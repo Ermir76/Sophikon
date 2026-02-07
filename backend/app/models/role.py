@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import RoleScope
 import uuid
 
 
@@ -56,7 +57,7 @@ class Role(Base):
     )
 
     # Scope: 'system' or 'project'
-    scope: Mapped[str] = mapped_column(
+    scope: Mapped[RoleScope] = mapped_column(
         String(20),
         nullable=False,
         server_default=text("'project'"),

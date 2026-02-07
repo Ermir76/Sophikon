@@ -21,6 +21,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import TaskType, ConstraintType, CostAccrual
 import uuid
 
 
@@ -166,7 +167,7 @@ class Task(Base):
     )
 
     # Task Type and Scheduling
-    task_type: Mapped[str] = mapped_column(
+    task_type: Mapped[TaskType] = mapped_column(
         String(20),
         nullable=False,
         server_default=text("'FIXED_UNITS'"),
@@ -178,7 +179,7 @@ class Task(Base):
     )
 
     # Constraints
-    constraint_type: Mapped[str] = mapped_column(
+    constraint_type: Mapped[ConstraintType] = mapped_column(
         String(10),
         nullable=False,
         server_default=text("'ASAP'"),
@@ -217,7 +218,7 @@ class Task(Base):
         nullable=False,
         server_default=text("0"),
     )
-    fixed_cost_accrual: Mapped[str] = mapped_column(
+    fixed_cost_accrual: Mapped[CostAccrual] = mapped_column(
         String(10),
         nullable=False,
         server_default=text("'PRORATED'"),

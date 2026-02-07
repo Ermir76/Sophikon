@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from collections.abc import AsyncGenerator
 from app.core.config import settings
-from typing import AsyncGenerator
 
 # Create the connection to the database
 # - echo: print all database commands (only in development)

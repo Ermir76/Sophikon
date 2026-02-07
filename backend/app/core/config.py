@@ -30,7 +30,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
 
     # Tell pydantic to read values from a .env file
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 # Create one settings object that the whole app can use

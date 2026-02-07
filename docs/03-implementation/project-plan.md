@@ -23,11 +23,22 @@
 
 **Backend Tasks:**
 
-- [ ] Initialize FastAPI project structure
+- [x] Initialize FastAPI project structure
+- [x] Create core config (settings, database connection)
+- [x] Create main.py with FastAPI app + CORS
 - [ ] Set up PostgreSQL database
 - [ ] Configure SQLAlchemy ORM
 - [ ] Create Alembic migrations setup
-- [ ] Implement core models (Project, Task, Resource, Assignment, Dependency)
+- [x] Implement auth models (User, Role, RefreshToken, PasswordReset)
+- [x] Implement core models (Project, Task, Resource, Assignment, Dependency)
+- [x] Implement project collaboration models (ProjectMember, ProjectInvitation)
+- [ ] Implement calendar models (Calendar, CalendarException)
+- [ ] Implement baseline models (TaskBaseline, AssignmentBaseline)
+- [ ] Implement resource detail models (ResourceRate, ResourceAvailability)
+- [ ] Implement collaboration models (Comment, Attachment, Notification)
+- [ ] Implement time tracking model (TimeEntry)
+- [ ] Implement AI models (AIConversation, AIMessage, AIUsage)
+- [ ] Implement audit model (ActivityLog)
 - [ ] Set up authentication (JWT)
 - [ ] Create basic CRUD endpoints
 

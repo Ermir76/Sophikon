@@ -19,6 +19,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import DependencyType, LagFormat
 import uuid
 
 
@@ -58,7 +59,7 @@ class Dependency(Base):
     )
 
     # Dependency Type
-    type: Mapped[str] = mapped_column(
+    type: Mapped[DependencyType] = mapped_column(
         String(2),
         nullable=False,
         server_default=text("'FS'"),
@@ -71,7 +72,7 @@ class Dependency(Base):
         server_default=text("0"),
         comment="Lag in minutes (negative for lead)",
     )
-    lag_format: Mapped[str] = mapped_column(
+    lag_format: Mapped[LagFormat] = mapped_column(
         String(10),  #
         nullable=False,
         server_default=text("'DURATION'"),

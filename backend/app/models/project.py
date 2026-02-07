@@ -20,6 +20,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import ProjectStatus, ScheduleFrom
 import uuid
 
 
@@ -68,7 +69,7 @@ class Project(Base):
     )
 
     # Scheduling Mode
-    schedule_from: Mapped[str] = mapped_column(
+    schedule_from: Mapped[ScheduleFrom] = mapped_column(
         String(20),
         nullable=False,
         server_default=text("'START'"),
@@ -83,7 +84,7 @@ class Project(Base):
     )
 
     # Project Status
-    status: Mapped[str] = mapped_column(
+    status: Mapped[ProjectStatus] = mapped_column(
         String(20),
         nullable=False,
         server_default=text("'PLANNING'"),

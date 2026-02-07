@@ -18,6 +18,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import ResourceType, CostAccrual
 import uuid
 
 
@@ -60,7 +61,7 @@ class Resource(Base):
     )
 
     # Resource Type
-    type: Mapped[str] = mapped_column(
+    type: Mapped[ResourceType] = mapped_column(
         String(10),
         nullable=False,
         server_default=text("'WORK'"),
@@ -124,7 +125,7 @@ class Resource(Base):
         nullable=False,
         server_default=text("0"),
     )
-    accrue_at: Mapped[str] = mapped_column(
+    accrue_at: Mapped[CostAccrual] = mapped_column(
         String(10),
         nullable=False,
         server_default=text("'PRORATED'"),

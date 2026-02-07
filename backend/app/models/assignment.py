@@ -21,6 +21,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
+from app.models.enums import WorkContour, RateTable
 import uuid
 
 
@@ -95,7 +96,7 @@ class Assignment(Base):
     )
 
     # Work Contour (How the work is distributed over time)
-    work_contour: Mapped[str] = mapped_column(
+    work_contour: Mapped[WorkContour] = mapped_column(
         String(20),
         nullable=False,
         server_default=text("'FLAT'"),
@@ -125,7 +126,7 @@ class Assignment(Base):
     )
 
     # Which rate table to use (A, B, C, D)
-    rate_table: Mapped[str] = mapped_column(
+    rate_table: Mapped[RateTable] = mapped_column(
         String(1),
         nullable=False,
         server_default=text("'A'"),
