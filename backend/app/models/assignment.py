@@ -2,6 +2,8 @@
 Assignment model for resource assignments to tasks.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     TIMESTAMP,
@@ -16,13 +18,19 @@ from sqlalchemy import (
     text,
     Boolean,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import WorkContour, RateTable
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.task import Task
+    from app.models.resource import Resource
+    from app.models.assignment_baseline import AssignmentBaseline
+    from app.models.time_entry import TimeEntry
 
 
 class Assignment(Base):
@@ -173,9 +181,13 @@ class Assignment(Base):
         ),
     )
 
-    # Relationships (will be added later)
-    # task: Mapped["Task"] = relationship(back_populates="assignments")
-    # resource: Mapped["Resource"] = relationship(back_populates="assignments")
+    # Relationships
+    task: Mapped["Task"] = relationship(back_populates="assignments")
+    resource: Mapped["Resource"] = relationship(back_populates="assignments")
+    baselines: Mapped[list["AssignmentBaseline"]] = relationship(
+        back_populates="assignment", cascade="all, delete-orphan"
+    )
+    time_entries: Mapped[list["TimeEntry"]] = relationship(back_populates="assignment")
 
     def __repr__(self) -> str:
         return f"<Assignment(id={self.id}, task_id={self.task_id}, resource_id={self.resource_id})>"

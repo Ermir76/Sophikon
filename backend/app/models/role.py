@@ -2,14 +2,20 @@
 Role model for RBAC (Role-Based Access Control).
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String, Boolean, Text, TIMESTAMP, text, CheckConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import RoleScope
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.project_member import ProjectMember
 
 
 class Role(Base):
@@ -84,9 +90,9 @@ class Role(Base):
         ),
     )
 
-    # Relationships (will be added after other models)
-    # users: Mapped[list["User"]] = relationship(back_populates="system_role")
-    # project_members: Mapped[list["ProjectMember"]] = relationship(back_populates="role")
+    # Relationships
+    users: Mapped[list["User"]] = relationship(back_populates="system_role")
+    project_members: Mapped[list["ProjectMember"]] = relationship(back_populates="role")
 
     def __repr__(self) -> str:
         return f"<Role(id={self.id}, name='{self.name}', scope='{self.scope}')>"

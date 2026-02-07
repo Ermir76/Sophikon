@@ -2,13 +2,18 @@
 RefreshToken model for JWT session management.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String, Boolean, TIMESTAMP, ForeignKey, Index, text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, INET
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class RefreshToken(Base):
@@ -99,8 +104,8 @@ class RefreshToken(Base):
         ),
     )
 
-    # Relationships (will be added after other models)
-    # user: Mapped["User"] = relationship(back_populates="refresh_tokens")
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
     def __repr__(self) -> str:
         return f"<RefreshToken(id={self.id}, user_id={self.user_id}, revoked={self.is_revoked})>"

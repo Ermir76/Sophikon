@@ -2,6 +2,8 @@
 Task model for work breakdown structure (WBS) and scheduling.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -16,13 +18,21 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import TaskType, ConstraintType, CostAccrual
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.calendar import Calendar
+    from app.models.assignment import Assignment
+    from app.models.dependency import Dependency
+    from app.models.task_baseline import TaskBaseline
+    from app.models.time_entry import TimeEntry
 
 
 class Task(Base):
@@ -343,11 +353,32 @@ class Task(Base):
         ),
     )
 
-    # Relationships (will be added later)
-    # project: Mapped["Project"] = relationship(back_populates="tasks")
-    # parent: Mapped["Task"] = relationship(back_populates="children", remote_side=[id])
-    # children: Mapped[list["Task"]] = relationship(back_populates="parent")
-    # assignments: Mapped[list["Assignment"]] = relationship(back_populates="task")
+    # Relationships
+    project: Mapped["Project"] = relationship(back_populates="tasks")
+    calendar: Mapped["Calendar | None"] = relationship(back_populates="tasks")
+    parent: Mapped["Task | None"] = relationship(
+        back_populates="children", remote_side="Task.id"
+    )
+    children: Mapped[list["Task"]] = relationship(back_populates="parent")
+    assignments: Mapped[list["Assignment"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )
+    predecessors: Mapped[list["Dependency"]] = relationship(
+        back_populates="successor",
+        foreign_keys="Dependency.successor_id",
+        cascade="all, delete-orphan",
+    )
+    successors: Mapped[list["Dependency"]] = relationship(
+        back_populates="predecessor",
+        foreign_keys="Dependency.predecessor_id",
+        cascade="all, delete-orphan",
+    )
+    baselines: Mapped[list["TaskBaseline"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )
+    time_entries: Mapped[list["TimeEntry"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Task(id={self.id}, name='{self.name}', wbs='{self.wbs_code}')>"

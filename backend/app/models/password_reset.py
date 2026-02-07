@@ -2,13 +2,18 @@
 PasswordReset model for password recovery flow.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String, TIMESTAMP, ForeignKey, Index, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class PasswordReset(Base):
@@ -63,8 +68,8 @@ class PasswordReset(Base):
     # Indexes
     __table_args__ = (Index("idx_password_reset_user", user_id),)
 
-    # Relationships (will be added after other models)
-    # user: Mapped["User"] = relationship(back_populates="password_resets")
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="password_resets")
 
     def __repr__(self) -> str:
         return f"<PasswordReset(id={self.id}, user_id={self.user_id})>"

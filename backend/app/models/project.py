@@ -2,6 +2,8 @@
 Project Model for project management and scheduling.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -15,13 +17,23 @@ from sqlalchemy import (
     text,
     ForeignKey,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import ProjectStatus, ScheduleFrom
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.calendar import Calendar
+    from app.models.task import Task
+    from app.models.resource import Resource
+    from app.models.project_member import ProjectMember
+    from app.models.project_invitation import ProjectInvitation
+    from app.models.ai_conversation import AIConversation
+    from app.models.activity_log import ActivityLog
 
 
 class Project(Base):
@@ -167,10 +179,30 @@ class Project(Base):
         ),
     )
 
-    # Relationships (will be added after other models)
-    # user: Mapped["User"] = relationship(back_populates="projects")
-    # calendar: Mapped["Calendar"] = relationship(back_populates="projects")
-    # tasks: Mapped[list["Task"]] = relationship(back_populates="project")
+    # Relationships
+    owner: Mapped["User"] = relationship(back_populates="created_projects")
+    default_calendar: Mapped["Calendar | None"] = relationship(
+        back_populates="default_for_projects"
+    )
+    calendars: Mapped[list["Calendar"]] = relationship(
+        back_populates="project", foreign_keys="Calendar.project_id"
+    )
+    tasks: Mapped[list["Task"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    resources: Mapped[list["Resource"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    members: Mapped[list["ProjectMember"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    invitations: Mapped[list["ProjectInvitation"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    ai_conversations: Mapped[list["AIConversation"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    activity_logs: Mapped[list["ActivityLog"]] = relationship(back_populates="project")
 
     def __repr__(self) -> str:
         return f"<Project(id={self.id}, name='{self.name}', status='{self.status}')>"

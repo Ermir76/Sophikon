@@ -2,6 +2,8 @@
 Calendar model for work calendars defining working hours.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -11,12 +13,18 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.calendar_exception import CalendarException
+    from app.models.task import Task
+    from app.models.resource import Resource
 
 
 class Calendar(Base):
@@ -96,10 +104,24 @@ class Calendar(Base):
     # Indexes
     __table_args__ = (Index("idx_calendar_project", project_id),)
 
-    # Relationships (will be added after other models)
-    # project: Mapped["Project"] = relationship(back_populates="calendars")
-    # base_calendar: Mapped["Calendar"] = relationship(remote_side=[id])
-    # exceptions: Mapped[list["CalendarException"]] = relationship(back_populates="calendar")
+    # Relationships
+    project: Mapped["Project | None"] = relationship(
+        back_populates="calendars", foreign_keys=[project_id]
+    )
+    default_for_projects: Mapped[list["Project"]] = relationship(
+        back_populates="default_calendar", foreign_keys="Project.default_calendar_id"
+    )
+    base_calendar: Mapped["Calendar | None"] = relationship(
+        back_populates="derived_calendars", remote_side="Calendar.id"
+    )
+    derived_calendars: Mapped[list["Calendar"]] = relationship(
+        back_populates="base_calendar"
+    )
+    exceptions: Mapped[list["CalendarException"]] = relationship(
+        back_populates="calendar", cascade="all, delete-orphan"
+    )
+    tasks: Mapped[list["Task"]] = relationship(back_populates="calendar")
+    resources: Mapped[list["Resource"]] = relationship(back_populates="calendar")
 
     def __repr__(self) -> str:
         return f"<Calendar(id={self.id}, name='{self.name}', is_base={self.is_base})>"

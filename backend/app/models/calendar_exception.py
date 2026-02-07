@@ -2,6 +2,8 @@
 CalendarException model for holidays and special working days.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -12,12 +14,15 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, date
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.calendar import Calendar
 
 
 class CalendarException(Base):
@@ -97,8 +102,8 @@ class CalendarException(Base):
         Index("idx_calendar_exception_dates", calendar_id, start_date, end_date),
     )
 
-    # Relationships (will be added after other models)
-    # calendar: Mapped["Calendar"] = relationship(back_populates="exceptions")
+    # Relationships
+    calendar: Mapped["Calendar"] = relationship(back_populates="exceptions")
 
     def __repr__(self) -> str:
         return f"<CalendarException(id={self.id}, name='{self.name}', start={self.start_date})>"

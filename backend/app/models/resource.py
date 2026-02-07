@@ -2,6 +2,8 @@
 Resource model for project resources (people, materials, costs).
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -13,13 +15,22 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import ResourceType, CostAccrual
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.calendar import Calendar
+    from app.models.assignment import Assignment
+    from app.models.resource_rate import ResourceRate
+    from app.models.resource_availability import ResourceAvailability
+    from app.models.project_member import ProjectMember
 
 
 class Resource(Base):
@@ -179,10 +190,22 @@ class Resource(Base):
         ),
     )
 
-    # Relationships (will be added later)
-    # project: Mapped["Project"] = relationship(back_populates="resources")
-    # user: Mapped["User"] = relationship(back_populates="resources")
-    # assignments: Mapped[list["Assignment"]] = relationship(back_populates="resource")
+    # Relationships
+    project: Mapped["Project"] = relationship(back_populates="resources")
+    user: Mapped["User | None"] = relationship(back_populates="resources")
+    calendar: Mapped["Calendar | None"] = relationship(back_populates="resources")
+    assignments: Mapped[list["Assignment"]] = relationship(
+        back_populates="resource", cascade="all, delete-orphan"
+    )
+    rates: Mapped[list["ResourceRate"]] = relationship(
+        back_populates="resource", cascade="all, delete-orphan"
+    )
+    availability_periods: Mapped[list["ResourceAvailability"]] = relationship(
+        back_populates="resource", cascade="all, delete-orphan"
+    )
+    project_member: Mapped["ProjectMember | None"] = relationship(
+        back_populates="resource"
+    )
 
     def __repr__(self) -> str:
         return f"<Resource(id={self.id}, name='{self.name}', type='{self.type}')>"

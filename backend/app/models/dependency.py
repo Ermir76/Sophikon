@@ -2,6 +2,8 @@
 Dependency model for task dependencies (predecessor-successor relationships).
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -14,13 +16,16 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 from app.models.enums import DependencyType, LagFormat
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.task import Task
 
 
 class Dependency(Base):
@@ -125,10 +130,13 @@ class Dependency(Base):
         ),
     )
 
-    # Relationships (will be added later)
-    # project: Mapped["Project"] = relationship(back_populates="dependencies")
-    # predecessor: Mapped["Task"] = relationship(foreign_keys=[predecessor_id])
-    # successor: Mapped["Task"] = relationship(foreign_keys=[successor_id])
+    # Relationships
+    predecessor: Mapped["Task"] = relationship(
+        back_populates="successors", foreign_keys=[predecessor_id]
+    )
+    successor: Mapped["Task"] = relationship(
+        back_populates="predecessors", foreign_keys=[successor_id]
+    )
 
     def __repr__(self) -> str:
         return f"<Dependency(id={self.id}, type='{self.type}', predecessor={self.predecessor_id}, successor={self.successor_id})>"

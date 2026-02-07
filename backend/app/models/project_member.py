@@ -2,6 +2,8 @@
 ProjectMember model for project team membership with RBAC roles.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     TIMESTAMP,
     ForeignKey,
@@ -9,12 +11,18 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.role import Role
+    from app.models.resource import Resource
 
 
 class ProjectMember(Base):
@@ -85,11 +93,11 @@ class ProjectMember(Base):
         Index("idx_project_member_project", project_id),
     )
 
-    # Relationships (will be added after other models)
-    # project: Mapped["Project"] = relationship(back_populates="members")
-    # user: Mapped["User"] = relationship(back_populates="project_memberships")
-    # role: Mapped["Role"] = relationship(back_populates="project_members")
-    # resource: Mapped["Resource"] = relationship(back_populates="project_member")
+    # Relationships
+    project: Mapped["Project"] = relationship(back_populates="members")
+    user: Mapped["User"] = relationship(back_populates="project_memberships")
+    role: Mapped["Role"] = relationship(back_populates="project_members")
+    resource: Mapped["Resource | None"] = relationship(back_populates="project_member")
 
     def __repr__(self) -> str:
         return f"<ProjectMember(id={self.id}, project_id={self.project_id}, user_id={self.user_id})>"

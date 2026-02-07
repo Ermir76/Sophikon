@@ -2,6 +2,8 @@
 ProjectInvitation model for email invitations to join projects.
 """
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     String,
     Boolean,
@@ -12,12 +14,17 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.role import Role
 
 
 class ProjectInvitation(Base):
@@ -117,10 +124,10 @@ class ProjectInvitation(Base):
         ),
     )
 
-    # Relationships (will be added after other models)
-    # project: Mapped["Project"] = relationship(back_populates="invitations")
-    # invited_by: Mapped["User"] = relationship(back_populates="sent_invitations")
-    # role: Mapped["Role"] = relationship()
+    # Relationships
+    project: Mapped["Project"] = relationship(back_populates="invitations")
+    invited_by: Mapped["User"] = relationship(back_populates="sent_invitations")
+    role: Mapped["Role"] = relationship()
 
     def __repr__(self) -> str:
         return f"<ProjectInvitation(id={self.id}, project_id={self.project_id}, email='{self.email}')>"

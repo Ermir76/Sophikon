@@ -2,13 +2,31 @@
 User model for authentication and profile management.
 """
 
-from sqlalchemy import String, Boolean, TIMESTAMP, text, Index, func
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+
+from sqlalchemy import String, Boolean, TIMESTAMP, text, Index, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 from uuid_utils import uuid7
 from app.core.database import Base
 import uuid
+
+if TYPE_CHECKING:
+    from app.models.role import Role
+    from app.models.refresh_token import RefreshToken
+    from app.models.password_reset import PasswordReset
+    from app.models.project import Project
+    from app.models.project_member import ProjectMember
+    from app.models.project_invitation import ProjectInvitation
+    from app.models.resource import Resource
+    from app.models.time_entry import TimeEntry
+    from app.models.comment import Comment
+    from app.models.attachment import Attachment
+    from app.models.notification import Notification
+    from app.models.ai_conversation import AIConversation
+    from app.models.ai_usage import AIUsage
+    from app.models.activity_log import ActivityLog
 
 
 class User(Base):
@@ -48,11 +66,11 @@ class User(Base):
         nullable=True,
     )
 
-    # System Role (Foreign Key - will add relationship after Role model)
+    # System Role
     system_role_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("role.id"),
         nullable=False,
-        # FK will be added in migration: REFERENCES role(id)
     )
 
     # OAuth Support
@@ -128,10 +146,35 @@ class User(Base):
         ),
     )
 
-    # Relationships (will be added after other models are created)
-    # system_role: Mapped["Role"] = relationship(back_populates="users")
-    # projects: Mapped[list["Project"]] = relationship(back_populates="owner")
-    # refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    # Relationships
+    system_role: Mapped["Role"] = relationship(back_populates="users")
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    password_resets: Mapped[list["PasswordReset"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    created_projects: Mapped[list["Project"]] = relationship(back_populates="owner")
+    project_memberships: Mapped[list["ProjectMember"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    sent_invitations: Mapped[list["ProjectInvitation"]] = relationship(
+        back_populates="invited_by"
+    )
+    resources: Mapped[list["Resource"]] = relationship(back_populates="user")
+    time_entries: Mapped[list["TimeEntry"]] = relationship(
+        back_populates="user", foreign_keys="TimeEntry.user_id"
+    )
+    comments: Mapped[list["Comment"]] = relationship(back_populates="author")
+    attachments: Mapped[list["Attachment"]] = relationship(back_populates="uploaded_by")
+    notifications: Mapped[list["Notification"]] = relationship(
+        back_populates="user", foreign_keys="Notification.user_id"
+    )
+    ai_conversations: Mapped[list["AIConversation"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    ai_usage: Mapped[list["AIUsage"]] = relationship(back_populates="user")
+    activity_logs: Mapped[list["ActivityLog"]] = relationship(back_populates="user")
 
     def __repr__(self) -> str:
         return (

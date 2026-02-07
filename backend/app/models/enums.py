@@ -137,3 +137,80 @@ class RoleScope(str, Enum):
 
     SYSTEM = "system"  # System-wide roles (admin, user)
     PROJECT = "project"  # Project-specific roles (owner, manager, member, viewer)
+
+
+# ============================================================================
+# TIME TRACKING
+# ============================================================================
+
+
+class BillingStatus(str, Enum):
+    """Time entry billing status."""
+
+    UNBILLED = "UNBILLED"
+    BILLED = "BILLED"
+    NON_BILLABLE = "NON_BILLABLE"
+
+
+class TimeEntryStatus(str, Enum):
+    """Time entry approval status."""
+
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+# ============================================================================
+# ATTACHMENTS
+# ============================================================================
+
+
+class StorageProvider(str, Enum):
+    """File storage providers."""
+
+    LOCAL = "local"
+    S3 = "s3"
+
+
+# ============================================================================
+# NOTIFICATIONS
+# ============================================================================
+
+
+class NotificationType(str, Enum):
+    """Notification event types."""
+
+    TASK_ASSIGNED = "task_assigned"
+    TASK_UPDATED = "task_updated"
+    MENTIONED = "mentioned"
+    COMMENT_ADDED = "comment_added"
+    DEADLINE_APPROACHING = "deadline_approaching"
+    INVITATION_RECEIVED = "invitation_received"
+
+
+# ============================================================================
+# AI
+# ============================================================================
+
+
+class AIMessageRole(str, Enum):
+    """AI message roles."""
+
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+
+# ============================================================================
+# AUDIT
+# ============================================================================
+
+
+class AuditAction(str, Enum):
+    """Audit log action types."""
+
+    CREATED = "created"
+    UPDATED = "updated"
+    DELETED = "deleted"
+    RESTORED = "restored"
