@@ -39,7 +39,7 @@
 - [x] Implement time tracking model (TimeEntry)
 - [x] Implement AI models (AIConversation, AIMessage, AIUsage)
 - [x] Implement audit model (ActivityLog)
-- [ ] Set up authentication (JWT)
+- [x] Set up authentication (JWT)
 - [ ] Create basic CRUD endpoints
 
 **DevOps Tasks:**
