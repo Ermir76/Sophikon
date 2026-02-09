@@ -29,6 +29,7 @@ dependencies = [
     "pillow>=12.1.0",
     # Utilities
     "uuid-utils>=0.14.0",
+    "email-validator>=2.3.0",
 ]
 
 [dependency-groups]
