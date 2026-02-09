@@ -8,6 +8,11 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.projects import router as projects_router
 from app.api.v1.endpoints.tasks import router as tasks_router
 from app.api.v1.endpoints.resources import router as resources_router
+from app.api.v1.endpoints.dependencies import router as dependencies_router
+from app.api.v1.endpoints.assignments import (
+    task_assignments_router,
+    assignments_router,
+)
 
 
 @asynccontextmanager
@@ -48,6 +53,9 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(projects_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(resources_router, prefix="/api/v1")
+app.include_router(dependencies_router, prefix="/api/v1")
+app.include_router(task_assignments_router, prefix="/api/v1")
+app.include_router(assignments_router, prefix="/api/v1")
 
 
 # Health check endpoint
