@@ -26,9 +26,9 @@
 - [x] Initialize FastAPI project structure
 - [x] Create core config (settings, database connection)
 - [x] Create main.py with FastAPI app + CORS
-- [ ] Set up PostgreSQL database
-- [ ] Configure SQLAlchemy ORM
-- [ ] Create Alembic migrations setup
+- [x] Set up PostgreSQL database
+- [x] Configure SQLAlchemy ORM
+- [x] Create Alembic migrations setup
 - [x] Implement auth models (User, Role, RefreshToken, PasswordReset)
 - [x] Implement core models (Project, Task, Resource, Assignment, Dependency)
 - [x] Implement project collaboration models (ProjectMember, ProjectInvitation)
@@ -37,15 +37,15 @@
 - [x] Implement resource detail models (ResourceRate, ResourceAvailability)
 - [x] Implement collaboration models (Comment, Attachment, Notification)
 - [x] Implement time tracking model (TimeEntry)
-- [ ] Implement AI models (AIConversation, AIMessage, AIUsage)
-- [ ] Implement audit model (ActivityLog)
+- [x] Implement AI models (AIConversation, AIMessage, AIUsage)
+- [x] Implement audit model (ActivityLog)
 - [ ] Set up authentication (JWT)
 - [ ] Create basic CRUD endpoints
 
 **DevOps Tasks:**
 
-- [ ] Docker & docker-compose setup
-- [ ] Development environment documentation
+- [x] Docker & docker-compose setup
+- [x] Development environment documentation
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Pre-commit hooks (linting, formatting)
 

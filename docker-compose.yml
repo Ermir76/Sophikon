@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: sophikon-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sophikon_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Soph1k0n_Dev_2026!}
+      POSTGRES_DB: sophikon
+    ports:
+      - "5433:5432" # Using 5433 to avoid conflict with local PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U sophikon_user -d sophikon" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sophikon-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
