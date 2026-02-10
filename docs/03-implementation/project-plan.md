@@ -40,7 +40,7 @@
 - [x] Implement AI models (AIConversation, AIMessage, AIUsage)
 - [x] Implement audit model (ActivityLog)
 - [x] Set up authentication (JWT)
-- [ ] Create basic CRUD endpoints
+- [x] Create basic CRUD endpoints
 
 **DevOps Tasks:**
 
