@@ -45,7 +45,7 @@ async def list_projects(
         select(Project)
         .outerjoin(ProjectMember, ProjectMember.project_id == Project.id)
         .where(
-            Project.is_deleted == False,  # TODO:Check this later
+            Project.is_deleted.is_(False),
             or_(
                 Project.owner_id == user.id,
                 ProjectMember.user_id == user.id,
@@ -109,9 +109,7 @@ async def get_project_by_id(
 ) -> Project | None:
     """Get a project by ID (excludes deleted)."""
     result = await db.execute(
-        select(Project).where(
-            Project.id == project_id, Project.is_deleted == False
-        )  # TODO:Check this later
+        select(Project).where(Project.id == project_id, Project.is_deleted.is_(False))
     )
     return result.scalar_one_or_none()
 

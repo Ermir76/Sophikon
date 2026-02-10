@@ -98,7 +98,7 @@ async def get_project_or_404(
     Raises 403 if user has no access.
     """
     result = await db.execute(
-        select(Project).where(Project.id == project_id, Project.is_deleted == False)
+        select(Project).where(Project.id == project_id, Project.is_deleted.is_(False))
     )
     project = result.scalar_one_or_none()
 
@@ -156,7 +156,7 @@ async def get_task_with_project_access(
     result = await db.execute(
         select(Task)
         .options(selectinload(Task.project))
-        .where(Task.id == task_id, Task.is_deleted == False)
+        .where(Task.id == task_id, Task.is_deleted.is_(False))
     )
     task = result.scalar_one_or_none()
 
