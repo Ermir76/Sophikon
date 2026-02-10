@@ -116,7 +116,11 @@ async def login_user(
 ) -> tuple[User, str, str]:
     """Authenticate and return (user, access_token, refresh_token)."""
     user = await get_user_by_email(db, email)
-    if not user or not user.password_hash or not verify_password(password, user.password_hash):
+    if (
+        not user
+        or not user.password_hash
+        or not verify_password(password, user.password_hash)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
