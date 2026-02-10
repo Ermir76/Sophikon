@@ -16,6 +16,16 @@ from app.models.user import User
 from app.schema.project import ProjectCreate, ProjectUpdate
 
 
+def escape_like(value: str) -> str:
+    """
+    Escape SQL LIKE wildcards to prevent pattern injection.
+
+    Characters % and _ are wildcards in SQL LIKE patterns.
+    This function escapes them so they're treated as literals.
+    """
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 async def list_projects(
     db: AsyncSession,
     user: User,
@@ -49,7 +59,10 @@ async def list_projects(
         base_query = base_query.where(Project.status == status)
 
     if search:
-        base_query = base_query.where(Project.name.ilike(f"%{search}%"))
+        escaped_search = escape_like(search)
+        base_query = base_query.where(
+            Project.name.ilike(f"%{escaped_search}%", escape="\\")
+        )
 
     # Get total count
     count_query = select(func.count()).select_from(base_query.subquery())

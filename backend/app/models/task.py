@@ -336,6 +336,7 @@ class Task(Base):
             "idx_task_project_order",
             project_id,
             order_index,
+            unique=True,
             postgresql_where=text("NOT is_deleted"),
         ),
         Index(

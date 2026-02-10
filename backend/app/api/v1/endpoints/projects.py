@@ -8,10 +8,15 @@ PATCH  /projects/{project_id} - Update project (owner/manager only)
 DELETE /projects/{project_id} - Soft delete project (owner only)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, get_current_active_user, get_project_or_404
+from app.api.deps import (
+    ProjectAccess,
+    check_role,
+    get_current_active_user,
+    get_project_or_404,
+)
 from app.core.database import get_db
 from app.models.user import User
 from app.schema.common import PaginatedResponse
@@ -81,11 +86,7 @@ async def update_project(
 
     Requires owner or manager role.
     """
-    if access.role_name not in ("owner", "manager"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only owners and managers can update projects",
-        )
+    check_role(access, "owner", "manager")
 
     project = await project_service.update_project(db, access.project, body)
     return ProjectDetail.model_validate(project)
@@ -101,10 +102,6 @@ async def delete_project(
 
     Requires owner role.
     """
-    if access.role_name != "owner":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the project owner can delete projects",
-        )
+    check_role(access, "owner")
 
     await project_service.soft_delete_project(db, access.project)

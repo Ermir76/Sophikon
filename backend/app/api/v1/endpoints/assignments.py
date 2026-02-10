@@ -14,15 +14,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
-from app.api.deps import get_current_active_user, get_project_or_404, ProjectAccess
+from app.api.deps import (
+    AssignmentAccess,
+    ProjectAccess,
+    check_role,
+    check_role_name,
+    get_assignment_with_access,
+    get_project_or_404,
+)
 from app.core.database import get_db
-from app.models.assignment import Assignment
 from app.models.task import Task
-from app.models.user import User
-from app.models.project_member import ProjectMember
 from app.schema.assignment import AssignmentCreate, AssignmentResponse, AssignmentUpdate
 from app.service import assignment_service
 
@@ -82,6 +85,7 @@ async def create_assignment(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new assignment for a task."""
+    check_role(access, "owner", "manager", "member")
     task = await _get_task_in_project(task_id, access, db)
     assignment = await assignment_service.create_assignment(db, task, body)
     return AssignmentResponse.model_validate(assignment)
@@ -90,63 +94,25 @@ async def create_assignment(
 # ── Flat Assignment Endpoints ──
 
 
-async def _get_assignment_with_access(
-    assignment_id: UUID,
-    db: AsyncSession,
-    user: User,
-) -> Assignment:
-    """Get assignment and verify user has access to its project."""
-    result = await db.execute(
-        select(Assignment)
-        .options(selectinload(Assignment.task).selectinload(Task.project))
-        .where(Assignment.id == assignment_id)
-    )
-    assignment = result.scalar_one_or_none()
-
-    if not assignment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assignment not found",
-        )
-
-    project = assignment.task.project
-
-    # Check access
-    if project.owner_id != user.id:
-        member_result = await db.execute(
-            select(ProjectMember).where(
-                ProjectMember.project_id == project.id,
-                ProjectMember.user_id == user.id,
-            )
-        )
-        if not member_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have access to this project",
-            )
-
-    return assignment
-
-
 @assignments_router.patch("/{assignment_id}", response_model=AssignmentResponse)
 async def update_assignment(
     assignment_id: UUID,
     body: AssignmentUpdate,
+    access: AssignmentAccess = Depends(get_assignment_with_access),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
 ):
     """Update an assignment."""
-    assignment = await _get_assignment_with_access(assignment_id, db, user)
-    assignment = await assignment_service.update_assignment(db, assignment, body)
+    check_role_name(access.role_name, "owner", "manager", "member")
+    assignment = await assignment_service.update_assignment(db, access.assignment, body)
     return AssignmentResponse.model_validate(assignment)
 
 
 @assignments_router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_assignment(
     assignment_id: UUID,
+    access: AssignmentAccess = Depends(get_assignment_with_access),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
 ):
     """Delete an assignment."""
-    assignment = await _get_assignment_with_access(assignment_id, db, user)
-    await assignment_service.delete_assignment(db, assignment)
+    check_role_name(access.role_name, "owner", "manager")
+    await assignment_service.delete_assignment(db, access.assignment)

@@ -27,19 +27,27 @@ class ProjectCreate(BaseModel):
 
 
 class ProjectUpdate(BaseModel):
-    """Update an existing project (all fields optional)."""
+    """
+    Update an existing project (all fields optional).
 
-    name: str | None = Field(default=None, min_length=1, max_length=255)
+    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    Nullable fields keep `| None` to allow explicit null.
+    """
+
+    # NOT NULL fields — optional but reject explicit null
+    name: str = Field(default=None, min_length=1, max_length=255)
+    start_date: date = None
+    status: ProjectStatus = None
+    schedule_from: ScheduleFrom = None
+    currency: str = Field(default=None, min_length=3, max_length=3)
+    settings: dict = None
+
+    # Nullable fields — can be explicitly set to null
     description: str | None = None
-    start_date: date | None = None
     finish_date: date | None = None
     status_date: date | None = None
-    status: ProjectStatus | None = None
-    schedule_from: ScheduleFrom | None = None
     default_calendar_id: uuid.UUID | None = None
     budget: Decimal | None = None
-    currency: str | None = Field(default=None, min_length=3, max_length=3)
-    settings: dict | None = None
 
 
 # ── Response Schemas ──

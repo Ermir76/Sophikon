@@ -7,6 +7,7 @@ Handles listing, creating, updating, and soft-deleting tasks.
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,24 +51,26 @@ async def list_tasks(
     return tasks, total
 
 
-async def get_next_order_index(db: AsyncSession, project_id: UUID) -> int:
-    """Get the next available order_index for a project."""
-    result = await db.execute(
-        select(func.coalesce(func.max(Task.order_index), 0) + 1).where(
-            Task.project_id == project_id,
-            Task.is_deleted == False,  # noqa: E712
-        )
-    )
-    return result.scalar() or 1
-
-
 async def create_task(
     db: AsyncSession,
     project: Project,
     data: TaskCreate,
 ) -> Task:
     """Create a new task in the project."""
-    order_index = await get_next_order_index(db, project.id)
+
+    # Lock the project row — serializes concurrent task creates for this project
+    await db.execute(
+        select(Project.id).where(Project.id == project.id).with_for_update()
+    )
+
+    # Now safe — no other transaction can be here for the same project
+    result = await db.execute(
+        select(func.coalesce(func.max(Task.order_index), 0) + 1).where(
+            Task.project_id == project.id,
+            Task.is_deleted == False,  # noqa: E712
+        )
+    )
+    order_index = result.scalar() or 1
 
     # Calculate outline_level and wbs_code
     outline_level = 1
@@ -75,23 +78,33 @@ async def create_task(
 
     if data.parent_task_id:
         parent_result = await db.execute(
-            select(Task).where(Task.id == data.parent_task_id)
+            select(Task).where(
+                Task.id == data.parent_task_id,
+                Task.project_id == project.id,
+                Task.is_deleted == False,  # noqa: E712
+            )
         )
         parent = parent_result.scalar_one_or_none()
-        if parent:
-            outline_level = parent.outline_level + 1
-            # Count siblings under this parent
-            sibling_count_result = await db.execute(
-                select(func.count()).where(
-                    Task.parent_task_id == data.parent_task_id,
-                    Task.is_deleted == False,  # noqa: E712
-                )
+        if not parent:
+            raise HTTPException(
+                status_code=400,
+                detail="Parent task not found in this project",
             )
-            sibling_count = sibling_count_result.scalar() or 0
-            wbs_code = f"{parent.wbs_code}.{sibling_count + 1}"
 
-            # Mark parent as summary
-            parent.is_summary = True
+        outline_level = parent.outline_level + 1
+        # Count siblings under this parent
+        sibling_count_result = await db.execute(
+            select(func.count()).where(
+                Task.parent_task_id == data.parent_task_id,
+                Task.project_id == project.id,
+                Task.is_deleted == False,  # noqa: E712
+            )
+        )
+        sibling_count = sibling_count_result.scalar() or 0
+        wbs_code = f"{parent.wbs_code}.{sibling_count + 1}"
+
+        # Mark parent as summary
+        parent.is_summary = True
 
     # Calculate finish_date based on duration (simple: 1 day = 480 minutes)
     hours_per_day = project.settings.get("hours_per_day", 8)

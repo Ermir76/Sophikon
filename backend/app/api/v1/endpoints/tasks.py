@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, get_project_or_404
+from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.schema.common import PaginatedResponse
 from app.schema.task import TaskCreate, TaskResponse, TaskUpdate
@@ -31,6 +31,9 @@ async def list_tasks(
     db: AsyncSession = Depends(get_db),
 ):
     """List all tasks in the project."""
+    if include_deleted:
+        check_role(access, "owner", "manager")
+
     tasks, total = await task_service.list_tasks(
         db,
         access.project,
@@ -57,6 +60,7 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new task in the project."""
+    check_role(access, "owner", "manager", "member")
     task = await task_service.create_task(db, access.project, body)
     return TaskResponse.model_validate(task)
 
@@ -85,6 +89,7 @@ async def update_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Update a task."""
+    check_role(access, "owner", "manager", "member")
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
     if not task:
         raise HTTPException(
@@ -103,6 +108,7 @@ async def delete_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Soft delete a task."""
+    check_role(access, "owner", "manager")
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
     if not task:
         raise HTTPException(

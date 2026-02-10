@@ -30,12 +30,16 @@ class DependencyCreate(BaseModel):
 
 
 class DependencyUpdate(BaseModel):
-    """Update an existing dependency (all fields optional)."""
+    """
+    Update an existing dependency (all fields optional).
 
-    type: DependencyType | None = None
-    lag: int | None = None
-    lag_format: LagFormat | None = None
-    is_disabled: bool | None = None
+    All fields are NOT NULL, so reject explicit nulls.
+    """
+
+    type: DependencyType = None
+    lag: int = None
+    lag_format: LagFormat = None
+    is_disabled: bool = None
 
 
 # ── Response Schemas ──

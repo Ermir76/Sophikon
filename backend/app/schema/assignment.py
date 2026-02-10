@@ -27,18 +27,23 @@ class AssignmentCreate(BaseModel):
 
 
 class AssignmentUpdate(BaseModel):
-    """Update an existing assignment (all fields optional)."""
+    """
+    Update an existing assignment (all fields optional).
 
-    units: Decimal | None = Field(default=None, ge=0)
-    start_date: date | None = None
-    finish_date: date | None = None
-    work: int | None = Field(default=None, ge=0)
-    actual_work: int | None = Field(default=None, ge=0)
-    remaining_work: int | None = Field(default=None, ge=0)
-    work_contour: WorkContour | None = None
-    rate_table: RateTable | None = None
-    percent_work_complete: Decimal | None = Field(default=None, ge=0, le=100)
-    is_confirmed: bool | None = None
+    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    """
+
+    # NOT NULL fields — optional but reject explicit null
+    units: Decimal = Field(default=None, ge=0)
+    start_date: date = None
+    finish_date: date = None
+    work: int = Field(default=None, ge=0)
+    actual_work: int = Field(default=None, ge=0)
+    remaining_work: int = Field(default=None, ge=0)
+    work_contour: WorkContour = None
+    rate_table: RateTable = None
+    percent_work_complete: Decimal = Field(default=None, ge=0, le=100)
+    is_confirmed: bool = None
 
 
 # ── Response Schemas ──

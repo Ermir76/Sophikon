@@ -33,22 +33,29 @@ class ResourceCreate(BaseModel):
 
 
 class ResourceUpdate(BaseModel):
-    """Update an existing resource (all fields optional)."""
+    """
+    Update an existing resource (all fields optional).
 
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    type: ResourceType | None = None
+    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    """
+
+    # NOT NULL fields — optional but reject explicit null
+    name: str = Field(default=None, min_length=1, max_length=255)
+    type: ResourceType = None
+    max_units: Decimal = Field(default=None, ge=0)
+    is_generic: bool = None
+    is_active: bool = None
+    standard_rate: Decimal = None
+    overtime_rate: Decimal = None
+    cost_per_use: Decimal = None
+    accrue_at: CostAccrual = None
+
+    # Nullable fields — can be explicitly set to null
     initials: str | None = Field(default=None, max_length=10)
     email: EmailStr | None = None
     material_label: str | None = Field(default=None, max_length=50)
-    max_units: Decimal | None = Field(default=None, ge=0)
     group_name: str | None = Field(default=None, max_length=100)
     code: str | None = Field(default=None, max_length=50)
-    is_generic: bool | None = None
-    is_active: bool | None = None
-    standard_rate: Decimal | None = None
-    overtime_rate: Decimal | None = None
-    cost_per_use: Decimal | None = None
-    accrue_at: CostAccrual | None = None
 
 
 # ── Response Schemas ──

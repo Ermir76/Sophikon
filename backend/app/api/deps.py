@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.models.assignment import Assignment
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.task import Task
@@ -65,6 +66,20 @@ class ProjectAccess(NamedTuple):
 
     project: Project
     role_name: str
+
+
+def check_role_name(role_name: str, *allowed: str) -> None:
+    """Raise 403 if role_name is not in allowed roles."""
+    if role_name not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Requires role: {', '.join(allowed)}",
+        )
+
+
+def check_role(access: ProjectAccess, *allowed: str) -> None:
+    """Raise 403 if user's project role is not in allowed roles."""
+    check_role_name(access.role_name, *allowed)
 
 
 async def get_project_or_404(
@@ -180,3 +195,77 @@ async def get_task_with_project_access(
         )
 
     return TaskAccess(task=task, project=project, role_name=member.role.name)
+
+
+class AssignmentAccess(NamedTuple):
+    """Result of assignment access check."""
+
+    assignment: Assignment
+    project: Project
+    role_name: str
+
+
+async def get_assignment_with_access(
+    assignment_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+) -> AssignmentAccess:
+    """
+    Load an assignment and verify the user has access to its project.
+
+    Checks if assignment, task, or project are deleted.
+    Returns AssignmentAccess(assignment, project, role_name).
+    """
+    result = await db.execute(
+        select(Assignment)
+        .options(selectinload(Assignment.task).selectinload(Task.project))
+        .where(Assignment.id == assignment_id)
+    )
+    assignment = result.scalar_one_or_none()
+
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assignment not found",
+        )
+
+    task = assignment.task
+    if task.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assignment not found",
+        )
+
+    project = task.project
+    if project.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assignment not found",
+        )
+
+    # Check if user is owner
+    if project.owner_id == user.id:
+        return AssignmentAccess(
+            assignment=assignment, project=project, role_name="owner"
+        )
+
+    # Check if user is a member
+    member_result = await db.execute(
+        select(ProjectMember)
+        .options(selectinload(ProjectMember.role))
+        .where(
+            ProjectMember.project_id == project.id,
+            ProjectMember.user_id == user.id,
+        )
+    )
+    member = member_result.scalar_one_or_none()
+
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this project",
+        )
+
+    return AssignmentAccess(
+        assignment=assignment, project=project, role_name=member.role.name
+    )

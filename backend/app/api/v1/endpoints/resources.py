@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, get_project_or_404
+from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.schema.common import PaginatedResponse
 from app.schema.resource import ResourceCreate, ResourceResponse, ResourceUpdate
@@ -59,6 +59,7 @@ async def create_resource(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new resource in the project."""
+    check_role(access, "owner", "manager", "member")
     resource = await resource_service.create_resource(db, access.project, body)
     return ResourceResponse.model_validate(resource)
 
@@ -89,6 +90,7 @@ async def update_resource(
     db: AsyncSession = Depends(get_db),
 ):
     """Update a resource."""
+    check_role(access, "owner", "manager", "member")
     resource = await resource_service.get_resource_by_id(
         db, resource_id, access.project.id
     )
@@ -109,6 +111,7 @@ async def delete_resource(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a resource (hard delete)."""
+    check_role(access, "owner", "manager")
     resource = await resource_service.get_resource_by_id(
         db, resource_id, access.project.id
     )

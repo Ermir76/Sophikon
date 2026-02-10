@@ -8,7 +8,7 @@ Note: Dependencies use hard delete.
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,14 +21,25 @@ from app.schema.dependency import DependencyCreate, DependencyUpdate
 async def list_dependencies(
     db: AsyncSession,
     project: Project,
-) -> list[Dependency]:
-    """List all dependencies for a project."""
+    page: int = 1,
+    per_page: int = 50,
+) -> tuple[list[Dependency], int]:
+    """List dependencies with pagination."""
+    # Count total
+    count_result = await db.execute(
+        select(func.count()).where(Dependency.project_id == project.id)
+    )
+    total = count_result.scalar() or 0
+
+    # Get page of items
     result = await db.execute(
         select(Dependency)
         .where(Dependency.project_id == project.id)
         .order_by(Dependency.created_at.asc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
-    return list(result.scalars().all())
+    return list(result.scalars().all()), total
 
 
 async def _validate_tasks_in_project(
