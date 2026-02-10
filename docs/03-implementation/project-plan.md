@@ -46,8 +46,8 @@
 
 - [x] Docker & docker-compose setup
 - [x] Development environment documentation
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Pre-commit hooks (linting, formatting)
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] Pre-commit hooks (linting, formatting)
 
 **Deliverables:**
 
