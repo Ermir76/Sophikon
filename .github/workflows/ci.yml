@@ -35,9 +35,10 @@ jobs:
       uses: astral-sh/setup-uv@v2
       with:
         enable-cache: true
-        cache-local-path: "/backend/.uv-cache"
 
     - name: Set up Python
+      env:
+        UV_CACHE_DIR: /tmp/.uv-cache
       run: uv python install 3.13
 
     - name: Install dependencies
