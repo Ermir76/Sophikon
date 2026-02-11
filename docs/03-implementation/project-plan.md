@@ -61,9 +61,9 @@
 
 **Frontend Tasks:**
 
-- [ ] Initialize React + Vite + TypeScript project
-- [ ] Set up folder structure
-- [ ] Configure Tailwind CSS
+- [x] Initialize React + Vite + TypeScript project
+- [x] Set up folder structure
+- [x] Configure Tailwind CSS
 - [ ] Set up React Router
 - [ ] Implement authentication UI (login/register)
 - [ ] Create API client (Axios/fetch wrapper)
@@ -330,7 +330,7 @@ Python 3.12+
 
 ```
 Node.js 20+
-├── React 18 (UI library)
+├── React 19 (UI library)
 ├── Vite (build tool)
 ├── TypeScript (language)
 ├── Tailwind CSS (styling)
