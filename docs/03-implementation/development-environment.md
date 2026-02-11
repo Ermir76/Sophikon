@@ -198,11 +198,11 @@ uv run alembic history
 
 > **Note:** Always run `alembic upgrade head` after pulling new changes that include migrations.
 
-### 5. Frontend Setup (Phase 2)
+### 5. Frontend Setup
 
-> **Status:** The frontend project structure exists but is not yet initialized with npm/Vite. This section will be updated in Week 2 when the frontend is set up.
+The frontend consists of two parts:
 
-Once initialized, the setup will be:
+#### React SPA (Application)
 
 ```bash
 cd frontend
@@ -210,7 +210,33 @@ npm install
 npm run dev
 ```
 
-The frontend dev server will run at **http://localhost:5173**.
+The app dev server runs at **http://localhost:5173**.
+
+| Package      | Version | Purpose                                |
+| ------------ | ------- | -------------------------------------- |
+| React        | 19.2.4  | UI library                             |
+| Vite         | 7.3.1   | Build tool                             |
+| TypeScript   | 5.9.3   | Language                               |
+| Tailwind CSS | 4.x     | Styling (via @tailwindcss/vite plugin) |
+| React Router | 7.x     | Client-side routing                    |
+
+#### Static Landing Page
+
+The landing page (`docs/02-design/landing-page-mockup.html`) is a standalone static HTML file — **not part of the React app**. This is intentional:
+
+- **SEO-friendly** — crawlers see content immediately, no JS rendering
+- **Fast** — no React bundle to load for first-time visitors
+- **Independent** — can be deployed/updated without rebuilding the app
+
+**Architecture:**
+
+| Route    | Served By           | Purpose                              |
+| -------- | ------------------- | ------------------------------------ |
+| `/`      | Static HTML (Nginx) | Landing page, marketing, SEO         |
+| `/app/*` | React SPA (Vite)    | Application (login, dashboard, etc.) |
+| `/api/*` | FastAPI             | Backend API                          |
+
+Landing page CTAs ("Start Planning Free", "Login") link to `/app/login` which loads the React app.
 
 ---
 
@@ -233,13 +259,16 @@ sophikon/
 │   ├── pyproject.toml        # Dependencies & project config
 │   ├── uv.lock               # Locked dependency versions
 │   └── .env                  # Local environment variables (gitignored)
-├── frontend/                 # React + TypeScript frontend
+├── frontend/                 # React + TypeScript SPA (behind /app)
 │   └── src/
 │       ├── components/       # Reusable UI components
 │       ├── hooks/            # Custom React hooks
 │       ├── pages/            # Page-level components
 │       ├── services/         # API client & utilities
-│       └── store/            # State management
+│       ├── store/            # State management
+│       ├── lib/              # Utilities
+│       ├── types/            # Shared TypeScript types
+│       └── assets/           # Static assets
 ├── ai-services/              # Standalone AI microservices
 │   ├── assistant/
 │   ├── estimation/
@@ -318,13 +347,13 @@ docker exec -it sophikon-db psql -U sophikon_user -d sophikon
 
 ## Ports Summary
 
-| Service      | Port | URL                         |
-| ------------ | ---- | --------------------------- |
-| FastAPI      | 8000 | http://localhost:8000       |
-| Swagger Docs | 8000 | http://localhost:8000/docs  |
-| PostgreSQL   | 5433 | localhost:5433              |
-| Redis        | 6379 | localhost:6379              |
-| Frontend     | 5173 | http://localhost:5173 (TBD) |
+| Service      | Port | URL                        |
+| ------------ | ---- | -------------------------- |
+| FastAPI      | 8000 | http://localhost:8000      |
+| Swagger Docs | 8000 | http://localhost:8000/docs |
+| PostgreSQL   | 5433 | localhost:5433             |
+| Redis        | 6379 | localhost:6379             |
+| Frontend SPA | 5173 | http://localhost:5173      |
 
 ---
 

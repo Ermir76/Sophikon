@@ -364,7 +364,7 @@ AI (3)                    Audit (1)
 | material_label | string    | Unit label       | "tons", "gallons"    |
 | max_units      | decimal   | Max allocation   | 1.0 = 100%           |
 | calendar_id    | FK        | Calendar         |                      |
-| group_name     | string    | Group            |         |
+| group_name     | string    | Group            |                      |
 | code           | string    | Resource code    |                      |
 | is_generic     | boolean   | Generic resource | Placeholder          |
 | is_active      | boolean   | Active           |                      |
@@ -443,7 +443,7 @@ AI (3)                    Audit (1)
 | --------------- | --------- | --------------- | ----- |
 | id              | UUID      | Primary key     |       |
 | assignment_id   | FK        | Assignment      |       |
-| baseline_number | integer   | Baseline #      |  |
+| baseline_number | integer   | Baseline #      |       |
 | work            | integer   | Snapshot work   |       |
 | start_date      | date      | Snapshot start  |       |
 | finish_date     | date      | Snapshot finish |       |
@@ -608,10 +608,10 @@ AI (3)                    Audit (1)
 ### 3.1 Authentication & User Management
 
 | ID        | Requirement                  | Priority | API Endpoint              |
-| --------- | ---------------------------- | -------- | ------------------------- |
+| --------- | ---------------------------- | -------- | ------------------------- | ---------------------------- |
 | FR-AU-001 | Register with email/password | Must     | POST /auth/register       |
 | FR-AU-002 | Login with email/password    | Must     | POST /auth/login          |
-| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | - check other auth providers
+| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | - check other auth providers |
 | FR-AU-004 | Logout (revoke token)        | Must     | POST /auth/logout         |
 | FR-AU-005 | Password reset via email     | Should   | POST /auth/password-reset |
 | FR-AU-006 | Update profile               | Should   | PATCH /users/me           |
@@ -893,12 +893,13 @@ AI (3)                    Audit (1)
 
 ### 6.1 Technical Constraints
 
-- Backend: Python 3.12+, FastAPI
-- Frontend: React 18+, TypeScript, Vite, Tailwind CSS, Shadcn UI
+- Backend: Python 3.13+, FastAPI
+- Frontend: React 19+, TypeScript, Vite 7, Tailwind CSS 4, Radix UI
+- Landing Page: Static HTML (separate from React SPA, SEO-friendly)
 - Database: PostgreSQL 18+
 - Cache: Redis 7+
-- Deployment: AWS (ECS or EC2)
-- AI: Claude API (primary), OpenAI (fallback) Ollama(local)
+- Deployment: AWS (ECS or EC2), EU-hosted (GDPR)
+- AI: Claude API (primary), OpenAI (fallback), Ollama (local)
 
 ### 6.2 Timeline Constraints
 
@@ -908,7 +909,7 @@ AI (3)                    Audit (1)
 
 ### 6.3 Resource Constraints
 
-- Solo developer 
+- Solo developer
 - Limited budget (AWS free tier + minimal)
 
 ---
@@ -940,8 +941,8 @@ AI (3)                    Audit (1)
 
 ## Document History
 
-| Version | Date       | Author    | Changes                              |
-| ------- | ---------- | --------- | ------------------------------------ |
-| 1.0     | 2026-02-05 | Ermir | Initial draft                        |
-| 2.0     | 2026-02-05 | Ermir | Scoped to V2.0 MVP                   |
-| 3.0     | 2026-02-06 | Ermir | Aligned with database-schema.md v3.0 |
+| Version | Date       | Author | Changes                              |
+| ------- | ---------- | ------ | ------------------------------------ |
+| 1.0     | 2026-02-05 | Ermir  | Initial draft                        |
+| 2.0     | 2026-02-05 | Ermir  | Scoped to V2.0 MVP                   |
+| 3.0     | 2026-02-06 | Ermir  | Aligned with database-schema.md v3.0 |

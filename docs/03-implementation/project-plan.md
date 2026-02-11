@@ -64,15 +64,20 @@
 - [x] Initialize React + Vite + TypeScript project
 - [x] Set up folder structure
 - [x] Configure Tailwind CSS
-- [ ] Set up React Router
+- [x] Set up React Router
 - [ ] Implement authentication UI (login/register)
 - [ ] Create API client (Axios/fetch wrapper)
 - [ ] Set up state management (Zustand or Redux Toolkit)
 - [ ] Create base layout components
+- [ ] Convert landing page mockup to production static HTML
+- [ ] Landing page SEO (meta tags, Open Graph, structured data)
+
+**Architecture Decision:** Landing page is a standalone static HTML file (not React). The React SPA lives under `/app/*`. Nginx routes: `/` → static landing, `/app/*` → React SPA, `/api/*` → FastAPI.
 
 **Deliverables:**
 
-- Running frontend that connects to backend
+- Static landing page (SEO-ready, no JS dependency)
+- Running frontend SPA that connects to backend
 - User can register/login
 - Basic navigation structure
 

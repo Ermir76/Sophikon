@@ -5,19 +5,19 @@
 ---
 
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  V1.0 "Foundation"  │  V1.1 "Resources"  │  V1.2 "Intelligence"  │ V2+ │
-│  ─────────────────  │  ────────────────  │  ──────────────────   │     │
-│  • Core PM          │  • Resources       │  • AI Planner         │  E  │
-│  • Tasks + WBS      │  • Assignments     │  • AI Risk Detection  │  N  │
-│  • Dependencies     │  • Utilization     │  • AI Optimizer       │  T  │
-│  • Gantt Chart      │  • Calendars       │  • AI Reports         │  E  │
-│  • AI Chat          │  • Leveling        │  • Learning from data │  R  │
-│  • AI Estimation    │  • Cost Tracking   │  • Integrations       │  P  │
-│  • Basic Collab     │  • Baselines       │  • Mobile App         │  R  │
-│  • Import/Export    │  • Reports         │  • Offline Mode       │  I  │
-│                     │                    │                       │  S  │
-│  10 weeks           │  +6 weeks          │  +8 weeks             │  E  │
-│  University MVP     │  Community         │  Community            │     │
+│ V1.0 "Foundation" │ V1.1 "Resources" │ V1.2 "Intelligence" │ V2+ │
+│ ───────────────── │ ──────────────── │ ────────────────── │ │
+│ • Core PM │ • Resources │ • AI Planner │ E │
+│ • Tasks + WBS │ • Assignments │ • AI Risk Detection │ N │
+│ • Dependencies │ • Utilization │ • AI Optimizer │ T │
+│ • Gantt Chart │ • Calendars │ • AI Reports │ E │
+│ • AI Chat │ • Leveling │ • Learning from data │ R │
+│ • AI Estimation │ • Cost Tracking │ • Integrations │ P │
+│ • Basic Collab │ • Baselines │ • Mobile App │ R │
+│ • Import/Export │ • Reports │ • Offline Mode │ I │
+│ │ │ │ S │
+│ 10 weeks │ +6 weeks │ +8 weeks │ E │
+│ University MVP │ Community │ Community │ │
 └─────────────────────────────────────────────────────────────────────────┘
 
 ---
@@ -32,9 +32,9 @@
 #### Project Management
 
 | Feature                     | Priority | Status  |
-| --------------------------- | -------- | ------- |
+| --------------------------- | -------- | ------- | -------------------------------------------- |
 | User registration & login   | Must     | Planned |
-| OAuth (Google)              | Must     | Planned | - Check if we can use another OAuth provider
+| OAuth (Google)              | Must     | Planned | - Check if we can use another OAuth provider |
 | Create/Edit/Delete projects | Must     | Planned |
 | Project dashboard           | Must     | Planned |
 | Project settings            | Should   | Planned |
@@ -117,15 +117,25 @@
 | Import MS Project XML    | Should   | Planned |
 | Export PDF (Gantt image) | Could    | Planned |
 
+#### Landing Page & SEO
+
+| Feature                       | Priority | Status  |
+| ----------------------------- | -------- | ------- |
+| Static HTML landing page      | Must     | Done    |
+| Landing page SEO (meta, OG)   | Should   | Planned |
+| Separate from React SPA (`/`) | Must     | Done    |
+| EU data sovereignty messaging | Should   | Done    |
+
 #### Infrastructure
 
 | Feature                     | Priority | Status  |
 | --------------------------- | -------- | ------- |
-| Docker setup                | Must     | Planned |
+| Docker setup                | Must     | Done    |
 | AWS deployment (ECS or EC2) | Must     | Planned |
 | PostgreSQL (RDS)            | Must     | Planned |
 | Redis (ElastiCache)         | Must     | Planned |
-| CI/CD (GitHub Actions)      | Must     | Planned |
+| CI/CD (GitHub Actions)      | Must     | Done    |
+| Pre-commit hooks            | Must     | Done    |
 | HTTPS/SSL                   | Must     | Planned |
 
 ### Tech Stack Showcase (V1.0)
@@ -241,7 +251,7 @@
 
 ---
 
-## V1.2  "Intelligence" (AI-Focused Release)
+## V1.2 "Intelligence" (AI-Focused Release)
 
 **Timeline:** +8 weeks after V1.1
 **Goal:** Advanced AI features, integrations

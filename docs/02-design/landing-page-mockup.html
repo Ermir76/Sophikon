@@ -1,0 +1,1534 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sophikon — Landing Page Mockup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-deep: #050505;
+        --bg-panel: #0d0c0a;
+        --gold: #34d399;
+        --gold-dim: #059669;
+        --gold-glow: #10b981;
+        --text-main: #fafaf9;
+        --text-muted: #a8a29e;
+
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-bg: rgba(28, 25, 23, 0.4);
+        --glass-highlight: rgba(255, 255, 255, 0.05);
+
+        --font-serif: "Instrument Serif", serif;
+        --font-sans: "Inter", sans-serif;
+
+        --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-snap-type: y proximity;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--bg-deep);
+        color: var(--text-main);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* ==================== NAV ==================== */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 1.25rem 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(5, 5, 5, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--glass-border);
+        transition: all 0.4s var(--ease-smooth);
+      }
+
+      .nav-logo {
+        font-family: var(--font-serif);
+        font-size: 1.75rem;
+        color: var(--gold);
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2.5rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        transition: color 0.3s;
+      }
+
+      .nav-links a:hover {
+        color: var(--gold);
+      }
+
+      .nav-cta {
+        padding: 0.6rem 1.75rem;
+        background: transparent;
+        border: 1px solid var(--gold-dim);
+        color: var(--gold);
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s var(--ease-smooth);
+      }
+
+      .nav-cta:hover {
+        background: var(--gold);
+        color: var(--bg-deep);
+        box-shadow: 0 0 30px rgba(234, 179, 8, 0.3);
+      }
+
+      /* ==================== HERO ==================== */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        padding: 8rem 2rem 4rem;
+        scroll-snap-align: start;
+        overflow: hidden;
+      }
+
+      /* Subtle gold ambient glow */
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          ellipse at 50% 60%,
+          rgba(234, 179, 8, 0.04) 0%,
+          transparent 40%
+        );
+        animation: meshMove 20s ease-in-out infinite;
+        z-index: 0;
+      }
+
+      @keyframes meshMove {
+        0%,
+        100% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        33% {
+          transform: translate(2%, -2%) rotate(1deg);
+        }
+        66% {
+          transform: translate(-1%, 1%) rotate(-0.5deg);
+        }
+      }
+
+      /* Grid overlay */
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+        z-index: 0;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-radius: 100px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 2.5rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        animation: fadeInDown 1s var(--ease-smooth) forwards;
+        opacity: 0;
+      }
+
+      .hero-badge .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        box-shadow: 0 0 8px var(--gold-glow);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      .hero h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(3.5rem, 8vw, 7rem);
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        margin-bottom: 2rem;
+        animation: fadeInUp 1s var(--ease-smooth) 0.2s forwards;
+        opacity: 0;
+      }
+
+      .hero h1 .gold {
+        color: var(--gold);
+        font-style: italic;
+      }
+
+      .hero-sub {
+        font-size: 1.2rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto 3rem;
+        line-height: 1.7;
+        font-weight: 300;
+        animation: fadeInUp 1s var(--ease-smooth) 0.4s forwards;
+        opacity: 0;
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 1.25rem;
+        justify-content: center;
+        animation: fadeInUp 1s var(--ease-smooth) 0.6s forwards;
+        opacity: 0;
+      }
+
+      .btn-primary {
+        padding: 1rem 2.5rem;
+        background: var(--gold);
+        color: var(--bg-deep);
+        font-family: var(--font-sans);
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border: none;
+        cursor: pointer;
+        transition: all 0.4s var(--ease-elastic);
+        text-decoration: none;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 40px rgba(234, 179, 8, 0.35);
+      }
+
+      .btn-ghost {
+        padding: 1rem 2.5rem;
+        background: transparent;
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        font-weight: 500;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border: 1px solid var(--glass-border);
+        cursor: pointer;
+        transition: all 0.3s var(--ease-smooth);
+        text-decoration: none;
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--gold-dim);
+        color: var(--gold);
+      }
+
+      /* Mockup */
+      .hero-mockup {
+        position: relative;
+        z-index: 1;
+        margin-top: 5rem;
+        max-width: 1000px;
+        width: 100%;
+        perspective: 1200px;
+        animation: fadeInUp 1.2s var(--ease-smooth) 0.8s forwards;
+        opacity: 0;
+      }
+
+      .mockup-frame {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow:
+          0 25px 80px rgba(0, 0, 0, 0.5),
+          0 0 120px rgba(234, 179, 8, 0.05);
+        transform-style: preserve-3d;
+        animation: mockup3dFloat 8s var(--ease-smooth) infinite;
+        transition: transform 0.15s ease-out;
+        will-change: transform;
+      }
+
+      /* Reflective sheen overlay */
+      .mockup-frame::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        background: linear-gradient(
+          105deg,
+          transparent 40%,
+          rgba(234, 179, 8, 0.04) 45%,
+          rgba(255, 255, 255, 0.06) 50%,
+          rgba(234, 179, 8, 0.04) 55%,
+          transparent 60%
+        );
+        pointer-events: none;
+        z-index: 10;
+        animation: sheen 8s ease-in-out infinite;
+      }
+
+      @keyframes mockup3dFloat {
+        0% {
+          transform: rotateX(2deg) rotateY(-3deg) translateZ(0);
+        }
+        25% {
+          transform: rotateX(-1deg) rotateY(2deg) translateZ(10px);
+        }
+        50% {
+          transform: rotateX(1.5deg) rotateY(3deg) translateZ(0);
+        }
+        75% {
+          transform: rotateX(-2deg) rotateY(-2deg) translateZ(10px);
+        }
+        100% {
+          transform: rotateX(2deg) rotateY(-3deg) translateZ(0);
+        }
+      }
+
+      @keyframes sheen {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Pause animation on hover (mouse takes over) */
+      .hero-mockup:hover .mockup-frame {
+        animation-play-state: paused;
+      }
+
+      .mockup-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .mockup-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .mockup-dot:first-child {
+        background: #ef4444;
+      }
+      .mockup-dot:nth-child(2) {
+        background: #eab308;
+      }
+      .mockup-dot:nth-child(3) {
+        background: #22c55e;
+      }
+
+      .mockup-body {
+        padding: 2rem;
+        min-height: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Fake gantt chart */
+      .gantt-placeholder {
+        width: 100%;
+      }
+
+      .gantt-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        gap: 1rem;
+      }
+
+      .gantt-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        width: 140px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .gantt-track {
+        flex: 1;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gantt-bar {
+        position: absolute;
+        height: 100%;
+        border-radius: 4px;
+        animation: barGrow 1.5s var(--ease-smooth) forwards;
+        transform-origin: left;
+        transform: scaleX(0);
+      }
+
+      .gantt-bar.gold {
+        background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      }
+      .gantt-bar.gold-dim {
+        background: linear-gradient(
+          90deg,
+          rgba(161, 98, 7, 0.6),
+          rgba(234, 179, 8, 0.6)
+        );
+      }
+      .gantt-bar.gold-glow {
+        background: linear-gradient(90deg, var(--gold-glow), var(--gold));
+      }
+      .gantt-bar.muted {
+        background: linear-gradient(
+          90deg,
+          rgba(168, 162, 158, 0.3),
+          rgba(168, 162, 158, 0.5)
+        );
+      }
+
+      @keyframes barGrow {
+        to {
+          transform: scaleX(1);
+        }
+      }
+
+      .gantt-row:nth-child(1) .gantt-bar {
+        animation-delay: 1.2s;
+      }
+      .gantt-row:nth-child(2) .gantt-bar {
+        animation-delay: 1.4s;
+      }
+      .gantt-row:nth-child(3) .gantt-bar {
+        animation-delay: 1.6s;
+      }
+      .gantt-row:nth-child(4) .gantt-bar {
+        animation-delay: 1.8s;
+      }
+      .gantt-row:nth-child(5) .gantt-bar {
+        animation-delay: 2s;
+      }
+      .gantt-row:nth-child(6) .gantt-bar {
+        animation-delay: 2.2s;
+      }
+      .gantt-row:nth-child(7) .gantt-bar {
+        animation-delay: 2.4s;
+      }
+
+      /* Scroll indicator */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        animation: fadeInUp 1s var(--ease-smooth) 1.5s forwards;
+        opacity: 0;
+      }
+
+      .scroll-indicator span {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .scroll-line {
+        width: 1px;
+        height: 40px;
+        background: linear-gradient(to bottom, var(--gold-dim), transparent);
+        animation: scrollPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes scrollPulse {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scaleY(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scaleY(1.2);
+        }
+      }
+
+      /* ==================== PAIN SECTION ==================== */
+      .pain-section {
+        padding: 8rem 2rem;
+        text-align: center;
+        position: relative;
+        scroll-snap-align: start;
+      }
+
+      .section-label {
+        font-size: 0.75rem;
+        color: var(--gold-dim);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+      }
+
+      .section-title {
+        font-family: var(--font-serif);
+        font-size: clamp(2rem, 4vw, 3.5rem);
+        font-weight: 400;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin-bottom: 4rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .stat-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        transition: all 0.5s var(--ease-smooth);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold-dim),
+          transparent
+        );
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+
+      .stat-card:hover {
+        border-color: rgba(234, 179, 8, 0.15);
+        transform: translateY(-4px);
+      }
+
+      .stat-card:hover::before {
+        opacity: 1;
+      }
+
+      .stat-number {
+        font-family: var(--font-serif);
+        font-size: 3.5rem;
+        color: var(--gold);
+        line-height: 1;
+        margin-bottom: 1rem;
+      }
+
+      .stat-label {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      /* ==================== FEATURES ==================== */
+      .features-section {
+        padding: 8rem 2rem;
+        scroll-snap-align: start;
+      }
+
+      .features-header {
+        text-align: center;
+        margin-bottom: 6rem;
+      }
+
+      .feature-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        max-width: 1100px;
+        margin: 0 auto 8rem;
+        align-items: center;
+      }
+
+      .feature-row.reverse {
+        direction: rtl;
+      }
+
+      .feature-row.reverse > * {
+        direction: ltr;
+      }
+
+      .feature-text {
+        padding: 1rem 0;
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--gold-dim);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        color: var(--gold);
+        font-size: 1.25rem;
+      }
+
+      .feature-title {
+        font-family: var(--font-serif);
+        font-size: 2.25rem;
+        font-weight: 400;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .feature-desc {
+        color: var(--text-muted);
+        font-size: 1rem;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+      }
+
+      .feature-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .feature-list li::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gold-dim);
+        flex-shrink: 0;
+      }
+
+      .feature-visual {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .feature-visual::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(234, 179, 8, 0.03),
+          transparent 70%
+        );
+      }
+
+      .visual-placeholder {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        opacity: 0.5;
+        z-index: 1;
+      }
+
+      /* ==================== SOLUTION TABS ==================== */
+      .tabs-section {
+        padding: 8rem 2rem;
+        text-align: center;
+        scroll-snap-align: start;
+      }
+
+      .tabs-container {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .tab-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0;
+        margin-bottom: 3rem;
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .tab-btn {
+        padding: 1rem 2.5rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.3s;
+      }
+
+      .tab-btn::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transition: transform 0.3s var(--ease-smooth);
+      }
+
+      .tab-btn.active {
+        color: var(--gold);
+      }
+
+      .tab-btn.active::after {
+        transform: scaleX(1);
+      }
+
+      .tab-btn:hover {
+        color: var(--text-main);
+      }
+
+      .tab-content {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tab-content::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: 20%;
+        right: 20%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold-dim),
+          transparent
+        );
+      }
+
+      /* ==================== TRUST ==================== */
+      .trust-section {
+        padding: 6rem 2rem;
+        scroll-snap-align: start;
+      }
+
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        max-width: 1000px;
+        margin: 4rem auto 0;
+      }
+
+      .trust-item {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        transition: all 0.3s var(--ease-smooth);
+      }
+
+      .trust-item:hover {
+        border-color: rgba(234, 179, 8, 0.15);
+      }
+
+      .trust-number {
+        font-family: var(--font-serif);
+        font-size: 2.5rem;
+        color: var(--gold);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+      }
+
+      .trust-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      /* ==================== TESTIMONIALS ==================== */
+      .testimonials-section {
+        padding: 8rem 2rem;
+        scroll-snap-align: start;
+      }
+
+      .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        max-width: 1100px;
+        margin: 4rem auto 0;
+      }
+
+      .testimonial-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 2.5rem;
+        transition: all 0.4s var(--ease-smooth);
+        position: relative;
+      }
+
+      .testimonial-card:hover {
+        border-color: rgba(234, 179, 8, 0.12);
+        transform: translateY(-4px);
+      }
+
+      .testimonial-quote {
+        font-family: var(--font-serif);
+        font-size: 3rem;
+        color: var(--gold-dim);
+        line-height: 1;
+        margin-bottom: 1rem;
+      }
+
+      .testimonial-text {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+        font-style: italic;
+      }
+
+      .testimonial-author {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .testimonial-role {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      /* ==================== CTA SECTION ==================== */
+      .cta-section {
+        padding: 10rem 2rem;
+        text-align: center;
+        position: relative;
+        scroll-snap-align: start;
+        overflow: hidden;
+      }
+
+      .cta-section::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 50% 50%,
+          rgba(234, 179, 8, 0.08) 0%,
+          transparent 60%
+        );
+      }
+
+      .cta-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .cta-title {
+        font-family: var(--font-serif);
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+      }
+
+      .cta-sub {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 3rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .cta-form {
+        display: flex;
+        gap: 0.75rem;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      .cta-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+
+      .cta-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .cta-input:focus {
+        border-color: var(--gold-dim);
+      }
+
+      .cta-form .btn-primary {
+        flex-shrink: 0;
+      }
+
+      /* ==================== FOOTER ==================== */
+      footer {
+        padding: 4rem 3rem;
+        border-top: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .footer-brand {
+        font-family: var(--font-serif);
+        font-size: 1.25rem;
+        color: var(--gold-dim);
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .footer-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.3s;
+      }
+
+      .footer-links a:hover {
+        color: var(--gold);
+      }
+
+      .footer-copy {
+        font-size: 0.8rem;
+        color: rgba(168, 162, 158, 0.5);
+      }
+
+      /* ==================== DIVIDER ==================== */
+      .section-divider {
+        width: 60px;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold-dim),
+          transparent
+        );
+        margin: 0 auto 2rem;
+      }
+
+      /* ==================== ANIMATIONS ==================== */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Scroll-triggered animations */
+      .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s var(--ease-smooth);
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .reveal-delay-1 {
+        transition-delay: 0.1s;
+      }
+      .reveal-delay-2 {
+        transition-delay: 0.2s;
+      }
+      .reveal-delay-3 {
+        transition-delay: 0.3s;
+      }
+
+      /* ==================== RESPONSIVE ==================== */
+      @media (max-width: 768px) {
+        nav {
+          padding: 1rem 1.5rem;
+        }
+        .nav-links {
+          display: none;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .feature-row {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+        .feature-row.reverse {
+          direction: ltr;
+        }
+        .trust-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .testimonials-grid {
+          grid-template-columns: 1fr;
+        }
+        .cta-form {
+          flex-direction: column;
+        }
+        footer {
+          flex-direction: column;
+          gap: 2rem;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- NAV -->
+    <nav>
+      <a href="#" class="nav-logo">Sophikon</a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#solutions">Solutions</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+      </ul>
+      <button class="nav-cta">Get Started</button>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          AI-Powered Project Planning
+        </div>
+        <h1>Plan. Build.<br /><span class="gold">Deliver.</span></h1>
+        <p class="hero-sub">
+          Intelligent scheduling, resource optimization, and AI-driven insights
+          for teams that manage real projects.
+        </p>
+        <div class="hero-buttons">
+          <a href="#" class="btn-primary">Start Planning Free</a>
+          <a href="#" class="btn-ghost">Book a Demo</a>
+        </div>
+      </div>
+
+      <div class="hero-mockup">
+        <div class="mockup-frame">
+          <div class="mockup-bar">
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+          </div>
+          <div class="mockup-body">
+            <div class="gantt-placeholder">
+              <div class="gantt-row">
+                <span class="gantt-label">Site Preparation</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold"
+                    style="left: 0%; width: 18%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">Material Procurement</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold-dim"
+                    style="left: 5%; width: 30%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">Foundation Work</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold-glow"
+                    style="left: 18%; width: 22%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">Structural Assembly</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold"
+                    style="left: 32%; width: 35%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">MEP Installation</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar muted"
+                    style="left: 50%; width: 25%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">Quality Inspection</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold-dim"
+                    style="left: 72%; width: 12%"
+                  ></div>
+                </div>
+              </div>
+              <div class="gantt-row">
+                <span class="gantt-label">Handover</span>
+                <div class="gantt-track">
+                  <div
+                    class="gantt-bar gold-glow"
+                    style="left: 82%; width: 10%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scroll-indicator">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- PAIN POINTS -->
+    <section class="pain-section">
+      <div class="section-label reveal">The Problem</div>
+      <h2 class="section-title reveal">
+        Your projects deserve better than spreadsheets and outdated tools
+      </h2>
+      <div class="stats-grid">
+        <div class="stat-card reveal reveal-delay-1">
+          <div class="stat-number">40%</div>
+          <div class="stat-label">
+            of projects miss their original deadlines due to poor scheduling
+          </div>
+        </div>
+        <div class="stat-card reveal reveal-delay-2">
+          <div class="stat-number">28%</div>
+          <div class="stat-label">
+            of project failures are caused by inadequate resource planning
+          </div>
+        </div>
+        <div class="stat-card reveal reveal-delay-3">
+          <div class="stat-number">12h</div>
+          <div class="stat-label">
+            wasted per week on manual scheduling and status updates
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features-section" id="features">
+      <div class="features-header">
+        <div class="section-label reveal">What We Do</div>
+        <h2 class="section-title reveal">
+          Everything you need to<br />deliver on time
+        </h2>
+      </div>
+
+      <div class="feature-row reveal">
+        <div class="feature-text">
+          <div class="feature-icon">&#9776;</div>
+          <h3 class="feature-title">Master Complex Schedules</h3>
+          <p class="feature-desc">
+            Interactive Gantt charts with automatic scheduling, critical path
+            analysis, and constraint handling — built for real-world complexity.
+          </p>
+          <ul class="feature-list">
+            <li>Forward & backward scheduling</li>
+            <li>Critical path with slack analysis</li>
+            <li>Dependencies, milestones & constraints</li>
+            <li>Baseline comparison tracking</li>
+          </ul>
+        </div>
+        <div class="feature-visual">
+          <span class="visual-placeholder">[ Gantt Chart Screenshot ]</span>
+        </div>
+      </div>
+
+      <div class="feature-row reverse reveal">
+        <div class="feature-text">
+          <div class="feature-icon">&#9881;</div>
+          <h3 class="feature-title">Optimize Your Resources</h3>
+          <p class="feature-desc">
+            See who's available, who's overloaded, and rebalance workload in
+            seconds — before problems become delays.
+          </p>
+          <ul class="feature-list">
+            <li>Team & equipment allocation</li>
+            <li>Utilization heatmaps</li>
+            <li>Over-allocation detection & alerts</li>
+            <li>Calendar & availability management</li>
+          </ul>
+        </div>
+        <div class="feature-visual">
+          <span class="visual-placeholder">[ Resource View Screenshot ]</span>
+        </div>
+      </div>
+
+      <div class="feature-row reveal">
+        <div class="feature-text">
+          <div class="feature-icon">&#10024;</div>
+          <h3 class="feature-title">AI-Powered Insights</h3>
+          <p class="feature-desc">
+            Ask questions about your project in plain language. Get task
+            estimates, risk assessments, and optimization suggestions —
+            instantly.
+          </p>
+          <ul class="feature-list">
+            <li>Natural language project queries</li>
+            <li>Intelligent task estimation</li>
+            <li>Risk detection & mitigation</li>
+            <li>Schedule optimization suggestions</li>
+          </ul>
+        </div>
+        <div class="feature-visual">
+          <span class="visual-placeholder">[ AI Assistant Screenshot ]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOLUTION TABS -->
+    <section class="tabs-section" id="solutions">
+      <div class="section-label reveal">See It In Action</div>
+      <h2 class="section-title reveal">One platform, every view you need</h2>
+
+      <div class="tabs-container reveal">
+        <div class="tab-buttons">
+          <button class="tab-btn active">Gantt Chart</button>
+          <button class="tab-btn">Task Board</button>
+          <button class="tab-btn">Resources</button>
+          <button class="tab-btn">AI Assistant</button>
+        </div>
+        <div class="tab-content">
+          <span class="visual-placeholder"
+            >[ Interactive Product Demo Area ]</span
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- TRUST -->
+    <section class="trust-section">
+      <div class="features-header">
+        <div class="section-label reveal">Built for Performance</div>
+        <h2 class="section-title reveal">Handles projects of any scale</h2>
+      </div>
+      <div class="trust-grid">
+        <div class="trust-item reveal reveal-delay-1">
+          <div class="trust-number">1000+</div>
+          <div class="trust-label">Tasks per project</div>
+        </div>
+        <div class="trust-item reveal reveal-delay-2">
+          <div class="trust-number">&lt;1s</div>
+          <div class="trust-label">Schedule recalculation</div>
+        </div>
+        <div class="trust-item reveal reveal-delay-3">
+          <div class="trust-number">XML</div>
+          <div class="trust-label">Import & Export</div>
+        </div>
+        <div class="trust-item reveal">
+          <div class="trust-number">24/7</div>
+          <div class="trust-label">AI Assistant</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA SOVEREIGNTY -->
+    <section class="pain-section">
+      <div class="section-label reveal">Your Data, Your Rules</div>
+      <h2 class="section-title reveal">
+        Built in Europe.<br />Hosted in Europe.
+      </h2>
+      <div class="stats-grid">
+        <div class="stat-card reveal reveal-delay-1">
+          <div class="stat-number">&#127466;&#127482;</div>
+          <div class="stat-label">
+            EU-hosted infrastructure. GDPR-compliant by design, not by patch.
+          </div>
+        </div>
+        <div class="stat-card reveal reveal-delay-2">
+          <div class="stat-number">&#128274;</div>
+          <div class="stat-label">
+            You own your data. Export everything, anytime. No vendor lock-in.
+          </div>
+        </div>
+        <div class="stat-card reveal reveal-delay-3">
+          <div class="stat-number">&#128737;</div>
+          <div class="stat-label">
+            Self-hosting option available. Keep your project data on your own
+            servers.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials-section" id="testimonials">
+      <div class="features-header">
+        <div class="section-label reveal">What Teams Say</div>
+        <h2 class="section-title reveal">Trusted by project professionals</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card reveal reveal-delay-1">
+          <div class="testimonial-quote">&ldquo;</div>
+          <p class="testimonial-text">
+            Finally, a planning tool that understands the complexity of
+            manufacturing schedules. The AI suggestions have saved us countless
+            hours.
+          </p>
+          <div class="testimonial-author">Sarah M.</div>
+          <div class="testimonial-role">Production Manager</div>
+        </div>
+        <div class="testimonial-card reveal reveal-delay-2">
+          <div class="testimonial-quote">&ldquo;</div>
+          <p class="testimonial-text">
+            We migrated our entire portfolio from legacy tools in a day. The
+            scheduling engine is incredibly accurate.
+          </p>
+          <div class="testimonial-author">David K.</div>
+          <div class="testimonial-role">Project Director, Construction</div>
+        </div>
+        <div class="testimonial-card reveal reveal-delay-3">
+          <div class="testimonial-quote">&ldquo;</div>
+          <p class="testimonial-text">
+            The resource management alone justified the switch. We can see
+            over-allocations before they become problems.
+          </p>
+          <div class="testimonial-author">Lisa R.</div>
+          <div class="testimonial-role">Operations Lead</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="cta-section">
+      <div class="cta-content reveal">
+        <div class="section-divider"></div>
+        <h2 class="cta-title">Ready to plan smarter?</h2>
+        <p class="cta-sub">
+          Start free. No credit card required. Import your existing projects in
+          seconds.
+        </p>
+        <div class="cta-form">
+          <input
+            type="email"
+            class="cta-input"
+            placeholder="Enter your work email"
+          />
+          <button class="btn-primary">Start Free</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-brand">Sophikon</div>
+      <ul class="footer-links">
+        <li><a href="#">Product</a></li>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+      <div class="footer-copy">&copy; 2026 Sophikon. All rights reserved.</div>
+    </footer>
+
+    <!-- Scroll reveal script -->
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.1 },
+      );
+
+      document
+        .querySelectorAll(".reveal")
+        .forEach((el) => observer.observe(el));
+
+      // Tab switching
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      // 3D mouse-tracking tilt on hero mockup
+      const mockup = document.querySelector(".hero-mockup");
+      const frame = document.querySelector(".mockup-frame");
+
+      if (mockup && frame) {
+        mockup.addEventListener("mousemove", (e) => {
+          const rect = mockup.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width; // 0 to 1
+          const y = (e.clientY - rect.top) / rect.height; // 0 to 1
+          const rotateY = (x - 0.5) * 20; // -10 to 10 deg
+          const rotateX = (0.5 - y) * 12; // -6 to 6 deg
+
+          frame.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+          frame.style.boxShadow = `
+          ${-rotateY * 2}px ${rotateX * 2}px 60px rgba(0, 0, 0, 0.5),
+          ${-rotateY * 0.5}px ${rotateX * 0.5}px 120px rgba(234, 179, 8, 0.06)
+        `;
+        });
+
+        mockup.addEventListener("mouseleave", () => {
+          frame.style.transform = "";
+          frame.style.boxShadow = "";
+        });
+      }
+    </script>
+  </body>
+</html>
