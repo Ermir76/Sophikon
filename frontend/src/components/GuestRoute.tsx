@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuthStore } from "@/store/auth-store";
 
 // ----------------------------------------------------------------------
 // GUEST ROUTE
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContexts";
 // Used for: Login Page, Register Page (why register if you already have an account?)
 
 export function GuestRoute() {
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

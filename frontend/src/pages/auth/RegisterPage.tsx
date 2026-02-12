@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate, Link } from "react-router";
 import { Loader2 } from "lucide-react";
+import { isAxiosError } from "axios";
 
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuthStore } from "@/store/auth-store";
 import { auth } from "@/services/auth";
 
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const login = useAuthStore((state) => state.login);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,7 +95,9 @@ export default function RegisterPage() {
       // C. Redirect to Home
       navigate("/");
     } catch (err) {
-      if (err instanceof Error) {
+      if (isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err instanceof Error) {
         setError(err.message);
       } else {
         setError("Something went wrong. Please try again.");

@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuthStore } from "@/store/auth-store";
 
 // ----------------------------------------------------------------------
 // PROTECTED ROUTE
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContexts";
 // If you are NOT logged in, it sends you to /login.
 
 export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!isAuthenticated) {
     // "replace" means: Don't let them click "Back" to return here.

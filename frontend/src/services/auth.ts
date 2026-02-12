@@ -1,3 +1,4 @@
+import type { AxiosResponse } from "axios";
 import { api } from "./api";
 import type { AuthUser } from "@/lib/auth";
 
@@ -47,17 +48,24 @@ export const auth = {
   /**
    * LOG IN
    */
-  login: (data: LoginRequest) => api.post<AuthResponse>("/auth/login", data),
+  login: (data: LoginRequest) =>
+    api
+      .post<AuthResponse>("/auth/login", data)
+      .then((res: AxiosResponse<AuthResponse>) => res.data),
 
   /**
    * REGISTER
    */
   register: (data: RegisterRequest) =>
-    api.post<AuthResponse>("/auth/register", data),
+    api
+      .post<AuthResponse>("/auth/register", data)
+      .then((res: AxiosResponse<AuthResponse>) => res.data),
 
   /**
    * REFRESH TOKEN
    */
   refresh: (token: string) =>
-    api.post<AuthResponse>("/auth/refresh", { refresh_token: token }),
+    api
+      .post<AuthResponse>("/auth/refresh", { refresh_token: token })
+      .then((res: AxiosResponse<AuthResponse>) => res.data),
 };
