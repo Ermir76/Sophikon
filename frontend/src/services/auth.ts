@@ -1,0 +1,63 @@
+import { api } from "./api";
+import type { AuthUser } from "@/lib/auth";
+
+// ----------------------------------------------------------------------
+// AUTH SERVICE
+// ----------------------------------------------------------------------
+// This service handles the specific API calls for logging in and registering.
+// It uses our `api.ts` helper to make the requests.
+//
+// API Endpoints:
+// POST /auth/login    -> Send email/password, get back tokens + user
+// POST /auth/register -> Send user details, get back tokens + user
+// POST /auth/refresh  -> Send refresh token, get back new access token
+// ----------------------------------------------------------------------
+
+/**
+ * The data we send to the backend to log in.
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/**
+ * The data we send to the backend to register a new user.
+ */
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  full_name: string;
+}
+
+/**
+ * The data the backend sends back when we log in or register.
+ * Backend: app/schema/auth.py -> AuthResponse
+ */
+export interface AuthResponse {
+  tokens: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+  };
+  user: AuthUser;
+}
+
+export const auth = {
+  /**
+   * LOG IN
+   */
+  login: (data: LoginRequest) => api.post<AuthResponse>("/auth/login", data),
+
+  /**
+   * REGISTER
+   */
+  register: (data: RegisterRequest) =>
+    api.post<AuthResponse>("/auth/register", data),
+
+  /**
+   * REFRESH TOKEN
+   */
+  refresh: (token: string) =>
+    api.post<AuthResponse>("/auth/refresh", { refresh_token: token }),
+};
