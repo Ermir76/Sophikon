@@ -65,9 +65,9 @@
 - [x] Set up folder structure
 - [x] Configure Tailwind CSS
 - [x] Set up React Router
-- [ ] Implement authentication UI (login/register)
-- [ ] Create API client (Axios/fetch wrapper)
-- [ ] Set up state management (Zustand or Redux Toolkit)
+- [x] Implement authentication UI (login/register)
+- [x] Create API client (Axios/fetch wrapper)
+- [x] Set up state management (Zustand or Redux Toolkit)
 - [ ] Create base layout components
 - [ ] Convert landing page mockup to production static HTML
 - [ ] Landing page SEO (meta tags, Open Graph, structured data)
