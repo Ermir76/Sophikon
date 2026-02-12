@@ -33,7 +33,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 // ----------------------------------------------------------------------
 // This defines the "rules" for our form.
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
