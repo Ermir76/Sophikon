@@ -17,6 +17,7 @@ from app.models.enums import ProjectStatus, ScheduleFrom
 class ProjectCreate(BaseModel):
     """Create a new project."""
 
+    organization_id: uuid.UUID
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
     start_date: date
@@ -59,6 +60,7 @@ class ProjectListItem(BaseModel):
     model_config = {"from_attributes": True}
 
     id: uuid.UUID
+    organization_id: uuid.UUID
     name: str
     description: str | None
     status: ProjectStatus
@@ -75,6 +77,7 @@ class ProjectDetail(BaseModel):
 
     id: uuid.UUID
     owner_id: uuid.UUID
+    organization_id: uuid.UUID
     name: str
     description: str | None
     start_date: date

@@ -27,6 +27,7 @@ import uuid
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.organization import Organization
     from app.models.calendar import Calendar
     from app.models.task import Task
     from app.models.resource import Resource
@@ -54,6 +55,13 @@ class Project(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Foreign Key to Organization (multi-tenancy)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organization.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -181,6 +189,7 @@ class Project(Base):
 
     # Relationships
     owner: Mapped["User"] = relationship(back_populates="created_projects")
+    organization: Mapped["Organization"] = relationship(back_populates="projects")
     default_calendar: Mapped["Calendar | None"] = relationship(
         back_populates="default_for_projects",
         foreign_keys=[default_calendar_id],

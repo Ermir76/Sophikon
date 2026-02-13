@@ -1,22 +1,23 @@
 # Sophikon V1.0 - Version Roadmap
 
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-13
 
 ---
 
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ V1.0 "Foundation" │ V1.1 "Resources" │ V1.2 "Intelligence" │ V2+ │
 │ ───────────────── │ ──────────────── │ ────────────────── │ │
-│ • Core PM │ • Resources │ • AI Planner │ E │
-│ • Tasks + WBS │ • Assignments │ • AI Risk Detection │ N │
-│ • Dependencies │ • Utilization │ • AI Optimizer │ T │
-│ • Gantt Chart │ • Calendars │ • AI Reports │ E │
-│ • AI Chat │ • Leveling │ • Learning from data │ R │
-│ • AI Estimation │ • Cost Tracking │ • Integrations │ P │
-│ • Basic Collab │ • Baselines │ • Mobile App │ R │
-│ • Import/Export │ • Reports │ • Offline Mode │ I │
-│ │ │ │ S │
-│ 10 weeks │ +6 weeks │ +8 weeks │ E │
+│ • Multi-Tenancy │ • Resources │ • AI Planner │ E │
+│ • Organizations │ • Assignments │ • AI Risk Detection │ N │
+│ • RBAC (org+proj) │ • Utilization │ • AI Optimizer │ T │
+│ • Core PM │ • Calendars │ • AI Reports │ E │
+│ • Tasks + WBS │ • Leveling │ • Learning from data │ R │
+│ • Dependencies │ • Cost Tracking │ • Integrations │ P │
+│ • Gantt Chart │ • Baselines │ • Mobile App │ R │
+│ • AI Chat │ • Reports │ • Offline Mode │ I │
+│ • AI Estimation │ │ │ S │
+│ • Import/Export │ │ │ E │
+│ 10 weeks │ +6 weeks │ +8 weeks │ │
 │ University MVP │ Community │ Community │ │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -29,15 +30,32 @@
 
 ### Core Features
 
+#### Multi-Tenancy & Organizations
+
+| Feature                                        | Priority | Status  |
+| ---------------------------------------------- | -------- | ------- |
+| Organization CRUD (create, update, list)       | Must     | Planned |
+| Organization membership (invite, remove, list) | Must     | Planned |
+| Projects scoped to organizations               | Must     | Planned |
+| Auto-create personal org on registration       | Must     | Planned |
+| Org switcher (if user belongs to multiple)     | Should   | Planned |
+| Data isolation per organization                | Must     | Planned |
+
+#### Authentication & User Management
+
+| Feature                   | Priority | Status  |
+| ------------------------- | -------- | ------- | -------------------------------------------- |
+| User registration & login | Must     | Done    |
+| OAuth (Google)            | Must     | Planned | - Check if we can use another OAuth provider |
+| JWT with refresh tokens   | Must     | Done    |
+
 #### Project Management
 
-| Feature                     | Priority | Status  |
-| --------------------------- | -------- | ------- | -------------------------------------------- |
-| User registration & login   | Must     | Planned |
-| OAuth (Google)              | Must     | Planned | - Check if we can use another OAuth provider |
-| Create/Edit/Delete projects | Must     | Planned |
-| Project dashboard           | Must     | Planned |
-| Project settings            | Should   | Planned |
+| Feature                                  | Priority | Status  |
+| ---------------------------------------- | -------- | ------- |
+| Create/Edit/Delete projects (within org) | Must     | Planned |
+| Project dashboard                        | Must     | Planned |
+| Project settings                         | Should   | Planned |
 
 #### Task Management
 
@@ -98,14 +116,18 @@
 | AI Task Estimation           | Must     | Planned |
 | AI Smart Suggestions (basic) | Should   | Planned |
 
-#### Collaboration
+#### Collaboration & RBAC
 
-| Feature                            | Priority | Status  |
-| ---------------------------------- | -------- | ------- |
-| Invite users to project            | Must     | Planned |
-| User roles (Owner, Editor, Viewer) | Must     | Planned |
-| Real-time updates (WebSocket)      | Must     | Planned |
-| Activity log                       | Should   | Planned |
+| Feature                                             | Priority | Status  |
+| --------------------------------------------------- | -------- | ------- |
+| Organization roles (admin, member)                  | Must     | Planned |
+| Project roles (owner, manager, member, viewer)      | Must     | Planned |
+| RBAC enforcement on all endpoints                   | Must     | Planned |
+| RBAC-filtered sidebar (viewers don't see Resources) | Should   | Planned |
+| Invite users to organization                        | Must     | Planned |
+| Invite users to project (within org)                | Must     | Planned |
+| Real-time updates (WebSocket)                       | Must     | Planned |
+| Activity log                                        | Should   | Planned |
 
 #### Import/Export
 
@@ -307,7 +329,7 @@
 
 ### Features
 
-- Multi-tenant architecture
+- ~~Multi-tenant architecture~~ _(moved to V1.0)_
 - SSO/SAML authentication
 - LDAP/Active Directory integration
 - Advanced audit logging

@@ -34,25 +34,37 @@ async def list_projects(
     per_page: int = 20,
     status: str | None = None,
     search: str | None = None,
+    organization_id: UUID | None = None,
 ) -> tuple[list[Project], int]:
     """
     List projects the user owns or is a member of.
 
+    When organization_id is provided, returns only projects within that
+    organization (and verifies the user is an org member).
+    Otherwise, returns all projects the user can see across orgs.
+
     Returns (projects, total_count).
     """
-    # Base query: projects user owns OR is a member of
-    base_query = (
-        select(Project)
-        .outerjoin(ProjectMember, ProjectMember.project_id == Project.id)
-        .where(
+    if organization_id:
+        # Scoped to a specific organization
+        base_query = select(Project).where(
             Project.is_deleted.is_(False),
-            or_(
-                Project.owner_id == user.id,
-                ProjectMember.user_id == user.id,
-            ),
+            Project.organization_id == organization_id,
         )
-        .distinct()
-    )
+    else:
+        # All projects the user owns OR is a member of
+        base_query = (
+            select(Project)
+            .outerjoin(ProjectMember, ProjectMember.project_id == Project.id)
+            .where(
+                Project.is_deleted.is_(False),
+                or_(
+                    Project.owner_id == user.id,
+                    ProjectMember.user_id == user.id,
+                ),
+            )
+            .distinct()
+        )
 
     # Apply filters
     if status:
@@ -89,6 +101,7 @@ async def create_project(
     """Create a new project owned by the user."""
     project = Project(
         owner_id=user.id,
+        organization_id=data.organization_id,
         name=data.name,
         description=data.description,
         start_date=data.start_date,

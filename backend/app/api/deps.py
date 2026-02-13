@@ -15,6 +15,8 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.assignment import Assignment
+from app.models.organization import Organization
+from app.models.organization_member import OrganizationMember
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.task import Task
@@ -56,6 +58,54 @@ async def get_current_active_user(
             detail="Inactive user",
         )
     return user
+
+
+# ── Organization Access Dependencies ──
+
+
+async def get_org_membership_or_404(
+    db: AsyncSession,
+    org_id: str,
+    user: User,
+) -> tuple:
+    """
+    Load an organization and verify the user is a member.
+
+    Returns (organization, membership).
+
+    Raises 404 if organization not found or deleted.
+    Raises 403 if user is not a member.
+    """
+
+    result = await db.execute(
+        select(Organization).where(
+            Organization.id == org_id,
+            Organization.is_deleted.is_(False),
+        )
+    )
+    org = result.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found",
+        )
+
+    member_result = await db.execute(
+        select(OrganizationMember).where(
+            OrganizationMember.organization_id == org.id,
+            OrganizationMember.user_id == user.id,
+        )
+    )
+    membership = member_result.scalar_one_or_none()
+
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this organization",
+        )
+
+    return org, membership
 
 
 # ── Project Access Dependencies ──

@@ -1,8 +1,8 @@
 # Sophikon V1 - API Specification
 
-**Version:** 1.0
-**Date:** 2026-02-06
-**Status:** Aligned with Database Schema v1.0
+**Version:** 1.1
+**Date:** 2026-02-13
+**Status:** Added organization & org member endpoints for multi-tenancy
 **Base URL:** `https://api.sophikon.app/api/v1`
 
 ---
@@ -101,6 +101,21 @@ flowchart TB
         P6[GET /:id/dashboard]
     end
 
+    subgraph Orgs["/organizations"]
+        O1[GET /]
+        O2[POST /]
+        O3[GET /:id]
+        O4[PATCH /:id]
+        O5[DELETE /:id]
+    end
+
+    subgraph OrgMembers["/organizations/:id/members"]
+        OM1[GET /]
+        OM2[POST /]
+        OM3[PATCH /:memberId]
+        OM4[DELETE /:memberId]
+    end
+
     subgraph Tasks["/projects/:id/tasks"]
         T1[GET /]
         T2[POST /]
@@ -177,6 +192,8 @@ flowchart TB
 | ------------- | ----- | ----------------------------- |
 | Auth          | 8     | /auth/\*                      |
 | Users         | 5     | /users/\*                     |
+| Organizations | 5     | /organizations/\*             |
+| Org Members   | 4     | /organizations/:id/members/\* |
 | Projects      | 8     | /projects/\*                  |
 | Tasks         | 12    | /projects/:id/tasks/\*        |
 | Dependencies  | 4     | /projects/:id/dependencies/\* |
@@ -456,7 +473,209 @@ Revoke session.
 
 ---
 
-## 3. Project Endpoints
+## 3. Organization Endpoints
+
+### GET /organizations
+
+List organizations the user is a member of.
+
+**Query Parameters:**
+
+| Param    | Type | Default | Description              |
+| -------- | ---- | ------- | ------------------------ |
+| page     | int  | 1       | Page number              |
+| per_page | int  | 20      | Items per page (max 100) |
+
+**Response:** `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Acme Corp",
+      "slug": "acme-corp",
+      "is_personal": false,
+      "created_at": "2026-02-06T10:00:00Z",
+      "updated_at": "2026-02-06T14:30:00Z"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 1
+}
+```
+
+---
+
+### POST /organizations
+
+Create a new organization.
+
+**Request:**
+
+```json
+{
+  "name": "Acme Corp",
+  "slug": "acme-corp"
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "id": "uuid",
+  "name": "Acme Corp",
+  "slug": "acme-corp",
+  "is_personal": false,
+  "settings": {},
+  "created_at": "2026-02-06T10:00:00Z",
+  "updated_at": "2026-02-06T10:00:00Z"
+}
+```
+
+**Errors:** `409` - Slug already exists
+
+---
+
+### GET /organizations/:id
+
+Get organization details.
+
+**Response:** `200 OK`
+
+**Permissions:** Any org member
+
+---
+
+### PATCH /organizations/:id
+
+Update organization.
+
+**Request:**
+
+```json
+{
+  "name": "Acme Corporation",
+  "slug": "acme-corporation",
+  "settings": {}
+}
+```
+
+**Response:** `200 OK`
+
+**Permissions:** owner only
+
+---
+
+### DELETE /organizations/:id
+
+Soft delete organization.
+
+**Response:** `204 No Content`
+
+**Permissions:** owner only
+
+**Errors:** `400` - Cannot delete personal organization
+
+---
+
+## 4. Organization Member Endpoints
+
+### GET /organizations/:id/members
+
+List organization members.
+
+**Query Parameters:**
+
+| Param    | Type | Default | Description              |
+| -------- | ---- | ------- | ------------------------ |
+| page     | int  | 1       | Page number              |
+| per_page | int  | 20      | Items per page (max 100) |
+
+**Response:** `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "organization_id": "uuid",
+      "user_id": "uuid",
+      "role": "owner",
+      "joined_at": "2026-02-06T10:00:00Z",
+      "updated_at": "2026-02-06T10:00:00Z",
+      "user_email": "john@example.com",
+      "user_full_name": "John Doe"
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 1
+}
+```
+
+**Permissions:** Any org member
+
+---
+
+### POST /organizations/:id/members
+
+Invite a user to the organization by email.
+
+**Request:**
+
+```json
+{
+  "email": "jane@example.com",
+  "role": "member"
+}
+```
+
+**Response:** `201 Created`
+
+**Permissions:** owner or admin
+
+**Errors:** `404` - User not found, `409` - Already a member
+
+---
+
+### PATCH /organizations/:id/members/:memberId
+
+Change a member's role.
+
+**Request:**
+
+```json
+{
+  "role": "admin"
+}
+```
+
+**Response:** `200 OK`
+
+**Permissions:** owner only
+
+**Errors:** `400` - Cannot demote last owner
+
+---
+
+### DELETE /organizations/:id/members/:memberId
+
+Remove a member from the organization.
+
+**Response:** `204 No Content`
+
+**Permissions:** owner or admin
+
+**Errors:** `400` - Cannot remove last owner
+
+---
+
+## 5. Project Endpoints
 
 ### GET /projects
 
@@ -677,7 +896,7 @@ Duplicate project.
 
 ---
 
-## 4. Task Endpoints
+## 6. Task Endpoints
 
 ### GET /projects/:id/tasks
 
@@ -932,7 +1151,7 @@ Outdent task.
 
 ---
 
-## 5. Dependency Endpoints
+## 7. Dependency Endpoints
 
 ### GET /projects/:id/dependencies
 
@@ -1011,7 +1230,7 @@ Delete dependency.
 
 ---
 
-## 6. Schedule Endpoints
+## 8. Schedule Endpoints
 
 ### POST /projects/:id/schedule/calculate
 
@@ -1060,7 +1279,7 @@ Get critical path.
 
 ---
 
-## 7. Calendar Endpoints
+## 9. Calendar Endpoints
 
 ### GET /projects/:id/calendars
 
@@ -1098,7 +1317,6 @@ Create calendar.
   "base_calendar_id": "uuid",
   "work_week": [
     null,
-    { "start": "22:00", "end": "06:00", "breaks": [] },
     { "start": "22:00", "end": "06:00", "breaks": [] },
     { "start": "22:00", "end": "06:00", "breaks": [] },
     { "start": "22:00", "end": "06:00", "breaks": [] },
@@ -1198,7 +1416,7 @@ Delete exception.
 
 ---
 
-## 8. Resource Endpoints
+## 10. Resource Endpoints
 
 ### GET /projects/:id/resources
 
@@ -1404,7 +1622,7 @@ Add availability period.
 
 ---
 
-## 9. Assignment Endpoints
+## 11. Assignment Endpoints
 
 ### GET /tasks/:taskId/assignments
 
@@ -1494,7 +1712,7 @@ List resource assignments.
 
 ---
 
-## 10. Baseline Endpoints
+## 12. Baseline Endpoints
 
 ### GET /projects/:id/baselines
 
@@ -1619,7 +1837,7 @@ Clear baseline.
 
 ---
 
-## 11. Time Entry Endpoints
+## 13. Time Entry Endpoints
 
 ### POST /time-entries
 
@@ -1770,7 +1988,7 @@ Or reject:
 
 ---
 
-## 12. Comment Endpoints
+## 14. Comment Endpoints
 
 ### GET /comments/entity/:entityType/:entityId
 
@@ -1852,7 +2070,7 @@ Delete comment.
 
 ---
 
-## 13. Attachment Endpoints
+## 15. Attachment Endpoints
 
 ### GET /attachments/entity/:entityType/:entityId
 
@@ -1915,7 +2133,7 @@ Delete attachment.
 
 ---
 
-## 14. Notification Endpoints
+## 16. Notification Endpoints
 
 ### GET /notifications
 
@@ -1993,7 +2211,7 @@ Get notification settings.
 
 ---
 
-## 15. Activity Log Endpoints
+## 17. Activity Log Endpoints
 
 ### GET /projects/:id/activity
 
@@ -2036,7 +2254,7 @@ Get activity log.
 
 ---
 
-## 16. AI Endpoints
+## 18. AI Endpoints
 
 ### POST /projects/:id/ai/chat
 
@@ -2132,7 +2350,7 @@ Get AI suggestions.
 
 ---
 
-## 17. Export/Import Endpoints
+## 19. Export/Import Endpoints
 
 ### GET /projects/:id/export/csv
 
@@ -2193,7 +2411,7 @@ Export Gantt as PNG.
 
 ---
 
-## 18. WebSocket API
+## 20. WebSocket API
 
 ### Connect
 
@@ -2249,7 +2467,7 @@ wss://api.projectlibre.app/ws/projects/:id?token=<access_token>
 
 ---
 
-## 19. Health & Meta
+## 21. Health & Meta
 
 ### GET /health
 
@@ -2308,8 +2526,9 @@ OpenAPI 3.0 specification.
 
 ## Document History
 
-| Version | Date       | Author    | Changes                                                                                                   |
-| ------- | ---------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2026-02-05 | Ermir | Initial draft                                                                                             |
-| 2.0     | 2026-02-05 | Ermir | Added WebSocket                                                                                           |
-| 3.0     | 2026-02-06 | Ermir | Added resources, calendars, baselines, time entries, comments, attachments, notifications (75+ endpoints) |
+| Version | Date       | Author | Changes                                                                                                   |
+| ------- | ---------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-02-05 | Ermir  | Initial draft                                                                                             |
+| 2.0     | 2026-02-05 | Ermir  | Added WebSocket                                                                                           |
+| 3.0     | 2026-02-06 | Ermir  | Added resources, calendars, baselines, time entries, comments, attachments, notifications (75+ endpoints) |
+| 4.0     | 2026-02-13 | AI     | Added organization & organization member endpoints for multi-tenancy                                      |

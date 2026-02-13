@@ -6,6 +6,8 @@ from app.models.user import User
 from app.models.role import Role
 from app.models.refresh_token import RefreshToken
 from app.models.password_reset import PasswordReset
+from app.models.organization import Organization
+from app.models.organization_member import OrganizationMember
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.project_invitation import ProjectInvitation
@@ -33,6 +35,8 @@ __all__ = [
     "Role",
     "RefreshToken",
     "PasswordReset",
+    "Organization",
+    "OrganizationMember",
     "Project",
     "ProjectMember",
     "ProjectInvitation",

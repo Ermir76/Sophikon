@@ -139,6 +139,14 @@ class RoleScope(str, Enum):
     PROJECT = "project"  # Project-specific roles (owner, manager, member, viewer)
 
 
+class OrgRole(str, Enum):
+    """Organization membership roles."""
+
+    OWNER = "owner"  # Full control, billing, can delete org
+    ADMIN = "admin"  # Manage members, create projects
+    MEMBER = "member"  # Access projects they're assigned to
+
+
 # ============================================================================
 # TIME TRACKING
 # ============================================================================

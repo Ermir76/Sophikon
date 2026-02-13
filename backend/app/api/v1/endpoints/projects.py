@@ -37,12 +37,19 @@ async def list_projects(
     per_page: int = Query(default=20, ge=1, le=100),
     status: str | None = Query(default=None),
     search: str | None = Query(default=None),
+    organization_id: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
     """List all projects the user owns or is a member of."""
     projects, total = await project_service.list_projects(
-        db, user, page=page, per_page=per_page, status=status, search=search
+        db,
+        user,
+        page=page,
+        per_page=per_page,
+        status=status,
+        search=search,
+        organization_id=organization_id,
     )
     return PaginatedResponse(
         items=[ProjectListItem.model_validate(p) for p in projects],

@@ -1,7 +1,7 @@
 # Sophikon V1.0 - Implementation Plan
 
-**Version:** 1.0
-**Date:** 2026-02-05
+**Version:** 2.0
+**Date:** 2026-02-13
 
 ---
 
@@ -83,31 +83,67 @@
 
 ---
 
+### Week 2.5: Multi-Tenancy & Navigation Architecture
+
+**Why now:** Teacher's approval requires multi-tenancy ("users can be part of a company or group") and a permission system. Building this before Task CRUD ensures every feature is multi-tenant from the start, avoiding costly refactoring later.
+
+**Backend:**
+
+- [x] Organization model (`organization` table: id, name, slug, settings, created_at)
+- [x] OrganizationMember model (`organization_member` table: id, org_id, user_id, role, joined_at)
+- [x] Alembic migration: add `organization_id` FK to `project` table
+- [ ] Alembic migration: auto-create personal org for existing users
+- [x] Organization CRUD endpoints (create, update, list)
+- [x] Organization member endpoints (invite, remove, list, change role)
+- [x] Update `deps.py`: add `get_org_or_404()` dependency with org membership check
+- [x] Update `project_service.py`: scope project queries by `organization_id`
+- [ ] Update `auth_service.py`: auto-create personal org on user registration
+
+**Frontend:**
+
+- [ ] Restructure routing: global layout (`/dashboard`, `/projects`) vs project layout (`/projects/:id/tasks`)
+- [ ] Org-aware sidebar: global mode (Dashboard, Projects) vs project mode (Tasks, Gantt, Resources)
+- [ ] Org switcher component (if user belongs to multiple orgs)
+- [ ] "Back to Projects" navigation when inside a project
+- [ ] RBAC-filtered sidebar items (e.g., viewers don't see Resources)
+
+**Deliverables:**
+
+- Users belong to organizations
+- Projects are scoped to organizations (data isolation)
+- Sidebar switches between global and project navigation
+- RBAC enforced at org and project level
+
+---
+
 ## Phase 2: Core Features (Weeks 3-5)
 
 ### Week 3: Task Management
 
 **Backend:**
 
-- [ ] Task CRUD with hierarchy support
-- [ ] WBS code generation
-- [ ] Task reordering API
+- [ ] Task CRUD with hierarchy support (indent/outdent, summary roll-up)
+- [ ] WBS code auto-generation and regeneration
+- [ ] Task reordering API (drag-drop support)
 - [ ] Dependency CRUD with validation (circular detection)
 - [ ] Bulk operations (create, update, delete)
+- [ ] Soft-delete cascades to children
 
 **Frontend:**
 
-- [ ] Project list/dashboard page
-- [ ] Task table view (spreadsheet-like)
+- [ ] Projects list page (`/projects` — cards with status, progress)
+- [ ] Create project dialog
+- [ ] Task table view (spreadsheet-like, inside `/projects/:id/tasks`)
 - [ ] Task detail panel/modal
 - [ ] Inline editing in table
 - [ ] Drag-drop for reordering
+- [ ] Indent/outdent buttons
 - [ ] Dependency creation UI
 
 **Deliverables:**
 
-- Full task CRUD working
-- Hierarchical task display
+- Full task CRUD working within org-scoped projects
+- Hierarchical task display with WBS codes
 - Dependencies can be created
 
 ---
@@ -244,22 +280,22 @@
 
 **Backend:**
 
-- [ ] Project sharing/permissions
-- [ ] WebSocket setup for real-time
-- [ ] Activity log
+- [ ] WebSocket setup for real-time updates
+- [ ] Activity log implementation
+- [ ] Notification delivery (in-app + email)
 
 **Frontend:**
 
-- [ ] Invite team members UI
+- [ ] Project member management UI (invite, change role, remove — uses org membership)
 - [ ] Real-time updates (WebSocket)
-- [ ] Notification system (basic)
+- [ ] Notification center
 - [ ] UI polish and consistency
 - [ ] Loading states and error handling
 - [ ] Keyboard shortcuts
 
 **Deliverables:**
 
-- Multi-user collaboration working
+- Multi-user collaboration working (built on org/project RBAC from Week 2.5)
 - Real-time sync
 - Polished UI
 
@@ -385,7 +421,10 @@ Node.js 20+
 ## Success Criteria for MVP
 
 - [ ] User can create account and login
-- [ ] User can create project with tasks
+- [ ] Users belong to organizations (multi-tenancy)
+- [ ] Organization members can access org's projects (data isolation)
+- [ ] RBAC enforced at org and project level
+- [ ] User can create project with tasks (within an org)
 - [ ] Tasks support hierarchy (WBS)
 - [ ] Dependencies work correctly
 - [ ] Gantt chart displays and is interactive
@@ -400,6 +439,7 @@ Node.js 20+
 
 ## Document History
 
-| Version | Date       | Author | Changes       |
-| ------- | ---------- | ------ | ------------- |
-| 1.0     | 2026-02-05 | Ermir  | Initial draft |
+| Version | Date       | Author | Changes                                                      |
+| ------- | ---------- | ------ | ------------------------------------------------------------ |
+| 1.0     | 2026-02-05 | Ermir  | Initial draft                                                |
+| 2.0     | 2026-02-13 | Ermir  | Added multi-tenancy (Week 2.5), restructured navigation/RBAC |

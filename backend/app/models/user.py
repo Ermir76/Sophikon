@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.role import Role
     from app.models.refresh_token import RefreshToken
     from app.models.password_reset import PasswordReset
+    from app.models.organization_member import OrganizationMember
     from app.models.project import Project
     from app.models.project_member import ProjectMember
     from app.models.project_invitation import ProjectInvitation
@@ -156,6 +157,9 @@ class User(Base):
     )
     created_projects: Mapped[list["Project"]] = relationship(back_populates="owner")
     project_memberships: Mapped[list["ProjectMember"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    organization_memberships: Mapped[list["OrganizationMember"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
     sent_invitations: Mapped[list["ProjectInvitation"]] = relationship(
