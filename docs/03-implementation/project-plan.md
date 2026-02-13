@@ -68,7 +68,7 @@
 - [x] Implement authentication UI (login/register)
 - [x] Create API client (Axios/fetch wrapper)
 - [x] Set up state management (Zustand or Redux Toolkit)
-- [ ] Create base layout components
+- [x] Create base layout components
 - [ ] Convert landing page mockup to production static HTML
 - [ ] Landing page SEO (meta tags, Open Graph, structured data)
 

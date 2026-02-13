@@ -182,7 +182,8 @@ class Project(Base):
     # Relationships
     owner: Mapped["User"] = relationship(back_populates="created_projects")
     default_calendar: Mapped["Calendar | None"] = relationship(
-        back_populates="default_for_projects"
+        back_populates="default_for_projects",
+        foreign_keys=[default_calendar_id],
     )
     calendars: Mapped[list["Calendar"]] = relationship(
         back_populates="project", foreign_keys="Calendar.project_id"
