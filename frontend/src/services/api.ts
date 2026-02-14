@@ -9,25 +9,47 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
-// Request Interceptor: Attach Token
+// Request Interceptor: No longer needed for tokens (handled by cookies)
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      // ProtectedRoute will handle the redirect via React Router
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+
+    // Check if 401 and we haven't retried yet
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !("_retry" in originalRequest)
+    ) {
+      // Mark as retried to avoid infinite loops
+      // @ts-expect-error - _retry is a custom property
+      originalRequest._retry = true;
+
+      try {
+        // Attempt to refresh the token (cookie-based)
+        await axios.post(
+          `${API_BASE}/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+
+        // Retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed (or no refresh token), force logout
+        useAuthStore.getState().logout();
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   },
 );

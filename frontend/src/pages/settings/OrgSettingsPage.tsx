@@ -79,10 +79,6 @@ export default function OrgSettingsPage() {
     }
   };
 
-  if (!activeOrgId) {
-    return <div className="p-4">Please select an organization.</div>;
-  }
-
   if (isLoading) {
     return <div className="p-4">Loading organization details...</div>;
   }

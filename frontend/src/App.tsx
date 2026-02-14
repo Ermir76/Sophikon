@@ -5,11 +5,13 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ProjectLayout } from "./components/layout/ProjectLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { GuestRoute } from "./components/GuestRoute";
+import { OrgGuard } from "./components/OrgGuard";
 import { PageLoader } from "./components/PageLoader";
 
 // Lazy imports
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
+const AuthLayout = lazy(() => import("./components/layout/AuthLayout"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const TasksPage = lazy(() => import("./pages/TasksPage"));
 const GanttPage = lazy(() => import("./pages/GanttPage"));
@@ -22,7 +24,16 @@ const OrgMembersPage = lazy(() => import("./pages/settings/OrgMembersPage"));
 const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
+import { useAuthStore } from "./store/auth-store";
+import { useEffect } from "react";
+
 function App() {
+  const checkSession = useAuthStore((state) => state.checkSession);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
@@ -32,8 +43,11 @@ function App() {
           If you are logged in, these redirect to "/"
         */}
         <Route element={<GuestRoute />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* Public Routes */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
         </Route>
 
         {/*
@@ -51,11 +65,16 @@ function App() {
               element={<div className="p-4">Create Organization (TODO)</div>}
             />
 
-            <Route
-              path="/organizations/settings"
-              element={<OrgSettingsPage />}
-            />
-            <Route path="/organizations/members" element={<OrgMembersPage />} />
+            <Route element={<OrgGuard />}>
+              <Route
+                path="/organizations/settings"
+                element={<OrgSettingsPage />}
+              />
+              <Route
+                path="/organizations/members"
+                element={<OrgMembersPage />}
+              />
+            </Route>
 
             {/* Project Scope */}
             <Route path="/projects/:projectId" element={<ProjectLayout />}>

@@ -139,6 +139,7 @@ async def login_user(
     user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(user)
+    # Return tokens separately so controller can set cookies
     return user, access_token, raw_refresh
 
 

@@ -24,7 +24,7 @@
 
 ## 1. P0 — Critical Bugs
 
-### 1.1 Fix broken 401 redirect URL
+### 1.1 Fix broken 401 redirect URL — **DONE**
 
 **File:** `src/services/api.ts:29`
 **Problem:** The response interceptor redirects to `/app/login` on 401 errors, but the actual route is `/login`. Every expired-token scenario sends users to a blank 404 page.
@@ -41,7 +41,7 @@ window.location.href = "/login";
 
 **But see 1.2 — the URL fix alone is not enough.**
 
-### 1.2 Replace hard page reload with router-based redirect
+### 1.2 Replace hard page reload with router-based redirect — **DONE**
 
 **File:** `src/services/api.ts:27-31`
 **Problem:** Even with the correct URL, `window.location.href` causes a full browser reload, destroying all in-memory React state, unsaved form data, Zustand stores, and React context. This is a jarring UX.
@@ -69,7 +69,7 @@ api.interceptors.response.use(
 
 **Optionally:** Show a "Session expired" toast before redirecting, so the user understands why they were sent back to login.
 
-### 1.3 Add 404 catch-all route
+### 1.3 Add 404 catch-all route — **DONE**
 
 **File:** `src/App.tsx`
 **Problem:** No `<Route path="*">` exists. Navigating to any undefined URL renders a blank page inside the layout shell.
@@ -90,7 +90,7 @@ api.interceptors.response.use(
 
 ## 2. P1 — Security
 
-### 2.1 Move token storage from localStorage to httpOnly cookies
+### 2.1 Move token storage from localStorage to httpOnly cookies — **DONE**
 
 **Files:** `src/lib/auth.ts`, `src/services/api.ts`, `src/store/auth-store.ts`, backend auth endpoints
 **Problem:** JWT tokens in `localStorage` are readable by any JavaScript, including XSS payloads from third-party dependencies.
@@ -110,7 +110,7 @@ api.interceptors.response.use(
 - On page reload, call `/auth/refresh` to get a new `access_token` into memory.
 - Implement strict CSP headers on the backend.
 
-### 2.2 Implement token refresh flow (or remove dead code)
+### 2.2 Implement token refresh flow (or remove dead code) — **DONE**
 
 **Files:** `src/services/auth.ts:67-70`, `src/services/api.ts`, `src/lib/auth.ts`
 **Problem:** `auth.refresh()` is defined but never called. The refresh token is stored in localStorage but never used. Users get silently logged out when the access token expires. The unused refresh token expands the attack surface for free.
@@ -154,7 +154,7 @@ api.interceptors.response.use(
 **Option B — Remove dead code:**
 If refresh is not needed yet, delete `auth.refresh()` from `services/auth.ts`, delete `getRefreshToken()` from `lib/auth.ts`, and stop storing the refresh token in localStorage.
 
-### 2.3 Validate localStorage data with Zod instead of `as` casts
+### 2.3 Validate localStorage data with Zod instead of `as` casts — **DONE**
 
 **File:** `src/lib/auth.ts:84`
 **Problem:** `JSON.parse(raw) as AuthUser` trusts that whatever is in localStorage conforms to `AuthUser`. Corrupted or maliciously modified localStorage could inject unexpected properties or shapes.
@@ -182,7 +182,7 @@ export function getUser(): AuthUser | null {
 }
 ```
 
-### 2.4 Replace `Record<string, any>` with proper types
+### 2.4 Replace `Record<string, any>` with proper types — **DONE** — **DONE**
 
 **File:** `src/types/organization.ts:8`
 **Problem:** `settings?: Record<string, any>` bypasses TypeScript's type safety entirely.
@@ -209,7 +209,7 @@ This is already done correctly in `types/project.ts:19` — make it consistent.
 
 ## 3. P1 — Missing Infrastructure
 
-### 3.1 Add a top-level ErrorBoundary
+### 3.1 Add a top-level ErrorBoundary — **DONE**
 
 **Problem:** Any uncaught JavaScript error in any component crashes the entire app with a white screen and no recovery path.
 
@@ -269,7 +269,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 **Optional:** Add per-route error boundaries inside `AppLayout` for more granular recovery.
 
-### 3.2 Add loading state for initial auth hydration
+### 3.2 Add loading state for initial auth hydration — **DONE**
 
 **File:** `src/components/ProtectedRoute.tsx`
 **Problem:** `ProtectedRoute` checks `isAuthenticated` synchronously. If token validation ever becomes async (e.g., checking expiry, calling `/auth/me`), there's no loading state — users see a flash of the login page before being redirected back.
@@ -280,7 +280,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ## 4. P2 — Data Fetching Overhaul (TanStack Query)
 
-### 4.1 Install and configure TanStack Query
+### 4.1 Install and configure TanStack Query — **DONE**
 
 **Problem:** Every page manually manages `useState` + `useCallback` + `useEffect` + try/catch + loading/error state. This creates boilerplate, no caching, no deduplication, no background refetching, race conditions on rapid navigation, and stale data on org switch.
 
@@ -317,7 +317,7 @@ export class ErrorBoundary extends Component<Props, State> {
    </QueryClientProvider>;
    ```
 
-### 4.2 Create query hooks for each domain
+### 4.2 Create query hooks for each domain — **DONE**
 
 **New file:** `src/hooks/use-projects.ts`
 
@@ -374,7 +374,7 @@ export function useMyOrgRole(orgId: string | null) {
 }
 ```
 
-### 4.3 Simplify pages by removing manual fetch boilerplate
+### 4.3 Simplify pages by removing manual fetch boilerplate — **DONE**
 
 **Example — `ProjectsPage.tsx` before and after:**
 
@@ -396,7 +396,7 @@ Apply this transformation to:
 - `OrgMembersPage.tsx` — replace manual fetch with `useOrgMembers()`
 - `OrgSettingsPage.tsx` — no data fetch to replace, but mutations should use `useMutation`
 
-### 4.4 Reduce Zustand to client-only state
+### 4.4 Reduce Zustand to client-only state — **DONE**
 
 After TanStack Query handles all server state, the org store should only manage:
 
@@ -412,7 +412,7 @@ Remove from org store:
 - `fetchOrgs()` (replaced by Query)
 - The `useAuthStore.subscribe` side effect at the bottom
 
-### 4.5 Add a backend `/organizations/{id}/me` endpoint
+### 4.5 Add a backend `/organizations/{id}/me` endpoint — **DONE**
 
 **Problem:** `org-store.ts` fetches the entire member list (`listMembers`) just to find the current user's role. This is an O(n) client-side scan that happens on every org switch and every app load.
 
@@ -430,7 +430,7 @@ export function useMyOrgRole(orgId: string | null) {
 }
 ```
 
-### 4.6 Fix org switch not refreshing page data
+### 4.6 Fix org switch not refreshing page data — **DONE**
 
 **Problem:** Switching organization via `OrgSwitcher` updates the org store, but page-level data (projects, members) stays stale until the user navigates away and back.
 
@@ -447,7 +447,7 @@ export function useMyOrgRole(orgId: string | null) {
 
 ## 5. P2 — Performance
 
-### 5.1 Add route-level code splitting with React.lazy
+### 5.1 Add route-level code splitting with React.lazy — **DONE**
 
 **File:** `src/App.tsx`
 **Problem:** All 11 page components are eagerly imported, shipping the entire application in a single bundle.
@@ -483,7 +483,7 @@ Wrap `<Outlet />` in `AppLayout` with a `<Suspense>` boundary:
 
 **New component:** `src/components/PageLoader.tsx` — centered spinner for route transitions.
 
-### 5.2 Fix Zustand selector misuse (prevent unnecessary re-renders)
+### 5.2 Fix Zustand selector misuse (prevent unnecessary re-renders) — **DONE**
 
 **Problem:** Several components destructure from the store without a selector, subscribing to the entire state object.
 
@@ -501,7 +501,7 @@ Wrap `<Outlet />` in `AppLayout` with a `<Suspense>` boundary:
 
 ## 6. P2 — Component Architecture
 
-### 6.1 Decompose OrgMembersPage (God Component)
+### 6.1 Decompose OrgMembersPage (God Component) — **DONE**
 
 **File:** `src/pages/settings/OrgMembersPage.tsx` (410 lines)
 **Problem:** This single file handles data fetching, local UI state, form validation, 3 different dialogs, and the members table. It's hard to test, hard to read, and impossible to reuse parts.
@@ -520,7 +520,7 @@ src/pages/settings/
 
 Each sub-component receives props and callbacks. The page component orchestrates state and passes it down.
 
-### 6.2 Centralize role constants and permission helpers
+### 6.2 Centralize role constants and permission helpers — **DONE**
 
 **Problem:** Role strings `"owner" | "admin" | "member"` are hardcoded in multiple files: `OrgMembersPage.tsx`, `AppSidebar.tsx`, `org-store.ts`, `types/organization.ts`.
 
@@ -554,7 +554,7 @@ export function canDeleteOrg(role: OrgRole | null): boolean {
 - `OrgMembersPage.tsx`: Import role constants for `<SelectItem>` values
 - `types/organization.ts`: Import `OrgRole` from `lib/roles.ts` instead of defining it locally
 
-### 6.3 Extract "no org selected" guard to layout level
+### 6.3 Extract "no org selected" guard to layout level — **DONE**
 
 **Problem:** Three pages repeat the identical guard:
 
@@ -583,7 +583,7 @@ export function RequireOrg({ children }: { children: ReactNode }) {
 
 ## 7. P2 — Consistency & Code Quality
 
-### 7.1 Unify service authoring patterns
+### 7.1 Unify service authoring patterns — **DONE**
 
 **Problem:** Three different patterns exist across 3 service files:
 
@@ -609,7 +609,7 @@ export const authService = {
 
 **Refactor `services/project.ts`:** Add explicit return types to all methods.
 
-### 7.2 Standardize import paths — use `@/` everywhere
+### 7.2 Standardize import paths — use `@/` everywhere — **DONE**
 
 **Problem:** Services use relative paths (`"../types/api"`, `"./api"`) while components use the `@/` alias.
 
@@ -621,7 +621,7 @@ export const authService = {
 - `src/services/project.ts:1` — `"./api"` → `"@/services/api"`
 - `src/services/auth.ts:2` — `"./api"` → `"@/services/api"`
 
-### 7.3 Fix manual query string construction in projectService
+### 7.3 Fix manual query string construction in projectService — **DONE**
 
 **File:** `src/services/project.ts:6`
 **Problem:**
@@ -636,7 +636,7 @@ const response = await api.get("/projects", {
 });
 ```
 
-### 7.4 Rename service exports for consistency
+### 7.4 Rename service exports for consistency — **DONE**
 
 **Current:**
 | File | Export name |
@@ -655,7 +655,7 @@ Update all imports in: `LoginPage.tsx`, `RegisterPage.tsx`.
 
 ## 8. P3 — Duplication Reduction
 
-### 8.1 Extract shared auth page layout
+### 8.1 Extract shared auth page layout — **DONE**
 
 **Files:** `src/pages/auth/LoginPage.tsx`, `src/pages/auth/RegisterPage.tsx`
 **Problem:** ~80% identical structure: outer `div` with `min-h-screen items-center justify-center`, `Card` chrome, error `Alert`, loading button pattern, error handling in `catch`.
@@ -689,7 +689,7 @@ export function AuthLayout({
 }
 ```
 
-### 8.2 Extract shared error handling for API calls
+### 8.2 Extract shared error handling for API calls — **DONE**
 
 **Problem:** Every form submission handler has this identical catch block:
 
@@ -719,7 +719,7 @@ export function getErrorMessage(err: unknown): string {
 }
 ```
 
-### 8.3 Extract `getInitials` utility
+### 8.3 Extract `getInitials` utility — **DONE**
 
 **File:** `src/components/layout/NavUser.tsx:38-45`
 **Problem:** Inline utility function that will likely be needed elsewhere (member avatars, project cards, etc.).
@@ -741,7 +741,7 @@ export function getInitials(name: string): string {
 
 ## 9. P3 — Accessibility
 
-### 9.1 Replace hardcoded gray colors with theme tokens
+### 9.1 Replace hardcoded gray colors with theme tokens — **DONE**
 
 **Files:** `LoginPage.tsx:96`, `RegisterPage.tsx:111`
 **Problem:** `bg-gray-100 dark:bg-gray-900` bypasses the CSS variable-based theme system. If the theme palette changes, these pages won't match.
@@ -756,7 +756,7 @@ export function getInitials(name: string): string {
 <div className="flex min-h-screen items-center justify-center bg-background p-4">
 ```
 
-### 9.2 Add focus management on route transitions
+### 9.2 Add focus management on route transitions — **DONE**
 
 **Problem:** When navigating between pages, focus stays wherever it was. Screen reader users get no indication that content changed.
 
@@ -774,7 +774,7 @@ useEffect(() => {
 <main ref={mainRef} tabIndex={-1} className="flex-1 overflow-auto outline-none">
 ```
 
-### 9.3 Add aria-live feedback for async operations
+### 9.3 Add aria-live feedback for async operations — **DONE**
 
 **Problem:** Toast notifications from Sonner may not be announced to screen readers depending on configuration. Clipboard operations ("Copy Email" in `OrgMembersPage`) give no feedback at all.
 
@@ -791,7 +791,7 @@ useEffect(() => {
    }}
    ```
 
-### 9.4 Add skip-to-content link
+### 9.4 Add skip-to-content link — **DONE**
 
 **File:** `src/components/layout/AppLayout.tsx`
 **Problem:** Keyboard users must tab through the entire sidebar to reach the main content.

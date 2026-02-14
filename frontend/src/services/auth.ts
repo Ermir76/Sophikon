@@ -63,10 +63,16 @@ export const authService = {
   /**
    * REFRESH TOKEN
    */
-  async refresh(token: string) {
-    const response = await api.post<AuthResponse>("/auth/refresh", {
-      refresh_token: token,
-    });
+  async refresh() {
+    const response = await api.post<AuthResponse>("/auth/refresh");
+    return response.data;
+  },
+
+  /**
+   * GET CURRENT USER
+   */
+  async me() {
+    const response = await api.get<AuthResponse["user"]>("/auth/me");
     return response.data;
   },
 };

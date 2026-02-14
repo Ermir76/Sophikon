@@ -5,7 +5,7 @@ export interface Organization {
   name: string;
   slug: string;
   is_personal: boolean;
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -29,7 +29,7 @@ export interface OrganizationCreate {
 export interface OrganizationUpdate {
   name?: string;
   slug?: string;
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
 }
 
 export interface InviteMemberRequest {

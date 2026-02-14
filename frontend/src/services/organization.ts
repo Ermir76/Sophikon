@@ -50,6 +50,13 @@ export const organizationService = {
 
   // ── Members ──
 
+  async getMyMembership(orgId: string): Promise<OrganizationMember> {
+    const response = await api.get<OrganizationMember>(
+      `/organizations/${orgId}/members/me`,
+    );
+    return response.data;
+  },
+
   async listMembers(
     orgId: string,
     page = 1,

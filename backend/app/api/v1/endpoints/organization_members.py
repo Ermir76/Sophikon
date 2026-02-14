@@ -29,6 +29,17 @@ router = APIRouter(
 )
 
 
+@router.get("/me", response_model=OrgMemberListItem)
+async def get_my_membership(
+    org_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    """Get my membership in the organization."""
+    _org, membership = await get_org_membership_or_404(db, org_id, user)
+    return OrgMemberListItem.model_validate(membership)
+
+
 @router.get("", response_model=PaginatedResponse[OrgMemberListItem])
 async def list_members(
     org_id: str,

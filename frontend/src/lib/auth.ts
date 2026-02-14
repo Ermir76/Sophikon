@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // ----------------------------------------------------------------------
 // AUTHENTICATION HELPER FUNCTIONS
 // ----------------------------------------------------------------------
@@ -17,8 +19,6 @@
 
 // Keys are the "labels" we use to find our data in Local Storage.
 // Think of them like filenames in a cabinet.
-const ACCESS_TOKEN_KEY = "sophikon_access_token";
-const REFRESH_TOKEN_KEY = "sophikon_refresh_token";
 const USER_KEY = "sophikon_user";
 
 // This defines the "shape" of a User object.
@@ -31,60 +31,49 @@ export interface AuthUser {
 }
 
 /**
- * Saves all authentication data to the browser.
+ * Saves authenticated user data to the browser.
  * Call this after a successful login.
  *
- * @param accessToken - The short-lived token for API requests
- * @param refreshToken - The long-lived token to get new access tokens
  * @param user - The user's profile information
  */
-export function saveAuth(
-  accessToken: string,
-  refreshToken: string,
-  user: AuthUser,
-) {
-  // localStorage.setItem("key", "value") saves data.
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-
+export function saveAuth(user: AuthUser) {
   // We cannot save an Object directly to Local Storage.
   // We must "stringify" it (turn it into text) first.
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 /**
- * Retrieves the Access Token.
- * Used by API calls to prove who you are.
- */
-export function getAccessToken(): string | null {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-/**
- * Retrieves the Refresh Token.
- * Used to get a new Access Token when the old one expires.
- */
-export function getRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-/**
  * Retrieves the User object.
  * This is "deserialization" - turning text back into an Object.
  */
+// ... (keep existing code)
+
+const userSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  full_name: z.string(),
+});
+
 export function getUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY);
 
-  // If there is no data, return null (no user logged in).
   if (!raw) return null;
 
   try {
-    // JSON.parse turns the text string back into a Javascript Object.
-    // We use "as AuthUser" to tell Typescript "Trust me, this is a User".
-    return JSON.parse(raw) as AuthUser;
+    const parsed = JSON.parse(raw);
+    const result = userSchema.safeParse(parsed);
+
+    if (result.success) {
+      return result.data;
+    } else {
+      console.warn(
+        "Invalid user data in localStorage, clearing.",
+        result.error,
+      );
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
   } catch {
-    // If the data is corrupted (someone messed with Local Storage),
-    // we return null to be safe.
     return null;
   }
 }
@@ -94,19 +83,13 @@ export function getUser(): AuthUser | null {
  * Call this when the user logs out.
  */
 export function clearAuth() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
 /**
  * Checks if the user is logged in.
- * Currently, we just check if an access token exists.
- * In a real app, we might also check if it's expired.
+ * We implicitly trust the presence of user data, but the API will enforce reality.
  */
 export function isAuthenticated(): boolean {
-  // The "!!" converts a value to a boolean (true/false).
-  // if getAccessToken() returns a string -> true
-  // if getAccessToken() returns null -> false
-  return !!getAccessToken();
+  return !!getUser();
 }

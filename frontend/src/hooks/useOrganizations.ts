@@ -11,6 +11,8 @@ export const orgKeys = {
   list: ["organizations", "list"] as const,
   detail: (orgId: string) => ["organizations", "detail", orgId] as const,
   members: (orgId: string) => ["organizations", "members", orgId] as const,
+  myMembership: (orgId: string) =>
+    ["organizations", "members", "me", orgId] as const,
 };
 
 export function useOrganizations() {

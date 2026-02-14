@@ -1,46 +1,60 @@
 import { create } from "zustand";
-import {
-  type AuthUser,
-  getAccessToken,
-  getUser,
-  saveAuth,
-  clearAuth,
-} from "@/lib/auth";
+import { type AuthUser, getUser, saveAuth, clearAuth } from "@/lib/auth";
 
 interface AuthState {
   user: AuthUser | null;
-  token: string | null;
   isAuthenticated: boolean;
-  login: (accessToken: string, refreshToken: string, user: AuthUser) => void;
+  isInitialized: boolean;
+  login: (user: AuthUser) => void;
   logout: () => void;
+  checkSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => {
   // Synchronously initialize state from localStorage
-  const initialToken = getAccessToken();
   const initialUser = getUser();
 
   return {
     user: initialUser,
-    token: initialToken,
-    isAuthenticated: !!initialToken,
+    isAuthenticated: !!initialUser, // Optimistic, but verified by checkSession
+    isInitialized: false,
 
-    login: (accessToken, refreshToken, user) => {
-      saveAuth(accessToken, refreshToken, user);
+    login: (user) => {
+      saveAuth(user);
       set({
-        token: accessToken,
         user,
         isAuthenticated: true,
+        isInitialized: true,
       });
     },
 
-    logout: () => {
+    logout: async () => {
+      // Call backend to clear cookies
+      try {
+        const { api } = await import("@/services/api");
+        await api.post("/auth/logout");
+      } catch (e) {
+        console.error("Logout failed on backend", e);
+      }
+
       clearAuth();
       set({
-        token: null,
         user: null,
         isAuthenticated: false,
+        isInitialized: true,
       });
+    },
+
+    checkSession: async () => {
+      try {
+        const { authService } = await import("@/services/auth");
+        const user = await authService.me();
+        saveAuth(user);
+        set({ user, isAuthenticated: true, isInitialized: true });
+      } catch {
+        clearAuth();
+        set({ user: null, isAuthenticated: false, isInitialized: true });
+      }
     },
   };
 });

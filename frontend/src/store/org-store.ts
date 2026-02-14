@@ -32,7 +32,7 @@ export const useOrgStore = create<OrgState>()(
 );
 
 useAuthStore.subscribe((state, prevState) => {
-  if (!state.token && prevState.token) {
+  if (!state.isAuthenticated && prevState.isAuthenticated) {
     useOrgStore.getState().clear();
   }
 });
