@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { Plus, MoreHorizontal, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,9 +60,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-import { organizationService } from "@/services/organization";
 import { useOrgStore } from "@/store/org-store";
 import type { OrganizationMember, OrgRole } from "@/types/organization";
+import {
+  useOrgMembers,
+  useInviteMember,
+  useRemoveMember,
+  useUpdateMemberRole,
+  useOrganization,
+} from "@/hooks/useOrganizations";
 
 const inviteSchema = z.object({
   email: z.email("Invalid email address"),
@@ -72,9 +78,16 @@ const inviteSchema = z.object({
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
 export default function OrgMembersPage() {
-  const activeOrganization = useOrgStore((state) => state.activeOrganization);
-  const [members, setMembers] = useState<OrganizationMember[]>([]);
-  const [loading, setLoading] = useState(false);
+  const activeOrgId = useOrgStore((state) => state.activeOrgId);
+  const { data: activeOrganization } = useOrganization(activeOrgId || "");
+  const { data: membersData, isLoading: isLoadingMembers } = useOrgMembers(
+    activeOrgId || "",
+  );
+
+  const inviteMutation = useInviteMember(activeOrgId || "");
+  const removeMemberMutation = useRemoveMember(activeOrgId || "");
+  const updateRoleMutation = useUpdateMemberRole(activeOrgId || "");
+
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // UI states for actions
@@ -93,37 +106,14 @@ export default function OrgMembersPage() {
     },
   });
 
-  const fetchMembers = useCallback(async () => {
-    if (!activeOrganization) return;
-    setLoading(true);
-    try {
-      const response = await organizationService.listMembers(
-        activeOrganization.id,
-      );
-      setMembers(response.items);
-    } catch (error) {
-      toast.error("Error", {
-        description: "Failed to fetch members.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeOrganization]);
-
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]); // Adding fetchMembers as dependency since it's memoized
-
   const onInvite = async (data: InviteFormValues) => {
-    if (!activeOrganization) return;
     try {
-      await organizationService.inviteMember(activeOrganization.id, data);
+      await inviteMutation.mutateAsync(data);
       toast.success("Invitation sent", {
         description: `Invited ${data.email} as ${data.role}.`,
       });
       setInviteOpen(false);
       form.reset();
-      await fetchMembers();
     } catch (error) {
       toast.error("Error", {
         description: "Failed to invite member.",
@@ -132,19 +122,17 @@ export default function OrgMembersPage() {
   };
 
   const confirmRemoveMember = async () => {
-    if (!activeOrganization || !memberToRemove) return;
+    if (!memberToRemove) return;
     await onRemoveMember(memberToRemove.id);
     setMemberToRemove(null);
   };
 
   const onRemoveMember = async (memberId: string) => {
-    if (!activeOrganization) return;
     try {
-      await organizationService.removeMember(activeOrganization.id, memberId);
+      await removeMemberMutation.mutateAsync(memberId);
       toast.success("Member removed", {
         description: "The member has been removed from the organization.",
       });
-      await fetchMembers();
     } catch (error) {
       toast.error("Error", {
         description: "Failed to remove member.",
@@ -153,19 +141,17 @@ export default function OrgMembersPage() {
   };
 
   const onUpdateRole = async () => {
-    if (!activeOrganization || !memberToEdit || !targetRole) return;
+    if (!memberToEdit || !targetRole) return;
     try {
-      await organizationService.updateMemberRole(
-        activeOrganization.id,
-        memberToEdit.id,
-        { role: targetRole },
-      );
+      await updateRoleMutation.mutateAsync({
+        memberId: memberToEdit.id,
+        data: { role: targetRole },
+      });
       toast.success("Role updated", {
         description: `${memberToEdit.user_full_name || memberToEdit.user_email}'s role updated to ${targetRole}.`,
       });
       setMemberToEdit(null);
       setTargetRole(null);
-      await fetchMembers();
     } catch (error) {
       toast.error("Error", {
         description: "Failed to update member role.",
@@ -173,9 +159,11 @@ export default function OrgMembersPage() {
     }
   };
 
-  if (!activeOrganization) {
+  if (!activeOrgId) {
     return <div className="p-4">Please select an organization.</div>;
   }
+
+  const members = membersData?.items || [];
 
   return (
     <div className="space-y-6 p-6">
@@ -197,7 +185,7 @@ export default function OrgMembersPage() {
             <DialogHeader>
               <DialogTitle>Invite Member</DialogTitle>
               <DialogDescription>
-                Send an invitation to join {activeOrganization.name}.
+                Send an invitation to join {activeOrganization?.name}.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -244,7 +232,11 @@ export default function OrgMembersPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Send Invitation</Button>
+                  <Button type="submit" disabled={inviteMutation.isPending}>
+                    {inviteMutation.isPending
+                      ? "Sending..."
+                      : "Send Invitation"}
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -265,13 +257,13 @@ export default function OrgMembersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && members.length === 0 ? (
+              {isLoadingMembers ? (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center">
                     <Loader2 className="mx-auto size-6 animate-spin" />
                   </TableCell>
                 </TableRow>
-              ) : members.length === 0 && !loading ? (
+              ) : members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center">
                     No members found.
@@ -356,9 +348,10 @@ export default function OrgMembersPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRemoveMember}
+              disabled={removeMemberMutation.isPending}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Remove Member
+              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -398,8 +391,12 @@ export default function OrgMembersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" onClick={onUpdateRole}>
-              Update Role
+            <Button
+              type="submit"
+              onClick={onUpdateRole}
+              disabled={updateRoleMutation.isPending}
+            >
+              {updateRoleMutation.isPending ? "Updating..." : "Update Role"}
             </Button>
           </DialogFooter>
         </DialogContent>

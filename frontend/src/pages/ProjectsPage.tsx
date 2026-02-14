@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { format } from "date-fns";
 import {
@@ -49,8 +49,7 @@ import {
 
 import { toast } from "sonner";
 import { useOrgStore } from "@/store/org-store";
-import { projectService } from "@/services/project";
-import type { Project } from "@/types/project";
+import { useProjects, useCreateProject } from "@/hooks/useProjects";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -61,9 +60,9 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export default function ProjectsPage() {
-  const activeOrganization = useOrgStore((state) => state.activeOrganization);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  const activeOrgId = useOrgStore((state) => state.activeOrgId);
+  const { data: projectsData, isLoading: isLoadingProjects } = useProjects();
+  const createProjectMutation = useCreateProject();
   const [createOpen, setCreateOpen] = useState(false);
 
   const form = useForm<ProjectFormValues>({
@@ -74,29 +73,9 @@ export default function ProjectsPage() {
     },
   });
 
-  const fetchProjects = useCallback(async () => {
-    if (!activeOrganization) return;
-    setLoading(true);
-    try {
-      const response = await projectService.list(activeOrganization.id);
-      setProjects(response.items);
-    } catch (error) {
-      toast.error("Error", {
-        description: "Failed to fetch projects.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeOrganization]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
   const onCreate = async (data: ProjectFormValues) => {
-    if (!activeOrganization) return;
     try {
-      await projectService.create(activeOrganization.id, {
+      await createProjectMutation.mutateAsync({
         name: data.name,
         description: data.description,
         start_date: format(data.start_date, "yyyy-MM-dd"),
@@ -107,7 +86,6 @@ export default function ProjectsPage() {
       });
       setCreateOpen(false);
       form.reset();
-      await fetchProjects(); // Await fetchProjects
     } catch (error) {
       toast.error("Error", {
         description: "Failed to create project.",
@@ -115,9 +93,11 @@ export default function ProjectsPage() {
     }
   };
 
-  if (!activeOrganization) {
+  if (!activeOrgId) {
     return <div className="p-4">Please select an organization.</div>;
   }
+
+  const projects = projectsData?.items || [];
 
   return (
     <div className="space-y-6 p-6">
@@ -139,7 +119,7 @@ export default function ProjectsPage() {
             <DialogHeader>
               <DialogTitle>Create Project</DialogTitle>
               <DialogDescription>
-                Add a new project to {activeOrganization.name}.
+                Add a new project to current organization.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -216,7 +196,14 @@ export default function ProjectsPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Create Project</Button>
+                  <Button
+                    type="submit"
+                    disabled={createProjectMutation.isPending}
+                  >
+                    {createProjectMutation.isPending
+                      ? "Creating..."
+                      : "Create Project"}
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -224,7 +211,7 @@ export default function ProjectsPage() {
         </Dialog>
       </div>
 
-      {loading ? (
+      {isLoadingProjects ? (
         <div className="flex justify-center p-8">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>

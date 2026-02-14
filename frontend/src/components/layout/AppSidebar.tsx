@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/layout/NavUser";
 import { OrgSwitcher } from "@/components/layout/OrgSwitcher";
-import { useOrgStore } from "@/store/org-store";
+import { useMyOrgRole } from "@/hooks/useMyOrgRole";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
@@ -38,7 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const projectId = projectMatch ? projectMatch[1] : null;
   const isProjectContext = !!projectId;
 
-  const currentRole = useOrgStore((state) => state.currentRole);
+  const { role: currentRole } = useMyOrgRole();
   const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
 
   const globalNavItems = [

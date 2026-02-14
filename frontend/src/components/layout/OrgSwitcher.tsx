@@ -1,5 +1,6 @@
-import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Link } from "react-router";
+import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -16,16 +17,27 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useOrgStore } from "@/store/org-store";
+import { useOrganizations, useOrganization } from "@/hooks/useOrganizations";
 
 export function OrgSwitcher() {
   const { isMobile } = useSidebar();
-  const organizations = useOrgStore((state) => state.organizations);
-  const activeOrganization = useOrgStore((state) => state.activeOrganization);
+  const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
-  const isLoading = useOrgStore((state) => state.isLoading);
+
+  const { data: organizationsData, isLoading } = useOrganizations();
+  const { data: activeOrgData } = useOrganization(activeOrgId || "");
+
+  const organizations = organizationsData?.items || [];
+
+  // Auto-select first organization if none is selected
+  useEffect(() => {
+    if (!activeOrgId && organizations.length > 0) {
+      setActiveOrg(organizations[0].id);
+    }
+  }, [activeOrgId, organizations, setActiveOrg]);
 
   // Default to a placeholder if no org is selected
-  const activeOrg = activeOrganization || {
+  const activeOrg = activeOrgData || {
     name: "Select Organization",
     slug: "none",
     id: "",
@@ -79,7 +91,7 @@ export function OrgSwitcher() {
                     </span>
                   </div>
                   <div className="flex-1 truncate">{org.name}</div>
-                  {activeOrganization?.id === org.id && (
+                  {activeOrg.id === org.id && (
                     <Check className="ml-auto size-4" />
                   )}
                 </DropdownMenuItem>

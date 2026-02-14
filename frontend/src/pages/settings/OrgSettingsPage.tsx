@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,8 +22,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { organizationService } from "@/services/organization";
 import { useOrgStore } from "@/store/org-store";
+import {
+  useOrganization,
+  useUpdateOrganization,
+} from "@/hooks/useOrganizations";
 
 const orgSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -39,9 +42,11 @@ const orgSchema = z.object({
 type OrgFormValues = z.infer<typeof orgSchema>;
 
 export default function OrgSettingsPage() {
-  const activeOrganization = useOrgStore((state) => state.activeOrganization);
-  const fetchOrgs = useOrgStore((state) => state.fetchOrgs);
-  const [loading, setLoading] = useState(false);
+  const activeOrgId = useOrgStore((state) => state.activeOrgId);
+  const { data: activeOrganization, isLoading } = useOrganization(
+    activeOrgId || "",
+  );
+  const updateOrgMutation = useUpdateOrganization(activeOrgId || "");
 
   const form = useForm<OrgFormValues>({
     resolver: zodResolver(orgSchema),
@@ -61,11 +66,9 @@ export default function OrgSettingsPage() {
   }, [activeOrganization, form]);
 
   const onSubmit = async (data: OrgFormValues) => {
-    if (!activeOrganization) return;
-    setLoading(true);
+    if (!activeOrgId) return;
     try {
-      await organizationService.update(activeOrganization.id, data);
-      await fetchOrgs(); // Refresh list to update changes in UI
+      await updateOrgMutation.mutateAsync(data);
       toast.success("Organization updated", {
         description: "Your organization settings have been saved.",
       });
@@ -73,13 +76,15 @@ export default function OrgSettingsPage() {
       toast.error("Error", {
         description: "Failed to update organization.",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (!activeOrganization) {
+  if (!activeOrgId) {
     return <div className="p-4">Please select an organization.</div>;
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Loading organization details...</div>;
   }
 
   return (
@@ -128,8 +133,8 @@ export default function OrgSettingsPage() {
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
+                <Button type="submit" disabled={updateOrgMutation.isPending}>
+                  {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>

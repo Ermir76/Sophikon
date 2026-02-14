@@ -32,6 +32,15 @@ export interface OrganizationUpdate {
   settings?: Record<string, any>;
 }
 
+export interface InviteMemberRequest {
+  email: string;
+  role: OrgRole;
+}
+
+export interface UpdateMemberRoleRequest {
+  role: OrgRole;
+}
+
 export interface OrgMemberInvite {
   email: string;
   role: OrgRole;

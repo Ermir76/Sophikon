@@ -1,7 +1,9 @@
 import { useOrgStore } from "@/store/org-store";
+import { useOrganization } from "@/hooks/useOrganizations";
 
 export default function DashboardPage() {
-  const { activeOrganization } = useOrgStore();
+  const activeOrgId = useOrgStore((state) => state.activeOrgId);
+  const { data: activeOrganization } = useOrganization(activeOrgId || "");
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
