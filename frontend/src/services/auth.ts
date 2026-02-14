@@ -33,13 +33,10 @@ export interface RegisterRequest {
 /**
  * The data the backend sends back when we log in or register.
  * Backend: app/schema/auth.py -> AuthResponse
+ *
+ * Tokens are set via httpOnly cookies; the frontend only uses `user`.
  */
 export interface AuthResponse {
-  tokens: {
-    access_token: string;
-    refresh_token: string;
-    token_type: string;
-  };
   user: AuthUser;
 }
 

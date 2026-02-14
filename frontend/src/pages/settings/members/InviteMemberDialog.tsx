@@ -30,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { OrgRole } from "@/types/organization";
 import { ROLE_OPTIONS } from "@/lib/roles";
 
 const inviteSchema = z.object({

@@ -6,8 +6,8 @@ import type {
   OrganizationCreate,
   OrganizationUpdate,
   OrganizationMember,
-  OrgMemberInvite,
-  OrgMemberRoleUpdate,
+  InviteMemberRequest,
+  UpdateMemberRoleRequest,
 } from "@/types/organization";
 
 export const organizationService = {
@@ -73,7 +73,7 @@ export const organizationService = {
 
   async inviteMember(
     orgId: string,
-    data: OrgMemberInvite,
+    data: InviteMemberRequest,
   ): Promise<OrganizationMember> {
     const response = await api.post<OrganizationMember>(
       `/organizations/${orgId}/members`,
@@ -85,7 +85,7 @@ export const organizationService = {
   async updateMemberRole(
     orgId: string,
     memberId: string,
-    data: OrgMemberRoleUpdate,
+    data: UpdateMemberRoleRequest,
   ): Promise<OrganizationMember> {
     const response = await api.patch<OrganizationMember>(
       `/organizations/${orgId}/members/${memberId}`,

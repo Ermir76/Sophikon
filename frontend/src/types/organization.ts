@@ -40,12 +40,3 @@ export interface InviteMemberRequest {
 export interface UpdateMemberRoleRequest {
   role: OrgRole;
 }
-
-export interface OrgMemberInvite {
-  email: string;
-  role: OrgRole;
-}
-
-export interface OrgMemberRoleUpdate {
-  role: OrgRole;
-}

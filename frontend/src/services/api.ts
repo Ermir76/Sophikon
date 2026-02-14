@@ -12,11 +12,6 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Request Interceptor: No longer needed for tokens (handled by cookies)
-api.interceptors.request.use((config) => {
-  return config;
-});
-
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(
   (response) => response,

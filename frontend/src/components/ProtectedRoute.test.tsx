@@ -13,17 +13,6 @@ describe("ProtectedRoute", () => {
   });
 
   it("shows loading spinner when not yet initialized", () => {
-    // @ts-ignore
-    useAuthStore.mockReturnValueOnce(false); // isInitialized
-    // @ts-ignore
-    useAuthStore.mockReturnValueOnce(false); // isAuthenticated (doesn't matter here)
-
-    // Actually, useAuthStore is a hook selector.
-    // The implementation of ProtectedRoute uses it twice:
-    // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-    // const isInitialized = useAuthStore((state) => state.isInitialized);
-
-    // We need to mock the implementation of useAuthStore to handle selector
     vi.mocked(useAuthStore).mockImplementation((selector: any) => {
       const state = {
         isAuthenticated: false,
@@ -38,9 +27,6 @@ describe("ProtectedRoute", () => {
       </MemoryRouter>,
     );
 
-    // Look for the spinner (it has specific classes)
-    // Or just check that Outlet is not rendered and Navigate is not rendered
-    // The spinner div has "animate-spin" class
     const spinner = document.querySelector(".animate-spin");
     expect(spinner).toBeInTheDocument();
   });

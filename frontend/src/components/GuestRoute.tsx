@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuthStore } from "@/store/auth-store";
+import { PageLoader } from "@/components/PageLoader";
 
 // ----------------------------------------------------------------------
 // GUEST ROUTE
@@ -10,6 +11,11 @@ import { useAuthStore } from "@/store/auth-store";
 
 export function GuestRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+
+  if (!isInitialized) {
+    return <PageLoader />;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

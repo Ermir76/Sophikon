@@ -1,4 +1,6 @@
-export type OrgRole = "owner" | "admin" | "member";
+import type { OrgRole } from "@/types/organization";
+
+export type { OrgRole };
 
 export const ROLES: Record<OrgRole, string> = {
   owner: "Owner",

@@ -27,6 +27,7 @@ import {
   useOrganization,
   useUpdateOrganization,
 } from "@/hooks/useOrganizations";
+import { QueryError } from "@/components/QueryError";
 
 const orgSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -43,9 +44,12 @@ type OrgFormValues = z.infer<typeof orgSchema>;
 
 export default function OrgSettingsPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
-  const { data: activeOrganization, isLoading } = useOrganization(
-    activeOrgId || "",
-  );
+  const {
+    data: activeOrganization,
+    isLoading,
+    isError,
+    refetch,
+  } = useOrganization(activeOrgId || "");
   const updateOrgMutation = useUpdateOrganization(activeOrgId || "");
 
   const form = useForm<OrgFormValues>({
@@ -81,6 +85,15 @@ export default function OrgSettingsPage() {
 
   if (isLoading) {
     return <div className="p-4">Loading organization details...</div>;
+  }
+
+  if (isError) {
+    return (
+      <QueryError
+        message="Failed to load organization settings."
+        onRetry={() => refetch()}
+      />
+    );
   }
 
   return (

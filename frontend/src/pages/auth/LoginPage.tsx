@@ -1,13 +1,11 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { Loader2 } from "lucide-react";
-import { isAxiosError } from "axios";
 
-import { useAuthStore } from "@/store/auth-store";
-import { authService } from "@/services/auth";
+import { useLogin } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,29 +27,16 @@ import {
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// ----------------------------------------------------------------------
-// VALIDATION SCHEMA (ZOD)
-// ----------------------------------------------------------------------
-// This defines the "rules" for our form.
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
-// Infer the Typescript type from the schema
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// ----------------------------------------------------------------------
-// LOGIN PAGE COMPONENT
-// ----------------------------------------------------------------------
-
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const loginMutation = useLogin();
 
-  // 1. Setup the Form
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -59,34 +44,6 @@ export default function LoginPage() {
       password: "",
     },
   });
-
-  // 2. Handle Submission
-  async function onSubmit(data: LoginFormValues) {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // A. Call the API
-      const response = await authService.login(data);
-
-      // B. Update Global State
-      login(response.user);
-
-      // C. Redirect to Home
-      navigate("/");
-    } catch (err) {
-      // Handle errors (e.g., "Invalid credentials")
-      if (isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   return (
     <Card className="w-full max-w-md">
@@ -98,16 +55,19 @@ export default function LoginPage() {
       </CardHeader>
 
       <CardContent>
-        {/* Global Error Message */}
-        {error && (
+        {loginMutation.isError && (
           <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {getErrorMessage(loginMutation.error)}
+            </AlertDescription>
           </Alert>
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* EMAIL FIELD */}
+          <form
+            onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="email"
@@ -126,7 +86,6 @@ export default function LoginPage() {
               )}
             />
 
-            {/* PASSWORD FIELD */}
             <FormField
               control={form.control}
               name="password"
@@ -146,8 +105,12 @@ export default function LoginPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing in...

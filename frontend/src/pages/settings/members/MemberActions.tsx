@@ -15,7 +15,7 @@ import {
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import type { OrganizationMember, OrgRole } from "@/types/organization";
-import { ROLE_OPTIONS, getRoleLabel } from "@/lib/roles";
+import { ROLE_OPTIONS } from "@/lib/roles";
 
 interface MemberActionsProps {
   member: OrganizationMember;

@@ -35,24 +35,6 @@ describe("Auth Store", () => {
     vi.clearAllMocks();
   });
 
-  it("initializes with user from localStorage", () => {
-    const mockUser = {
-      id: "1",
-      email: "test@example.com",
-      full_name: "Test User",
-    };
-    vi.mocked(authLib.getUser).mockReturnValue(mockUser);
-
-    // Re-create store to trigger initialization logic?
-    // Zustand stores are created once. We rely on the initial call.
-    // However, in the test, we might need to reset the store state manually if we want to test "initialization"
-    // which happens at create time.
-    // But since `create` happens at module load, we can't easily re-run it with different mocks without `vi.resetModules()`.
-    // Instead, let's test the actions and default state after manual `setState`.
-
-    // For this test, let's assume we are testing `checkSession` and `login/logout`.
-  });
-
   it("login updates state and saves to localStorage", () => {
     const mockUser = {
       id: "1",

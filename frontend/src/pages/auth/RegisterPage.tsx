@@ -1,13 +1,11 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { Loader2 } from "lucide-react";
-import { isAxiosError } from "axios";
 
-import { useAuthStore } from "@/store/auth-store";
-import { authService } from "@/services/auth";
+import { useRegister } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +27,6 @@ import {
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// ----------------------------------------------------------------------
-// VALIDATION SCHEMA (ZOD)
-// ----------------------------------------------------------------------
 const registerSchema = z
   .object({
     full_name: z.string().min(2, "Name must be at least 2 characters."),
@@ -49,22 +44,14 @@ const registerSchema = z
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
-    path: ["confirmPassword"], // path of error
+    path: ["confirmPassword"],
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-// ----------------------------------------------------------------------
-// REGISTER PAGE COMPONENT
-// ----------------------------------------------------------------------
-
 export default function RegisterPage() {
-  const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const registerMutation = useRegister();
 
-  // 1. Setup Form
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -75,32 +62,9 @@ export default function RegisterPage() {
     },
   });
 
-  // 2. Handle Submission
-  async function onSubmit(data: RegisterFormValues) {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // A. Call API (Exclude confirmPassword)
-      const { confirmPassword, ...apiData } = data;
-      const response = await authService.register(apiData);
-
-      // B. Update Global State (Auto-login after register)
-      login(response.user);
-
-      // C. Redirect to Home
-      navigate("/");
-    } catch (err) {
-      if (isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+  function onSubmit(data: RegisterFormValues) {
+    const { confirmPassword: _, ...apiData } = data;
+    registerMutation.mutate(apiData);
   }
 
   return (
@@ -111,15 +75,16 @@ export default function RegisterPage() {
       </CardHeader>
 
       <CardContent>
-        {error && (
+        {registerMutation.isError && (
           <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {getErrorMessage(registerMutation.error)}
+            </AlertDescription>
           </Alert>
         )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* FULL NAME */}
             <FormField
               control={form.control}
               name="full_name"
@@ -138,7 +103,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* EMAIL */}
             <FormField
               control={form.control}
               name="email"
@@ -157,7 +121,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* PASSWORD */}
             <FormField
               control={form.control}
               name="password"
@@ -177,7 +140,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* CONFIRM PASSWORD */}
             <FormField
               control={form.control}
               name="confirmPassword"
@@ -197,8 +159,12 @@ export default function RegisterPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={registerMutation.isPending}
+            >
+              {registerMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...

@@ -22,6 +22,7 @@ import {
   useUpdateMemberRole,
   useOrganization,
 } from "@/hooks/useOrganizations";
+import { QueryError } from "@/components/QueryError";
 import { MembersTable } from "./members/MembersTable";
 import {
   InviteMemberDialog,
@@ -33,9 +34,12 @@ export default function OrgMembersPage() {
   const currentUser = useAuthStore((state) => state.user);
 
   const { data: activeOrganization } = useOrganization(activeOrgId || "");
-  const { data: membersData, isLoading: isLoadingMembers } = useOrgMembers(
-    activeOrgId || "",
-  );
+  const {
+    data: membersData,
+    isLoading: isLoadingMembers,
+    isError: isMembersError,
+    refetch: refetchMembers,
+  } = useOrgMembers(activeOrgId || "");
 
   const inviteMutation = useInviteMember(activeOrgId || "");
   const removeMemberMutation = useRemoveMember(activeOrgId || "");
@@ -108,17 +112,24 @@ export default function OrgMembersPage() {
 
       <Separator />
 
-      <Card>
-        <CardContent className="p-0">
-          <MembersTable
-            members={members}
-            isLoading={isLoadingMembers}
-            currentUserId={currentUser?.id}
-            onUpdateRole={onUpdateRole}
-            onRemove={setMemberToRemove}
-          />
-        </CardContent>
-      </Card>
+      {isMembersError ? (
+        <QueryError
+          message="Failed to load members."
+          onRetry={() => refetchMembers()}
+        />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <MembersTable
+              members={members}
+              isLoading={isLoadingMembers}
+              currentUserId={currentUser?.id}
+              onUpdateRole={onUpdateRole}
+              onRemove={setMemberToRemove}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <AlertDialog
         open={!!memberToRemove}

@@ -85,11 +85,3 @@ export function getUser(): AuthUser | null {
 export function clearAuth() {
   localStorage.removeItem(USER_KEY);
 }
-
-/**
- * Checks if the user is logged in.
- * We implicitly trust the presence of user data, but the API will enforce reality.
- */
-export function isAuthenticated(): boolean {
-  return !!getUser();
-}
