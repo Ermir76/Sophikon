@@ -24,12 +24,19 @@ export function AppHeader() {
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
 
-  // Helper to capitalize or use label map
-  const getLabel = (segment: string) => {
-    return (
-      segmentLabels[segment] ||
-      segment.charAt(0).toUpperCase() + segment.slice(1)
-    );
+  const isUUID = (str: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+  const getLabel = (segment: string, index: number, allSegments: string[]) => {
+    if (segmentLabels[segment]) {
+      return segmentLabels[segment];
+    }
+    if (isUUID(segment)) {
+      const prev = allSegments[index - 1];
+      if (prev === "projects") return "Project";
+      return "Details";
+    }
+    return segment.charAt(0).toUpperCase() + segment.slice(1);
   };
 
   return (
@@ -58,7 +65,7 @@ export function AppHeader() {
           {segments.map((segment, index) => {
             const isLast = index === segments.length - 1;
             const path = `/${segments.slice(0, index + 1).join("/")}`;
-            const label = getLabel(segment);
+            const label = getLabel(segment, index, segments);
 
             return (
               <Fragment key={path}>

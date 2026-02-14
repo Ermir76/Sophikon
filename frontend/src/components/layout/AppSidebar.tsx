@@ -2,12 +2,14 @@ import * as React from "react";
 import { Link, useLocation } from "react-router";
 import {
   BarChart3,
-  Boxes,
   Calendar,
   GanttChart,
   LayoutDashboard,
   ListTodo,
+  Settings,
   Users,
+  FolderKanban,
+  ArrowLeft,
 } from "lucide-react";
 
 import {
@@ -24,42 +26,66 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/layout/NavUser";
-
-const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Tasks", url: "/tasks", icon: ListTodo },
-  { title: "Gantt", url: "/gantt", icon: GanttChart },
-  { title: "Resources", url: "/resources", icon: Users },
-  { title: "Calendar", url: "/calendar", icon: Calendar },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-];
+import { OrgSwitcher } from "@/components/layout/OrgSwitcher";
+import { useOrgStore } from "@/store/org-store";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
 
+  // Check if we are in a project context
+  // Regex matches /projects/{uuid}/... but not just /projects
+  const projectMatch = location.pathname.match(/^\/projects\/([^/]+)/);
+  const projectId = projectMatch ? projectMatch[1] : null;
+  const isProjectContext = !!projectId;
+
+  const { currentRole } = useOrgStore();
+  const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
+
+  const globalNavItems = [
+    { title: "Dashboard", url: "/", icon: LayoutDashboard },
+    { title: "Projects", url: "/projects", icon: FolderKanban },
+    ...(isAdminOrOwner
+      ? [
+          { title: "Members", url: "/organizations/members", icon: Users },
+          { title: "Settings", url: "/organizations/settings", icon: Settings },
+        ]
+      : []),
+  ];
+
+  const projectNavItems = [
+    { title: "Back to Projects", url: "/projects", icon: ArrowLeft },
+    { title: "Overview", url: `/projects/${projectId}`, icon: LayoutDashboard },
+    { title: "Tasks", url: `/projects/${projectId}/tasks`, icon: ListTodo },
+    { title: "Gantt", url: `/projects/${projectId}/gantt`, icon: GanttChart },
+    {
+      title: "Resources",
+      url: `/projects/${projectId}/resources`,
+      icon: Users,
+    },
+    {
+      title: "Calendar",
+      url: `/projects/${projectId}/calendar`,
+      icon: Calendar,
+    },
+    {
+      title: "Reports",
+      url: `/projects/${projectId}/reports`,
+      icon: BarChart3,
+    },
+  ];
+
+  const navItems = isProjectContext ? projectNavItems : globalNavItems;
+  const groupLabel = isProjectContext ? "Project" : "Organization";
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Boxes className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Sophikon</span>
-                  <span className="truncate text-xs">Project Management</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <OrgSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
@@ -67,7 +93,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   item.url === "/"
                     ? location.pathname === "/"
                     : location.pathname === item.url ||
-                      location.pathname.startsWith(item.url + "/");
+                      (item.url !== "/projects" &&
+                        location.pathname.startsWith(item.url + "/"));
 
                 return (
                   <SidebarMenuItem key={item.title}>
