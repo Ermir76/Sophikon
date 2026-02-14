@@ -19,8 +19,10 @@ import { useOrgStore } from "@/store/org-store";
 
 export function OrgSwitcher() {
   const { isMobile } = useSidebar();
-  const { organizations, activeOrganization, setActiveOrg, isLoading } =
-    useOrgStore();
+  const organizations = useOrgStore((state) => state.organizations);
+  const activeOrganization = useOrgStore((state) => state.activeOrganization);
+  const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
+  const isLoading = useOrgStore((state) => state.isLoading);
 
   // Default to a placeholder if no org is selected
   const activeOrg = activeOrganization || {

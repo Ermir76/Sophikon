@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { isAxiosError } from "axios";
 
 import { useAuthStore } from "@/store/auth-store";
-import { auth } from "@/services/auth";
+import { authService } from "@/services/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +83,7 @@ export default function RegisterPage() {
     try {
       // A. Call API (Exclude confirmPassword)
       const { confirmPassword, ...apiData } = data;
-      const response = await auth.register(apiData);
+      const response = await authService.register(apiData);
 
       // B. Update Global State (Auto-login after register)
       login(
@@ -108,7 +108,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4 dark:bg-gray-900">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Create an account</CardTitle>
@@ -219,7 +219,7 @@ export default function RegisterPage() {
         </CardContent>
 
         <CardFooter className="justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline">
               Sign in

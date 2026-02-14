@@ -38,7 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const projectId = projectMatch ? projectMatch[1] : null;
   const isProjectContext = !!projectId;
 
-  const { currentRole } = useOrgStore();
+  const currentRole = useOrgStore((state) => state.currentRole);
   const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
 
   const globalNavItems = [

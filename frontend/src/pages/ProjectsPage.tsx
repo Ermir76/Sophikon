@@ -61,7 +61,7 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export default function ProjectsPage() {
-  const { activeOrganization } = useOrgStore();
+  const activeOrganization = useOrgStore((state) => state.activeOrganization);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);

@@ -72,7 +72,7 @@ const inviteSchema = z.object({
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
 export default function OrgMembersPage() {
-  const { activeOrganization } = useOrgStore();
+  const activeOrganization = useOrgStore((state) => state.activeOrganization);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);

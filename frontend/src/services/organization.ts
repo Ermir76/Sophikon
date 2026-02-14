@@ -1,6 +1,6 @@
-import type { PaginatedResponse } from "../types/api";
+import type { PaginatedResponse } from "@/types/api";
 
-import { api } from "./api";
+import { api } from "@/services/api";
 import type {
   Organization,
   OrganizationCreate,
@@ -8,7 +8,7 @@ import type {
   OrganizationMember,
   OrgMemberInvite,
   OrgMemberRoleUpdate,
-} from "../types/organization";
+} from "@/types/organization";
 
 export const organizationService = {
   // ── Organizations ──

@@ -39,7 +39,8 @@ const orgSchema = z.object({
 type OrgFormValues = z.infer<typeof orgSchema>;
 
 export default function OrgSettingsPage() {
-  const { activeOrganization, fetchOrgs } = useOrgStore();
+  const activeOrganization = useOrgStore((state) => state.activeOrganization);
+  const fetchOrgs = useOrgStore((state) => state.fetchOrgs);
   const [loading, setLoading] = useState(false);
 
   const form = useForm<OrgFormValues>({

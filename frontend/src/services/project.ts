@@ -1,10 +1,11 @@
-import { api } from "./api";
-import type { Project, ProjectCreate, ProjectUpdate } from "../types/project";
+import { api } from "@/services/api";
+import type { Project, ProjectCreate, ProjectUpdate } from "@/types/project";
 
 export const projectService = {
   list: async (orgId: string) => {
     const response = await api.get<{ items: Project[]; total: number }>(
-      `/projects?organization_id=${orgId}`,
+      "/projects",
+      { params: { organization_id: orgId } },
     );
     return response.data;
   },

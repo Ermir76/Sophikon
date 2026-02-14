@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = "/app/login"; // Redirect to login
+      // ProtectedRoute will handle the redirect via React Router
     }
     return Promise.reject(error);
   },

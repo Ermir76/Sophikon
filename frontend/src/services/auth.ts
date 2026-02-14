@@ -1,5 +1,4 @@
-import type { AxiosResponse } from "axios";
-import { api } from "./api";
+import { api } from "@/services/api";
 import type { AuthUser } from "@/lib/auth";
 
 // ----------------------------------------------------------------------
@@ -44,28 +43,30 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export const auth = {
+export const authService = {
   /**
    * LOG IN
    */
-  login: (data: LoginRequest) =>
-    api
-      .post<AuthResponse>("/auth/login", data)
-      .then((res: AxiosResponse<AuthResponse>) => res.data),
+  async login(data: LoginRequest) {
+    const response = await api.post<AuthResponse>("/auth/login", data);
+    return response.data;
+  },
 
   /**
    * REGISTER
    */
-  register: (data: RegisterRequest) =>
-    api
-      .post<AuthResponse>("/auth/register", data)
-      .then((res: AxiosResponse<AuthResponse>) => res.data),
+  async register(data: RegisterRequest) {
+    const response = await api.post<AuthResponse>("/auth/register", data);
+    return response.data;
+  },
 
   /**
    * REFRESH TOKEN
    */
-  refresh: (token: string) =>
-    api
-      .post<AuthResponse>("/auth/refresh", { refresh_token: token })
-      .then((res: AxiosResponse<AuthResponse>) => res.data),
+  async refresh(token: string) {
+    const response = await api.post<AuthResponse>("/auth/refresh", {
+      refresh_token: token,
+    });
+    return response.data;
+  },
 };
