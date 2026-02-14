@@ -97,7 +97,7 @@
 - [x] Organization member endpoints (invite, remove, list, change role)
 - [x] Update `deps.py`: add `get_org_or_404()` dependency with org membership check
 - [x] Update `project_service.py`: scope project queries by `organization_id`
-- [ ] Update `auth_service.py`: auto-create personal org on user registration
+- [x] Update `auth_service.py`: auto-create personal org on user registration
 
 **Frontend:**
 

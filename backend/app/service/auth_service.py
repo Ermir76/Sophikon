@@ -21,6 +21,7 @@ from app.core.security import (
 from app.models.refresh_token import RefreshToken
 from app.models.role import Role
 from app.models.user import User
+from app.service.organization_service import create_personal_organization
 
 
 # ── Helpers ──
@@ -100,6 +101,9 @@ async def register_user(
     )
     db.add(user)
     await db.flush()  # populate user.id
+
+    # Create personal organization
+    await create_personal_organization(db, user)
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     await db.commit()

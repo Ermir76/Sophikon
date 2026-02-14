@@ -76,13 +76,55 @@ async def create_organization(
             detail="Organization with this slug already exists",
         )
 
+    return await _create_org_internal(db, user, data.name, data.slug, is_personal=False)
+
+
+async def create_personal_organization(
+    db: AsyncSession,
+    user: User,
+) -> Organization:
+    """
+    Create a personal organization for a user.
+    Slug is derived from email username, ensuring uniqueness.
+    """
+    # Derive base slug from email (e.g., "john.doe" from "john.doe@example.com")
+    base_slug = user.email.split("@")[0].lower()
+    # Remove non-alphanumeric chars (keep hyphens/underscores)
+    base_slug = "".join(c for c in base_slug if c.isalnum() or c in "-_")
+    if not base_slug:
+        base_slug = "user"
+
+    # Ensure uniqueness
+    slug = base_slug
+    counter = 1
+    while True:
+        existing = await db.execute(
+            select(Organization).where(Organization.slug == slug)
+        )
+        if not existing.scalar_one_or_none():
+            break
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    org_name = f"{user.full_name}'s Org"
+    return await _create_org_internal(db, user, org_name, slug, is_personal=True)
+
+
+async def _create_org_internal(
+    db: AsyncSession,
+    user: User,
+    name: str,
+    slug: str,
+    is_personal: bool,
+) -> Organization:
+    """Internal helper to create org + owner member."""
     org = Organization(
-        name=data.name,
-        slug=data.slug,
-        is_personal=False,
+        name=name,
+        slug=slug,
+        is_personal=is_personal,
     )
     db.add(org)
-    await db.flush()  # Get org.id before creating member
+    await db.flush()  # Get org.id
 
     # Make the creator the owner
     member = OrganizationMember(
