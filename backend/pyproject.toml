@@ -63,3 +63,14 @@ where = ["."]
 include = ["app*"]
 exclude = ["alembic*", "tests*"]
 
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

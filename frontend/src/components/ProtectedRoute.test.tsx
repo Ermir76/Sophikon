@@ -2,10 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthStore, type AuthState } from "@/store/auth-store";
 
 // Mock the auth store
 vi.mock("@/store/auth-store");
+
+// Use the actual AuthState type to satisfy the mock signature
+type StateSelector = (state: AuthState) => unknown;
 
 describe("ProtectedRoute", () => {
   beforeEach(() => {
@@ -13,11 +16,11 @@ describe("ProtectedRoute", () => {
   });
 
   it("shows loading spinner when not yet initialized", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: any) => {
+    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
       const state = {
         isAuthenticated: false,
         isInitialized: false,
-      };
+      } as unknown as AuthState;
       return selector(state);
     });
 
@@ -32,11 +35,11 @@ describe("ProtectedRoute", () => {
   });
 
   it("redirects to login when initialized but not authenticated", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: any) => {
+    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
       const state = {
         isAuthenticated: false,
         isInitialized: true,
-      };
+      } as unknown as AuthState;
       return selector(state);
     });
 
@@ -56,11 +59,11 @@ describe("ProtectedRoute", () => {
   });
 
   it("renders child routes when initialized and authenticated", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: any) => {
+    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
       const state = {
         isAuthenticated: true,
         isInitialized: true,
-      };
+      } as unknown as AuthState;
       return selector(state);
     });
 

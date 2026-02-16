@@ -1,15 +1,43 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+  # Backend - Ruff (Linting & Formatting)
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix]
+        name: ruff-check
+        entry: ruff check --fix
+        language: system
+        types: [python]
+        files: ^backend/
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v10.0.0
+        name: ruff-format
+        entry: ruff format
+        language: system
+        types: [python]
+        files: ^backend/
+
+  # Frontend - ESLint & Prettier
+  - repo: local
     hooks:
       - id: eslint
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
-    hooks:
+        name: eslint
+        entry: npm run lint --prefix frontend
+        language: system
+        types: [javascript, jsx, ts, tsx]
+        files: ^frontend/
+        pass_filenames: false
       - id: prettier
+        name: prettier
+        entry: npm run format --prefix frontend
+        language: system
+        types: [javascript, jsx, ts, tsx, json, css, yaml, html]
+        files: ^frontend/
+        pass_filenames: false
+
+  # Standard Hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict

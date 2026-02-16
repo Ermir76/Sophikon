@@ -63,7 +63,7 @@ export default function RegisterPage() {
   });
 
   function onSubmit(data: RegisterFormValues) {
-    const { confirmPassword: _, ...apiData } = data;
+    const { confirmPassword: _confirmPassword, ...apiData } = data;
     registerMutation.mutate(apiData);
   }
 

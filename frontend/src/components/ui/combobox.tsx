@@ -54,7 +54,6 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
 
 function ComboboxInput({
   className,
-  children,
   disabled = false,
   showTrigger = true,
   showClear = false,
@@ -84,7 +83,6 @@ function ComboboxInput({
         )}
         {showClear && <ComboboxClear disabled={disabled} />}
       </InputGroupAddon>
-      {children}
     </InputGroup>
   );
 }
@@ -274,7 +272,6 @@ function ComboboxChip({
 
 function ComboboxChipsInput({
   className,
-  children,
   ...props
 }: ComboboxPrimitive.Input.Props) {
   return (

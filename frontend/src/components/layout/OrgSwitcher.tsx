@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect } from "react";
 import { Link } from "react-router";
 import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
@@ -27,7 +28,10 @@ export function OrgSwitcher() {
   const { data: organizationsData, isLoading } = useOrganizations();
   const { data: activeOrgData } = useOrganization(activeOrgId || "");
 
-  const organizations = organizationsData?.items || [];
+  const organizations = React.useMemo(
+    () => organizationsData?.items || [],
+    [organizationsData?.items],
+  );
 
   // Auto-select first organization if none is selected
   useEffect(() => {
