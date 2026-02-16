@@ -76,3 +76,22 @@ async def client(
 
     app.dependency_overrides.clear()
     await transaction.rollback()
+
+
+@pytest.fixture()
+async def session(
+    connection: AsyncConnection,
+) -> AsyncGenerator[AsyncSession]:
+    """
+    Direct DB session for tests that need to insert data outside the API.
+
+    Shares the same connection (and transaction) as the client fixture,
+    so rows inserted here are visible to API endpoints during the test.
+    """
+    session = AsyncSession(
+        bind=connection,
+        join_transaction_mode="create_savepoint",
+        expire_on_commit=False,
+    )
+    async with session:
+        yield session
