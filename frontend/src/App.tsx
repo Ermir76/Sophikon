@@ -22,6 +22,10 @@ const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const OrgSettingsPage = lazy(() => import("./pages/settings/OrgSettingsPage"));
 const OrgMembersPage = lazy(() => import("./pages/settings/OrgMembersPage"));
 const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
+const CreateOrganizationPage = lazy(
+  () => import("./pages/CreateOrganizationPage"),
+);
+const ProjectOverviewPage = lazy(() => import("./pages/ProjectOverviewPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 import { useAuthStore } from "./store/auth-store";
@@ -62,7 +66,7 @@ function App() {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route
               path="/organizations/new"
-              element={<div className="p-4">Create Organization (TODO)</div>}
+              element={<CreateOrganizationPage />}
             />
 
             <Route element={<OrgGuard />}>
@@ -78,10 +82,7 @@ function App() {
 
             {/* Project Scope */}
             <Route path="/projects/:projectId" element={<ProjectLayout />}>
-              <Route
-                index
-                element={<div className="p-4">Project Overview (TODO)</div>}
-              />
+              <Route index element={<ProjectOverviewPage />} />
               <Route path="tasks" element={<TasksPage />} />
               <Route path="gantt" element={<GanttPage />} />
               <Route path="resources" element={<ResourcesPage />} />

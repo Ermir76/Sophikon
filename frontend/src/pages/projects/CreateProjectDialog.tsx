@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { cn } from "@/lib/utils";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,9 +75,9 @@ export function CreateProjectDialog({
       });
       onOpenChange(false);
       form.reset();
-    } catch {
+    } catch (error) {
       toast.error("Error", {
-        description: "Failed to create project.",
+        description: getErrorMessage(error),
       });
     }
   };

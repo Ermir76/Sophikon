@@ -65,7 +65,7 @@ async def get_current_active_user(
 
 async def get_org_membership_or_404(
     db: AsyncSession,
-    org_id: str,
+    org_id: UUID,
     user: User,
 ) -> tuple:
     """

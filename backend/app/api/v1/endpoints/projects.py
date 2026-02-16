@@ -15,6 +15,7 @@ from app.api.deps import (
     ProjectAccess,
     check_role,
     get_current_active_user,
+    get_org_membership_or_404,
     get_project_or_404,
 )
 from app.core.database import get_db
@@ -70,6 +71,7 @@ async def create_project(
     user: User = Depends(get_current_active_user),
 ):
     """Create a new project."""
+    await get_org_membership_or_404(db, body.organization_id, user)
     project = await project_service.create_project(db, user, body)
     return ProjectDetail.model_validate(project)
 

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth-store";
 
 // Use the environment variable, or fallback (useful for local dev proxy)
@@ -12,20 +12,23 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+interface RetryableRequest extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetryableRequest;
 
     // Check if 401 and we haven't retried yet
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !("_retry" in originalRequest)
+      !originalRequest._retry
     ) {
       // Mark as retried to avoid infinite loops
-      // @ts-expect-error - _retry is a custom property
       originalRequest._retry = true;
 
       try {

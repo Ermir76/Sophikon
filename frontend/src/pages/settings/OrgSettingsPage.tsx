@@ -28,6 +28,7 @@ import {
   useUpdateOrganization,
 } from "@/hooks/useOrganizations";
 import { QueryError } from "@/components/QueryError";
+import { getErrorMessage } from "@/lib/errors";
 
 const orgSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -78,7 +79,7 @@ export default function OrgSettingsPage() {
       });
     } catch (error) {
       toast.error("Error", {
-        description: "Failed to update organization.",
+        description: getErrorMessage(error),
       });
     }
   };

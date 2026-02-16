@@ -23,6 +23,7 @@ import {
   useOrganization,
 } from "@/hooks/useOrganizations";
 import { QueryError } from "@/components/QueryError";
+import { getErrorMessage } from "@/lib/errors";
 import { MembersTable } from "./members/MembersTable";
 import {
   InviteMemberDialog,
@@ -56,7 +57,7 @@ export default function OrgMembersPage() {
       });
     } catch (error) {
       toast.error("Error", {
-        description: "Failed to invite member.",
+        description: getErrorMessage(error),
       });
     }
   };
@@ -71,7 +72,7 @@ export default function OrgMembersPage() {
       setMemberToRemove(null);
     } catch (error) {
       toast.error("Error", {
-        description: "Failed to remove member.",
+        description: getErrorMessage(error),
       });
     }
   };
@@ -87,7 +88,7 @@ export default function OrgMembersPage() {
       });
     } catch (error) {
       toast.error("Error", {
-        description: "Failed to update member role.",
+        description: getErrorMessage(error),
       });
     }
   };

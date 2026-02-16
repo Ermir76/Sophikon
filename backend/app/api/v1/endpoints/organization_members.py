@@ -31,7 +31,7 @@ router = APIRouter(
 
 @router.get("/me", response_model=OrgMemberListItem)
 async def get_my_membership(
-    org_id: str,
+    org_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
@@ -42,7 +42,7 @@ async def get_my_membership(
 
 @router.get("", response_model=PaginatedResponse[OrgMemberListItem])
 async def list_members(
-    org_id: str,
+    org_id: UUID,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -68,7 +68,7 @@ async def list_members(
     status_code=status.HTTP_201_CREATED,
 )
 async def invite_member(
-    org_id: str,
+    org_id: UUID,
     body: OrgMemberInvite,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
@@ -88,7 +88,7 @@ async def invite_member(
 
 @router.patch("/{member_id}", response_model=OrgMemberListItem)
 async def change_member_role(
-    org_id: str,
+    org_id: UUID,
     member_id: UUID,
     body: OrgMemberRoleUpdate,
     db: AsyncSession = Depends(get_db),
@@ -111,7 +111,7 @@ async def change_member_role(
 
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(
-    org_id: str,
+    org_id: UUID,
     member_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),

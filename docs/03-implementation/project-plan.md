@@ -101,11 +101,11 @@
 
 **Frontend:**
 
-- [ ] Restructure routing: global layout (`/dashboard`, `/projects`) vs project layout (`/projects/:id/tasks`)
-- [ ] Org-aware sidebar: global mode (Dashboard, Projects) vs project mode (Tasks, Gantt, Resources)
-- [ ] Org switcher component (if user belongs to multiple orgs)
-- [ ] "Back to Projects" navigation when inside a project
-- [ ] RBAC-filtered sidebar items (e.g., viewers don't see Resources)
+- [x] Restructure routing: global layout (`/dashboard`, `/projects`) vs project layout (`/projects/:id/tasks`)
+- [x] Org-aware sidebar: global mode (Dashboard, Projects) vs project mode (Tasks, Gantt, Resources)
+- [x] Org switcher component (if user belongs to multiple orgs)
+- [x] "Back to Projects" navigation when inside a project
+- [x] RBAC-filtered sidebar items (e.g., viewers don't see Resources)
 
 **Deliverables:**
 

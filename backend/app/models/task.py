@@ -2,35 +2,36 @@
 Task model for work breakdown structure (WBS) and scheduling.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    TIMESTAMP,
-    Date,
-    Integer,
     DECIMAL,
+    TIMESTAMP,
+    Boolean,
     CheckConstraint,
-    Index,
+    Date,
     ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, date
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-from app.models.enums import TaskType, ConstraintType, CostAccrual
-import uuid
+from app.models.enums import ConstraintType, CostAccrual, TaskType
 
 if TYPE_CHECKING:
-    from app.models.project import Project
-    from app.models.calendar import Calendar
     from app.models.assignment import Assignment
+    from app.models.calendar import Calendar
     from app.models.dependency import Dependency
+    from app.models.project import Project
     from app.models.task_baseline import TaskBaseline
     from app.models.time_entry import TimeEntry
 

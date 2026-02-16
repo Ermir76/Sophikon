@@ -1,9 +1,35 @@
 import { useOrgStore } from "@/store/org-store";
 import { useOrganization } from "@/hooks/useOrganizations";
+import { QueryError } from "@/components/QueryError";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function DashboardPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
-  const { data: activeOrganization } = useOrganization(activeOrgId || "");
+  const {
+    data: activeOrganization,
+    isLoading,
+    isError,
+    error,
+  } = useOrganization(activeOrgId || "");
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading dashboard...</div>;
+  }
+
+  if (isError) {
+    return <QueryError message={getErrorMessage(error)} />;
+  }
+
+  if (!activeOrganization) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <h1 className="text-2xl font-semibold mb-2">Welcome to Sophikon</h1>
+        <p className="text-muted-foreground">
+          Please select or create an organization to get started.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">

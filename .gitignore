@@ -2,3 +2,5 @@
 diary/
 node_modules/
 
+review/
+./rules.md

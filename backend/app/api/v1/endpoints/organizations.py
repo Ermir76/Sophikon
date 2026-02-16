@@ -8,6 +8,8 @@ PATCH  /organizations/{org_id}     - Update organization (owner only)
 DELETE /organizations/{org_id}     - Soft delete organization (owner only)
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -62,7 +64,7 @@ async def create_organization(
 
 @router.get("/{org_id}", response_model=OrganizationDetail)
 async def get_organization(
-    org_id: str,
+    org_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
@@ -73,7 +75,7 @@ async def get_organization(
 
 @router.patch("/{org_id}", response_model=OrganizationDetail)
 async def update_organization(
-    org_id: str,
+    org_id: UUID,
     body: OrganizationUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
@@ -93,7 +95,7 @@ async def update_organization(
 
 @router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_organization(
-    org_id: str,
+    org_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
