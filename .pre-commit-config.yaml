@@ -1,18 +1,12 @@
 repos:
   # Backend - Ruff (Linting & Formatting)
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
     hooks:
       - id: ruff
-        name: ruff-check
-        entry: ruff check --fix
-        language: system
-        types: [python]
+        args: [--fix]
         files: ^backend/
       - id: ruff-format
-        name: ruff-format
-        entry: ruff format
-        language: system
-        types: [python]
         files: ^backend/
 
   # Frontend - ESLint & Prettier
