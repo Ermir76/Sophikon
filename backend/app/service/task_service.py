@@ -4,7 +4,7 @@ Task business logic.
 Handles listing, creating, updating, and soft-deleting tasks.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -178,5 +178,5 @@ async def soft_delete_task(
 ) -> None:
     """Soft delete a task."""
     task.is_deleted = True
-    task.deleted_at = datetime.now(timezone.utc)
+    task.deleted_at = datetime.now(UTC)
     await db.commit()

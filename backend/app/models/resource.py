@@ -2,35 +2,36 @@
 Resource model for project resources (people, materials, costs).
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
-    TIMESTAMP,
     DECIMAL,
+    TIMESTAMP,
+    Boolean,
     CheckConstraint,
-    Index,
     ForeignKey,
+    Index,
+    String,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-from app.models.enums import ResourceType, CostAccrual
-import uuid
+from app.models.enums import CostAccrual, ResourceType
 
 if TYPE_CHECKING:
-    from app.models.project import Project
-    from app.models.user import User
-    from app.models.calendar import Calendar
     from app.models.assignment import Assignment
-    from app.models.resource_rate import ResourceRate
-    from app.models.resource_availability import ResourceAvailability
+    from app.models.calendar import Calendar
+    from app.models.project import Project
     from app.models.project_member import ProjectMember
+    from app.models.resource_availability import ResourceAvailability
+    from app.models.resource_rate import ResourceRate
+    from app.models.user import User
 
 
 class Resource(Base):

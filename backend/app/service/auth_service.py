@@ -4,7 +4,7 @@ Authentication business logic.
 Handles registration, login, token refresh, and logout.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -22,7 +22,6 @@ from app.models.refresh_token import RefreshToken
 from app.models.role import Role
 from app.models.user import User
 from app.service.organization_service import create_personal_organization
-
 
 # ── Helpers ──
 
@@ -65,7 +64,7 @@ async def _create_token_pair(
         token_hash=hash_token(raw_refresh),
         device_info=device_info,
         ip_address=ip,
-        expires_at=datetime.now(timezone.utc)
+        expires_at=datetime.now(UTC)
         + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
     db.add(db_token)
@@ -136,7 +135,7 @@ async def login_user(
         )
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(user)
     # Return tokens separately so controller can set cookies
@@ -161,7 +160,7 @@ async def refresh_tokens(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )
-    if db_token.expires_at < datetime.now(timezone.utc):
+    if db_token.expires_at < datetime.now(UTC):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token expired",
@@ -169,7 +168,7 @@ async def refresh_tokens(
 
     # Revoke old token
     db_token.is_revoked = True
-    db_token.revoked_at = datetime.now(timezone.utc)
+    db_token.revoked_at = datetime.now(UTC)
     db_token.revoked_reason = "rotated"
 
     user = await get_user_by_id(db, db_token.user_id)
@@ -194,6 +193,6 @@ async def logout_user(db: AsyncSession, raw_refresh_token: str) -> None:
     db_token = result.scalar_one_or_none()
     if db_token and not db_token.is_revoked:
         db_token.is_revoked = True
-        db_token.revoked_at = datetime.now(timezone.utc)
+        db_token.revoked_at = datetime.now(UTC)
         db_token.revoked_reason = "logout"
         await db.commit()

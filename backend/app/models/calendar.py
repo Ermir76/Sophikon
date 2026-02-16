@@ -2,29 +2,30 @@
 Calendar model for work calendars defining working hours.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
     TIMESTAMP,
+    Boolean,
     ForeignKey,
     Index,
+    String,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
-    from app.models.project import Project
     from app.models.calendar_exception import CalendarException
-    from app.models.task import Task
+    from app.models.project import Project
     from app.models.resource import Resource
+    from app.models.task import Task
 
 
 class Calendar(Base):

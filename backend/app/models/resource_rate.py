@@ -2,26 +2,27 @@
 ResourceRate model for cost rate tables with effective dates.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DECIMAL,
     TIMESTAMP,
+    CheckConstraint,
     Date,
     ForeignKey,
     Index,
     UniqueConstraint,
-    CheckConstraint,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, date
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import RateTable
-import uuid
 
 if TYPE_CHECKING:
     from app.models.resource import Resource

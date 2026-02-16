@@ -2,23 +2,24 @@
 ActivityLog model for audit trail of all project changes.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
     TIMESTAMP,
     ForeignKey,
     Index,
+    String,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import AuditAction
-import uuid
 
 if TYPE_CHECKING:
     from app.models.project import Project

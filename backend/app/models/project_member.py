@@ -2,6 +2,8 @@
 ProjectMember model for project team membership with RBAC roles.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -11,18 +13,17 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.project import Project
-    from app.models.user import User
-    from app.models.role import Role
     from app.models.resource import Resource
+    from app.models.role import Role
+    from app.models.user import User
 
 
 class ProjectMember(Base):

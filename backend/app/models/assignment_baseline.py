@@ -2,25 +2,26 @@
 AssignmentBaseline model for baseline snapshots of assignments.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Integer,
     DECIMAL,
     TIMESTAMP,
+    CheckConstraint,
     Date,
     ForeignKey,
     Index,
+    Integer,
     UniqueConstraint,
-    CheckConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, date
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.assignment import Assignment

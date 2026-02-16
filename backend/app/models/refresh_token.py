@@ -2,15 +2,16 @@
 RefreshToken model for JWT session management.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, TIMESTAMP, ForeignKey, Index, text, func
+from sqlalchemy import TIMESTAMP, Boolean, ForeignKey, Index, String, func, text
+from sqlalchemy.dialects.postgresql import INET, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, INET
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.user import User

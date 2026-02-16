@@ -2,20 +2,21 @@
 Role model for RBAC (Role-Based Access Control).
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, Text, TIMESTAMP, text, CheckConstraint, func
+from sqlalchemy import TIMESTAMP, Boolean, CheckConstraint, String, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import RoleScope
-import uuid
 
 if TYPE_CHECKING:
-    from app.models.user import User
     from app.models.project_member import ProjectMember
+    from app.models.user import User
 
 
 class Role(Base):

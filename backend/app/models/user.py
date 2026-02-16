@@ -2,32 +2,33 @@
 User model for authentication and profile management.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, TIMESTAMP, text, Index, ForeignKey, func
+from sqlalchemy import TIMESTAMP, Boolean, ForeignKey, Index, String, func, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
-    from app.models.role import Role
-    from app.models.refresh_token import RefreshToken
-    from app.models.password_reset import PasswordReset
-    from app.models.organization_member import OrganizationMember
-    from app.models.project import Project
-    from app.models.project_member import ProjectMember
-    from app.models.project_invitation import ProjectInvitation
-    from app.models.resource import Resource
-    from app.models.time_entry import TimeEntry
-    from app.models.comment import Comment
-    from app.models.attachment import Attachment
-    from app.models.notification import Notification
+    from app.models.activity_log import ActivityLog
     from app.models.ai_conversation import AIConversation
     from app.models.ai_usage import AIUsage
-    from app.models.activity_log import ActivityLog
+    from app.models.attachment import Attachment
+    from app.models.comment import Comment
+    from app.models.notification import Notification
+    from app.models.organization_member import OrganizationMember
+    from app.models.password_reset import PasswordReset
+    from app.models.project import Project
+    from app.models.project_invitation import ProjectInvitation
+    from app.models.project_member import ProjectMember
+    from app.models.refresh_token import RefreshToken
+    from app.models.resource import Resource
+    from app.models.role import Role
+    from app.models.time_entry import TimeEntry
 
 
 class User(Base):

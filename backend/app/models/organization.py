@@ -5,22 +5,23 @@ Organizations are the top-level tenant container. All projects belong to an
 organization, providing data isolation between different companies/groups.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
     TIMESTAMP,
+    Boolean,
     Index,
+    String,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.organization_member import OrganizationMember

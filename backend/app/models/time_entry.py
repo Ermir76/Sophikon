@@ -2,33 +2,34 @@
 TimeEntry model for time logging with approval workflow.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Integer,
-    Boolean,
-    Text,
     TIMESTAMP,
+    Boolean,
+    CheckConstraint,
     Date,
     ForeignKey,
     Index,
-    CheckConstraint,
+    Integer,
+    String,
+    Text,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, date
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import BillingStatus, TimeEntryStatus
-import uuid
 
 if TYPE_CHECKING:
-    from app.models.user import User
-    from app.models.task import Task
     from app.models.assignment import Assignment
+    from app.models.task import Task
+    from app.models.user import User
 
 
 class TimeEntry(Base):

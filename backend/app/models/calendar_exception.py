@@ -2,24 +2,25 @@
 CalendarException model for holidays and special working days.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
     TIMESTAMP,
+    Boolean,
     Date,
     ForeignKey,
     Index,
+    String,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime, date
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.calendar import Calendar

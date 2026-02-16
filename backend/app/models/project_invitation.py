@@ -2,29 +2,30 @@
 ProjectInvitation model for email invitations to join projects.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
     TIMESTAMP,
+    Boolean,
     ForeignKey,
     Index,
+    String,
+    Text,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.project import Project
-    from app.models.user import User
     from app.models.role import Role
+    from app.models.user import User
 
 
 class ProjectInvitation(Base):

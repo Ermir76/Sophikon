@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 
 from app.models.enums import ConstraintType, TaskType
 
-
 # ── Request Schemas ──
 
 

@@ -2,25 +2,26 @@
 AIMessage model for individual messages in AI conversations.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Integer,
-    Text,
     TIMESTAMP,
+    CheckConstraint,
     ForeignKey,
     Index,
-    CheckConstraint,
+    Integer,
+    String,
+    Text,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import AIMessageRole
-import uuid
 
 if TYPE_CHECKING:
     from app.models.ai_conversation import AIConversation

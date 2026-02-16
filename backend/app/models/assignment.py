@@ -2,34 +2,35 @@
 Assignment model for resource assignments to tasks.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    TIMESTAMP,
-    Date,
-    Integer,
     DECIMAL,
+    TIMESTAMP,
+    Boolean,
     CheckConstraint,
-    Index,
+    Date,
     ForeignKey,
+    Index,
+    Integer,
+    String,
     UniqueConstraint,
     func,
     text,
-    Boolean,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime, date
 from uuid_utils import uuid7
+
 from app.core.database import Base
-from app.models.enums import WorkContour, RateTable
-import uuid
+from app.models.enums import RateTable, WorkContour
 
 if TYPE_CHECKING:
-    from app.models.task import Task
-    from app.models.resource import Resource
     from app.models.assignment_baseline import AssignmentBaseline
+    from app.models.resource import Resource
+    from app.models.task import Task
     from app.models.time_entry import TimeEntry
 
 

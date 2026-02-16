@@ -4,7 +4,7 @@ Project business logic.
 Handles listing, creating, updating, and soft-deleting projects.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -148,5 +148,5 @@ async def soft_delete_project(
 ) -> None:
     """Soft delete a project."""
     project.is_deleted = True
-    project.deleted_at = datetime.now(timezone.utc)
+    project.deleted_at = datetime.now(UTC)
     await db.commit()

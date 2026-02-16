@@ -2,27 +2,28 @@
 Dependency model for task dependencies (predecessor-successor relationships).
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
     TIMESTAMP,
-    Integer,
+    Boolean,
     CheckConstraint,
-    Index,
     ForeignKey,
+    Index,
+    Integer,
+    String,
     UniqueConstraint,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import DependencyType, LagFormat
-import uuid
 
 if TYPE_CHECKING:
     from app.models.task import Task

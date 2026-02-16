@@ -2,24 +2,25 @@
 Comment model for comments on tasks, projects, and other entities.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
     TIMESTAMP,
+    Boolean,
     ForeignKey,
     Index,
+    String,
+    Text,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
-from datetime import datetime
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.user import User

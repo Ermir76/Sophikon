@@ -1,19 +1,18 @@
 """
 Centralized enums for database models.
 
-All enums inherit from (str, Enum) for JSON serialization compatibility.
+All enums inherit from StrEnum for JSON serialization compatibility.
 These are used in SQLAlchemy models and Pydantic schemas.
 """
 
-from enum import Enum
-
+from enum import StrEnum
 
 # ============================================================================
 # PROJECT
 # ============================================================================
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     """Project lifecycle status."""
 
     PLANNING = "PLANNING"
@@ -23,7 +22,7 @@ class ProjectStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
-class ScheduleFrom(str, Enum):
+class ScheduleFrom(StrEnum):
     """Project scheduling direction."""
 
     START = "START"
@@ -35,7 +34,7 @@ class ScheduleFrom(str, Enum):
 # ============================================================================
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     """Task scheduling type (determines what stays fixed when adjusting)."""
 
     FIXED_UNITS = "FIXED_UNITS"
@@ -43,7 +42,7 @@ class TaskType(str, Enum):
     FIXED_WORK = "FIXED_WORK"
 
 
-class ConstraintType(str, Enum):
+class ConstraintType(StrEnum):
     """Task scheduling constraints."""
 
     ASAP = "ASAP"  # As Soon As Possible
@@ -56,7 +55,7 @@ class ConstraintType(str, Enum):
     FNLT = "FNLT"  # Finish No Later Than
 
 
-class CostAccrual(str, Enum):
+class CostAccrual(StrEnum):
     """When costs are accrued."""
 
     START = "START"
@@ -69,7 +68,7 @@ class CostAccrual(str, Enum):
 # ============================================================================
 
 
-class DependencyType(str, Enum):
+class DependencyType(StrEnum):
     """Task dependency relationship types."""
 
     FS = "FS"  # Finish-to-Start
@@ -78,7 +77,7 @@ class DependencyType(str, Enum):
     SF = "SF"  # Start-to-Finish
 
 
-class LagFormat(str, Enum):
+class LagFormat(StrEnum):
     """Lag/lead time format."""
 
     DURATION = "DURATION"
@@ -90,7 +89,7 @@ class LagFormat(str, Enum):
 # ============================================================================
 
 
-class ResourceType(str, Enum):
+class ResourceType(StrEnum):
     """Resource types."""
 
     WORK = "WORK"  # People (hours)
@@ -103,7 +102,7 @@ class ResourceType(str, Enum):
 # ============================================================================
 
 
-class WorkContour(str, Enum):
+class WorkContour(StrEnum):
     """Work distribution patterns over time."""
 
     FLAT = "FLAT"
@@ -117,7 +116,7 @@ class WorkContour(str, Enum):
     CONTOURED = "CONTOURED"  # Custom pattern
 
 
-class RateTable(str, Enum):
+class RateTable(StrEnum):
     """Cost rate tables (A-E)."""
 
     A = "A"
@@ -132,14 +131,14 @@ class RateTable(str, Enum):
 # ============================================================================
 
 
-class RoleScope(str, Enum):
+class RoleScope(StrEnum):
     """Role scope levels."""
 
     SYSTEM = "system"  # System-wide roles (admin, user)
     PROJECT = "project"  # Project-specific roles (owner, manager, member, viewer)
 
 
-class OrgRole(str, Enum):
+class OrgRole(StrEnum):
     """Organization membership roles."""
 
     OWNER = "owner"  # Full control, billing, can delete org
@@ -152,7 +151,7 @@ class OrgRole(str, Enum):
 # ============================================================================
 
 
-class BillingStatus(str, Enum):
+class BillingStatus(StrEnum):
     """Time entry billing status."""
 
     UNBILLED = "UNBILLED"
@@ -160,7 +159,7 @@ class BillingStatus(str, Enum):
     NON_BILLABLE = "NON_BILLABLE"
 
 
-class TimeEntryStatus(str, Enum):
+class TimeEntryStatus(StrEnum):
     """Time entry approval status."""
 
     DRAFT = "DRAFT"
@@ -174,7 +173,7 @@ class TimeEntryStatus(str, Enum):
 # ============================================================================
 
 
-class StorageProvider(str, Enum):
+class StorageProvider(StrEnum):
     """File storage providers."""
 
     LOCAL = "local"
@@ -186,7 +185,7 @@ class StorageProvider(str, Enum):
 # ============================================================================
 
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     """Notification event types."""
 
     TASK_ASSIGNED = "task_assigned"
@@ -202,7 +201,7 @@ class NotificationType(str, Enum):
 # ============================================================================
 
 
-class AIMessageRole(str, Enum):
+class AIMessageRole(StrEnum):
     """AI message roles."""
 
     USER = "user"
@@ -215,7 +214,7 @@ class AIMessageRole(str, Enum):
 # ============================================================================
 
 
-class AuditAction(str, Enum):
+class AuditAction(StrEnum):
     """Audit log action types."""
 
     CREATED = "created"

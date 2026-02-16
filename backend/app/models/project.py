@@ -2,39 +2,40 @@
 Project Model for project management and scheduling.
 """
 
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    TIMESTAMP,
-    Date,
     DECIMAL,
+    TIMESTAMP,
+    Boolean,
     CheckConstraint,
+    Date,
+    ForeignKey,
     Index,
+    String,
+    Text,
     func,
     text,
-    ForeignKey,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from datetime import datetime, date
 from uuid_utils import uuid7
+
 from app.core.database import Base
 from app.models.enums import ProjectStatus, ScheduleFrom
-import uuid
 
 if TYPE_CHECKING:
-    from app.models.user import User
-    from app.models.organization import Organization
-    from app.models.calendar import Calendar
-    from app.models.task import Task
-    from app.models.resource import Resource
-    from app.models.project_member import ProjectMember
-    from app.models.project_invitation import ProjectInvitation
-    from app.models.ai_conversation import AIConversation
     from app.models.activity_log import ActivityLog
+    from app.models.ai_conversation import AIConversation
+    from app.models.calendar import Calendar
+    from app.models.organization import Organization
+    from app.models.project_invitation import ProjectInvitation
+    from app.models.project_member import ProjectMember
+    from app.models.resource import Resource
+    from app.models.task import Task
+    from app.models.user import User
 
 
 class Project(Base):

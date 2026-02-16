@@ -2,15 +2,16 @@
 PasswordReset model for password recovery flow.
 """
 
+import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, TIMESTAMP, ForeignKey, Index, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import TIMESTAMP, ForeignKey, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
+
 from app.core.database import Base
-import uuid
 
 if TYPE_CHECKING:
     from app.models.user import User

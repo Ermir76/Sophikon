@@ -4,7 +4,7 @@ Organization business logic.
 Handles listing, creating, updating, and soft-deleting organizations.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -195,5 +195,5 @@ async def soft_delete_organization(
             detail="Cannot delete personal organization",
         )
     org.is_deleted = True
-    org.deleted_at = datetime.now(timezone.utc)
+    org.deleted_at = datetime.now(UTC)
     await db.commit()
