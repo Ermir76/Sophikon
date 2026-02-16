@@ -23,6 +23,8 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "bcrypt>=4.0.0",
     "python-multipart>=0.0.22",
+    # Rate Limiting
+    "slowapi>=0.1.9",
     # Redis
     "redis>=7.1.0",
     # Background Tasks

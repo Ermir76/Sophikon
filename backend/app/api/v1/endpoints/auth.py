@@ -2,11 +2,13 @@
 Authentication endpoints: register, login, refresh, logout, me.
 """
 
-from fastapi import APIRouter, Depends, Request, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.schema.auth import (
     AuthResponse,
@@ -17,7 +19,6 @@ from app.schema.auth import (
     UserResponse,
 )
 from app.service import auth_service
-from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,6 +34,7 @@ def _client_info(request: Request) -> tuple[str | None, str | None]:
     response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/hour")
 async def register(
     body: UserRegisterRequest,
     request: Request,
@@ -69,6 +71,7 @@ async def register(
 
 
 @router.post("/login", response_model=AuthResponse)
+@limiter.limit("10/minute")
 async def login(
     body: UserLoginRequest,
     request: Request,
@@ -104,6 +107,7 @@ async def login(
 
 
 @router.post("/refresh", response_model=AuthResponse)
+@limiter.limit("30/minute")
 async def refresh(
     request: Request,
     db: AsyncSession = Depends(get_db),

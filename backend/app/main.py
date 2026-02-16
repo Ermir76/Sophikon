@@ -1,26 +1,31 @@
-from contextlib import asynccontextmanager
-from collections.abc import AsyncGenerator
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
+from app.api.v1.endpoints.assignments import (
+    assignments_router,
+    task_assignments_router,
+)
+from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.dependencies import router as dependencies_router
+from app.api.v1.endpoints.organization_members import router as org_members_router
+from app.api.v1.endpoints.organizations import router as orgs_router
+from app.api.v1.endpoints.projects import router as projects_router
+from app.api.v1.endpoints.resources import router as resources_router
+from app.api.v1.endpoints.tasks import router as tasks_router
 from app.core.config import settings
 from app.core.database import engine
-from app.api.v1.endpoints.auth import router as auth_router
-from app.api.v1.endpoints.organizations import router as orgs_router
-from app.api.v1.endpoints.organization_members import router as org_members_router
-from app.api.v1.endpoints.projects import router as projects_router
-from app.api.v1.endpoints.tasks import router as tasks_router
-from app.api.v1.endpoints.resources import router as resources_router
-from app.api.v1.endpoints.dependencies import router as dependencies_router
-from app.api.v1.endpoints.assignments import (
-    task_assignments_router,
-    assignments_router,
-)
+from app.core.rate_limit import limiter, rate_limit_exceeded_handler
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """
     Manage application lifecycle.
 
@@ -39,6 +44,11 @@ app = FastAPI(
     version=settings.VERSION,
     lifespan=lifespan,
 )
+
+# Set up Rate Limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.exception_handler(Exception)
