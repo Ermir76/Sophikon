@@ -16,34 +16,43 @@ interface RetryableRequest extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+// Auth endpoints should never trigger token refresh
+const AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/logout", "/auth/refresh", "/auth/me"];
+
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequest;
+    const requestPath = originalRequest?.url || "";
 
-    // Check if 401 and we haven't retried yet
+    // Skip refresh for auth endpoints and already-retried requests
+    const isAuthEndpoint = AUTH_PATHS.some((p) => requestPath.includes(p));
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthEndpoint
     ) {
-      // Mark as retried to avoid infinite loops
       originalRequest._retry = true;
 
       try {
-        // Attempt to refresh the token (cookie-based)
         await axios.post(
           `${API_BASE}/auth/refresh`,
           {},
           { withCredentials: true },
         );
 
-        // Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed (or no refresh token), force logout
-        useAuthStore.getState().logout();
+        // Refresh failed — clear local state without calling backend logout
+        const { clearAuth } = await import("@/lib/auth");
+        clearAuth();
+        useAuthStore.setState({
+          user: null,
+          isAuthenticated: false,
+          isInitialized: true,
+        });
         return Promise.reject(refreshError);
       }
     }
