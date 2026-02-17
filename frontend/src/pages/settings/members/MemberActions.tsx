@@ -22,6 +22,7 @@ interface MemberActionsProps {
   isCurrentUser: boolean;
   onUpdateRole: (member: OrganizationMember, newRole: OrgRole) => void;
   onRemove: (member: OrganizationMember) => void;
+  canManage: boolean;
 }
 
 export function MemberActions({
@@ -29,6 +30,7 @@ export function MemberActions({
   isCurrentUser,
   onUpdateRole,
   onRemove,
+  canManage,
 }: MemberActionsProps) {
   return (
     <DropdownMenu>
@@ -50,31 +52,36 @@ export function MemberActions({
         >
           Copy Email
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
 
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup
-              value={member.role}
-              onValueChange={(val) => onUpdateRole(member, val as OrgRole)}
+        {canManage && (
+          <>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup
+                  value={member.role}
+                  onValueChange={(val) => onUpdateRole(member, val as OrgRole)}
+                >
+                  {ROLE_OPTIONS.map((role) => (
+                    <DropdownMenuRadioItem key={role.value} value={role.value}>
+                      {role.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => onRemove(member)}
+              disabled={isCurrentUser}
             >
-              {ROLE_OPTIONS.map((role) => (
-                <DropdownMenuRadioItem key={role.value} value={role.value}>
-                  {role.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-
-        <DropdownMenuItem
-          className="text-destructive"
-          onClick={() => onRemove(member)}
-          disabled={isCurrentUser}
-        >
-          Remove Member
-        </DropdownMenuItem>
+              Remove Member
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

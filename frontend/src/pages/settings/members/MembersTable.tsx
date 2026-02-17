@@ -16,6 +16,7 @@ interface MembersTableProps {
   currentUserId?: string;
   onUpdateRole: (member: OrganizationMember, newRole: OrgRole) => void;
   onRemove: (member: OrganizationMember) => void;
+  canManage: boolean;
 }
 
 export function MembersTable({
@@ -24,6 +25,7 @@ export function MembersTable({
   currentUserId,
   onUpdateRole,
   onRemove,
+  canManage,
 }: MembersTableProps) {
   return (
     <Table>
@@ -67,6 +69,7 @@ export function MembersTable({
                   isCurrentUser={member.user_id === currentUserId}
                   onUpdateRole={onUpdateRole}
                   onRemove={onRemove}
+                  canManage={canManage}
                 />
               </TableCell>
             </TableRow>

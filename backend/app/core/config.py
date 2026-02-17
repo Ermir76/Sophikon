@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 
+    # Rate Limiting (disabled in development by default)
+    RATE_LIMIT_ENABLED: bool = True
+
     # AI (optional for now)
     ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None

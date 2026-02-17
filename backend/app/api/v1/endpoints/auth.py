@@ -34,7 +34,7 @@ def _client_info(request: Request) -> tuple[str | None, str | None]:
     response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("100/minute" if settings.ENV == "development" else "5/hour")
+@limiter.limit("5/hour")
 async def register(
     body: UserRegisterRequest,
     request: Request,
@@ -70,7 +70,7 @@ async def register(
 
 
 @router.post("/login", response_model=AuthResponse)
-@limiter.limit("100/minute" if settings.ENV == "development" else "10/minute")
+@limiter.limit("10/minute")
 async def login(
     body: UserLoginRequest,
     request: Request,
@@ -106,7 +106,7 @@ async def login(
 
 
 @router.post("/refresh", response_model=AuthResponse)
-@limiter.limit("100/minute" if settings.ENV == "development" else "30/minute")
+@limiter.limit("30/minute")
 async def refresh(
     request: Request,
     response: Response,

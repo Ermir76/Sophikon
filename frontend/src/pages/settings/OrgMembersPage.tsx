@@ -22,6 +22,7 @@ import {
   useUpdateMemberRole,
   useOrganization,
 } from "@/hooks/useOrganizations";
+import { useMyOrgRole } from "@/hooks/useMyOrgRole";
 import { QueryError } from "@/components/QueryError";
 import { getErrorMessage } from "@/lib/errors";
 import { MembersTable } from "./members/MembersTable";
@@ -33,6 +34,8 @@ import {
 export default function OrgMembersPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const currentUser = useAuthStore((state) => state.user);
+  const { role: myRole } = useMyOrgRole();
+  const canManage = myRole === "owner" || myRole === "admin";
 
   const { data: activeOrganization } = useOrganization(activeOrgId || "");
   const {
@@ -104,11 +107,13 @@ export default function OrgMembersPage() {
             Manage who has access to this organization.
           </p>
         </div>
-        <InviteMemberDialog
-          orgName={activeOrganization?.name}
-          onInvite={onInvite}
-          isPending={inviteMutation.isPending}
-        />
+        {canManage && (
+          <InviteMemberDialog
+            orgName={activeOrganization?.name}
+            onInvite={onInvite}
+            isPending={inviteMutation.isPending}
+          />
+        )}
       </div>
 
       <Separator />
@@ -127,6 +132,7 @@ export default function OrgMembersPage() {
               currentUserId={currentUser?.id}
               onUpdateRole={onUpdateRole}
               onRemove={setMemberToRemove}
+              canManage={canManage}
             />
           </CardContent>
         </Card>
