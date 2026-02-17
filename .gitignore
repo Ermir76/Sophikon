@@ -9,3 +9,9 @@ docs/
 # Playwright
 test-results/
 playwright-report/
+archive/
+.env
+.env.local
+.env.development
+.env.production
+.env.test

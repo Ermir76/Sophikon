@@ -1,6 +1,5 @@
 import * as React from "react";
-import { useEffect } from "react";
-import { Link } from "react-router";
+import { useState, useEffect } from "react";
 import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
 
 import {
@@ -19,9 +18,11 @@ import {
 } from "@/shared/ui/sidebar";
 import { useOrgStore } from "@/features/organizations/store/org-store";
 import { useOrganizations, useOrganization } from "@/features/organizations/hooks/useOrganizations";
+import { CreateOrgDialog } from "./CreateOrgDialog";
 
 export function OrgSwitcher() {
   const { isMobile } = useSidebar();
+  const [createOpen, setCreateOpen] = useState(false);
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
 
@@ -103,18 +104,20 @@ export function OrgSwitcher() {
             )}
 
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="gap-2 p-2 cursor-pointer">
-              <Link to="/organizations/new">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                  <Plus className="size-4" />
-                </div>
-                <div className="font-medium text-muted-foreground">
-                  Add Organization
-                </div>
-              </Link>
+            <DropdownMenuItem
+              className="gap-2 p-2 cursor-pointer"
+              onClick={() => setCreateOpen(true)}
+            >
+              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                <Plus className="size-4" />
+              </div>
+              <div className="font-medium text-muted-foreground">
+                Add Organization
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <CreateOrgDialog open={createOpen} onOpenChange={setCreateOpen} />
       </SidebarMenuItem>
     </SidebarMenu>
   );
