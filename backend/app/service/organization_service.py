@@ -89,8 +89,12 @@ async def create_personal_organization(
     """
     # Derive base slug from email (e.g., "john.doe" from "john.doe@example.com")
     base_slug = user.email.split("@")[0].lower()
-    # Remove non-alphanumeric chars (keep hyphens/underscores)
-    base_slug = "".join(c for c in base_slug if c.isalnum() or c in "-_")
+    # Replace underscores/dots with hyphens, keep only alphanumeric + hyphens
+    base_slug = base_slug.replace("_", "-").replace(".", "-")
+    base_slug = "".join(c for c in base_slug if c.isalnum() or c == "-")
+    while "--" in base_slug:
+        base_slug = base_slug.replace("--", "-")
+    base_slug = base_slug.strip("-")
     if not base_slug:
         base_slug = "user"
 
