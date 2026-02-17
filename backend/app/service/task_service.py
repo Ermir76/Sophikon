@@ -8,9 +8,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.assignment import Assignment
+from app.models.dependency import Dependency
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskCreate, TaskUpdate
@@ -176,7 +178,31 @@ async def soft_delete_task(
     db: AsyncSession,
     task: Task,
 ) -> None:
-    """Soft delete a task."""
+    """
+    Soft delete a task and cascade to children, assignments (hard), dependencies (hard).
+    """
+    # 1. Soft delete children recursively
+    children_result = await db.execute(
+        select(Task).where(Task.parent_task_id == task.id, Task.is_deleted == False)  # noqa: E712
+    )
+    children = children_result.scalars().all()
+    for child in children:
+        await soft_delete_task(db, child)
+
+    # 2. Hard delete assignments (Assignments belong to task -> remove)
+    # Using CORE delete for efficiency
+
+    await db.execute(delete(Assignment).where(Assignment.task_id == task.id))
+
+    # 3. Hard delete dependencies (Predecessor/Successor relationships involving this task)
+    await db.execute(
+        delete(Dependency).where(
+            (Dependency.predecessor_id == task.id)
+            | (Dependency.successor_id == task.id)
+        )
+    )
+
+    # 4. Soft delete the task itself
     task.is_deleted = True
     task.deleted_at = datetime.now(UTC)
     await db.commit()
