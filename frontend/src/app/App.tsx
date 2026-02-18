@@ -82,11 +82,11 @@ function App() {
 
             <Route element={<OrgGuard />}>
               <Route
-                path="/organizations/settings"
+                path="/settings"
                 element={<OrgSettingsPage />}
               />
               <Route
-                path="/organizations/members"
+                path="/members"
                 element={<OrgMembersPage />}
               />
             </Route>

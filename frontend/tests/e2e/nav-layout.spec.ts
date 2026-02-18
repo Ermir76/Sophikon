@@ -88,7 +88,7 @@ test.describe("Navigation & Layout", () => {
 
     test("Protected routes redirect to login", async ({ page }) => {
         // Do not register/login
-        const protectedPaths = ["/", "/projects", "/organizations/settings"];
+        const protectedPaths = ["/", "/projects", "/settings"];
 
         for (const path of protectedPaths) {
             await page.goto(path);

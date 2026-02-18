@@ -46,8 +46,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: "Projects", url: "/projects", icon: FolderKanban },
     ...(isAdminOrOwner
       ? [
-          { title: "Members", url: "/organizations/members", icon: Users },
-          { title: "Settings", url: "/organizations/settings", icon: Settings },
+          { title: "Members", url: "/members", icon: Users },
+          { title: "Settings", url: "/settings", icon: Settings },
         ]
       : []),
   ];

@@ -1,21 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router";
-import { format } from "date-fns";
-import { MoreHorizontal, Loader2, Folder } from "lucide-react";
+import { Loader2, Folder, LayoutGrid, List } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-
 import { useOrgStore } from "@/features/organizations/store/org-store";
 import { useProjects } from "@/features/projects/hooks/useProjects";
 import { QueryError } from "@/shared/components/QueryError";
 import { CreateProjectDialog } from "@/features/projects/components/CreateProjectDialog";
+import { ProjectsTable } from "@/features/projects/components/ProjectsTable";
+import { ProjectsGrid } from "@/features/projects/components/ProjectsGrid";
+
+type ViewMode = "table" | "grid";
 
 export default function ProjectsPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
@@ -26,6 +20,7 @@ export default function ProjectsPage() {
     refetch: refetchProjects,
   } = useProjects();
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   if (!activeOrgId) {
     return <div className="p-4">Please select an organization.</div>;
@@ -42,7 +37,27 @@ export default function ProjectsPage() {
             Manage your organization's projects.
           </p>
         </div>
-        <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+        <div className="flex items-center gap-3">
+          <div className="view-toggle flex items-center gap-1 rounded-lg p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`size-8 p-0 ${viewMode === "table" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+              onClick={() => setViewMode("table")}
+            >
+              <List className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`size-8 p-0 ${viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+          </div>
+          <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+        </div>
       </div>
 
       {isProjectsError ? (
@@ -67,48 +82,13 @@ export default function ProjectsPage() {
             Create your first project
           </Button>
         </div>
+      ) : viewMode === "table" ? (
+        <div key="table" className="animate-in fade-in duration-200">
+          <ProjectsTable projects={projects} />
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Card
-              key={project.id}
-              className="hover:bg-muted/50 transition-colors"
-            >
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">
-                  <Link
-                    to={`/projects/${project.id}/tasks`}
-                    className="hover:underline"
-                  >
-                    {project.name}
-                  </Link>
-                </CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="size-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to={`/projects/${project.id}/settings`}>
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                  {project.description || "No description provided."}
-                </div>
-                <div className="mt-4 text-xs text-muted-foreground">
-                  Updated {format(new Date(project.updated_at), "MMM d, yyyy")}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div key="grid" className="animate-in fade-in duration-200">
+          <ProjectsGrid projects={projects} />
         </div>
       )}
     </div>

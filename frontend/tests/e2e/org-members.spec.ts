@@ -35,7 +35,7 @@ test.describe("Organization Members Flow", () => {
         await expect(page).toHaveURL("/");
 
         // 3. Go to Members Page
-        await page.goto("/organizations/members");
+        await page.goto("/members");
 
         // 4. Invite Member
         await page.getByRole("button", { name: "Invite Member" }).click();
@@ -88,7 +88,7 @@ test.describe("Organization Members Flow", () => {
         await expect(page).toHaveURL("/");
 
         // Invite Member2
-        await page.goto("/organizations/members");
+        await page.goto("/members");
         await page.getByRole("button", { name: "Invite Member" }).click();
         await page.fill('input[name="email"]', member2.email);
         await page.getByRole("button", { name: "Send Invitation" }).click();
@@ -136,7 +136,7 @@ test.describe("Organization Members Flow", () => {
         await expect(page).toHaveURL("/");
 
         // Invite Member3
-        await page.goto("/organizations/members");
+        await page.goto("/members");
         await page.getByRole("button", { name: "Invite Member" }).click();
         await page.fill('input[name="email"]', member3.email);
         await page.getByRole("button", { name: "Send Invitation" }).click();
@@ -183,7 +183,7 @@ test.describe("Organization Members Flow", () => {
         await expect(page).toHaveURL("/");
 
         // Invite Member4 as 'member' (default)
-        await page.goto("/organizations/members");
+        await page.goto("/members");
         await page.getByRole("button", { name: "Invite Member" }).click();
         await page.fill('input[name="email"]', member4.email);
         await page.getByRole("button", { name: "Send Invitation" }).click();
@@ -214,7 +214,7 @@ test.describe("Organization Members Flow", () => {
         await page.getByRole("menuitem", { name: orgName }).click();
 
         // Navigate to Members
-        await page.goto("/organizations/members");
+        await page.goto("/members");
 
         // VERIFY RESTRICTIONS
         // 1. "Invite Member" button should NOT be visible

@@ -95,7 +95,7 @@ test.describe("Organization Flow", () => {
         const personalOrgName = `${user.fullName}'s Org`;
 
         // 2. Go to Settings
-        await page.goto("/organizations/settings");
+        await page.goto("/settings");
 
         // 3. Wait for form to load with current org data, then update name
         const nameInput = page.locator('input[name="name"]');
@@ -132,7 +132,7 @@ test.describe("Organization Flow", () => {
         await createOrg(page, orgToDelete, `delete-${Date.now()}`);
 
         // 3. Go to Settings and wait for page to load
-        await page.goto("/organizations/settings");
+        await page.goto("/settings");
         await expect(page.locator('input[name="name"]')).toHaveValue(orgToDelete);
 
         // 4. Delete

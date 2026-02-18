@@ -48,7 +48,7 @@ test.describe("Error States & Loading", () => {
         });
 
         // Navigate to Org Settings
-        await page.goto("/organizations/settings");
+        await page.goto("/settings");
 
         // Trigger the update
         await page.fill('input[name="name"]', "New Name");
