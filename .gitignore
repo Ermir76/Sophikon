@@ -15,3 +15,4 @@ archive/
 .env.development
 .env.production
 .env.test
+issues/

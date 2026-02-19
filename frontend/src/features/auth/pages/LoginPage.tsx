@@ -57,7 +57,7 @@ export default function LoginPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Email Address</FormLabel>
+                <FormLabel>Email Address</FormLabel>
                 <FormControl>
                   <Input
                     className="h-11 px-4 text-sm"
@@ -77,7 +77,7 @@ export default function LoginPage() {
             render={({ field }) => (
               <FormItem>
                 <div className="flex justify-between items-center mb-1.5">
-                  <FormLabel className="text-sm font-medium">Password</FormLabel>
+                  <FormLabel>Password</FormLabel>
                   <a href="#" className="text-xs font-semibold text-primary hover:text-primary/80">
                     Forgot password?
                   </a>
