@@ -213,7 +213,7 @@ export default function ProjectSettingsPage() {
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -225,8 +225,8 @@ export default function ProjectSettingsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90"
               disabled={deleteProjectMutation.isPending}
             >
               {deleteProjectMutation.isPending ? "Deleting..." : "Delete Project"}

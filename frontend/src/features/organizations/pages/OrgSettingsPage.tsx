@@ -198,8 +198,8 @@ export default function OrgSettingsPage() {
             Irreversible actions for your organization.
           </p>
         </div>
-        <Separator className="bg-destructive/20" />
-        <Card className="border-destructive/20 bg-destructive/5">
+        <Separator className="gradient-divider-destructive" />
+        <Card className="gradient-border-destructive bg-destructive/5">
           <CardHeader>
             <CardTitle className="text-destructive">Delete Organization</CardTitle>
             <CardDescription>
@@ -224,7 +224,7 @@ export default function OrgSettingsPage() {
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent variant="destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -236,8 +236,8 @@ export default function OrgSettingsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => deleteOrgMutation.mutate()}
-              className="bg-destructive hover:bg-destructive/90"
               disabled={deleteOrgMutation.isPending}
             >
               {deleteOrgMutation.isPending ? "Deleting..." : "Delete Organization"}

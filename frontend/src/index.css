@@ -223,10 +223,18 @@
   background: var(--border);
 }
 
+.dark [data-slot="card"].gradient-border-destructive::after {
+  background: color-mix(in oklch, var(--destructive) 50%, transparent);
+}
+
 /* ─── SEPARATORS ─────────────────────────────────────────────────────────── */
 
 [data-slot="separator"][data-orientation="horizontal"] {
   background: linear-gradient(to right, transparent 0%, var(--border) 15%, var(--border) 85%, transparent 100%);
+}
+
+[data-slot="separator"].gradient-divider-destructive[data-orientation="horizontal"] {
+  background: linear-gradient(to right, transparent 0%, color-mix(in oklch, var(--destructive) 50%, transparent) 15%, color-mix(in oklch, var(--destructive) 50%, transparent) 85%, transparent 100%);
 }
 [data-slot="separator"][data-orientation="vertical"] {
   background: linear-gradient(to bottom, transparent 0%, var(--border) 15%, var(--border) 85%, transparent 100%);
@@ -282,6 +290,10 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+.dark [data-slot="alert-dialog-content"][data-variant="destructive"]::after {
+  background: color-mix(in oklch, var(--destructive) 40%, transparent);
 }
 
 /* ─── DROPDOWNS / POPOVERS / TOOLTIPS / SELECT ───────────────────────────── */
