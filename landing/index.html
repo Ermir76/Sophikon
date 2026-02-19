@@ -193,6 +193,21 @@
         color: var(--gold);
       }
 
+      .nav-login {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        transition: color 0.3s;
+        margin-right: 1.5rem;
+      }
+
+      .nav-login:hover {
+        color: var(--gold);
+      }
+
       .nav-cta {
         display: inline-block;
         padding: 0.6rem 1.75rem;
@@ -1520,7 +1535,10 @@
           <span aria-hidden="true"></span>
           <span aria-hidden="true"></span>
         </button>
-        <a href="#cta" class="nav-cta">Get Started</a>
+        <div>
+          <a href="/login" class="nav-login" data-app-link="/login">Log In</a>
+          <a href="/register" class="nav-cta" data-app-link="/register">Get Started</a>
+        </div>
       </nav>
     </header>
 
@@ -1536,7 +1554,8 @@
       <a href="#solutions">Solutions</a>
       <a href="#faq">Pricing</a>
       <a href="#testimonials">Testimonials</a>
-      <a href="#cta" style="color: var(--gold)">Get Started</a>
+      <a href="/login" data-app-link="/login">Log In</a>
+      <a href="/register" style="color: var(--gold)" data-app-link="/register">Get Started</a>
     </div>
 
     <main id="main-content">
@@ -1557,7 +1576,7 @@
             deliver complex projects.
           </p>
           <div class="hero-buttons">
-            <a href="#cta" class="btn-primary">Get Started Free</a>
+            <a href="/register" class="btn-primary" data-app-link="/register">Get Started Free</a>
             <a href="#" class="btn-ghost">Book a Demo</a>
             <p class="hero-buttons-hint">
               Free for small teams. No credit card required.
@@ -1783,7 +1802,7 @@
           Free for individuals and small teams. Book a demo for enterprise.
         </p>
         <div class="mid-cta-buttons">
-          <a href="#cta" class="btn-primary">Get Started Free</a>
+          <a href="/register" class="btn-primary" data-app-link="/register">Get Started Free</a>
           <a href="#" class="btn-ghost">Book a Demo</a>
         </div>
       </section>
@@ -2054,6 +2073,12 @@
     </footer>
 
     <script>
+      // App URL — CI/CD replaces __APP_URL__ in production, falls back to localhost for dev
+      const APP_URL = "__APP_URL__".startsWith("__") ? "http://localhost:5173" : "__APP_URL__";
+      document.querySelectorAll("[data-app-link]").forEach((el) => {
+        el.href = APP_URL + el.getAttribute("data-app-link");
+      });
+
       // Scroll reveal
       const observer = new IntersectionObserver(
         (entries) => {
