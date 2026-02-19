@@ -46,26 +46,46 @@
 - [x] **Fix pre-commit hooks** — install + scope + local hooks — 30 min
 - [x] **Create `frontend/.env.example`** — 1 min
 
+### Email Verification
+
+1. **Choose SMTP provider** — Gmail (free, 500/day), Resend (free, 100/day), or Mailgun
+2. **Add SMTP config to `config.py`** — MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM
+3. **Create `EmailVerification` model** — copy pattern from `PasswordReset` model (token_hash, expires_at, user_id)
+4. **Create Alembic migration** — `alembic revision --autogenerate -m "add email_verification table"`
+5. **Create `email_service.py`** — FastMail setup, `send_verification_email()` with HTML template
+6. **Add endpoints to `auth.py`:**
+   - `POST /api/v1/auth/send-verification-email` — generate token, send email
+   - `GET /api/v1/auth/verify-email?token=...` — validate token, set `email_verified=True`
+7. **Update `register` endpoint** — auto-send verification email on registration
+8. **Frontend: verification page** — `VerifyEmailPage.tsx` that reads token from URL and calls the endpoint
+9. **Frontend: resend button** — on dashboard or settings, show "Verify your email" banner with resend link
+10. **Update `.env.example`** — document SMTP settings
+
+- [ ] SMTP provider chosen
+- [ ] Backend: model + migration + service + endpoints
+- [ ] Frontend: verify page + resend UI
+- [ ] Tested end-to-end locally
+
 ### Deploy
 
 The steps before deploy are:
 
 1. Move landing page out of docs/ into its own landing/ folder —
-   it becomes a deployable artifact
+   it becomes a deployable artifact ✅
 2. Decide the URL structure: sophikon.eu → landing,
    app.sophikon.eu → React app, api.sophikon.eu → FastAPI (needs a
-   domain — get one soon)
-3. Production Docker for backend only
-4. Nginx only for the backend (reverse proxy in front of FastAPI)
+   domain — get one soon) ✅
+3. Production Docker for backend only ✅
+4. Nginx only for the backend (reverse proxy in front of FastAPI) ✅
 5. S3 bucket + CloudFront for landing, separate bucket +
    CloudFront for app
 6. RDS for PostgreSQL, EC2 or ECS for backend
 7. GitHub Actions CI/CD — push to main → auto deploy frontend to
    S3, auto deploy backend to EC2/ECS
 
-- [ ] **Production Docker setup** — Dockerfile for backend + frontend, docker-compose.prod.yml
-- [ ] **Nginx config** — reverse proxy, request size limits, static files
-- [ ] **Environment config** — production .env, CORS origins, secret keys
+- [x] **Production Docker setup** — Dockerfile for backend, multi-stage build, auto migrations
+- [x] **Nginx config** — reverse proxy, security headers, SSL config ready
+- [ ] **Environment config** — production .env, CORS origins, secret keys (CORS done)
 - [ ] **Deploy to hosting** (Railway / Render / VPS / university server)
 
 **Phase 1 total: ~1 day**

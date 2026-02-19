@@ -13,6 +13,7 @@ from app.models.calendar import Calendar
 from app.models.calendar_exception import CalendarException
 from app.models.comment import Comment
 from app.models.dependency import Dependency
+from app.models.email_verification import EmailVerification
 from app.models.notification import Notification
 from app.models.organization import Organization
 from app.models.organization_member import OrganizationMember
@@ -35,6 +36,7 @@ __all__ = [
     "Role",
     "RefreshToken",
     "PasswordReset",
+    "EmailVerification",
     "Organization",
     "OrganizationMember",
     "Project",

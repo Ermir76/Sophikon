@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     # Rate Limiting (disabled in development by default)
     RATE_LIMIT_ENABLED: bool = True
 
+    # Email (SMTP)
+    MAIL_SERVER: str = ""  # Required - must be in .env
+    MAIL_PORT: int = 587
+    MAIL_USERNAME: str = ""  # Required - must be in .env
+    MAIL_PASSWORD: str = ""  # Required - must be in .env
+    MAIL_FROM: str = ""  # Required - must be in .env
+    MAIL_FROM_NAME: str = "Sophikon"
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
+
     # AI (optional for now)
     ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None

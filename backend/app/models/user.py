@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.models.ai_usage import AIUsage
     from app.models.attachment import Attachment
     from app.models.comment import Comment
+    from app.models.email_verification import EmailVerification
     from app.models.notification import Notification
     from app.models.organization_member import OrganizationMember
     from app.models.password_reset import PasswordReset
@@ -154,6 +155,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     password_resets: Mapped[list["PasswordReset"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    email_verifications: Mapped[list["EmailVerification"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
     created_projects: Mapped[list["Project"]] = relationship(back_populates="owner")

@@ -1,6 +1,8 @@
 """
-Authentication endpoints: register, login, refresh, logout, me.
+Authentication endpoints: register, login, refresh, logout, me, email verification.
 """
+
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +20,9 @@ from app.schema.auth import (
     UserRegisterRequest,
     UserResponse,
 )
-from app.service import auth_service
+from app.service import auth_service, email_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,6 +66,15 @@ async def register(
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
+
+    # Send verification email (don't fail registration if email fails)
+    try:
+        frontend_url = request.headers.get("Origin", "http://localhost:5173")
+        await email_service.send_verification_email(
+            db, user.id, user.email, frontend_url
+        )
+    except Exception:
+        logger.warning("Failed to send verification email on register", exc_info=True)
 
     return AuthResponse(
         tokens=TokenResponse(access_token="", refresh_token=""),
@@ -165,3 +178,32 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def me(user: User = Depends(get_current_active_user)):
     return UserResponse.model_validate(user)
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+@limiter.limit("10/minute")
+async def verify_email(
+    request: Request,
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    await email_service.verify_email_token(db, token)
+    return MessageResponse(message="Email verified successfully")
+
+
+@router.post("/send-verification-email", response_model=MessageResponse)
+@limiter.limit("3/hour")
+async def resend_verification_email(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    if user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already verified",
+        )
+
+    frontend_url = request.headers.get("Origin", "http://localhost:5173")
+    await email_service.send_verification_email(db, user.id, user.email, frontend_url)
+    return MessageResponse(message="Verification email sent")
