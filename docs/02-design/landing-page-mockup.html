@@ -67,17 +67,17 @@
       }
 
       :root {
-        --bg-deep: #050505;
-        --bg-panel: #0d0c0a;
-        --gold: #34d399;
-        --gold-dim: #059669;
-        --gold-glow: #10b981;
-        --text-main: #fafaf9;
-        --text-muted: #a8a29e;
+        --bg-deep: oklch(0.29 0.015 263);
+        --bg-panel: oklch(0.23 0.013 263);
+        --gold: oklch(0.65 0.18 251);
+        --gold-dim: oklch(0.50 0.14 251);
+        --gold-glow: oklch(0.58 0.16 251);
+        --text-main: oklch(0.96 0.004 165);
+        --text-muted: oklch(0.72 0.010 250);
 
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-bg: rgba(28, 25, 23, 0.4);
-        --glass-highlight: rgba(255, 255, 255, 0.05);
+        --glass-border: oklch(0.63 0.19 254 / 15%);
+        --glass-bg: oklch(0.22 0.015 263 / 50%);
+        --glass-highlight: oklch(1 0 0 / 5%);
 
         --font-serif: "Instrument Serif", serif;
         --font-sans: "Inter", sans-serif;
@@ -154,7 +154,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(5, 5, 5, 0.6);
+        background: oklch(0.29 0.015 263 / 60%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-bottom: 1px solid var(--glass-border);
@@ -210,8 +210,8 @@
         background: var(--gold);
         color: var(--bg-deep);
         box-shadow:
-          0 0 30px rgba(52, 211, 153, 0.5),
-          0 0 60px rgba(52, 211, 153, 0.2);
+          0 0 30px oklch(0.50 0.14 251 / 50%),
+          0 0 60px oklch(0.50 0.14 251 / 20%);
       }
 
       /* Hamburger menu */
@@ -256,7 +256,7 @@
         right: 0;
         bottom: 0;
         z-index: 99;
-        background: rgba(5, 5, 5, 0.95);
+        background: oklch(0.18 0.015 263 / 95%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         flex-direction: column;
@@ -310,7 +310,7 @@
         height: 140%;
         background: radial-gradient(
           ellipse at 50% 60%,
-          rgba(52, 211, 153, 0.08) 0%,
+          oklch(0.50 0.14 251 / 8%) 0%,
           transparent 40%
         );
         z-index: 0;
@@ -359,7 +359,7 @@
         background: var(--gold);
         box-shadow:
           0 0 10px var(--gold-glow),
-          0 0 20px rgba(52, 211, 153, 0.35);
+          0 0 20px oklch(0.50 0.14 251 / 35%);
         animation: pulse 2s ease-in-out infinite;
       }
 
@@ -390,7 +390,7 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-style: italic;
-        filter: drop-shadow(0 0 30px rgba(52, 211, 153, 0.45));
+        filter: drop-shadow(0 0 30px oklch(0.50 0.14 251 / 45%));
       }
 
       .hero-sub {
@@ -443,8 +443,8 @@
       .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow:
-          0 8px 40px rgba(52, 211, 153, 0.5),
-          0 0 60px rgba(52, 211, 153, 0.2);
+          0 8px 40px oklch(0.50 0.14 251 / 50%),
+          0 0 60px oklch(0.50 0.14 251 / 20%);
       }
 
       .btn-ghost {
@@ -489,7 +489,7 @@
         overflow: hidden;
         box-shadow:
           0 25px 80px rgba(0, 0, 0, 0.5),
-          0 0 120px rgba(52, 211, 153, 0.1);
+          0 0 120px oklch(0.50 0.14 251 / 10%);
         transform-style: preserve-3d;
         animation: mockup3dFloat 8s var(--ease-smooth) infinite;
         transition: transform 0.15s ease-out;
@@ -596,8 +596,8 @@
       .gantt-bar.gold-dim {
         background: linear-gradient(
           90deg,
-          rgba(5, 150, 105, 0.6),
-          rgba(52, 211, 153, 0.6)
+          oklch(0.40 0.12 251 / 60%),
+          oklch(0.50 0.14 251 / 60%)
         );
       }
       .gantt-bar.gold-glow {
@@ -704,7 +704,7 @@
       }
 
       .stat-card {
-        background: rgba(28, 25, 23, 0.5);
+        background: oklch(0.23 0.013 263 / 50%);
         border: 1px solid rgba(255, 255, 255, 0.04);
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
@@ -736,7 +736,7 @@
         transform: translateY(-4px);
         box-shadow:
           0 8px 40px rgba(0, 0, 0, 0.4),
-          0 0 24px rgba(52, 211, 153, 0.15);
+          0 0 24px oklch(0.50 0.14 251 / 15%);
       }
 
       .stat-card:hover::before {
@@ -837,7 +837,7 @@
       }
 
       .feature-visual {
-        background: rgba(10, 10, 10, 0.6);
+        background: oklch(0.20 0.015 263 / 60%);
         border: 1px solid rgba(255, 255, 255, 0.04);
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         border-radius: 16px;
@@ -853,7 +853,7 @@
       .feature-visual:hover {
         box-shadow:
           0 8px 40px rgba(0, 0, 0, 0.4),
-          0 0 24px rgba(52, 211, 153, 0.15);
+          0 0 24px oklch(0.50 0.14 251 / 15%);
       }
 
       .feature-visual::after {
@@ -862,7 +862,7 @@
         inset: 0;
         background: radial-gradient(
           ellipse at center,
-          rgba(52, 211, 153, 0.05),
+          oklch(0.50 0.14 251 / 5%),
           transparent 70%
         );
       }
@@ -1023,7 +1023,7 @@
       .trust-item {
         text-align: center;
         padding: 2rem 1rem;
-        background: rgba(28, 25, 23, 0.25);
+        background: oklch(0.23 0.013 263 / 25%);
         border: 1px solid rgba(255, 255, 255, 0.04);
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
         border-radius: 12px;
@@ -1033,7 +1033,7 @@
       .trust-item:hover {
         box-shadow:
           0 8px 40px rgba(0, 0, 0, 0.4),
-          0 0 24px rgba(52, 211, 153, 0.15);
+          0 0 24px oklch(0.50 0.14 251 / 15%);
         transform: translateY(-2px);
       }
 
@@ -1079,7 +1079,7 @@
         transform: translateY(-4px);
         box-shadow:
           0 8px 40px rgba(0, 0, 0, 0.4),
-          0 0 24px rgba(52, 211, 153, 0.15);
+          0 0 24px oklch(0.50 0.14 251 / 15%);
       }
 
       .testimonial-quote {
@@ -1125,7 +1125,7 @@
       .faq-item {
         border: 1px solid rgba(255, 255, 255, 0.04);
         border-radius: 12px;
-        background: rgba(28, 25, 23, 0.3);
+        background: oklch(0.23 0.013 263 / 30%);
         overflow: hidden;
         transition: border-color 0.3s;
       }
@@ -1185,7 +1185,7 @@
         inset: 0;
         background: radial-gradient(
           ellipse at 50% 50%,
-          rgba(52, 211, 153, 0.12) 0%,
+          oklch(0.50 0.14 251 / 12%) 0%,
           transparent 60%
         );
       }
@@ -2125,7 +2125,7 @@
           frame.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
           frame.style.boxShadow = `
             ${-rotateY * 2}px ${rotateX * 2}px 60px rgba(0, 0, 0, 0.5),
-            ${-rotateY * 0.5}px ${rotateX * 0.5}px 120px rgba(52, 211, 153, 0.1)
+            ${-rotateY * 0.5}px ${rotateX * 0.5}px 120px oklch(0.50 0.14 251 / 10%)
           `;
         });
 

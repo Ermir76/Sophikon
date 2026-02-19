@@ -371,6 +371,7 @@ Features considered but not scheduled:
 
 | Feature                           | Reason         | Reconsider When         |
 | --------------------------------- | -------------- | ----------------------- |
+| Project archiving                 | Post-MVP       | V1.1 — backend needs `ARCHIVED` status in `ProjectStatus` enum + filter in `list_projects()`; frontend types already reference it |
 | Time tracking                     | Scope creep    | V3+ if requested        |
 | Invoicing                         | Out of scope   | Never (use integration) |
 | Native mobile apps                | Web-first      | V3+ if PWA insufficient |
