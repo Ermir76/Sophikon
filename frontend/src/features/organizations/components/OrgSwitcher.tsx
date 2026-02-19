@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
 
 import {
@@ -18,11 +19,13 @@ import {
 } from "@/shared/ui/sidebar";
 import { useOrgStore } from "@/features/organizations/store/org-store";
 import { useOrganizations, useOrganization } from "@/features/organizations/hooks/useOrganizations";
+import { projectKeys } from "@/features/projects/hooks/useProjects";
 import { CreateOrgDialog } from "./CreateOrgDialog";
 
 export function OrgSwitcher() {
   const { isMobile } = useSidebar();
   const [createOpen, setCreateOpen] = useState(false);
+  const queryClient = useQueryClient();
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
 
@@ -87,7 +90,10 @@ export function OrgSwitcher() {
               organizations.map((org) => (
                 <DropdownMenuItem
                   key={org.id}
-                  onClick={() => setActiveOrg(org.id)}
+                  onClick={() => {
+                    setActiveOrg(org.id);
+                    queryClient.invalidateQueries({ queryKey: projectKeys.list(org.id) });
+                  }}
                   className="gap-2 p-2 cursor-pointer"
                 >
                   <div className="flex size-6 items-center justify-center rounded-sm border">
