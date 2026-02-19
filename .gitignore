@@ -3,7 +3,7 @@ diary/
 node_modules/
 
 review/
-docs/
+
 .coverage
 
 # Playwright
