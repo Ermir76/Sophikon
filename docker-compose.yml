@@ -26,6 +26,25 @@ services:
     volumes:
       - redis_data:/data
 
+  backend:
+    build:
+      context: ./backend
+    container_name: sophikon-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override localhost → container name for Docker networking
+      DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD:-Soph1k0n_Dev_2026!}@postgres:5432/sophikon
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
 volumes:
   postgres_data:
   redis_data:

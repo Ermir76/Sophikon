@@ -1,0 +1,22 @@
+# Dev/test files
+tests/
+.env
+.env.*
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Virtual environment (built in Docker, not copied from host)
+.venv/
+
+# Python
+*.pyc
+*.pyo
