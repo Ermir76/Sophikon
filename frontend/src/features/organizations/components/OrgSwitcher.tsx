@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { ChevronsUpDown, Plus, Check, Loader2 } from "lucide-react";
 
 import {
@@ -26,6 +27,7 @@ export function OrgSwitcher() {
   const { isMobile } = useSidebar();
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
 
@@ -93,6 +95,7 @@ export function OrgSwitcher() {
                   onClick={() => {
                     setActiveOrg(org.id);
                     queryClient.invalidateQueries({ queryKey: projectKeys.list(org.id) });
+                    navigate("/projects");
                   }}
                   className="gap-2 p-2 cursor-pointer"
                 >
