@@ -55,7 +55,7 @@
 5. **Create `email_service.py`** — FastMail setup, `send_verification_email()` with HTML template
 6. **Add endpoints to `auth.py`:**
    - `POST /api/v1/auth/send-verification-email` — generate token, send email
-   - `GET /api/v1/auth/verify-email?token=...` — validate token, set `email_verified=True`
+   - `POST /api/v1/auth/verify-email?token=...` — validate token, set `email_verified=True`
 7. **Update `register` endpoint** — auto-send verification email on registration
 8. **Frontend: verification page** — `VerifyEmailPage.tsx` that reads token from URL and calls the endpoint
 9. **Frontend: resend button** — on dashboard or settings, show "Verify your email" banner with resend link
