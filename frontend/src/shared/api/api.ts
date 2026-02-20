@@ -17,7 +17,7 @@ interface RetryableRequest extends InternalAxiosRequestConfig {
 }
 
 // Auth endpoints should never trigger token refresh
-const AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/logout", "/auth/refresh", "/auth/me"];
+const AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/logout", "/auth/refresh", "/auth/me", "/auth/verify-email", "/auth/send-verification-email"];
 
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(

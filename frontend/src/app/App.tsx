@@ -42,6 +42,9 @@ const ProjectOverviewPage = lazy(
   () => import("@/features/projects/pages/ProjectOverviewPage"),
 );
 const NotFoundPage = lazy(() => import("@/app/NotFoundPage"));
+const VerifyEmailPage = lazy(
+  () => import("@/features/auth/pages/VerifyEmailPage"),
+);
 
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useEffect } from "react";
@@ -67,6 +70,15 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
+        </Route>
+
+        {/*
+          PUBLIC ROUTES
+          Accessible by anyone (logged in or not).
+          Used for: email verification (user clicks link from email)
+        */}
+        <Route element={<AuthLayout />}>
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
 
         {/*

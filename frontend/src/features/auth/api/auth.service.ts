@@ -8,9 +8,11 @@ import type { AuthUser } from "@/features/auth/lib/auth";
 // It uses our `api.ts` helper to make the requests.
 //
 // API Endpoints:
-// POST /auth/login    -> Send email/password, get back tokens + user
-// POST /auth/register -> Send user details, get back tokens + user
-// POST /auth/refresh  -> Send refresh token, get back new access token
+// POST /auth/login                    -> Send email/password, get back tokens + user
+// POST /auth/register                 -> Send user details, get back tokens + user
+// POST /auth/refresh                  -> Send refresh token, get back new access token
+// POST /auth/verify-email             -> Validate token, mark email as verified
+// POST /auth/send-verification-email  -> Send/resend verification email
 // ----------------------------------------------------------------------
 
 /**
@@ -38,6 +40,14 @@ export interface RegisterRequest {
  */
 export interface AuthResponse {
   user: AuthUser;
+}
+
+/**
+ * Generic message response from the backend.
+ * Backend: app/schema/auth.py -> MessageResponse
+ */
+export interface MessageResponse {
+  message: string;
 }
 
 export const authService = {
@@ -70,6 +80,24 @@ export const authService = {
    */
   async me() {
     const response = await api.get<AuthResponse["user"]>("/auth/me");
+    return response.data;
+  },
+
+  /**
+   * VERIFY EMAIL
+   */
+  async verifyEmail(token: string) {
+    const response = await api.post<MessageResponse>("/auth/verify-email", null, {
+      params: { token },
+    });
+    return response.data;
+  },
+
+  /**
+   * SEND / RESEND VERIFICATION EMAIL
+   */
+  async sendVerificationEmail() {
+    const response = await api.post<MessageResponse>("/auth/send-verification-email");
     return response.data;
   },
 };

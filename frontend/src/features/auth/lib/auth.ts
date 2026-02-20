@@ -28,6 +28,7 @@ export interface AuthUser {
   id: string;
   email: string;
   full_name: string;
+  email_verified: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   full_name: z.string(),
+  email_verified: z.boolean(),
 });
 
 export function getUser(): AuthUser | null {

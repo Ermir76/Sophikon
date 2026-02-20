@@ -5,6 +5,7 @@ import { AppHeader } from "@/shared/layout/AppHeader";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar";
 import { PageLoader } from "@/shared/components/PageLoader";
+import { EmailVerificationBanner } from "@/features/auth/components/EmailVerificationBanner";
 
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null);
@@ -32,6 +33,7 @@ export function AppLayout() {
           tabIndex={-1}
           className="flex-1 overflow-auto outline-none"
         >
+          <EmailVerificationBanner />
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
