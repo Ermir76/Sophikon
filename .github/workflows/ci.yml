@@ -53,6 +53,7 @@ jobs:
     - name: Run tests
       env:
         DATABASE_URL: postgresql+asyncpg://sophikon_user:Soph1k0n_Dev_2026!@localhost:5432/sophikon_test
+        SECRET_KEY: ci-test-only-not-a-real-secret-key-0000000000
       run: |
         uv run pytest
 
