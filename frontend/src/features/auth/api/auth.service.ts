@@ -11,7 +11,7 @@ import type { AuthUser } from "@/features/auth/lib/auth";
 // POST /auth/login                    -> Send email/password, get back tokens + user
 // POST /auth/register                 -> Send user details, get back tokens + user
 // POST /auth/refresh                  -> Send refresh token, get back new access token
-// POST /auth/verify-email             -> Validate token, mark email as verified
+// GET  /auth/verify-email             -> Backend handles via redirect (no frontend call)
 // POST /auth/send-verification-email  -> Send/resend verification email
 // ----------------------------------------------------------------------
 
@@ -80,16 +80,6 @@ export const authService = {
    */
   async me() {
     const response = await api.get<AuthResponse["user"]>("/auth/me");
-    return response.data;
-  },
-
-  /**
-   * VERIFY EMAIL
-   */
-  async verifyEmail(token: string) {
-    const response = await api.post<MessageResponse>("/auth/verify-email", null, {
-      params: { token },
-    });
     return response.data;
   },
 

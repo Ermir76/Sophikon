@@ -37,6 +37,10 @@ export const useAuthStore = create<AuthState>((set) => {
         console.error("Logout failed on backend", e);
       }
 
+      // Clear React Query cache to prevent stale data leaking to the next user
+      const { queryClient } = await import("@/config/react-query");
+      queryClient.clear();
+
       clearAuth();
       set({
         user: null,

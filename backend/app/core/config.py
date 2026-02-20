@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "Sophikon"
     VERSION: str = "1.0.0"
     ENV: str = "development"  # "development" or "production"
+    FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_URL: str = "http://localhost:8000"
 
     # Database
     DATABASE_URL: str = ""  # Required - must be in .env

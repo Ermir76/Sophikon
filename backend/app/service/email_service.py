@@ -74,8 +74,9 @@ async def send_verification_email(
     db.add(verification)
     await db.commit()
 
-    # Build verification link
-    verify_url = f"{frontend_url}/verify-email?token={token}"
+    # Build verification link — points to the backend API GET endpoint.
+    # The backend verifies the token and redirects to the frontend.
+    verify_url = f"{settings.BACKEND_URL}/api/v1/auth/verify-email?token={token}"
 
     # Send email
     html = f"""
@@ -109,7 +110,7 @@ async def verify_email_token(db: AsyncSession, token: str) -> None:
     """
     Validate a verification token and mark the user's email as verified.
 
-    Raises HTTPException if token is invalid or expired.
+    Raises HTTPException if token is invalid, expired, or already used.
     """
     token_hash = hash_token(token)
 

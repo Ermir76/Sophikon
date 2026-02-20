@@ -39,11 +39,34 @@ services:
       # Override localhost → container name for Docker networking
       DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD:-Soph1k0n_Dev_2026!}@postgres:5432/sophikon
       REDIS_URL: redis://redis:6379/0
+      # MailPit SMTP (dev profile)
+      MAIL_SERVER: ${MAIL_SERVER:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM: noreply@sophikon.eu
+      MAIL_STARTTLS: "false"
+      MAIL_SSL_TLS: "false"
+      # Email verification redirect URLs
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: sophikon-mailpit
+    restart: unless-stopped
+    profiles: [ "dev" ]
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
   nginx:
     image: nginx:1.28-alpine

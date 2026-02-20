@@ -5,6 +5,7 @@ Authentication endpoints: register, login, refresh, logout, me, email verificati
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user
@@ -180,15 +181,31 @@ async def me(user: User = Depends(get_current_active_user)):
     return UserResponse.model_validate(user)
 
 
-@router.post("/verify-email", response_model=MessageResponse)
+@router.get("/verify-email")
 @limiter.limit("10/minute")
 async def verify_email(
     request: Request,
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    await email_service.verify_email_token(db, token)
-    return MessageResponse(message="Email verified successfully")
+    """
+    GET endpoint called directly from the email link.
+    Verifies the token and redirects the browser to the frontend
+    with ?status=success or ?status=error.
+    """
+    frontend_url = settings.FRONTEND_URL
+
+    try:
+        await email_service.verify_email_token(db, token)
+        return RedirectResponse(
+            url=f"{frontend_url}/verify-email?status=success",
+            status_code=status.HTTP_302_FOUND,
+        )
+    except HTTPException:
+        return RedirectResponse(
+            url=f"{frontend_url}/verify-email?status=error",
+            status_code=status.HTTP_302_FOUND,
+        )
 
 
 @router.post("/send-verification-email", response_model=MessageResponse)

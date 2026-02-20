@@ -30,11 +30,6 @@ export function useRegister() {
   });
 }
 
-export function useVerifyEmail() {
-  return useMutation({
-    mutationFn: (token: string) => authService.verifyEmail(token),
-  });
-}
 
 export function useSendVerificationEmail() {
   return useMutation({
