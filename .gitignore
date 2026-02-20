@@ -16,3 +16,6 @@ archive/
 .env.production
 .env.test
 issues/
+
+CHANGES.md
+DEPLOYMENT_GUIDE.md
