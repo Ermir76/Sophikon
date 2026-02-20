@@ -72,8 +72,8 @@ The steps before deploy are:
 
 1. Move landing page out of docs/ into its own landing/ folder —
    it becomes a deployable artifact ✅
-2. Decide the URL structure: sophikon.eu → landing,
-   app.sophikon.eu → React app, api.sophikon.eu → FastAPI (needs a
+2. Decide the URL structure: sophikon.org → landing,
+   app.sophikon.org → React app, api.sophikon.org → FastAPI (needs a
    domain — get one soon) ✅
 3. Production Docker for backend only ✅
 4. Nginx only for the backend (reverse proxy in front of FastAPI) ✅

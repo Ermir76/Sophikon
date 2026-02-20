@@ -44,7 +44,7 @@ services:
       MAIL_PORT: ${MAIL_PORT:-1025}
       MAIL_USERNAME: ""
       MAIL_PASSWORD: ""
-      MAIL_FROM: noreply@sophikon.eu
+      MAIL_FROM: noreply@sophikon.org
       MAIL_STARTTLS: "false"
       MAIL_SSL_TLS: "false"
       # Email verification redirect URLs
