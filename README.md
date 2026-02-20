@@ -65,6 +65,7 @@ docker compose --profile dev up mailpit -d   # email testing UI at localhost:802
 ## Testing
 
 ```bash
-cd backend && uv run pytest        # backend tests
-cd frontend && npm test            # frontend tests
+cd backend && uv run pytest           # backend tests
+cd frontend && npm test               # frontend unit tests (Vitest)
+cd frontend && npm run test:e2e       # frontend E2E tests (Playwright)
 ```

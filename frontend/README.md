@@ -47,6 +47,15 @@ The Vite dev server proxies `/api` requests to `localhost:8000` (backend).
 | `npm test` | Vitest (unit tests) |
 | `npm run test:e2e` | Playwright (E2E tests) |
 
+## Testing
+
+Unit tests (`src/`) and E2E tests (`tests/e2e/`) are separate test suites with different runners:
+
+- **`npm test`** — runs Vitest unit tests in jsdom (files under `src/`)
+- **`npm run test:e2e`** — runs Playwright browser tests (files under `tests/e2e/`)
+
+They do not interfere with each other — Vitest is configured to exclude `tests/e2e/`.
+
 ## Key Libraries
 
 - **React Router v7** — client-side routing
