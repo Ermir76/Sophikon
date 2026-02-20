@@ -43,6 +43,10 @@ async def list_projects(
     user: User = Depends(get_current_active_user),
 ):
     """List all projects the user owns or is a member of."""
+    # Verify org membership before listing (same pattern as create_project)
+    if organization_id:
+        await get_org_membership_or_404(db, organization_id, user)
+
     projects, total = await project_service.list_projects(
         db,
         user,

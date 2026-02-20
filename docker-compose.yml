@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: sophikon_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Soph1k0n_Dev_2026!}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: sophikon
     ports:
       - "5433:5432" # Using 5433 to avoid conflict with local PostgreSQL
@@ -37,7 +37,7 @@ services:
       - ./backend/.env
     environment:
       # Override localhost → container name for Docker networking
-      DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD:-Soph1k0n_Dev_2026!}@postgres:5432/sophikon
+      DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD}@postgres:5432/sophikon
       REDIS_URL: redis://redis:6379/0
       # MailPit SMTP (dev profile)
       MAIL_SERVER: ${MAIL_SERVER:-mailpit}

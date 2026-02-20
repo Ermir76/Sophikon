@@ -40,7 +40,7 @@ async def list_projects(
     List projects the user owns or is a member of.
 
     When organization_id is provided, returns only projects within that
-    organization (and verifies the user is an org member).
+    organization. Caller must verify org membership before calling.
     Otherwise, returns all projects the user can see across orgs.
 
     Returns (projects, total_count).

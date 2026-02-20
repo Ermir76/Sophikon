@@ -39,10 +39,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 
 # Initialize the FastAPI application
+_is_dev = settings.ENV == "development"
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     lifespan=lifespan,
+    docs_url="/docs" if _is_dev else None,
+    redoc_url="/redoc" if _is_dev else None,
+    openapi_url="/openapi.json" if _is_dev else None,
 )
 
 # Set up Rate Limiting

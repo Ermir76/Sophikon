@@ -2,7 +2,7 @@
 Tests for email verification feature.
 
 Covers:
-- POST /api/v1/auth/verify-email  (valid, invalid, expired, reused tokens)
+- GET /api/v1/auth/verify-email  (valid, invalid, expired, reused tokens → 302 redirect)
 - POST /api/v1/auth/send-verification-email  (auth, already verified, unauth)
 - Registration auto-sends verification email
 - Resend invalidates old tokens
@@ -95,7 +95,7 @@ async def test_register_sends_verification_email(
 
 
 # ---------------------------------------------------------------------------
-# 2. Verify email — valid token
+# 2. Verify email — valid token (GET → 302 redirect to ?status=success)
 # ---------------------------------------------------------------------------
 
 
@@ -108,14 +108,16 @@ async def test_register_sends_verification_email(
 async def test_verify_email_valid_token(
     mock_mail, mock_token, client: AsyncClient, session: AsyncSession
 ):
-    """Valid token verifies the user's email."""
+    """Valid token redirects to frontend with ?status=success."""
     resp = await _register_user(client, email="valid_verify@example.com")
     assert resp.status_code == 201
 
-    # Use the known token to verify
-    verify_resp = await client.post(VERIFY_URL, params={"token": KNOWN_TOKEN})
-    assert verify_resp.status_code == 200
-    assert "verified" in verify_resp.json()["message"].lower()
+    # GET verify-email with known token (don't follow redirect)
+    verify_resp = await client.get(
+        VERIFY_URL, params={"token": KNOWN_TOKEN}, follow_redirects=False
+    )
+    assert verify_resp.status_code == 302
+    assert "status=success" in verify_resp.headers["location"]
 
     # Confirm user.email_verified is True
     user_id = resp.json()["user"]["id"]
@@ -125,7 +127,7 @@ async def test_verify_email_valid_token(
 
 
 # ---------------------------------------------------------------------------
-# 3. Verify email — invalid token
+# 3. Verify email — invalid token (GET → 302 redirect to ?status=error)
 # ---------------------------------------------------------------------------
 
 
@@ -135,17 +137,16 @@ async def test_verify_email_valid_token(
     return_value=_mock_mail_client(),
 )
 async def test_verify_email_invalid_token(mock_mail, client: AsyncClient):
-    """Random/wrong token returns 400."""
-    resp = await client.post(VERIFY_URL, params={"token": "totally-bogus-token"})
-    assert resp.status_code == 400
-    assert (
-        "invalid" in resp.json()["detail"].lower()
-        or "expired" in resp.json()["detail"].lower()
+    """Random/wrong token redirects to frontend with ?status=error."""
+    resp = await client.get(
+        VERIFY_URL, params={"token": "totally-bogus-token"}, follow_redirects=False
     )
+    assert resp.status_code == 302
+    assert "status=error" in resp.headers["location"]
 
 
 # ---------------------------------------------------------------------------
-# 4. Verify email — expired token
+# 4. Verify email — expired token (GET → 302 redirect to ?status=error)
 # ---------------------------------------------------------------------------
 
 
@@ -158,7 +159,7 @@ async def test_verify_email_invalid_token(mock_mail, client: AsyncClient):
 async def test_verify_email_expired_token(
     mock_mail, mock_token, client: AsyncClient, session: AsyncSession
 ):
-    """Expired token returns 400."""
+    """Expired token redirects to frontend with ?status=error."""
     resp = await _register_user(client, email="expired_verify@example.com")
     assert resp.status_code == 201
 
@@ -170,12 +171,15 @@ async def test_verify_email_expired_token(
     verification.expires_at = datetime.now(UTC) - timedelta(hours=1)
     await session.commit()
 
-    verify_resp = await client.post(VERIFY_URL, params={"token": KNOWN_TOKEN})
-    assert verify_resp.status_code == 400
+    verify_resp = await client.get(
+        VERIFY_URL, params={"token": KNOWN_TOKEN}, follow_redirects=False
+    )
+    assert verify_resp.status_code == 302
+    assert "status=error" in verify_resp.headers["location"]
 
 
 # ---------------------------------------------------------------------------
-# 5. Verify email — already used token
+# 5. Verify email — already used token (GET → 302 redirect to ?status=error)
 # ---------------------------------------------------------------------------
 
 
@@ -188,17 +192,23 @@ async def test_verify_email_expired_token(
 async def test_verify_email_already_used_token(
     mock_mail, mock_token, client: AsyncClient
 ):
-    """Reusing a token after it was consumed returns 400."""
+    """Reusing a token after it was consumed redirects to ?status=error."""
     resp = await _register_user(client, email="reuse_verify@example.com")
     assert resp.status_code == 201
 
-    # First call — should succeed
-    verify_resp1 = await client.post(VERIFY_URL, params={"token": KNOWN_TOKEN})
-    assert verify_resp1.status_code == 200
+    # First call — should succeed (redirect to ?status=success)
+    verify_resp1 = await client.get(
+        VERIFY_URL, params={"token": KNOWN_TOKEN}, follow_redirects=False
+    )
+    assert verify_resp1.status_code == 302
+    assert "status=success" in verify_resp1.headers["location"]
 
-    # Second call — should fail
-    verify_resp2 = await client.post(VERIFY_URL, params={"token": KNOWN_TOKEN})
-    assert verify_resp2.status_code == 400
+    # Second call — should fail (redirect to ?status=error)
+    verify_resp2 = await client.get(
+        VERIFY_URL, params={"token": KNOWN_TOKEN}, follow_redirects=False
+    )
+    assert verify_resp2.status_code == 302
+    assert "status=error" in verify_resp2.headers["location"]
 
 
 # ---------------------------------------------------------------------------
@@ -238,8 +248,8 @@ async def test_send_verification_email_already_verified(
     """Already-verified user gets 400 when requesting verification email."""
     await _register_user(client, email="already_verified@example.com")
 
-    # Verify the email first
-    await client.post(VERIFY_URL, params={"token": KNOWN_TOKEN})
+    # Verify the email first via GET redirect
+    await client.get(VERIFY_URL, params={"token": KNOWN_TOKEN}, follow_redirects=False)
 
     # Try to request re-send — should be rejected
     resp = await client.post(SEND_URL)
