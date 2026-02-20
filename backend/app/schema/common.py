@@ -2,14 +2,10 @@
 Common Pydantic schemas shared across endpoints.
 """
 
-from typing import Generic, TypeVar
-
 from pydantic import BaseModel, computed_field
 
-T = TypeVar("T")
 
-
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse[T](BaseModel):
     """Generic paginated response wrapper."""
 
     items: list[T]
