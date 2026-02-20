@@ -47,7 +47,7 @@ def _get_mail_client() -> FastMail:
 
 
 async def send_verification_email(
-    db: AsyncSession, user_id: uuid.UUID, email: str, frontend_url: str
+    db: AsyncSession, user_id: uuid.UUID, email: str
 ) -> None:
     """
     Generate a verification token, save its hash, and send the email.

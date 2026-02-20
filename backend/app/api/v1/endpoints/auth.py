@@ -57,6 +57,7 @@ async def register(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     response.set_cookie(
@@ -65,15 +66,13 @@ async def register(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api/v1/auth",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
     # Send verification email (don't fail registration if email fails)
     try:
-        frontend_url = request.headers.get("Origin", "http://localhost:5173")
-        await email_service.send_verification_email(
-            db, user.id, user.email, frontend_url
-        )
+        await email_service.send_verification_email(db, user.id, user.email)
     except Exception:
         logger.warning("Failed to send verification email on register", exc_info=True)
 
@@ -102,6 +101,7 @@ async def login(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     response.set_cookie(
@@ -110,6 +110,7 @@ async def login(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api/v1/auth",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
@@ -144,6 +145,7 @@ async def refresh(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     response.set_cookie(
@@ -152,6 +154,7 @@ async def refresh(
         httponly=True,
         secure=settings.ENV == "production",
         samesite="lax",
+        path="/api/v1/auth",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
@@ -171,8 +174,8 @@ async def logout(
     if refresh_token:
         await auth_service.logout_user(db, refresh_token)
 
-    response.delete_cookie(settings.ACCESS_TOKEN_COOKIE_NAME)
-    response.delete_cookie(settings.REFRESH_TOKEN_COOKIE_NAME)
+    response.delete_cookie(settings.ACCESS_TOKEN_COOKIE_NAME, path="/api")
+    response.delete_cookie(settings.REFRESH_TOKEN_COOKIE_NAME, path="/api/v1/auth")
     return MessageResponse(message="Logged out successfully")
 
 
@@ -221,6 +224,5 @@ async def resend_verification_email(
             detail="Email is already verified",
         )
 
-    frontend_url = request.headers.get("Origin", "http://localhost:5173")
-    await email_service.send_verification_email(db, user.id, user.email, frontend_url)
+    await email_service.send_verification_email(db, user.id, user.email)
     return MessageResponse(message="Verification email sent")

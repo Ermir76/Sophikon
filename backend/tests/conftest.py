@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -44,6 +45,23 @@ async def transaction(connection: AsyncConnection) -> AsyncGenerator[AsyncTransa
 def disable_rate_limiter():
     """Disable rate limiting for all tests."""
     app.state.limiter.enabled = False
+
+
+@pytest.fixture(autouse=True)
+def _mock_mail_globally(monkeypatch):
+    """
+    Prevent ALL tests from sending real emails.
+
+    Without this, any test that registers a user will trigger
+    send_verification_email → real Gmail SMTP → bounce-back spam.
+    """
+
+    mock_client = MagicMock()
+    mock_client.send_message = AsyncMock()
+    monkeypatch.setattr(
+        "app.service.email_service._get_mail_client",
+        lambda: mock_client,
+    )
 
 
 @pytest.fixture()
