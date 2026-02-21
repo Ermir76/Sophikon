@@ -1,4 +1,5 @@
 name: CI
+# Deploys backend (EC2), frontend (S3+CloudFront), landing (S3) with Discord notifications
 
 on:
   push:
