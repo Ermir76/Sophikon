@@ -40,6 +40,7 @@ describe("Auth Store", () => {
       id: "1",
       email: "test@example.com",
       full_name: "Test User",
+      email_verified: true,
     };
     const { login } = useAuthStore.getState();
 
@@ -71,6 +72,7 @@ describe("Auth Store", () => {
       id: "1",
       email: "test@example.com",
       full_name: "Test User",
+      email_verified: true,
     };
     const { authService } = await import("@/features/auth/api/auth.service");
     vi.mocked(authService.me).mockResolvedValue(mockUser);
