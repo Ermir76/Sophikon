@@ -3,6 +3,7 @@ Authentication endpoints: register, login, refresh, logout, me, email verificati
 """
 
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
@@ -44,7 +45,7 @@ async def register(
     body: UserRegisterRequest,
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     device_info, ip = _client_info(request)
     user, access, refresh = await auth_service.register_user(
@@ -88,7 +89,7 @@ async def login(
     body: UserLoginRequest,
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     device_info, ip = _client_info(request)
     user, access, refresh = await auth_service.login_user(
@@ -125,7 +126,7 @@ async def login(
 async def refresh(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     refresh_token = request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
     if not refresh_token:
@@ -168,7 +169,7 @@ async def refresh(
 async def logout(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     refresh_token = request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
     if refresh_token:
@@ -180,7 +181,7 @@ async def logout(
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(user: User = Depends(get_current_active_user)):
+async def me(user: Annotated[User, Depends(get_current_active_user)]):
     return UserResponse.model_validate(user)
 
 
@@ -189,7 +190,7 @@ async def me(user: User = Depends(get_current_active_user)):
 async def verify_email(
     request: Request,
     token: str,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     GET endpoint called directly from the email link.
@@ -215,8 +216,8 @@ async def verify_email(
 @limiter.limit("3/hour")
 async def resend_verification_email(
     request: Request,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     if user.email_verified:
         raise HTTPException(

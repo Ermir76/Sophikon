@@ -8,6 +8,7 @@ PATCH  /projects/{project_id}/resources/{resource_id}    - Update resource
 DELETE /projects/{project_id}/resources/{resource_id}    - Delete resource (hard)
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -24,12 +25,12 @@ router = APIRouter(prefix="/projects/{project_id}/resources", tags=["resources"]
 
 @router.get("", response_model=PaginatedResponse[ResourceResponse])
 async def list_resources(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=50, ge=1, le=200),
-    type: str | None = Query(default=None, alias="type"),
-    include_inactive: bool = Query(default=False),
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=200)] = 50,
+    type: Annotated[str | None, Query(alias="type")] = None,
+    include_inactive: Annotated[bool, Query()] = False,
 ):
     """List all resources in the project."""
     resources, total = await resource_service.list_resources(
@@ -55,8 +56,8 @@ async def list_resources(
 )
 async def create_resource(
     body: ResourceCreate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Create a new resource in the project."""
     check_role(access, "owner", "manager", "member")
@@ -67,8 +68,8 @@ async def create_resource(
 @router.get("/{resource_id}", response_model=ResourceResponse)
 async def get_resource(
     resource_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get resource details."""
     resource = await resource_service.get_resource_by_id(
@@ -86,8 +87,8 @@ async def get_resource(
 async def update_resource(
     resource_id: UUID,
     body: ResourceUpdate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update a resource."""
     check_role(access, "owner", "manager", "member")
@@ -107,8 +108,8 @@ async def update_resource(
 @router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_resource(
     resource_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Delete a resource (hard delete)."""
     check_role(access, "owner", "manager")

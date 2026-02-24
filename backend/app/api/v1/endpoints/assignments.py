@@ -10,6 +10,7 @@ PATCH  /assignments/{assignment_id}                           - Update assignmen
 DELETE /assignments/{assignment_id}                           - Delete assignment
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -64,8 +65,8 @@ async def _get_task_in_project(
 @task_assignments_router.get("", response_model=list[AssignmentResponse])
 async def list_assignments(
     task_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """List all assignments for a task."""
     task = await _get_task_in_project(task_id, access, db)
@@ -81,8 +82,8 @@ async def list_assignments(
 async def create_assignment(
     task_id: UUID,
     body: AssignmentCreate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Create a new assignment for a task."""
     check_role(access, "owner", "manager", "member")
@@ -98,8 +99,8 @@ async def create_assignment(
 async def update_assignment(
     assignment_id: UUID,
     body: AssignmentUpdate,
-    access: AssignmentAccess = Depends(get_assignment_with_access),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[AssignmentAccess, Depends(get_assignment_with_access)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update an assignment."""
     check_role_name(access.role_name, "owner", "manager", "member")
@@ -110,8 +111,8 @@ async def update_assignment(
 @assignments_router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_assignment(
     assignment_id: UUID,
-    access: AssignmentAccess = Depends(get_assignment_with_access),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[AssignmentAccess, Depends(get_assignment_with_access)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Delete an assignment."""
     check_role_name(access.role_name, "owner", "manager")

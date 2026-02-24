@@ -7,6 +7,7 @@ PATCH  /organizations/{org_id}/members/{member_id}  - Change member role
 DELETE /organizations/{org_id}/members/{member_id}  - Remove a member
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -32,8 +33,8 @@ router = APIRouter(
 @router.get("/me", response_model=OrgMemberListItem)
 async def get_my_membership(
     org_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get my membership in the organization."""
     _org, membership = await get_org_membership_or_404(db, org_id, user)
@@ -43,10 +44,10 @@ async def get_my_membership(
 @router.get("", response_model=PaginatedResponse[OrgMemberListItem])
 async def list_members(
     org_id: UUID,
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 20,
 ):
     """List all members of an organization."""
     org, _membership = await get_org_membership_or_404(db, org_id, user)
@@ -70,8 +71,8 @@ async def list_members(
 async def invite_member(
     org_id: UUID,
     body: OrgMemberInvite,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """
     Invite a user to the organization.
@@ -91,8 +92,8 @@ async def change_member_role(
     org_id: UUID,
     member_id: UUID,
     body: OrgMemberRoleUpdate,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """
     Change a member's role.
@@ -113,8 +114,8 @@ async def change_member_role(
 async def remove_member(
     org_id: UUID,
     member_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """
     Remove a member from the organization.

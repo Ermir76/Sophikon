@@ -2,7 +2,7 @@
 FastAPI dependency injection for authentication.
 """
 
-from typing import NamedTuple
+from typing import Annotated, NamedTuple
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
@@ -28,8 +28,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=F
 
 async def get_current_user(
     request: Request,
-    token: str | None = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +59,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    user: User = Depends(get_current_user),
+    user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not user.is_active:
         raise HTTPException(
@@ -143,8 +143,8 @@ def check_role(access: ProjectAccess, *allowed: str) -> None:
 
 async def get_project_or_404(
     project_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ) -> ProjectAccess:
     """
     Load a project and verify the user has access.
@@ -201,8 +201,8 @@ class TaskAccess(NamedTuple):
 
 async def get_task_with_project_access(
     task_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ) -> TaskAccess:
     """
     Load a task and verify the user has access to its project.
@@ -266,8 +266,8 @@ class AssignmentAccess(NamedTuple):
 
 async def get_assignment_with_access(
     assignment_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ) -> AssignmentAccess:
     """
     Load an assignment and verify the user has access to its project.

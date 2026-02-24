@@ -8,6 +8,8 @@ PATCH  /projects/{project_id} - Update project (owner/manager only)
 DELETE /projects/{project_id} - Soft delete project (owner only)
 """
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,13 +36,13 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.get("", response_model=PaginatedResponse[ProjectListItem])
 async def list_projects(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=20, ge=1, le=100),
-    status: str | None = Query(default=None),
-    search: str | None = Query(default=None),
-    organization_id: str | None = Query(default=None),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 20,
+    status: Annotated[str | None, Query()] = None,
+    search: Annotated[str | None, Query()] = None,
+    organization_id: Annotated[str | None, Query()] = None,
 ):
     """List all projects the user owns or is a member of."""
     # Verify org membership before listing (same pattern as create_project)
@@ -71,8 +73,8 @@ async def list_projects(
 )
 async def create_project(
     body: ProjectCreate,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Create a new project."""
     await get_org_membership_or_404(db, body.organization_id, user)
@@ -82,7 +84,7 @@ async def create_project(
 
 @router.get("/{project_id}", response_model=ProjectDetail)
 async def get_project(
-    access: ProjectAccess = Depends(get_project_or_404),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
 ):
     """Get project details."""
     return ProjectDetail.model_validate(access.project)
@@ -91,8 +93,8 @@ async def get_project(
 @router.patch("/{project_id}", response_model=ProjectDetail)
 async def update_project(
     body: ProjectUpdate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     Update a project.
@@ -107,8 +109,8 @@ async def update_project(
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     Soft delete a project.

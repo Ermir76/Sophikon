@@ -7,6 +7,7 @@ PATCH  /projects/{project_id}/dependencies/{dependency_id}    - Update dependenc
 DELETE /projects/{project_id}/dependencies/{dependency_id}    - Delete dependency
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -23,10 +24,10 @@ router = APIRouter(prefix="/projects/{project_id}/dependencies", tags=["dependen
 
 @router.get("", response_model=PaginatedResponse[DependencyResponse])
 async def list_dependencies(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=50, ge=1, le=200),
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=200)] = 50,
 ):
     """List all dependencies in the project."""
     dependencies, total = await dependency_service.list_dependencies(
@@ -47,8 +48,8 @@ async def list_dependencies(
 )
 async def create_dependency(
     body: DependencyCreate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Create a new dependency between tasks."""
     check_role(access, "owner", "manager", "member")
@@ -60,8 +61,8 @@ async def create_dependency(
 async def update_dependency(
     dependency_id: UUID,
     body: DependencyUpdate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update a dependency."""
     check_role(access, "owner", "manager", "member")
@@ -81,8 +82,8 @@ async def update_dependency(
 @router.delete("/{dependency_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_dependency(
     dependency_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Delete a dependency."""
     check_role(access, "owner", "manager")

@@ -8,6 +8,7 @@ PATCH  /projects/{project_id}/tasks/{task_id}    - Update task
 DELETE /projects/{project_id}/tasks/{task_id}    - Soft delete task
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -24,11 +25,11 @@ router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
 
 @router.get("", response_model=PaginatedResponse[TaskResponse])
 async def list_tasks(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=50, ge=1, le=200),
-    include_deleted: bool = Query(default=False),
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=200)] = 50,
+    include_deleted: Annotated[bool, Query()] = False,
 ):
     """List all tasks in the project."""
     if include_deleted:
@@ -56,8 +57,8 @@ async def list_tasks(
 )
 async def create_task(
     body: TaskCreate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Create a new task in the project."""
     check_role(access, "owner", "manager", "member")
@@ -68,8 +69,8 @@ async def create_task(
 @router.get("/{task_id}", response_model=TaskResponse)
 async def get_task(
     task_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get task details."""
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
@@ -85,8 +86,8 @@ async def get_task(
 async def update_task(
     task_id: UUID,
     body: TaskUpdate,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update a task."""
     check_role(access, "owner", "manager", "member")
@@ -104,8 +105,8 @@ async def update_task(
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: UUID,
-    access: ProjectAccess = Depends(get_project_or_404),
-    db: AsyncSession = Depends(get_db),
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Soft delete a task."""
     check_role(access, "owner", "manager")

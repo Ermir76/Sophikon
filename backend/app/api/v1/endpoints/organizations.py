@@ -8,6 +8,7 @@ PATCH  /organizations/{org_id}     - Update organization (owner only)
 DELETE /organizations/{org_id}     - Soft delete organization (owner only)
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -30,10 +31,10 @@ router = APIRouter(prefix="/organizations", tags=["organizations"])
 
 @router.get("", response_model=PaginatedResponse[OrganizationListItem])
 async def list_organizations(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100)] = 20,
 ):
     """List all organizations the user is a member of."""
     orgs, total = await organization_service.list_organizations(
@@ -54,8 +55,8 @@ async def list_organizations(
 )
 async def create_organization(
     body: OrganizationCreate,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Create a new organization."""
     org = await organization_service.create_organization(db, user, body)
@@ -65,8 +66,8 @@ async def create_organization(
 @router.get("/{org_id}", response_model=OrganizationDetail)
 async def get_organization(
     org_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get organization details."""
     org, _membership = await get_org_membership_or_404(db, org_id, user)
@@ -77,8 +78,8 @@ async def get_organization(
 async def update_organization(
     org_id: UUID,
     body: OrganizationUpdate,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """
     Update an organization.
@@ -96,8 +97,8 @@ async def update_organization(
 @router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_organization(
     org_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
 ):
     """
     Soft delete an organization.
