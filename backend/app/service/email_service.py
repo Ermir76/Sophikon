@@ -9,13 +9,13 @@ import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException, status
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import NameEmail, SecretStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.exceptions import InvalidOperationError
 from app.core.security import hash_token
 from app.models.email_verification import EmailVerification
 from app.models.user import User
@@ -123,16 +123,10 @@ async def verify_email_token(db: AsyncSession, token: str) -> None:
     verification = result.scalar_one_or_none()
 
     if not verification:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token",
-        )
+        raise InvalidOperationError("Invalid or expired verification token")
 
     if verification.expires_at < datetime.now(UTC):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token",
-        )
+        raise InvalidOperationError("Invalid or expired verification token")
 
     # Mark token as used
     verification.used_at = datetime.now(UTC)
@@ -141,10 +135,7 @@ async def verify_email_token(db: AsyncSession, token: str) -> None:
     user_result = await db.execute(select(User).where(User.id == verification.user_id))
     user = user_result.scalar_one_or_none()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification token",
-        )
+        raise InvalidOperationError("Invalid or expired verification token")
 
     user.email_verified = True
     await db.commit()

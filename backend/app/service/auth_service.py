@@ -6,11 +6,16 @@ Handles registration, login, token refresh, and logout.
 
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.exceptions import (
+    AppException,
+    AuthenticationError,
+    PermissionDeniedError,
+    ResourceConflictError,
+)
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -42,10 +47,7 @@ async def get_default_role(db: AsyncSession) -> Role:
     )
     role = result.scalar_one_or_none()
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Default 'user' role not found. Run seed migration.",
-        )
+        raise AppException("Default 'user' role not found. Run seed migration.")
     return role
 
 
@@ -85,10 +87,7 @@ async def register_user(
     """Register a new user. Returns (user, access_token, refresh_token)."""
     existing = await get_user_by_email(db, email)
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already registered",
-        )
+        raise ResourceConflictError("Email already registered")
 
     role = await get_default_role(db)
 
@@ -124,15 +123,9 @@ async def login_user(
         or not user.password_hash
         or not verify_password(password, user.password_hash)
     ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        raise AuthenticationError("Invalid email or password")
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated",
-        )
+        raise PermissionDeniedError("Account is deactivated")
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     user.last_login_at = datetime.now(UTC)
@@ -156,15 +149,9 @@ async def refresh_tokens(
     db_token = result.scalar_one_or_none()
 
     if not db_token or db_token.is_revoked:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-        )
+        raise AuthenticationError("Invalid refresh token")
     if db_token.expires_at < datetime.now(UTC):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token expired",
-        )
+        raise AuthenticationError("Refresh token expired")
 
     # Revoke old token
     db_token.is_revoked = True
@@ -173,10 +160,7 @@ async def refresh_tokens(
 
     user = await get_user_by_id(db, db_token.user_id)
     if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or deactivated",
-        )
+        raise AuthenticationError("User not found or deactivated")
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     await db.commit()

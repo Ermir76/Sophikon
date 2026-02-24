@@ -5,13 +5,18 @@ Authentication endpoints: register, login, refresh, logout, me, email verificati
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.exceptions import (
+    AppException,
+    AuthenticationError,
+    InvalidOperationError,
+)
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.schema.auth import (
@@ -130,10 +135,7 @@ async def refresh(
 ):
     refresh_token = request.cookies.get(settings.REFRESH_TOKEN_COOKIE_NAME)
     if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No refresh token found",
-        )
+        raise AuthenticationError("No refresh token found")
 
     device_info, ip = _client_info(request)
     user, access, new_refresh = await auth_service.refresh_tokens(
@@ -205,7 +207,7 @@ async def verify_email(
             url=f"{frontend_url}/verify-email?status=success",
             status_code=status.HTTP_302_FOUND,
         )
-    except HTTPException:
+    except AppException:
         return RedirectResponse(
             url=f"{frontend_url}/verify-email?status=error",
             status_code=status.HTTP_302_FOUND,
@@ -220,10 +222,7 @@ async def resend_verification_email(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
     if user.email_verified:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email is already verified",
-        )
+        raise InvalidOperationError("Email is already verified")
 
     await email_service.send_verification_email(db, user.id, user.email)
     return MessageResponse(message="Verification email sent")

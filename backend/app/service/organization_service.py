@@ -7,10 +7,10 @@ Handles listing, creating, updating, and soft-deleting organizations.
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import InvalidOperationError, ResourceConflictError
 from app.models.organization import Organization
 from app.models.organization_member import OrganizationMember
 from app.models.user import User
@@ -71,10 +71,7 @@ async def create_organization(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=409,
-            detail="Organization with this slug already exists",
-        )
+        raise ResourceConflictError("Organization with this slug already exists")
 
     return await _create_org_internal(db, user, data.name, data.slug, is_personal=False)
 
@@ -175,10 +172,7 @@ async def update_organization(
             )
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=409,
-                detail="Organization with this slug already exists",
-            )
+            raise ResourceConflictError("Organization with this slug already exists")
 
     for field, value in update_data.items():
         setattr(org, field, value)
@@ -194,10 +188,7 @@ async def soft_delete_organization(
 ) -> None:
     """Soft delete an organization."""
     if org.is_personal:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete personal organization",
-        )
+        raise InvalidOperationError("Cannot delete personal organization")
     org.is_deleted = True
     org.deleted_at = datetime.now(UTC)
     await db.commit()

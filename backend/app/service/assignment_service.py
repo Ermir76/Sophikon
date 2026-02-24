@@ -7,11 +7,14 @@ Note: Assignments use hard delete.
 
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    InvalidOperationError,
+    ResourceConflictError,
+)
 from app.models.assignment import Assignment
 from app.models.resource import Resource
 from app.models.task import Task
@@ -44,10 +47,7 @@ async def _validate_resource_in_project(
         )
     )
     if not result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Resource not found in this project",
-        )
+        raise InvalidOperationError("Resource not found in this project")
 
 
 async def create_assignment(
@@ -78,10 +78,7 @@ async def create_assignment(
         return assignment
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This resource is already assigned to this task",
-        )
+        raise ResourceConflictError("This resource is already assigned to this task")
 
 
 async def get_assignment_by_id(

@@ -6,10 +6,14 @@ Handles listing, inviting, removing, and changing roles of organization members.
 
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    InvalidOperationError,
+    NotFoundError,
+    ResourceConflictError,
+)
 from app.models.organization import Organization
 from app.models.organization_member import OrganizationMember
 from app.models.user import User
@@ -85,10 +89,7 @@ async def invite_member(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found with this email",
-        )
+        raise NotFoundError("User not found with this email")
 
     # Check if already a member
     existing = await db.execute(
@@ -98,10 +99,7 @@ async def invite_member(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=409,
-            detail="User is already a member of this organization",
-        )
+        raise ResourceConflictError("User is already a member of this organization")
 
     member = OrganizationMember(
         organization_id=org.id,
@@ -142,10 +140,7 @@ async def change_member_role(
     row = result.one_or_none()
 
     if not row:
-        raise HTTPException(
-            status_code=404,
-            detail="Member not found",
-        )
+        raise NotFoundError("Member not found")
 
     member, email, full_name = row
 
@@ -159,10 +154,7 @@ async def change_member_role(
         )
         owners = owner_count.scalars().all()
         if len(owners) <= 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot demote the last owner",
-            )
+            raise InvalidOperationError("Cannot demote the last owner")
 
     member.role = data.role.value
     await db.commit()
@@ -195,10 +187,7 @@ async def remove_member(
     member = result.scalar_one_or_none()
 
     if not member:
-        raise HTTPException(
-            status_code=404,
-            detail="Member not found",
-        )
+        raise NotFoundError("Member not found")
 
     # Prevent removing the last owner
     if member.role == "owner":
@@ -210,10 +199,7 @@ async def remove_member(
         )
         owners = owner_count.scalars().all()
         if len(owners) <= 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot remove the last owner",
-            )
+            raise InvalidOperationError("Cannot remove the last owner")
 
     await db.delete(member)
     await db.commit()

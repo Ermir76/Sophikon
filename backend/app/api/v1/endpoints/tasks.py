@@ -11,11 +11,12 @@ DELETE /projects/{project_id}/tasks/{task_id}    - Soft delete task
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
+from app.core.exceptions import NotFoundError
 from app.schema.common import PaginatedResponse
 from app.schema.task import TaskCreate, TaskResponse, TaskUpdate
 from app.service import task_service
@@ -75,10 +76,7 @@ async def get_task(
     """Get task details."""
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
     return TaskResponse.model_validate(task)
 
 
@@ -93,10 +91,7 @@ async def update_task(
     check_role(access, "owner", "manager", "member")
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
 
     task = await task_service.update_task(db, task, body)
     return TaskResponse.model_validate(task)
@@ -112,9 +107,6 @@ async def delete_task(
     check_role(access, "owner", "manager")
     task = await task_service.get_task_by_id(db, task_id, access.project.id)
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
 
     await task_service.soft_delete_task(db, task)

@@ -21,6 +21,7 @@ from app.api.v1.endpoints.resources import router as resources_router
 from app.api.v1.endpoints.tasks import router as tasks_router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.exceptions import AppException
 from app.core.rate_limit import limiter, rate_limit_exceeded_handler
 
 
@@ -67,7 +68,19 @@ async def global_exception_handler(request: Request, exc: Exception):
     logging.error(f"Global exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal Server Error"},
+        content={
+            "error": {"code": "INTERNAL_ERROR", "message": "Internal Server Error"}
+        },
+    )
+
+
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    """Handler for custom application exceptions."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": exc.error_code, "message": exc.message}},
+        headers=exc.headers,
     )
 
 

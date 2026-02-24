@@ -10,11 +10,12 @@ DELETE /organizations/{org_id}/members/{member_id}  - Remove a member
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_org_membership_or_404
 from app.core.database import get_db
+from app.core.exceptions import PermissionDeniedError
 from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.organization_member import (
@@ -81,7 +82,7 @@ async def invite_member(
     """
     org, membership = await get_org_membership_or_404(db, org_id, user)
     if membership.role not in ("owner", "admin"):
-        raise HTTPException(status_code=403, detail="Owner or admin role required")
+        raise PermissionDeniedError("Owner or admin role required")
 
     member = await organization_member_service.invite_member(db, org, body)
     return OrgMemberListItem(**member)
@@ -102,7 +103,7 @@ async def change_member_role(
     """
     org, membership = await get_org_membership_or_404(db, org_id, user)
     if membership.role != "owner":
-        raise HTTPException(status_code=403, detail="Owner role required")
+        raise PermissionDeniedError("Owner role required")
 
     member = await organization_member_service.change_member_role(
         db, org, member_id, body
@@ -124,6 +125,6 @@ async def remove_member(
     """
     org, membership = await get_org_membership_or_404(db, org_id, user)
     if membership.role not in ("owner", "admin"):
-        raise HTTPException(status_code=403, detail="Owner or admin role required")
+        raise PermissionDeniedError("Owner or admin role required")
 
     await organization_member_service.remove_member(db, org, member_id)

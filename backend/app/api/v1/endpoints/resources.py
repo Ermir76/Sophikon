@@ -11,11 +11,12 @@ DELETE /projects/{project_id}/resources/{resource_id}    - Delete resource (hard
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
+from app.core.exceptions import NotFoundError
 from app.schema.common import PaginatedResponse
 from app.schema.resource import ResourceCreate, ResourceResponse, ResourceUpdate
 from app.service import resource_service
@@ -76,10 +77,7 @@ async def get_resource(
         db, resource_id, access.project.id
     )
     if not resource:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resource not found",
-        )
+        raise NotFoundError("Resource not found")
     return ResourceResponse.model_validate(resource)
 
 
@@ -96,10 +94,7 @@ async def update_resource(
         db, resource_id, access.project.id
     )
     if not resource:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resource not found",
-        )
+        raise NotFoundError("Resource not found")
 
     resource = await resource_service.update_resource(db, resource, body)
     return ResourceResponse.model_validate(resource)
@@ -117,9 +112,6 @@ async def delete_resource(
         db, resource_id, access.project.id
     )
     if not resource:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resource not found",
-        )
+        raise NotFoundError("Resource not found")
 
     await resource_service.delete_resource(db, resource)

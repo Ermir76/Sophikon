@@ -7,11 +7,14 @@ Note: Dependencies use hard delete.
 
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    InvalidOperationError,
+    ResourceConflictError,
+)
 from app.models.dependency import Dependency
 from app.models.project import Project
 from app.models.task import Task
@@ -61,10 +64,7 @@ async def _validate_tasks_in_project(
             )
         )
         if not result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"{label} task not found in this project",
-            )
+            raise InvalidOperationError(f"{label} task not found in this project")
 
 
 async def create_dependency(
@@ -94,10 +94,7 @@ async def create_dependency(
         return dependency
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This dependency already exists",
-        )
+        raise ResourceConflictError("This dependency already exists")
 
 
 async def get_dependency_by_id(

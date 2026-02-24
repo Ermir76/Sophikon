@@ -7,10 +7,10 @@ Handles listing, creating, updating, and soft-deleting tasks.
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import InvalidOperationError
 from app.models.assignment import Assignment
 from app.models.dependency import Dependency
 from app.models.project import Project
@@ -88,10 +88,7 @@ async def create_task(
         )
         parent = parent_result.scalar_one_or_none()
         if not parent:
-            raise HTTPException(
-                status_code=400,
-                detail="Parent task not found in this project",
-            )
+            raise InvalidOperationError("Parent task not found in this project")
 
         outline_level = parent.outline_level + 1
         # Count siblings under this parent

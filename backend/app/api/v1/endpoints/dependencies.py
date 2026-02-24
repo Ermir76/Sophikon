@@ -10,11 +10,12 @@ DELETE /projects/{project_id}/dependencies/{dependency_id}    - Delete dependenc
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
+from app.core.exceptions import NotFoundError
 from app.schema.common import PaginatedResponse
 from app.schema.dependency import DependencyCreate, DependencyResponse, DependencyUpdate
 from app.service import dependency_service
@@ -70,10 +71,7 @@ async def update_dependency(
         db, dependency_id, access.project.id
     )
     if not dependency:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Dependency not found",
-        )
+        raise NotFoundError("Dependency not found")
 
     dependency = await dependency_service.update_dependency(db, dependency, body)
     return DependencyResponse.model_validate(dependency)
@@ -91,9 +89,6 @@ async def delete_dependency(
         db, dependency_id, access.project.id
     )
     if not dependency:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Dependency not found",
-        )
+        raise NotFoundError("Dependency not found")
 
     await dependency_service.delete_dependency(db, dependency)

@@ -11,11 +11,12 @@ DELETE /organizations/{org_id}     - Soft delete organization (owner only)
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_org_membership_or_404
 from app.core.database import get_db
+from app.core.exceptions import PermissionDeniedError
 from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.organization import (
@@ -88,7 +89,7 @@ async def update_organization(
     """
     org, membership = await get_org_membership_or_404(db, org_id, user)
     if membership.role != "owner":
-        raise HTTPException(status_code=403, detail="Owner role required")
+        raise PermissionDeniedError("Owner role required")
 
     org = await organization_service.update_organization(db, org, body)
     return OrganizationDetail.model_validate(org)
@@ -107,6 +108,6 @@ async def delete_organization(
     """
     org, membership = await get_org_membership_or_404(db, org_id, user)
     if membership.role != "owner":
-        raise HTTPException(status_code=403, detail="Owner role required")
+        raise PermissionDeniedError("Owner role required")
 
     await organization_service.soft_delete_organization(db, org)

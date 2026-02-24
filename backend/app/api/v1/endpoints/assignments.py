@@ -13,7 +13,7 @@ DELETE /assignments/{assignment_id}                           - Delete assignmen
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +26,7 @@ from app.api.deps import (
     get_project_or_404,
 )
 from app.core.database import get_db
+from app.core.exceptions import NotFoundError
 from app.models.task import Task
 from app.schema.assignment import AssignmentCreate, AssignmentResponse, AssignmentUpdate
 from app.service import assignment_service
@@ -55,10 +56,7 @@ async def _get_task_in_project(
     )
     task = result.scalar_one_or_none()
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
     return task
 
 

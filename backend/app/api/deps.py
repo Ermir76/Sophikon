@@ -5,7 +5,7 @@ FastAPI dependency injection for authentication.
 from typing import Annotated, NamedTuple
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy import select
@@ -13,6 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.exceptions import (
+    AuthenticationError,
+    NotFoundError,
+    PermissionDeniedError,
+)
 from app.core.security import decode_access_token
 from app.models.assignment import Assignment
 from app.models.organization import Organization
@@ -31,30 +36,24 @@ async def get_current_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     # If header token is missing, check cookie
     if not token:
         token = request.cookies.get("access_token")
 
     if not token:
-        raise credentials_exception
+        raise AuthenticationError("Could not validate credentials")
 
     try:
         payload = decode_access_token(token)
         user_id: str | None = payload.get("sub")
         if user_id is None:
-            raise credentials_exception
+            raise AuthenticationError("Could not validate credentials")
     except JWTError:
-        raise credentials_exception
+        raise AuthenticationError("Could not validate credentials")
 
     user = await get_user_by_id(db, user_id)
     if user is None:
-        raise credentials_exception
+        raise AuthenticationError("Could not validate credentials")
     return user
 
 
@@ -62,10 +61,7 @@ async def get_current_active_user(
     user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user",
-        )
+        raise PermissionDeniedError("Inactive user")
     return user
 
 
@@ -95,10 +91,7 @@ async def get_org_membership_or_404(
     org = result.scalar_one_or_none()
 
     if not org:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found",
-        )
+        raise NotFoundError("Organization not found")
 
     member_result = await db.execute(
         select(OrganizationMember).where(
@@ -109,10 +102,7 @@ async def get_org_membership_or_404(
     membership = member_result.scalar_one_or_none()
 
     if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have access to this organization",
-        )
+        raise PermissionDeniedError("You do not have access to this organization")
 
     return org, membership
 
@@ -130,10 +120,7 @@ class ProjectAccess(NamedTuple):
 def check_role_name(role_name: str, *allowed: str) -> None:
     """Raise 403 if role_name is not in allowed roles."""
     if role_name not in allowed:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Requires role: {', '.join(allowed)}",
-        )
+        raise PermissionDeniedError(f"Requires role: {', '.join(allowed)}")
 
 
 def check_role(access: ProjectAccess, *allowed: str) -> None:
@@ -162,10 +149,7 @@ async def get_project_or_404(
     project = result.scalar_one_or_none()
 
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
+        raise NotFoundError("Project not found")
 
     # Check if user is owner
     if project.owner_id == user.id:
@@ -183,10 +167,7 @@ async def get_project_or_404(
     member = member_result.scalar_one_or_none()
 
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have access to this project",
-        )
+        raise PermissionDeniedError("You do not have access to this project")
 
     return ProjectAccess(project=project, role_name=member.role.name)
 
@@ -220,17 +201,11 @@ async def get_task_with_project_access(
     task = result.scalar_one_or_none()
 
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
 
     project = task.project
     if project.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found",
-        )
+        raise NotFoundError("Task not found")
 
     # Check if user is owner
     if project.owner_id == user.id:
@@ -248,10 +223,7 @@ async def get_task_with_project_access(
     member = member_result.scalar_one_or_none()
 
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have access to this project",
-        )
+        raise PermissionDeniedError("You do not have access to this project")
 
     return TaskAccess(task=task, project=project, role_name=member.role.name)
 
@@ -283,24 +255,15 @@ async def get_assignment_with_access(
     assignment = result.scalar_one_or_none()
 
     if not assignment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assignment not found",
-        )
+        raise NotFoundError("Assignment not found")
 
     task = assignment.task
     if task.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assignment not found",
-        )
+        raise NotFoundError("Assignment not found")
 
     project = task.project
     if project.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assignment not found",
-        )
+        raise NotFoundError("Assignment not found")
 
     # Check if user is owner
     if project.owner_id == user.id:
@@ -320,10 +283,7 @@ async def get_assignment_with_access(
     member = member_result.scalar_one_or_none()
 
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have access to this project",
-        )
+        raise PermissionDeniedError("You do not have access to this project")
 
     return AssignmentAccess(
         assignment=assignment, project=project, role_name=member.role.name
