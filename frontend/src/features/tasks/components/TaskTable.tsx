@@ -16,6 +16,8 @@ import {
 } from "@/shared/ui/table";
 import { Checkbox } from "@/shared/ui/checkbox";
 import type { Task } from "@/features/tasks/types";
+import { AddTaskRow } from "@/features/tasks/components/AddTaskRow";
+import { TaskInlineEdit } from "@/features/tasks/components/TaskInlineEdit";
 import { ChevronDown } from "lucide-react";
 
 const columnHelper = createColumnHelper<Task>();
@@ -54,14 +56,19 @@ export const columns = [
             const isSummary = task.is_summary;
 
             return (
-                <div style={{ paddingLeft }} className="flex items-center gap-2">
+                <div style={{ paddingLeft }} className="flex items-center gap-2 w-full">
                     {isSummary ? (
-                        <ChevronDown className="size-4 text-muted-foreground" />
+                        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                     ) : (
-                        <div className="size-4" /> // Placeholder for alignment
+                        <div className="size-4 shrink-0" /> // Placeholder for alignment
                     )}
-                    <span className={isSummary ? "font-bold" : ""}>
-                        {info.getValue()}
+                    <span className={`w-full ${isSummary ? "font-bold" : ""}`}>
+                        <TaskInlineEdit
+                            task={task}
+                            field="name"
+                            value={info.getValue()}
+                            type="text"
+                        />
                     </span>
                 </div>
             );
@@ -69,7 +76,18 @@ export const columns = [
     }),
     columnHelper.accessor("duration", {
         header: "Duration",
-        cell: (info) => `${info.getValue()} mins`,
+        cell: (info) => (
+            <div className="flex items-center gap-1">
+                <TaskInlineEdit
+                    task={info.row.original}
+                    field="duration"
+                    value={info.getValue()}
+                    type="number"
+                    disabled={info.row.original.is_summary}
+                />
+                <span className="text-muted-foreground shrink-0 text-xs">mins</span>
+            </div>
+        ),
     }),
     columnHelper.accessor("start_date", {
         header: "Start",
@@ -86,12 +104,22 @@ export const columns = [
 ];
 
 interface TaskTableProps {
+    projectId: string;
     data: Task[];
     rowSelection: RowSelectionState;
     setRowSelection: OnChangeFn<RowSelectionState>;
+    forceAdding?: boolean;
+    onCancelAdding?: () => void;
 }
 
-export function TaskTable({ data, rowSelection, setRowSelection }: TaskTableProps) {
+export function TaskTable({
+    projectId,
+    data,
+    rowSelection,
+    setRowSelection,
+    forceAdding,
+    onCancelAdding
+}: TaskTableProps) {
     const table = useReactTable({
         data,
         columns,
@@ -138,10 +166,18 @@ export function TaskTable({ data, rowSelection, setRowSelection }: TaskTableProp
                 ) : (
                     <TableRow>
                         <TableCell colSpan={columns.length} className="h-24 text-center">
-                            No tasks found.
+                            No tasks found. Create one below.
                         </TableCell>
                     </TableRow>
                 )}
+
+                {/* Inline Add Task Row */}
+                <AddTaskRow
+                    projectId={projectId}
+                    colSpan={columns.length}
+                    forceAdding={forceAdding}
+                    onCancelAdding={onCancelAdding}
+                />
             </TableBody>
         </Table>
     );
