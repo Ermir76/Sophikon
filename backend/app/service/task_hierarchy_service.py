@@ -6,59 +6,76 @@ Handles indentation, outdentation, reordering, and WBS regeneration.
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError
 from app.models.project import Project
 from app.models.task import Task
-from app.service.task_service import recalculate_summary
+from app.service.task_service import recalculate_summary, regenerate_wbs_codes
 
 
-async def regenerate_wbs_codes(db: AsyncSession, project_id: UUID) -> None:
+async def _renumber_siblings(
+    db: AsyncSession,
+    project_id: UUID,
+    parent_task_id: UUID | None,
+) -> None:
     """
-    Regenerate WBS codes, outline levels, and summary flags for all tasks in a project.
-    Fixes orphaned tasks and flushes changes without committing.
+    Renumber order_index for all active siblings under parent_task_id.
+
+    Uses negative-index trick to avoid unique constraint collisions:
+    Phase 1: set all to negative values, flush
+    Phase 2: set all to final positive values, flush
     """
+    parent_condition = (
+        Task.parent_task_id.is_(None)
+        if parent_task_id is None
+        else Task.parent_task_id == parent_task_id
+    )
     result = await db.execute(
         select(Task)
         .where(
             Task.project_id == project_id,
+            parent_condition,
             Task.is_deleted == False,  # noqa: E712
         )
         .order_by(Task.order_index.asc())
     )
-    tasks = list(result.scalars().all())
+    siblings = list(result.scalars().all())
 
-    task_map = {task.id: task for task in tasks}
-    children_map: dict[UUID, list[Task]] = {}
-    roots: list[Task] = []
+    if not siblings:
+        return
 
-    for task in tasks:
-        if task.parent_task_id:
-            if task.parent_task_id not in task_map:
-                task.parent_task_id = None
-                roots.append(task)
-            else:
-                children_map.setdefault(task.parent_task_id, []).append(task)
-        else:
-            roots.append(task)
-
-    def traverse(node: Task, current_wbs_prefix: str, level: int) -> None:
-        node.outline_level = level
-        children = children_map.get(node.id, [])
-        node.is_summary = len(children) > 0
-
-        for i, child in enumerate(children, start=1):
-            child_wbs = f"{current_wbs_prefix}.{i}"
-            child.wbs_code = child_wbs
-            traverse(child, child_wbs, level + 1)
-
-    for i, root in enumerate(roots, start=1):
-        root.wbs_code = str(i)
-        traverse(root, str(i), 1)
-
+    # Phase 1: negative indexes
+    for i, t in enumerate(siblings):
+        t.order_index = -(i + 1)
     await db.flush()
+
+    # Phase 2: final positive indexes
+    for i, t in enumerate(siblings):
+        t.order_index = i + 1
+    await db.flush()
+
+
+async def _next_sibling_order(
+    db: AsyncSession,
+    project_id: UUID,
+    parent_task_id: UUID | None,
+) -> int:
+    """Return the next available order_index in a sibling group."""
+    parent_condition = (
+        Task.parent_task_id.is_(None)
+        if parent_task_id is None
+        else Task.parent_task_id == parent_task_id
+    )
+    result = await db.execute(
+        select(func.coalesce(func.max(Task.order_index), 0) + 1).where(
+            Task.project_id == project_id,
+            parent_condition,
+            Task.is_deleted == False,  # noqa: E712
+        )
+    )
+    return result.scalar() or 1
 
 
 async def indent_task(
@@ -100,11 +117,19 @@ async def indent_task(
 
     old_parent_id = task.parent_task_id
 
-    # Set new parent
-    task.parent_task_id = prev_sibling.id
-
-    # Regenerate WBS
+    # Set new parent — temp negative index avoids unique constraint
+    # collision when autoflush sees the new parent before order_index is updated
+    task.order_index = -9999
     await db.flush()
+
+    task.parent_task_id = prev_sibling.id
+    task.order_index = await _next_sibling_order(db, project.id, prev_sibling.id)
+
+    await db.flush()
+
+    # Renumber old sibling group (gap left behind)
+    await _renumber_siblings(db, project.id, old_parent_id)
+
     if old_parent_id:
         await recalculate_summary(db, project.id, old_parent_id)
     await recalculate_summary(db, project.id, task.parent_task_id)
@@ -144,13 +169,12 @@ async def outdent_task(
         )
     )
     parent = parent_result.scalar_one_or_none()
+    if not parent:
+        raise InvalidOperationError("Parent task not found or has been deleted.")
 
-    if parent:
-        task.parent_task_id = parent.parent_task_id
-    else:
-        task.parent_task_id = None
+    new_parent_id = parent.parent_task_id
 
-    # Following siblings become children of THIS task
+    # Following siblings (under old parent) become children of THIS task
     following_siblings_result = await db.execute(
         select(Task).where(
             Task.project_id == project.id,
@@ -164,17 +188,29 @@ async def outdent_task(
     for sibling in following_siblings:
         sibling.parent_task_id = task.id
 
+    # Move task to new parent — temp negative index avoids unique constraint
+    # collision when autoflush sees the new parent before order_index is updated
+    task.order_index = -9999
     await db.flush()
 
-    # Recalculate summaries for the old parent and the new parent (if any)
+    task.parent_task_id = new_parent_id
+    task.order_index = await _next_sibling_order(db, project.id, new_parent_id)
+
+    await db.flush()
+
+    # Renumber all affected sibling groups
+    await _renumber_siblings(db, project.id, old_parent_id)
+    await _renumber_siblings(db, project.id, new_parent_id)
+    if following_siblings:
+        await _renumber_siblings(db, project.id, task.id)
+
+    # Recalculate summaries
     if old_parent_id:
         await recalculate_summary(db, project.id, old_parent_id)
-    if task.parent_task_id:
-        await recalculate_summary(db, project.id, task.parent_task_id)
-    # The outdented task itself might now be a summary task due to the following siblings
+    if new_parent_id:
+        await recalculate_summary(db, project.id, new_parent_id)
     await recalculate_summary(db, project.id, task.id)
 
-    # Regenerate WBS
     await regenerate_wbs_codes(db, project.id)
     await db.commit()
     await db.refresh(task)
@@ -192,13 +228,19 @@ async def reorder_task(
 ) -> Task:
     """
     Reorder a task via drag-and-drop.
-    Extracts the task and its descendants as a block and re-inserts it.
+    Moves the task within its sibling group or to a new parent.
     """
     await db.execute(
         select(Project.id).where(Project.id == project.id).with_for_update()
     )
 
-    if new_parent_id:
+    old_parent_id = task.parent_task_id
+
+    # Validate new parent BEFORE mutating anything
+    if new_parent_id is not None:
+        if new_parent_id == task.id:
+            raise InvalidOperationError("Cannot make a task its own parent")
+
         parent_result = await db.execute(
             select(Task).where(
                 Task.id == new_parent_id,
@@ -206,99 +248,100 @@ async def reorder_task(
                 Task.is_deleted == False,  # noqa: E712
             )
         )
-        parent = parent_result.scalar_one_or_none()
-        if not parent:
+        new_parent = parent_result.scalar_one_or_none()
+        if not new_parent:
             raise InvalidOperationError("New parent task not found")
-        task.parent_task_id = parent.id
 
-    # Load all tasks ordered by order_index
-    result = await db.execute(
+        # Check descendant constraint — build hierarchy map from DB state
+        all_result = await db.execute(
+            select(Task.id, Task.parent_task_id).where(
+                Task.project_id == project.id,
+                Task.is_deleted == False,  # noqa: E712
+            )
+        )
+        all_rows = all_result.all()
+        parent_map = {row.id: row.parent_task_id for row in all_rows}
+
+        children_map: dict[UUID, list[UUID]] = {}
+        for tid, pid in parent_map.items():
+            if pid is not None:
+                children_map.setdefault(pid, []).append(tid)
+
+        descendant_ids: set[UUID] = set()
+
+        def find_descendants(node_id: UUID) -> None:
+            for child_id in children_map.get(node_id, []):
+                if child_id not in descendant_ids:
+                    descendant_ids.add(child_id)
+                    find_descendants(child_id)
+
+        find_descendants(task.id)
+
+        if new_parent_id in descendant_ids:
+            raise InvalidOperationError(
+                "Cannot move a task to be a child of its descendant"
+            )
+
+    # Determine target parent
+    target_parent_id = new_parent_id if new_parent_id is not None else old_parent_id
+
+    # Load siblings in target group (excluding the task being moved)
+    target_parent_condition = (
+        Task.parent_task_id.is_(None)
+        if target_parent_id is None
+        else Task.parent_task_id == target_parent_id
+    )
+    siblings_result = await db.execute(
         select(Task)
         .where(
             Task.project_id == project.id,
+            target_parent_condition,
+            Task.id != task.id,
             Task.is_deleted == False,  # noqa: E712
         )
         .order_by(Task.order_index.asc())
     )
-    all_tasks = list(result.scalars().all())
+    siblings = list(siblings_result.scalars().all())
 
-    # Build hierarchy map to identify descendants
-    children_map: dict[UUID, list[Task]] = {}
-    for t in all_tasks:
-        if t.parent_task_id:
-            children_map.setdefault(t.parent_task_id, []).append(t)
-
-    # Find the target task and all its descendants
-    descendant_ids = set()
-
-    def find_descendants(node_id: UUID):
-        for child in children_map.get(node_id, []):
-            descendant_ids.add(child.id)
-            find_descendants(child.id)
-
-    find_descendants(task.id)
-
-    if new_parent_id and new_parent_id in descendant_ids:
-        raise InvalidOperationError(
-            "Cannot move a task to be a child of its descendant"
-        )
-
-    if new_parent_id == task.id:
-        raise InvalidOperationError("Cannot make a task its own parent")
-
-    # Extract the block of tasks being moved
-    block = []
-    remaining = []
-
-    for t in all_tasks:
-        if t.id == task.id or t.id in descendant_ids:
-            block.append(t)
-        else:
-            remaining.append(t)
-
-    insert_index = len(remaining)  # Default to end
-
-    remaining_map = {t.id: t for t in remaining}
-
-    # Helper to check if child is a descendant of parent
-    def is_descendant(child_id: UUID, parent_id: UUID) -> bool:
-        if child_id == parent_id:
-            return True
-        child_node = remaining_map.get(child_id)
-        if not child_node or not child_node.parent_task_id:
-            return False
-        return is_descendant(child_node.parent_task_id, parent_id)
+    # Determine insertion position
+    insert_pos = len(siblings)  # Default: append to end
 
     if after_task_id:
-        for i, t in enumerate(remaining):
-            if t.id == after_task_id:
-                insert_index = i + 1
-                # Skip over the descendants of the after_task_id so
-                # we don't insert the block right in the middle of them
-                while insert_index < len(remaining):
-                    if is_descendant(remaining[insert_index].id, after_task_id):
-                        insert_index += 1
-                    else:
-                        break
+        for i, s in enumerate(siblings):
+            if s.id == after_task_id:
+                insert_pos = i + 1
                 break
     elif before_task_id:
-        for i, t in enumerate(remaining):
-            if t.id == before_task_id:
-                insert_index = i
+        for i, s in enumerate(siblings):
+            if s.id == before_task_id:
+                insert_pos = i
                 break
 
-    # Reassemble the list
-    new_order = remaining[:insert_index] + block + remaining[insert_index:]
+    # Insert task into the sibling list
+    siblings.insert(insert_pos, task)
 
-    # Re-assign sequential order_index 1-based
-    for idx, t in enumerate(new_order, start=1):
-        t.order_index = idx
+    # Set new parent
+    task.parent_task_id = target_parent_id
 
+    # Renumber: negative-index trick on the target group
+    for i, t in enumerate(siblings):
+        t.order_index = -(i + 1)
     await db.flush()
 
-    # If the parent changed, we'd need to recalculate old and new parent summaries.
-    # Since reorder_task can change parents, let's recalculate all parents involved.
-    parents_to_recalc = {t.parent_task_id for t in all_tasks if t.parent_task_id}
+    for i, t in enumerate(siblings):
+        t.order_index = i + 1
+    await db.flush()
+
+    # If parent changed, renumber old sibling group too
+    if new_parent_id is not None and old_parent_id != target_parent_id:
+        await _renumber_siblings(db, project.id, old_parent_id)
+
+    # Recalculate summaries
+    parents_to_recalc = set()
+    if old_parent_id:
+        parents_to_recalc.add(old_parent_id)
+    if target_parent_id:
+        parents_to_recalc.add(target_parent_id)
     for p_id in parents_to_recalc:
         await recalculate_summary(db, project.id, p_id)
 

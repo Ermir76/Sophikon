@@ -28,7 +28,7 @@ async def list_tasks(
     include_deleted: bool = False,
 ) -> tuple[list[Task], int]:
     """
-    List tasks for a project, ordered by order_index.
+    List tasks for a project in tree order (depth-first).
 
     Returns (tasks, total_count).
     """
@@ -42,16 +42,67 @@ async def list_tasks(
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
-    # Apply pagination and ordering
+    # Apply pagination and ordering by sort_order (global DFS traversal order)
     offset = (page - 1) * per_page
     paginated_query = (
-        base_query.order_by(Task.order_index.asc()).offset(offset).limit(per_page)
+        base_query.order_by(Task.sort_order.asc()).offset(offset).limit(per_page)
     )
 
     result = await db.execute(paginated_query)
     tasks = list(result.scalars().all())
 
     return tasks, total
+
+
+async def regenerate_wbs_codes(db: AsyncSession, project_id: UUID) -> None:
+    """
+    Regenerate WBS codes, outline levels, sort_order, and summary flags
+    for all tasks in a project. Fixes orphaned tasks and flushes without committing.
+    """
+    result = await db.execute(
+        select(Task)
+        .where(
+            Task.project_id == project_id,
+            Task.is_deleted == False,  # noqa: E712
+        )
+        .order_by(Task.order_index.asc())
+    )
+    tasks = list(result.scalars().all())
+
+    task_map = {task.id: task for task in tasks}
+    children_map: dict[UUID, list[Task]] = {}
+    roots: list[Task] = []
+
+    for task in tasks:
+        if task.parent_task_id:
+            if task.parent_task_id not in task_map:
+                task.parent_task_id = None
+                roots.append(task)
+            else:
+                children_map.setdefault(task.parent_task_id, []).append(task)
+        else:
+            roots.append(task)
+
+    counter = 0
+
+    def traverse(node: Task, current_wbs_prefix: str, level: int) -> None:
+        nonlocal counter
+        counter += 1
+        node.sort_order = counter
+        node.outline_level = level
+        children = children_map.get(node.id, [])
+        node.is_summary = len(children) > 0
+
+        for i, child in enumerate(children, start=1):
+            child_wbs = f"{current_wbs_prefix}.{i}"
+            child.wbs_code = child_wbs
+            traverse(child, child_wbs, level + 1)
+
+    for i, root in enumerate(roots, start=1):
+        root.wbs_code = str(i)
+        traverse(root, str(i), 1)
+
+    await db.flush()
 
 
 async def create_task(
@@ -67,9 +118,16 @@ async def create_task(
     )
 
     # Now safe — no other transaction can be here for the same project
+    # Per-sibling-group order_index: MAX within the same parent
+    parent_condition = (
+        Task.parent_task_id.is_(None)
+        if data.parent_task_id is None
+        else Task.parent_task_id == data.parent_task_id
+    )
     result = await db.execute(
         select(func.coalesce(func.max(Task.order_index), 0) + 1).where(
             Task.project_id == project.id,
+            parent_condition,
             Task.is_deleted == False,  # noqa: E712
         )
     )
@@ -140,6 +198,7 @@ async def create_task(
     if data.parent_task_id:
         await recalculate_summary(db, project.id, data.parent_task_id)
 
+    await regenerate_wbs_codes(db, project.id)
     await db.commit()
     await db.refresh(task)
     return task

@@ -80,6 +80,11 @@ class Task(Base):
         Integer,
         nullable=False,  # Sort order within siblings
     )
+    sort_order: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,  # Global DFS traversal order for flat listing
+        server_default=text("0"),
+    )
 
     # Basic Info
     name: Mapped[str] = mapped_column(
@@ -334,11 +339,19 @@ class Task(Base):
             postgresql_where=text("NOT is_deleted"),
         ),
         Index(
-            "idx_task_project_order",
+            "idx_task_sibling_order",
+            project_id,
+            parent_task_id,
+            order_index,
+            unique=True,
+            postgresql_where=text("NOT is_deleted AND parent_task_id IS NOT NULL"),
+        ),
+        Index(
+            "idx_task_root_order",
             project_id,
             order_index,
             unique=True,
-            postgresql_where=text("NOT is_deleted"),
+            postgresql_where=text("NOT is_deleted AND parent_task_id IS NULL"),
         ),
         Index(
             "idx_task_project_wbs",

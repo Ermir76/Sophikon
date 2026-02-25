@@ -14,8 +14,11 @@ from app.core.exceptions import InvalidOperationError
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskBulkUpdateItem, TaskCreate
-from app.service.task_hierarchy_service import regenerate_wbs_codes
-from app.service.task_service import recalculate_summary, soft_delete_task
+from app.service.task_service import (
+    recalculate_summary,
+    regenerate_wbs_codes,
+    soft_delete_task,
+)
 
 
 async def bulk_create_tasks(
@@ -30,13 +33,26 @@ async def bulk_create_tasks(
         select(Project.id).where(Project.id == project.id).with_for_update()
     )
 
-    result = await db.execute(
-        select(func.coalesce(func.max(Task.order_index), 0)).where(
-            Task.project_id == project.id,
-            Task.is_deleted == False,  # noqa: E712
-        )
-    )
-    max_order_index = result.scalar() or 0
+    # Track max order_index per sibling group (keyed by parent_task_id, None for roots)
+    max_order_per_parent: dict[UUID | None, int] = {}
+
+    async def get_next_order(parent_id: UUID | None) -> int:
+        if parent_id not in max_order_per_parent:
+            parent_condition = (
+                Task.parent_task_id.is_(None)
+                if parent_id is None
+                else Task.parent_task_id == parent_id
+            )
+            result = await db.execute(
+                select(func.coalesce(func.max(Task.order_index), 0)).where(
+                    Task.project_id == project.id,
+                    parent_condition,
+                    Task.is_deleted == False,  # noqa: E712
+                )
+            )
+            max_order_per_parent[parent_id] = result.scalar() or 0
+        max_order_per_parent[parent_id] += 1
+        return max_order_per_parent[parent_id]
 
     hours_per_day = project.settings.get("hours_per_day", 8)
     minutes_per_day = hours_per_day * 60
@@ -63,7 +79,7 @@ async def bulk_create_tasks(
                         )
                     parent_ids_to_recalc.add(parent.id)
 
-                max_order_index += 1
+                order_index = await get_next_order(task_data.parent_task_id)
                 duration_days = (
                     max(1, task_data.duration // minutes_per_day)
                     if not task_data.is_milestone
@@ -78,7 +94,7 @@ async def bulk_create_tasks(
                     notes=task_data.notes,
                     wbs_code="TEMP",  # Will be fixed by regenerate_wbs_codes
                     outline_level=1,  # Will be fixed by regenerate_wbs_codes
-                    order_index=max_order_index,
+                    order_index=order_index,
                     start_date=task_data.start_date,
                     finish_date=finish_date,
                     duration=task_data.duration,

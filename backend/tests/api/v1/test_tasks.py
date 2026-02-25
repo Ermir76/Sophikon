@@ -951,3 +951,566 @@ async def test_delete_task_viewer_forbidden(
 
     resp = await client.delete(f"/api/v1/projects/{proj_id}/tasks/{task_id}")
     assert resp.status_code == 403
+
+
+# --- Indent Tests ---
+
+
+@pytest.mark.asyncio
+async def test_indent_task_success(client: AsyncClient):
+    """Indent — success — task becomes child of previous sibling."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ind_ok@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Ind Ok",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Ind", "slug": "org-ind"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Ind",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/indent")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["parent_task_id"] == t1_id
+    assert data["wbs_code"] == "1.1"
+
+
+@pytest.mark.asyncio
+async def test_indent_first_task(client: AsyncClient):
+    """Indent — first task — 400."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ind_first@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Ind First",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Ind F", "slug": "org-ind-f"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Ind F",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t1_id}/indent")
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_indent_viewer_forbidden(
+    client: AsyncClient, session: AsyncSession, setup_roles
+):
+    """Indent — viewer role — 403."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ind_v_o@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Ind VO",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Ind V", "slug": "org-ind-v"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Ind V",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+    )
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ind_v_u@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Ind VU",
+        },
+    )
+    await add_project_member(session, proj_id, "ind_v_u@x.com", "viewer")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "ind_v_u@x.com", "password": "StrongPassword123!"},
+    )
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/indent")
+    assert resp.status_code == 403
+
+
+# --- Outdent Tests ---
+
+
+@pytest.mark.asyncio
+async def test_outdent_task_success(client: AsyncClient):
+    """Outdent — success."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "out_ok@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Out Ok",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Out", "slug": "org-out"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Out",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "T2",
+                "start_date": "2024-01-01",
+                "duration": 480,
+                "parent_task_id": t1_id,
+            },
+        )
+    ).json()["id"]
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/outdent")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["parent_task_id"] is None
+    assert data["wbs_code"] == "2"
+
+
+@pytest.mark.asyncio
+async def test_outdent_root_task(client: AsyncClient):
+    """Outdent — root task — 400."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "out_root@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Out Root",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Out R", "slug": "org-out-r"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Out R",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t1_id}/outdent")
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_outdent_viewer_forbidden(
+    client: AsyncClient, session: AsyncSession, setup_roles
+):
+    """Outdent — viewer role — 403."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "out_v_o@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Out VO",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Out V", "slug": "org-out-v"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Out V",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "T2",
+                "start_date": "2024-01-01",
+                "duration": 480,
+                "parent_task_id": t1_id,
+            },
+        )
+    ).json()["id"]
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "out_v_u@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Out VU",
+        },
+    )
+    await add_project_member(session, proj_id, "out_v_u@x.com", "viewer")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "out_v_u@x.com", "password": "StrongPassword123!"},
+    )
+
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/outdent")
+    assert resp.status_code == 403
+
+
+# --- Reorder Tests ---
+
+
+@pytest.mark.asyncio
+async def test_reorder_task_after(client: AsyncClient):
+    """Reorder — with after_task_id."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reo_aft@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Aft",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Reo A", "slug": "org-reo-a"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo A",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+    )
+    t3_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T3", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t3_id}/reorder",
+        json={"after_task_id": t1_id},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["order_index"] == 2
+    assert data["wbs_code"] == "2"
+
+
+@pytest.mark.asyncio
+async def test_reorder_task_before(client: AsyncClient):
+    """Reorder — with before_task_id."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reo_bef@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Bef",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Reo B", "slug": "org-reo-b"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo B",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+    )
+    t3_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T3", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t3_id}/reorder",
+        json={"before_task_id": t1_id},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["order_index"] == 1
+    assert data["wbs_code"] == "1"
+
+
+@pytest.mark.asyncio
+async def test_reorder_task_new_parent(client: AsyncClient):
+    """Reorder — with new_parent_id."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reo_par@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Par",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Reo P", "slug": "org-reo-p"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo P",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t2_id}/reorder",
+        json={"new_parent_id": t1_id},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["parent_task_id"] == t1_id
+
+
+@pytest.mark.asyncio
+async def test_reorder_descendant(client: AsyncClient):
+    """Reorder — to descendant (400)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reo_desc@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Desc",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Reo D", "slug": "org-reo-d"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo D",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "T2",
+                "start_date": "2024-01-01",
+                "duration": 480,
+                "parent_task_id": t1_id,
+            },
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t1_id}/reorder",
+        json={"new_parent_id": t2_id},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_reorder_both_after_before(client: AsyncClient):
+    """Reorder — with both after_task_id and before_task_id (422)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reo_both@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Both",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Reo Both", "slug": "org-reo-both"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo Both",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t2_id}/reorder",
+        json={"after_task_id": t1_id, "before_task_id": t1_id},
+    )
+    assert resp.status_code == 422

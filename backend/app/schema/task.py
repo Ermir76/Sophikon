@@ -114,6 +114,7 @@ class TaskResponse(BaseModel):
     wbs_code: str
     outline_level: int
     order_index: int
+    sort_order: int
     name: str
     notes: str | None
     is_milestone: bool
