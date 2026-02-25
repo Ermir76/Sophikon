@@ -35,7 +35,7 @@ from app.schema.task import (
     TaskResponse,
     TaskUpdate,
 )
-from app.service import task_service
+from app.service import task_bulk_service, task_hierarchy_service, task_service
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
 
@@ -93,7 +93,9 @@ async def bulk_create_tasks(
     Bulk create tasks.
     """
     check_role(access, "owner", "manager", "member")
-    tasks, errors = await task_service.bulk_create_tasks(db, access.project, body.tasks)
+    tasks, errors = await task_bulk_service.bulk_create_tasks(
+        db, access.project, body.tasks
+    )
     return {
         "tasks": [TaskResponse.model_validate(t) for t in tasks],
         "errors": errors,
@@ -110,7 +112,7 @@ async def bulk_update_tasks(
     Bulk update tasks.
     """
     check_role(access, "owner", "manager", "member")
-    succeeded, failed, errors = await task_service.bulk_update_tasks(
+    succeeded, failed, errors = await task_bulk_service.bulk_update_tasks(
         db, access.project, body.tasks
     )
     return {"succeeded": succeeded, "failed": failed, "errors": errors}
@@ -126,7 +128,7 @@ async def bulk_delete_tasks(
     Bulk soft-delete tasks.
     """
     check_role(access, "owner", "manager")
-    succeeded, failed, errors = await task_service.bulk_delete_tasks(
+    succeeded, failed, errors = await task_bulk_service.bulk_delete_tasks(
         db, access.project, body.task_ids
     )
     return {"succeeded": succeeded, "failed": failed, "errors": errors}
@@ -193,7 +195,7 @@ async def indent_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    task = await task_service.indent_task(db, access.project, task)
+    task = await task_hierarchy_service.indent_task(db, access.project, task)
     return TaskResponse.model_validate(task)
 
 
@@ -209,7 +211,7 @@ async def outdent_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    task = await task_service.outdent_task(db, access.project, task)
+    task = await task_hierarchy_service.outdent_task(db, access.project, task)
     return TaskResponse.model_validate(task)
 
 
@@ -228,7 +230,7 @@ async def reorder_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    task = await task_service.reorder_task(
+    task = await task_hierarchy_service.reorder_task(
         db,
         access.project,
         task,
