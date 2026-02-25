@@ -6,7 +6,8 @@ import type {
     TaskReorder,
     TaskBulkCreate,
     TaskBulkUpdate,
-    TaskBulkDelete
+    TaskBulkDelete,
+    Task
 } from "@/features/tasks/types";
 
 export const taskKeys = {
@@ -118,11 +119,37 @@ export function useReorderTask(projectId: string | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ taskId, data }: { taskId: string; data: TaskReorder }) => {
+        mutationFn: ({ taskId, data }: { taskId: string; data: TaskReorder; optimisticData?: Task[] }) => {
             if (!projectId) throw new Error("No active project");
             return taskService.reorder(projectId, taskId, data);
         },
-        onSuccess: () => {
+        onMutate: async ({ optimisticData }) => {
+            if (!projectId || !optimisticData) return;
+
+            // Cancel any outgoing refetches so they don't overwrite our optimistic update
+            await queryClient.cancelQueries({ queryKey: taskKeys.list(projectId) });
+
+            // Snapshot the previous value
+            const previousTasks = queryClient.getQueryData(taskKeys.list(projectId));
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(taskKeys.list(projectId), (old: any) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    items: optimisticData,
+                };
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousTasks };
+        },
+        onError: (_err, _variables, context) => {
+            if (context?.previousTasks && projectId) {
+                queryClient.setQueryData(taskKeys.list(projectId), context.previousTasks);
+            }
+        },
+        onSettled: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
             }

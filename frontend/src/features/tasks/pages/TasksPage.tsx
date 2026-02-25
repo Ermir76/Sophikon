@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router";
-import { Loader2, ListTodo } from "lucide-react";
+import { Loader2, ListTodo, Indent, Outdent } from "lucide-react";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import { QueryError } from "@/shared/components/QueryError";
-import { useTasks } from "@/features/tasks/hooks/useTasks";
-import { TaskTable } from "@/features/tasks/components/TaskTable";
-import { TaskDetailPanel } from "@/features/tasks/components/TaskDetailPanel";
+import { useTasks, useIndentTask, useOutdentTask, useReorderTask } from "@/features/tasks/hooks/useTasks";
+import { TaskTable } from "@/features/tasks/components/task-table/TaskTable";
+import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
+import { toast } from "sonner";
 import type { Task } from "@/features/tasks/types";
 
 const EMPTY_TASKS: Task[] = [];
@@ -25,6 +26,13 @@ export default function TasksPage() {
 
   // Fetch task data
   const { data, isLoading, isError, refetch } = useTasks(projectId);
+  const indentTask = useIndentTask(projectId);
+  const outdentTask = useOutdentTask(projectId);
+  const reorderTask = useReorderTask(projectId);
+
+  // Helper to get selected task id
+  const selectedRowIds = Object.keys(rowSelection);
+  const activeSelectionId = selectedRowIds.length === 1 ? selectedRowIds[0] : null;
 
   // Ensure data structure safely maps out items array
   const tasks = data?.items ?? EMPTY_TASKS;
@@ -62,10 +70,41 @@ export default function TasksPage() {
           </p>
         </div>
 
-        {/* Placeholder for toolbar actions */}
-        <div className="flex items-center gap-2">
-          {/* We will add Add/Indent/Outdent buttons here in future phases */}
-        </div>
+        {/* Toolbar */}
+        {tasks.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!activeSelectionId || indentTask.isPending}
+              onClick={() => {
+                if (activeSelectionId) {
+                  indentTask.mutate(activeSelectionId, {
+                    onError: () => toast.error("Failed to indent task")
+                  });
+                }
+              }}
+            >
+              <Indent className="size-4 mr-2" />
+              Indent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!activeSelectionId || outdentTask.isPending}
+              onClick={() => {
+                if (activeSelectionId) {
+                  outdentTask.mutate(activeSelectionId, {
+                    onError: () => toast.error("Failed to outdent task")
+                  });
+                }
+              }}
+            >
+              <Outdent className="size-4 mr-2" />
+              Outdent
+            </Button>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -95,6 +134,18 @@ export default function TasksPage() {
             forceAdding={isAddingFirstTask}
             onCancelAdding={() => setIsAddingFirstTask(false)}
             onRowClick={(id: string) => setSelectedTaskId(id)}
+            onReorder={(taskId, afterTaskId, beforeTaskId, sortedData) => {
+              reorderTask.mutate({
+                taskId,
+                data: {
+                  after_task_id: afterTaskId || null,
+                  before_task_id: beforeTaskId || null
+                },
+                optimisticData: sortedData
+              }, {
+                onError: () => toast.error("Failed to reorder task")
+              });
+            }}
           />
         </div>
       )}

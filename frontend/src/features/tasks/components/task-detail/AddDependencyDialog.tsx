@@ -104,7 +104,7 @@ export function AddDependencyDialog({
                         </label>
                         <Select
                             value={dependencyType}
-                            onValueChange={(v: any) => setDependencyType(v)}
+                            onValueChange={(v) => setDependencyType(v as "FS" | "FF" | "SS" | "SF")}
                         >
                             <SelectTrigger id="type">
                                 <SelectValue />
