@@ -738,3 +738,169 @@ async def test_delete_dependency_not_found(client: AsyncClient):
     rand_id = str(uuid.uuid4())
     resp = await client.delete(f"/api/v1/projects/{proj_id}/dependencies/{rand_id}")
     assert resp.status_code == 404
+
+
+# --- Circular Dependency Tests ---
+
+
+@pytest.mark.asyncio
+async def test_circular_dependency_direct(client: AsyncClient):
+    """Create — Direct circular (A -> B, B -> A) — 400."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "circ_dir@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Circ Dir",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Circ D", "slug": "org-circ-d"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Circ D",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    a_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "A", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    b_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "B", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    # A -> B
+    resp1 = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": a_id, "successor_id": b_id, "type": "FS"},
+    )
+    assert resp1.status_code == 201
+
+    # B -> A (should fail)
+    resp2 = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": b_id, "successor_id": a_id, "type": "FS"},
+    )
+    assert resp2.status_code == 400
+    assert "error" in resp2.json()
+    assert resp2.json()["error"]["code"] == "INVALID_OPERATION"
+
+
+@pytest.mark.asyncio
+async def test_circular_dependency_transitive(client: AsyncClient):
+    """Create — Transitive circular (A -> B, B -> C, C -> A) — 400."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "circ_trn@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Circ Trn",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Circ T", "slug": "org-circ-t"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Circ T",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    a_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "A", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    b_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "B", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    c_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "C", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": a_id, "successor_id": b_id, "type": "FS"},
+    )
+    await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": b_id, "successor_id": c_id, "type": "FS"},
+    )
+
+    # C -> A (should fail)
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": c_id, "successor_id": a_id, "type": "FS"},
+    )
+    assert resp.status_code == 400
+    assert "error" in resp.json()
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
+
+
+@pytest.mark.asyncio
+async def test_circular_dependency_self(client: AsyncClient):
+    """Create — Self reference (A -> A) — 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "circ_slf@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Circ Slf",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Circ S", "slug": "org-circ-s"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Circ S",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    a_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "A", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": a_id, "successor_id": a_id, "type": "FS"},
+    )
+    assert resp.status_code == 422
