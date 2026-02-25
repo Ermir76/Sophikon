@@ -197,7 +197,8 @@ async def test_login_non_existent_email(client: AsyncClient):
         },
     )
     assert response.status_code == 401
-    assert "Invalid email or password" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
 
 
 @pytest.mark.asyncio
@@ -267,7 +268,8 @@ async def test_refresh_token_missing_cookie(client: AsyncClient):
     response = await client.post("/api/v1/auth/refresh")
 
     assert response.status_code == 401
-    assert "No refresh token found" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
 
 
 @pytest.mark.asyncio
@@ -350,4 +352,5 @@ async def test_get_current_user_unauthenticated(client: AsyncClient):
     response = await client.get("/api/v1/auth/me")
 
     assert response.status_code == 401
-    assert "Could not validate credentials" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"

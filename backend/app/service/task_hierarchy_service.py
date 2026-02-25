@@ -188,19 +188,50 @@ async def outdent_task(
     for sibling in following_siblings:
         sibling.parent_task_id = task.id
 
-    # Move task to new parent — temp negative index avoids unique constraint
-    # collision when autoflush sees the new parent before order_index is updated
+    # Move task to new parent — insert right after the former parent's position
     task.order_index = -9999
     await db.flush()
 
     task.parent_task_id = new_parent_id
-    task.order_index = await _next_sibling_order(db, project.id, new_parent_id)
-
     await db.flush()
 
-    # Renumber all affected sibling groups
+    # Load new siblings (excluding task), insert task right after parent
+    new_parent_condition = (
+        Task.parent_task_id.is_(None)
+        if new_parent_id is None
+        else Task.parent_task_id == new_parent_id
+    )
+    siblings_result = await db.execute(
+        select(Task)
+        .where(
+            Task.project_id == project.id,
+            new_parent_condition,
+            Task.id != task.id,
+            Task.is_deleted == False,  # noqa: E712
+        )
+        .order_by(Task.order_index.asc())
+    )
+    siblings = list(siblings_result.scalars().all())
+
+    # Find parent's position and insert after it
+    insert_pos = len(siblings)  # default: end
+    if new_parent_id == parent.parent_task_id:
+        for i, s in enumerate(siblings):
+            if s.id == parent.id:
+                insert_pos = i + 1
+                break
+    siblings.insert(insert_pos, task)
+
+    # Negative-index trick to renumber without constraint collisions
+    for i, t in enumerate(siblings):
+        t.order_index = -(i + 1)
+    await db.flush()
+    for i, t in enumerate(siblings):
+        t.order_index = i + 1
+    await db.flush()
+
+    # Renumber old sibling group (gap left behind)
     await _renumber_siblings(db, project.id, old_parent_id)
-    await _renumber_siblings(db, project.id, new_parent_id)
     if following_siblings:
         await _renumber_siblings(db, project.id, task.id)
 

@@ -72,7 +72,8 @@ async def test_get_my_membership_non_member(client: AsyncClient):
     # Note: get_org_membership_or_404 returns 403 for non-members
     response = await client.get(f"/api/v1/organizations/{org_id}/members/me")
     assert response.status_code == 403
-    assert "access" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.asyncio
@@ -329,7 +330,8 @@ async def test_invite_member_non_admin(client: AsyncClient):
         json={"email": "someone@example.com", "role": "member"},
     )
     assert response.status_code == 403
-    assert "Owner or admin role required" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.asyncio
@@ -356,7 +358,8 @@ async def test_invite_member_unknown_email(client: AsyncClient):
         json={"email": "doesnotexist@example.com", "role": "member"},
     )
     assert response.status_code == 404
-    assert "User not found" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "NOT_FOUND"
 
 
 @pytest.mark.asyncio
@@ -406,7 +409,8 @@ async def test_invite_member_already_member(client: AsyncClient):
         json={"email": target_email, "role": "admin"},
     )
     assert response.status_code == 409
-    assert "already a member" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "RESOURCE_CONFLICT"
 
 
 @pytest.mark.asyncio
@@ -553,7 +557,8 @@ async def test_change_role_non_owner(client: AsyncClient):
         json={"role": "admin"},
     )
     assert response.status_code == 403
-    assert "Owner role required" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.asyncio
@@ -584,7 +589,8 @@ async def test_change_role_last_owner_demotion(client: AsyncClient):
         json={"role": "member"},
     )
     assert response.status_code == 400
-    assert "Cannot demote the last owner" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -690,7 +696,8 @@ async def test_remove_member_non_admin(client: AsyncClient):
 
     response = await client.delete(f"/api/v1/organizations/{org_id}/members/{owner_id}")
     assert response.status_code == 403
-    assert "Owner or admin role required" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.asyncio
@@ -720,7 +727,8 @@ async def test_remove_last_owner(client: AsyncClient):
         f"/api/v1/organizations/{org_id}/members/{member_id}"
     )
     assert response.status_code == 400
-    assert "Cannot remove the last owner" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -820,7 +828,8 @@ async def test_change_role_not_found(client: AsyncClient):
         json={"role": "admin"},
     )
     assert response.status_code == 404
-    assert "Member not found" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "NOT_FOUND"
 
 
 @pytest.mark.asyncio
@@ -846,4 +855,5 @@ async def test_remove_member_not_found(client: AsyncClient):
 
     response = await client.delete(f"/api/v1/organizations/{org_id}/members/{rand_id}")
     assert response.status_code == 404
-    assert "Member not found" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "NOT_FOUND"

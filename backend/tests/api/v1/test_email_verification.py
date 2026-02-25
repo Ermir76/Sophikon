@@ -254,7 +254,8 @@ async def test_send_verification_email_already_verified(
     # Try to request re-send — should be rejected
     resp = await client.post(SEND_URL)
     assert resp.status_code == 400
-    assert "already verified" in resp.json()["detail"].lower()
+    assert "error" in resp.json()
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 # ---------------------------------------------------------------------------

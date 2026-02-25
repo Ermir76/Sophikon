@@ -86,7 +86,8 @@ async def test_assignment_with_deleted_task_returns_404(
 
     resp = await client.patch(f"/api/v1/assignments/{aid}", json={"units": 0.5})
     assert resp.status_code == 404
-    assert resp.json()["detail"] == "Assignment not found"
+    assert "error" in resp.json()
+    assert resp.json()["error"]["code"] == "NOT_FOUND"
 
 
 @pytest.mark.asyncio
@@ -145,4 +146,5 @@ async def test_assignment_with_deleted_project_returns_404(
 
     resp = await client.patch(f"/api/v1/assignments/{aid}", json={"units": 0.5})
     assert resp.status_code == 404
-    assert resp.json()["detail"] == "Assignment not found"
+    assert "error" in resp.json()
+    assert resp.json()["error"]["code"] == "NOT_FOUND"

@@ -109,3 +109,209 @@ async def test_delete_parent_cascade(client: AsyncClient):
     # 4. Verify Child is 404
     resp = await client.get(f"/api/v1/projects/{proj_id}/tasks/{child_id}")
     assert resp.status_code == 404
+
+
+# --- Additional Integration Flows ---
+
+
+@pytest.mark.asyncio
+async def test_hierarchy_flow_indent_outdent(client: AsyncClient):
+    """Integration: Indent and Outdent flow, verifying WBS codes."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "hier_flow@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Hier Flow",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Hier", "slug": "org-hier"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Hier",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t3_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T3", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    # Indent T2 under T1
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/indent")
+    assert resp.status_code == 200
+
+    # Fetch all to verify WBS
+    tasks = (await client.get(f"/api/v1/projects/{proj_id}/tasks")).json()["items"]
+    wbs_map = {t["id"]: t["wbs_code"] for t in tasks}
+    assert wbs_map[t1_id] == "1"
+    assert wbs_map[t2_id] == "1.1"
+    assert wbs_map[t3_id] == "2"
+
+    # Outdent T2 back to root
+    resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t2_id}/outdent")
+    assert resp.status_code == 200
+
+    tasks2 = (await client.get(f"/api/v1/projects/{proj_id}/tasks")).json()["items"]
+    wbs_map2 = {t["id"]: t["wbs_code"] for t in tasks2}
+
+    # T2 outdented from T1 — placed right after T1, T3 shifts
+    assert wbs_map2[t1_id] == "1"
+    assert wbs_map2[t2_id] == "2"
+    assert wbs_map2[t3_id] == "3"
+
+
+@pytest.mark.asyncio
+async def test_summary_rollup_flow(client: AsyncClient):
+    """Integration: Parent metrics roll up and deleting children resets parent summary flag."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "roll_flow@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Roll Flow",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Roll", "slug": "org-roll"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Roll",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    p_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Parent", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    c1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "C1",
+                "start_date": "2024-01-05",
+                "duration": 480,
+                "parent_task_id": p_id,
+            },
+        )
+    ).json()["id"]
+    c2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "C2",
+                "start_date": "2024-01-10",
+                "duration": 480,
+                "parent_task_id": p_id,
+            },
+        )
+    ).json()["id"]
+
+    parent_check = (await client.get(f"/api/v1/projects/{proj_id}/tasks/{p_id}")).json()
+    assert parent_check["is_summary"] is True
+    # The parent takes the min start date of its children
+    assert parent_check["start_date"] == "2024-01-05"
+
+    # Delete children to test cascade summary reset
+    await client.delete(f"/api/v1/projects/{proj_id}/tasks/{c1_id}")
+    await client.delete(f"/api/v1/projects/{proj_id}/tasks/{c2_id}")
+
+    # We flush & commit in soft_delete_task recursive deletes, check if summary status reverts
+    parent_check2 = (
+        await client.get(f"/api/v1/projects/{proj_id}/tasks/{p_id}")
+    ).json()
+    assert parent_check2["is_summary"] is False
+
+
+@pytest.mark.asyncio
+async def test_reorder_flow(client: AsyncClient):
+    """Integration: Reorder tasks and verify order sequence arrays."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "reoflow@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Reo Flow",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Reo F", "slug": "org-reof"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Reo F",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t3_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T3", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{t3_id}/reorder",
+        json={"after_task_id": t1_id},
+    )
+    assert resp.status_code == 200
+
+    tasks = (await client.get(f"/api/v1/projects/{proj_id}/tasks")).json()["items"]
+    order_map = {t["id"]: t["order_index"] for t in tasks}
+
+    assert order_map[t1_id] == 1
+    assert order_map[t3_id] == 2
+    assert order_map[t2_id] == 3

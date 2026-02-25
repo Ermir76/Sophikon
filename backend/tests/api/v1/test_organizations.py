@@ -175,7 +175,8 @@ async def test_create_organization_duplicate_slug(client: AsyncClient):
         json={"name": "Org 2", "slug": "dup-slug"},
     )
     assert response.status_code == 409
-    assert "already exists" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "RESOURCE_CONFLICT"
 
 
 @pytest.mark.asyncio
@@ -306,7 +307,8 @@ async def test_get_organization_non_member(client: AsyncClient):
     # Try to access Org
     response = await client.get(f"/api/v1/organizations/{org_id}")
     assert response.status_code == 403
-    assert "do not have access" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.asyncio
@@ -337,7 +339,8 @@ async def test_get_organization_deleted(client: AsyncClient):
     # Try get
     response = await client.get(f"/api/v1/organizations/{org_id}")
     assert response.status_code == 404
-    assert "Organization not found" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "NOT_FOUND"
 
 
 @pytest.mark.asyncio
@@ -460,7 +463,8 @@ async def test_update_organization_duplicate_slug(client: AsyncClient):
         json={"slug": "slug-one"},
     )
     assert response.status_code == 409
-    assert "already exists" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "RESOURCE_CONFLICT"
 
 
 @pytest.mark.asyncio
@@ -583,4 +587,5 @@ async def test_delete_personal_organization(client: AsyncClient):
     org_id = personal_org["id"]
     response = await client.delete(f"/api/v1/organizations/{org_id}")
     assert response.status_code == 400
-    assert "Cannot delete personal organization" in response.json()["detail"]
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "INVALID_OPERATION"
