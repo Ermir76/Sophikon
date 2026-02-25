@@ -1,10 +1,81 @@
+import { useState } from "react";
+import { useParams } from "react-router";
+import { Loader2, ListTodo } from "lucide-react";
+import type { RowSelectionState } from "@tanstack/react-table";
+import { Button } from "@/shared/ui/button";
+import { QueryError } from "@/shared/components/QueryError";
+import { useTasks } from "@/features/tasks/hooks/useTasks";
+import { TaskTable } from "@/features/tasks/components/TaskTable";
+import type { Task } from "@/features/tasks/types";
+
+const EMPTY_TASKS: Task[] = [];
+
 export default function TasksPage() {
+  const { id: projectId } = useParams<{ id: string }>();
+
+  // Local state for table row selection
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Fetch task data
+  const { data, isLoading, isError, refetch } = useTasks(projectId);
+
+  if (isError) {
+    return (
+      <div className="p-6">
+        <QueryError
+          message="Failed to load project tasks."
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  // Ensure data structure safely maps out items array
+  const tasks = data?.items ?? EMPTY_TASKS;
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Tasks</h1>
-      <p className="text-muted-foreground">
-        Manage project tasks, subtasks, and dependencies.
-      </p>
+    <div className="space-y-6 p-6">
+      {/* Header section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-2xl font-medium">Tasks</h3>
+          <p className="text-sm text-muted-foreground">
+            Manage project tasks, subtasks, and dependencies.
+          </p>
+        </div>
+
+        {/* Placeholder for toolbar actions */}
+        <div className="flex items-center gap-2">
+          {/* We will add Add/Indent/Outdent buttons here in future phases */}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-8 text-center animate-in fade-in-50">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent">
+            <ListTodo className="size-6 text-muted-foreground" />
+          </div>
+          <h3 className="mt-4 text-lg font-semibold">No tasks</h3>
+          <p className="mb-4 mt-2 text-sm text-muted-foreground">
+            You haven't added any tasks to this project yet.
+          </p>
+          <Button variant="outline">
+            Add task
+          </Button>
+        </div>
+      ) : (
+        <div className="animate-in fade-in duration-200">
+          <TaskTable
+            data={tasks}
+            rowSelection={rowSelection}
+            setRowSelection={setRowSelection}
+          />
+        </div>
+      )}
     </div>
   );
 }
