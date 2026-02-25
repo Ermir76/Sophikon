@@ -67,14 +67,63 @@ async def _validate_tasks_in_project(
             raise InvalidOperationError(f"{label} task not found in this project")
 
 
+async def _check_for_circular_dependency(
+    db: AsyncSession,
+    project_id: UUID,
+    predecessor_id: UUID,
+    successor_id: UUID,
+) -> None:
+    """
+    Check if adding an edge from predecessor_id -> successor_id creates a cycle.
+    Raises InvalidOperationError if a cycle is detected.
+    """
+    result = await db.execute(
+        select(Dependency.predecessor_id, Dependency.successor_id).where(
+            Dependency.project_id == project_id
+        )
+    )
+    existing_edges = result.all()
+
+    # Build adjacency list
+    graph: dict[UUID, list[UUID]] = {}
+    for pred, succ in existing_edges:
+        graph.setdefault(pred, []).append(succ)
+
+    # Add the tentative new edge
+    graph.setdefault(predecessor_id, []).append(successor_id)
+
+    # DFS from the successor to see if we can reach the predecessor
+    visited = set()
+    stack = [successor_id]
+
+    while stack:
+        node = stack.pop()
+        if node == predecessor_id:
+            raise InvalidOperationError(
+                "Adding this dependency would create a circular reference"
+            )
+
+        if node not in visited:
+            visited.add(node)
+            for neighbor in graph.get(node, []):
+                stack.append(neighbor)
+
+
 async def create_dependency(
     db: AsyncSession,
     project: Project,
     data: DependencyCreate,
 ) -> Dependency:
     """Create a new dependency between tasks."""
+    if data.predecessor_id == data.successor_id:
+        raise InvalidOperationError("A task cannot depend on itself")
+
     # Validate both tasks exist in the project
     await _validate_tasks_in_project(
+        db, project.id, data.predecessor_id, data.successor_id
+    )
+
+    await _check_for_circular_dependency(
         db, project.id, data.predecessor_id, data.successor_id
     )
 
