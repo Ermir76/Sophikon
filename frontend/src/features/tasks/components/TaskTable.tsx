@@ -26,21 +26,25 @@ export const columns = [
     columnHelper.display({
         id: "select",
         header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && "indeterminate")
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-            />
+            <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-center">
+                <Checkbox
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            </div>
         ),
         cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
+            <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-center">
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            </div>
         ),
     }),
     columnHelper.accessor("wbs_code", {
@@ -110,6 +114,7 @@ interface TaskTableProps {
     setRowSelection: OnChangeFn<RowSelectionState>;
     forceAdding?: boolean;
     onCancelAdding?: () => void;
+    onRowClick?: (taskId: string) => void;
 }
 
 export function TaskTable({
@@ -118,7 +123,8 @@ export function TaskTable({
     rowSelection,
     setRowSelection,
     forceAdding,
-    onCancelAdding
+    onCancelAdding,
+    onRowClick
 }: TaskTableProps) {
     const table = useReactTable({
         data,
@@ -155,6 +161,8 @@ export function TaskTable({
                         <TableRow
                             key={row.id}
                             data-state={row.getIsSelected() && "selected"}
+                            onClick={() => onRowClick?.(row.id)}
+                            className="cursor-pointer"
                         >
                             {row.getVisibleCells().map((cell) => (
                                 <TableCell key={cell.id}>

@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { QueryError } from "@/shared/components/QueryError";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
 import { TaskTable } from "@/features/tasks/components/TaskTable";
+import { TaskDetailPanel } from "@/features/tasks/components/TaskDetailPanel";
 import type { Task } from "@/features/tasks/types";
 
 const EMPTY_TASKS: Task[] = [];
@@ -15,6 +16,9 @@ export default function TasksPage() {
 
   // Local state for table row selection
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Detail panel state
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Local state to override empty view and show the table with the inline row
   const [isAddingFirstTask, setIsAddingFirstTask] = useState(false);
@@ -90,9 +94,18 @@ export default function TasksPage() {
             setRowSelection={setRowSelection}
             forceAdding={isAddingFirstTask}
             onCancelAdding={() => setIsAddingFirstTask(false)}
+            onRowClick={(id: string) => setSelectedTaskId(id)}
           />
         </div>
       )}
+
+      {/* Slide-out Panel for Task Core Edit */}
+      <TaskDetailPanel
+        projectId={projectId}
+        taskId={selectedTaskId}
+        isOpen={!!selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+      />
     </div>
   );
 }
