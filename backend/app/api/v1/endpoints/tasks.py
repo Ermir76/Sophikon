@@ -9,6 +9,9 @@ DELETE /projects/{project_id}/tasks/{task_id}    - Soft delete task
 POST   /projects/{project_id}/tasks/{task_id}/indent  - Indent task
 POST   /projects/{project_id}/tasks/{task_id}/outdent - Outdent task
 POST   /projects/{project_id}/tasks/{task_id}/reorder - Reorder task
+POST   /projects/{project_id}/tasks/bulk              - Bulk create tasks
+PATCH  /projects/{project_id}/tasks/bulk              - Bulk update tasks
+DELETE /projects/{project_id}/tasks/bulk              - Bulk delete tasks
 """
 
 from typing import Annotated
@@ -21,7 +24,17 @@ from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.schema.common import PaginatedResponse
-from app.schema.task import TaskCreate, TaskReorder, TaskResponse, TaskUpdate
+from app.schema.task import (
+    BulkOperationResponse,
+    TaskBulkCreate,
+    TaskBulkCreateResponse,
+    TaskBulkDelete,
+    TaskBulkUpdate,
+    TaskCreate,
+    TaskReorder,
+    TaskResponse,
+    TaskUpdate,
+)
 from app.service import task_service
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
@@ -68,6 +81,55 @@ async def create_task(
     check_role(access, "owner", "manager", "member")
     task = await task_service.create_task(db, access.project, body)
     return TaskResponse.model_validate(task)
+
+
+@router.post("/bulk", response_model=TaskBulkCreateResponse)
+async def bulk_create_tasks(
+    body: TaskBulkCreate,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Bulk create tasks.
+    """
+    check_role(access, "owner", "manager", "member")
+    tasks, errors = await task_service.bulk_create_tasks(db, access.project, body.tasks)
+    return {
+        "tasks": [TaskResponse.model_validate(t) for t in tasks],
+        "errors": errors,
+    }
+
+
+@router.patch("/bulk", response_model=BulkOperationResponse)
+async def bulk_update_tasks(
+    body: TaskBulkUpdate,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Bulk update tasks.
+    """
+    check_role(access, "owner", "manager", "member")
+    succeeded, failed, errors = await task_service.bulk_update_tasks(
+        db, access.project, body.tasks
+    )
+    return {"succeeded": succeeded, "failed": failed, "errors": errors}
+
+
+@router.delete("/bulk", response_model=BulkOperationResponse)
+async def bulk_delete_tasks(
+    body: TaskBulkDelete,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Bulk soft-delete tasks.
+    """
+    check_role(access, "owner", "manager")
+    succeeded, failed, errors = await task_service.bulk_delete_tasks(
+        db, access.project, body.task_ids
+    )
+    return {"succeeded": succeeded, "failed": failed, "errors": errors}
 
 
 @router.get("/{task_id}", response_model=TaskResponse)

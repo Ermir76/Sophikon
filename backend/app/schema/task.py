@@ -72,6 +72,34 @@ class TaskReorder(BaseModel):
         return self
 
 
+# ── Bulk Schemas ──
+
+
+class TaskBulkCreate(BaseModel):
+    """Payload for bulk creating tasks."""
+
+    tasks: list[TaskCreate] = Field(min_length=1, max_length=100)
+
+
+class TaskBulkUpdateItem(BaseModel):
+    """A single task update in a bulk operation."""
+
+    id: uuid.UUID
+    data: TaskUpdate
+
+
+class TaskBulkUpdate(BaseModel):
+    """Payload for bulk updating tasks."""
+
+    tasks: list[TaskBulkUpdateItem] = Field(min_length=1, max_length=100)
+
+
+class TaskBulkDelete(BaseModel):
+    """Payload for bulk deleting tasks."""
+
+    task_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
+
+
 # ── Response Schemas ──
 
 
@@ -112,3 +140,26 @@ class TaskResponse(BaseModel):
     actual_cost: Decimal
     created_at: datetime
     updated_at: datetime
+
+
+class BulkOperationError(BaseModel):
+    """Error details for a single item in a bulk operation."""
+
+    index: int
+    task_id: uuid.UUID | None = None
+    message: str
+
+
+class TaskBulkCreateResponse(BaseModel):
+    """Response payload for bulk creating tasks."""
+
+    tasks: list[TaskResponse]
+    errors: list[BulkOperationError]
+
+
+class BulkOperationResponse(BaseModel):
+    """Response payload for bulk update and delete operations."""
+
+    succeeded: int
+    failed: int
+    errors: list[BulkOperationError]
