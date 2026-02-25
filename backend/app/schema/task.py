@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import ConstraintType, TaskType
 
@@ -56,6 +56,20 @@ class TaskUpdate(BaseModel):
     notes: str | None = None
     constraint_date: date | None = None
     deadline: date | None = None
+
+
+class TaskReorder(BaseModel):
+    """Payload for reordering tasks via drag-and-drop."""
+
+    after_task_id: uuid.UUID | None = None
+    before_task_id: uuid.UUID | None = None
+    new_parent_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def check_position_anchor(self) -> "TaskReorder":
+        if self.after_task_id and self.before_task_id:
+            raise ValueError("Cannot provide both after_task_id and before_task_id")
+        return self
 
 
 # ── Response Schemas ──

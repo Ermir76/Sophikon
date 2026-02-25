@@ -6,6 +6,9 @@ POST   /projects/{project_id}/tasks              - Create a new task
 GET    /projects/{project_id}/tasks/{task_id}    - Get task details
 PATCH  /projects/{project_id}/tasks/{task_id}    - Update task
 DELETE /projects/{project_id}/tasks/{task_id}    - Soft delete task
+POST   /projects/{project_id}/tasks/{task_id}/indent  - Indent task
+POST   /projects/{project_id}/tasks/{task_id}/outdent - Outdent task
+POST   /projects/{project_id}/tasks/{task_id}/reorder - Reorder task
 """
 
 from typing import Annotated
@@ -18,7 +21,7 @@ from app.api.deps import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.schema.common import PaginatedResponse
-from app.schema.task import TaskCreate, TaskResponse, TaskUpdate
+from app.schema.task import TaskCreate, TaskReorder, TaskResponse, TaskUpdate
 from app.service import task_service
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
@@ -110,3 +113,65 @@ async def delete_task(
         raise NotFoundError("Task not found")
 
     await task_service.soft_delete_task(db, task)
+    # Unlike soft_delete_project/organization which commit internally,
+    # soft_delete_task is recursive (deleting child tasks). We flush
+    # internally and commit once here to avoid partial commits.
+    await db.commit()
+
+
+@router.post("/{task_id}/indent", response_model=TaskResponse)
+async def indent_task(
+    task_id: UUID,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Indent a task in the project hierarchy."""
+    check_role(access, "owner", "manager", "member")
+    task = await task_service.get_task_by_id(db, task_id, access.project.id)
+    if not task:
+        raise NotFoundError("Task not found")
+
+    task = await task_service.indent_task(db, access.project, task)
+    return TaskResponse.model_validate(task)
+
+
+@router.post("/{task_id}/outdent", response_model=TaskResponse)
+async def outdent_task(
+    task_id: UUID,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Outdent a task in the project hierarchy."""
+    check_role(access, "owner", "manager", "member")
+    task = await task_service.get_task_by_id(db, task_id, access.project.id)
+    if not task:
+        raise NotFoundError("Task not found")
+
+    task = await task_service.outdent_task(db, access.project, task)
+    return TaskResponse.model_validate(task)
+
+
+@router.post("/{task_id}/reorder", response_model=TaskResponse)
+async def reorder_task(
+    task_id: UUID,
+    body: TaskReorder,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Reorder a task via drag-and-drop.
+    """
+    check_role(access, "owner", "manager", "member")
+    task = await task_service.get_task_by_id(db, task_id, access.project.id)
+    if not task:
+        raise NotFoundError("Task not found")
+
+    task = await task_service.reorder_task(
+        db,
+        access.project,
+        task,
+        after_task_id=body.after_task_id,
+        before_task_id=body.before_task_id,
+        new_parent_id=body.new_parent_id,
+    )
+    return TaskResponse.model_validate(task)
