@@ -13,7 +13,7 @@ import type { Task } from "@/features/tasks/types";
 const EMPTY_TASKS: Task[] = [];
 
 export default function TasksPage() {
-  const { id: projectId } = useParams<{ id: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
 
   // Local state for table row selection
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});

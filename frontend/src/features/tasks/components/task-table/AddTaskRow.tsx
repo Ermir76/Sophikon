@@ -97,6 +97,7 @@ export function AddTaskRow({ projectId, colSpan, forceAdding, onCancelAdding }: 
             <TableCell colSpan={colSpan} className="p-2">
                 <div className="flex items-center gap-2">
                     <Input
+                        name="taskName"
                         autoFocus
                         placeholder="Task name..."
                         value={taskName}
