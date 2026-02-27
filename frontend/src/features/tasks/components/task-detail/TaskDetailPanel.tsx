@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import {
     Sheet,
     SheetContent,
@@ -9,6 +9,17 @@ import {
     SheetDescription,
 } from "@/shared/ui/sheet";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { TaskDependencyList } from "@/features/tasks/components/task-detail/TaskDependencyList";
 import { TaskDetailCoreFields } from "@/features/tasks/components/task-detail/TaskDetailCoreFields";
@@ -20,11 +31,14 @@ interface TaskDetailPanelProps {
     taskId: string | null;
     isOpen: boolean;
     onClose: () => void;
+    onDelete?: (taskId: string) => void;
+    isDeletePending?: boolean;
 }
 
-export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, isDeletePending }: TaskDetailPanelProps) {
     const { data: task, isLoading } = useTask(projectId, taskId ?? undefined);
     const updateTask = useUpdateTask(projectId);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Local form state to track keystrokes without spamming the API
     const [localData, setLocalData] = useState<Partial<TaskUpdate>>({});
@@ -69,7 +83,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDeta
         }
     };
 
-    return (
+    return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="w-full sm:max-w-md md:max-w-2xl overflow-y-auto p-0 border-l border-border/50 shadow-2xl">
                 {isLoading || !task ? (
@@ -83,10 +97,19 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDeta
                             <SheetHeader className="space-y-4">
                                 <SheetTitle className="flex justify-between items-start gap-4 pr-8">
                                     <div className="flex flex-col gap-3 flex-1">
-                                        <div className="flex items-center">
+                                        <div className="flex items-center gap-2">
                                             <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-mono font-medium text-primary ring-1 ring-inset ring-primary/20">
                                                 {task.wbs_code}
                                             </span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                disabled={isDeletePending}
+                                                onClick={() => setShowDeleteConfirm(true)}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
                                         </div>
                                         <Input
                                             value={localData.name ?? ""}
@@ -125,5 +148,30 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDeta
                 )}
             </SheetContent>
         </Sheet>
-    );
+
+        {task && (
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogContent variant="destructive">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete task?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete "{task.name}". This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => {
+                                onDelete?.(task.id);
+                                setShowDeleteConfirm(false);
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+    </>);
 }

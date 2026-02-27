@@ -1,4 +1,5 @@
-import { MoreHorizontal, Indent, Outdent, Link, PanelRight } from "lucide-react";
+import { useState } from "react";
+import { MoreHorizontal, Indent, Outdent, Link, PanelRight, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
     DropdownMenu,
@@ -7,6 +8,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import type { Task } from "@/features/tasks/types";
 
 interface TaskRowActionsProps {
@@ -15,8 +26,10 @@ interface TaskRowActionsProps {
     onOutdent?: (taskId: string) => void;
     onAddDependency?: (taskId: string) => void;
     onViewDetails?: (taskId: string) => void;
+    onDelete?: (taskId: string) => void;
     isIndentPending?: boolean;
     isOutdentPending?: boolean;
+    isDeletePending?: boolean;
 }
 
 export function TaskRowActions({
@@ -25,9 +38,13 @@ export function TaskRowActions({
     onOutdent,
     onAddDependency,
     onViewDetails,
+    onDelete,
     isIndentPending,
     isOutdentPending,
+    isDeletePending,
 }: TaskRowActionsProps) {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     return (
         <div onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
@@ -65,8 +82,37 @@ export function TaskRowActions({
                         <PanelRight className="size-4" />
                         View Details
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        disabled={isDeletePending}
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                        onClick={() => setShowDeleteConfirm(true)}
+                    >
+                        <Trash2 className="size-4" />
+                        Delete
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogContent variant="destructive">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete task?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete "{task.name}". This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => onDelete?.(task.id)}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

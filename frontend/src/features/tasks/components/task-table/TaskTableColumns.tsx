@@ -14,8 +14,10 @@ declare module "@tanstack/react-table" {
         onOutdent?: (taskId: string) => void;
         onAddDependency?: (taskId: string) => void;
         onViewDetails?: (taskId: string) => void;
+        onDelete?: (taskId: string) => void;
         isIndentPending?: boolean;
         isOutdentPending?: boolean;
+        isDeletePending?: boolean;
     }
 }
 
@@ -140,8 +142,10 @@ export const taskColumns = [
                     onOutdent={meta?.onOutdent}
                     onAddDependency={meta?.onAddDependency}
                     onViewDetails={meta?.onViewDetails}
+                    onDelete={meta?.onDelete}
                     isIndentPending={meta?.isIndentPending}
                     isOutdentPending={meta?.isOutdentPending}
+                    isDeletePending={meta?.isDeletePending}
                 />
             );
         },

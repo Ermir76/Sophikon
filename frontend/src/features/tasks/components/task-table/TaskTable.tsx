@@ -46,8 +46,10 @@ interface TaskTableProps {
     onOutdent?: (taskId: string) => void;
     onAddDependency?: (taskId: string) => void;
     onViewDetails?: (taskId: string) => void;
+    onDelete?: (taskId: string) => void;
     isIndentPending?: boolean;
     isOutdentPending?: boolean;
+    isDeletePending?: boolean;
 }
 
 export function TaskTable({
@@ -62,8 +64,10 @@ export function TaskTable({
     onOutdent,
     onAddDependency,
     onViewDetails,
+    onDelete,
     isIndentPending,
     isOutdentPending,
+    isDeletePending,
 }: TaskTableProps) {
     const { visibleData, collapsedTaskIds, toggleTaskCollapse } = useCollapsedTasks(projectId, data);
 
@@ -81,8 +85,10 @@ export function TaskTable({
             onOutdent,
             onAddDependency,
             onViewDetails,
+            onDelete,
             isIndentPending,
             isOutdentPending,
+            isDeletePending,
         },
     });
 
