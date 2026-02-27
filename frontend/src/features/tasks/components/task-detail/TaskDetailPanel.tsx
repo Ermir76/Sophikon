@@ -22,6 +22,7 @@ import {
 } from "@/shared/ui/alert-dialog";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { TaskDependencyList } from "@/features/tasks/components/task-detail/TaskDependencyList";
+import { TaskAssignmentList } from "@/features/tasks/components/task-detail/TaskAssignmentList";
 import { TaskDetailCoreFields } from "@/features/tasks/components/task-detail/TaskDetailCoreFields";
 import { toast } from "sonner";
 import type { TaskUpdate } from "@/features/tasks/types";
@@ -141,6 +142,15 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 <h3 className="text-lg font-semibold tracking-tight">Dependencies</h3>
                                 <div className="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
                                     <TaskDependencyList projectId={projectId} taskId={task.id} />
+                                </div>
+                            </div>
+
+                            <div className="h-px w-full bg-border/50 rounded-full" />
+
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold tracking-tight">Assignments</h3>
+                                <div className="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
+                                    <TaskAssignmentList projectId={projectId} taskId={task.id} />
                                 </div>
                             </div>
                         </div>

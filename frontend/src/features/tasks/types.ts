@@ -134,3 +134,63 @@ export interface DependencyUpdate {
     lag_format?: "DURATION" | "PERCENT";
     is_disabled?: boolean;
 }
+
+// ── Assignments ──
+
+export type WorkContour =
+    | "FLAT"
+    | "BACK_LOADED"
+    | "FRONT_LOADED"
+    | "DOUBLE_PEAK"
+    | "EARLY_PEAK"
+    | "LATE_PEAK"
+    | "BELL"
+    | "TURTLE"
+    | "CONTOURED";
+
+export type RateTable = "A" | "B" | "C" | "D" | "E";
+
+export interface Assignment {
+    id: string;
+    task_id: string;
+    resource_id: string;
+    units: number;
+    work: number;
+    actual_work: number;
+    remaining_work: number;
+    start_date: string;
+    finish_date: string;
+    actual_start: string | null;
+    actual_finish: string | null;
+    work_contour: WorkContour;
+    cost: number;
+    actual_cost: number;
+    remaining_cost: number;
+    rate_table: RateTable;
+    percent_work_complete: number;
+    is_confirmed: boolean;
+    created_at: string;
+}
+
+export interface AssignmentCreate {
+    resource_id: string;
+    units?: number;
+    start_date: string;
+    finish_date: string;
+    work?: number;
+    work_contour?: WorkContour;
+    rate_table?: RateTable;
+}
+
+export interface AssignmentUpdate {
+    units?: number;
+    start_date?: string;
+    finish_date?: string;
+    work?: number;
+    actual_work?: number;
+    remaining_work?: number;
+    work_contour?: WorkContour;
+    rate_table?: RateTable;
+    percent_work_complete?: number;
+    is_confirmed?: boolean;
+}
