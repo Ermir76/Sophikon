@@ -127,3 +127,10 @@ export interface DependencyCreate {
     lag?: number;
     lag_format?: "DURATION" | "PERCENT";
 }
+
+export interface DependencyUpdate {
+    type?: "FS" | "FF" | "SS" | "SF";
+    lag?: number;
+    lag_format?: "DURATION" | "PERCENT";
+    is_disabled?: boolean;
+}

@@ -2,14 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
-import { useDependencies, useCreateDependency, useDeleteDependency } from "./useDependencies";
-import type { DependencyCreate } from "@/features/tasks/types";
+import { useDependencies, useCreateDependency, useDeleteDependency, useUpdateDependency } from "./useDependencies";
+import type { DependencyCreate, DependencyUpdate } from "@/features/tasks/types";
 
 // Mock services
 vi.mock("@/features/tasks/api/dependency.service", () => ({
     dependencyService: {
         list: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
         delete: vi.fn(),
     },
 }));
@@ -63,6 +64,18 @@ describe("Dependency Hooks", () => {
         expect(dependencyService.create).toHaveBeenCalledWith(projectId, newDepData);
     });
 
+    it("useUpdateDependency — calls service, invalidates caches", async () => {
+        const updateData: DependencyUpdate = { type: "SS", lag: 10 };
+        (dependencyService.update as any).mockResolvedValue({ id: "dep-1", ...updateData });
+
+        const { result } = renderHook(() => useUpdateDependency(projectId), { wrapper: createWrapper() });
+
+        result.current.mutate({ dependencyId: "dep-1", data: updateData });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+        expect(dependencyService.update).toHaveBeenCalledWith(projectId, "dep-1", updateData);
+    });
+
     it("useDeleteDependency — calls service, invalidates dependency list + task list", async () => {
         (dependencyService.delete as any).mockResolvedValue(null);
 
@@ -79,6 +92,13 @@ describe("Dependency Hooks", () => {
             const { result } = renderHook(() => useCreateDependency(undefined), { wrapper: createWrapper() });
             const newDepData: DependencyCreate = { predecessor_id: "t1", successor_id: "t2", type: "FS" };
             result.current.mutate(newDepData);
+            await waitFor(() => expect(result.current.isError).toBe(true));
+            expect(result.current.error?.message).toBe("No active project");
+        });
+
+        it("useUpdateDependency", async () => {
+            const { result } = renderHook(() => useUpdateDependency(undefined), { wrapper: createWrapper() });
+            result.current.mutate({ dependencyId: "dep-1", data: { type: "FF" } });
             await waitFor(() => expect(result.current.isError).toBe(true));
             expect(result.current.error?.message).toBe("No active project");
         });

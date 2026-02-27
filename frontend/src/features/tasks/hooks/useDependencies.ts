@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dependencyService } from "@/features/tasks/api/dependency.service";
-import type { DependencyCreate } from "@/features/tasks/types";
+import type { DependencyCreate, DependencyUpdate } from "@/features/tasks/types";
 import { taskKeys } from "./useTasks";
 
 export const dependencyKeys = {
@@ -29,6 +29,23 @@ export function useCreateDependency(projectId: string | undefined) {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: dependencyKeys.list(projectId) });
                 // Also invalidate tasks since dependencies might affect dates via scheduling
+                queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+            }
+        },
+    });
+}
+
+export function useUpdateDependency(projectId: string | undefined) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ dependencyId, data }: { dependencyId: string; data: DependencyUpdate }) => {
+            if (!projectId) throw new Error("No active project");
+            return dependencyService.update(projectId, dependencyId, data);
+        },
+        onSuccess: () => {
+            if (projectId) {
+                queryClient.invalidateQueries({ queryKey: dependencyKeys.list(projectId) });
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
             }
         },
