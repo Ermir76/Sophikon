@@ -135,11 +135,11 @@ export default function ResourcesPage() {
       {/* Floating bulk-action toolbar */}
       {selectionCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-5 py-3 shadow-2xl">
-            <span className="text-sm font-medium text-foreground/80">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-xl px-5 py-3 shadow-2xl">
+            <span className="text-sm font-semibold text-primary">
               {selectionCount} selected
             </span>
-            <div className="h-5 w-px bg-border/60" />
+            <div className="h-5 w-px bg-primary/20" />
             <Button
               variant="destructive"
               size="sm"

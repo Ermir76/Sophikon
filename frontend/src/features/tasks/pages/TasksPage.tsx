@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router";
-import { Loader2, ListTodo, Trash2 } from "lucide-react";
+import { Loader2, ListTodo, Trash2, Pencil } from "lucide-react";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import {
@@ -18,6 +18,7 @@ import { useTasks, useIndentTask, useOutdentTask, useReorderTask, useDeleteTask,
 import { TaskTable } from "@/features/tasks/components/task-table/TaskTable";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
 import { AddDependencyDialog } from "@/features/tasks/components/task-detail/AddDependencyDialog";
+import { BulkEditDialog } from "@/features/tasks/components/BulkEditDialog";
 import { toast } from "sonner";
 import type { Task } from "@/features/tasks/types";
 
@@ -40,6 +41,7 @@ export default function TasksPage() {
 
   // Bulk delete confirmation dialog state
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
 
   // Fetch task data
   const { data, isLoading, isError, refetch } = useTasks(projectId);
@@ -181,11 +183,20 @@ export default function TasksPage() {
       {/* Floating bulk-action toolbar */}
       {selectionCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-5 py-3 shadow-2xl">
-            <span className="text-sm font-medium text-foreground/80">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-xl px-5 py-3 shadow-2xl">
+            <span className="text-sm font-semibold text-primary">
               {selectionCount} selected
             </span>
-            <div className="h-5 w-px bg-border/60" />
+            <div className="h-5 w-px bg-primary/20" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs font-medium gap-1.5"
+              onClick={() => setShowBulkEdit(true)}
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </Button>
             <Button
               variant="destructive"
               size="sm"
@@ -241,6 +252,15 @@ export default function TasksPage() {
           onClose={() => setDependencyTaskId(null)}
         />
       )}
+
+      {/* Bulk Edit Dialog */}
+      <BulkEditDialog
+        projectId={projectId}
+        selectedTaskIds={selectedTaskIds}
+        isOpen={showBulkEdit}
+        onClose={() => setShowBulkEdit(false)}
+        onSuccess={() => setRowSelection({})}
+      />
     </div>
   );
 }
