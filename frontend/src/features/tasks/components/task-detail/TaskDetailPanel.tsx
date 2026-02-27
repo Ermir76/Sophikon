@@ -71,31 +71,40 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDeta
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-y-auto">
+            <SheetContent className="w-full sm:max-w-md md:max-w-2xl overflow-y-auto p-0 border-l border-border/50 shadow-2xl">
                 {isLoading || !task ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />
                     </div>
                 ) : (
-                    <>
-                        <SheetHeader className="mb-6">
-                            <SheetTitle>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground font-mono text-sm">{task.wbs_code}</span>
-                                    <Input
-                                        value={localData.name ?? ""}
-                                        onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
-                                        onBlur={() => handleBlur("name")}
-                                        className="text-lg font-semibold border-transparent hover:border-border focus:border-primary shadow-none -ml-3"
-                                    />
-                                </div>
-                            </SheetTitle>
-                            <SheetDescription>
-                                Created on {format(parseISO(task.created_at), "PPP")}
-                            </SheetDescription>
-                        </SheetHeader>
+                    <div className="flex flex-col h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                        {/* Header Section */}
+                        <div className="px-6 py-6 border-b border-border/50 bg-muted/20">
+                            <SheetHeader className="space-y-4">
+                                <SheetTitle className="flex justify-between items-start gap-4 pr-8">
+                                    <div className="flex flex-col gap-3 flex-1">
+                                        <div className="flex items-center">
+                                            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-mono font-medium text-primary ring-1 ring-inset ring-primary/20">
+                                                {task.wbs_code}
+                                            </span>
+                                        </div>
+                                        <Input
+                                            value={localData.name ?? ""}
+                                            onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
+                                            onBlur={() => handleBlur("name")}
+                                            className="text-2xl font-bold h-auto px-3 py-1.5 bg-transparent border-none hover:bg-muted/30 focus-visible:ring-0 focus-visible:outline-none focus-visible:shadow-none shadow-none rounded-md transition-colors w-full"
+                                            placeholder="Task Name"
+                                        />
+                                    </div>
+                                </SheetTitle>
+                                <SheetDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                                    Created on {format(parseISO(task.created_at), "MMMM do, yyyy")}
+                                </SheetDescription>
+                            </SheetHeader>
+                        </div>
 
-                        <div className="space-y-6">
+                        {/* Scrolling Body content */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-10">
                             <TaskDetailCoreFields
                                 task={task}
                                 localData={localData}
@@ -103,10 +112,16 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose }: TaskDeta
                                 handleBlur={handleBlur}
                             />
 
-                            {/* Dependencies Placeholder */}
-                            <TaskDependencyList projectId={projectId} taskId={task.id} />
+                            <div className="h-px w-full bg-border/50 rounded-full" />
+
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold tracking-tight">Dependencies</h3>
+                                <div className="rounded-xl border border-border/50 bg-card shadow-sm overflow-hidden">
+                                    <TaskDependencyList projectId={projectId} taskId={task.id} />
+                                </div>
+                            </div>
                         </div>
-                    </>
+                    </div>
                 )}
             </SheetContent>
         </Sheet>

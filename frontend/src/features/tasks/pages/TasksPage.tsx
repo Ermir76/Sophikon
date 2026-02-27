@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router";
-import { Loader2, ListTodo, Indent, Outdent } from "lucide-react";
+import { Loader2, ListTodo } from "lucide-react";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import { QueryError } from "@/shared/components/QueryError";
 import { useTasks, useIndentTask, useOutdentTask, useReorderTask } from "@/features/tasks/hooks/useTasks";
 import { TaskTable } from "@/features/tasks/components/task-table/TaskTable";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
+import { AddDependencyDialog } from "@/features/tasks/components/task-detail/AddDependencyDialog";
 import { toast } from "sonner";
 import type { Task } from "@/features/tasks/types";
 
@@ -21,6 +22,9 @@ export default function TasksPage() {
   // Detail panel state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  // Add Dependency dialog state (triggered from row kebab menu)
+  const [dependencyTaskId, setDependencyTaskId] = useState<string | null>(null);
+
   // Local state to override empty view and show the table with the inline row
   const [isAddingFirstTask, setIsAddingFirstTask] = useState(false);
 
@@ -29,10 +33,6 @@ export default function TasksPage() {
   const indentTask = useIndentTask(projectId);
   const outdentTask = useOutdentTask(projectId);
   const reorderTask = useReorderTask(projectId);
-
-  // Helper to get selected task id
-  const selectedRowIds = Object.keys(rowSelection);
-  const activeSelectionId = selectedRowIds.length === 1 ? selectedRowIds[0] : null;
 
   // Ensure data structure safely maps out items array
   const tasks = data?.items ?? EMPTY_TASKS;
@@ -62,49 +62,13 @@ export default function TasksPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header section */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
         <div>
           <h3 className="text-2xl font-medium">Tasks</h3>
           <p className="text-sm text-muted-foreground">
             Manage project tasks, subtasks, and dependencies.
           </p>
         </div>
-
-        {/* Toolbar */}
-        {tasks.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!activeSelectionId || indentTask.isPending}
-              onClick={() => {
-                if (activeSelectionId) {
-                  indentTask.mutate(activeSelectionId, {
-                    onError: () => toast.error("Failed to indent task")
-                  });
-                }
-              }}
-            >
-              <Indent className="size-4 mr-2" />
-              Indent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!activeSelectionId || outdentTask.isPending}
-              onClick={() => {
-                if (activeSelectionId) {
-                  outdentTask.mutate(activeSelectionId, {
-                    onError: () => toast.error("Failed to outdent task")
-                  });
-                }
-              }}
-            >
-              <Outdent className="size-4 mr-2" />
-              Outdent
-            </Button>
-          </div>
-        )}
       </div>
 
       {isLoading ? (
@@ -133,7 +97,12 @@ export default function TasksPage() {
             setRowSelection={setRowSelection}
             forceAdding={isAddingFirstTask}
             onCancelAdding={() => setIsAddingFirstTask(false)}
-            onRowClick={(id: string) => setSelectedTaskId(id)}
+            onIndent={(id) => indentTask.mutate(id, { onError: () => toast.error("Failed to indent task") })}
+            onOutdent={(id) => outdentTask.mutate(id, { onError: () => toast.error("Failed to outdent task") })}
+            onAddDependency={(id) => setDependencyTaskId(id)}
+            onViewDetails={(id) => setSelectedTaskId(id)}
+            isIndentPending={indentTask.isPending}
+            isOutdentPending={outdentTask.isPending}
             onReorder={(taskId, afterTaskId, beforeTaskId, sortedData) => {
               reorderTask.mutate({
                 taskId,
@@ -157,6 +126,16 @@ export default function TasksPage() {
         isOpen={!!selectedTaskId}
         onClose={() => setSelectedTaskId(null)}
       />
+
+      {/* Add Dependency Dialog triggered from row kebab menu */}
+      {dependencyTaskId && (
+        <AddDependencyDialog
+          projectId={projectId}
+          successorTaskId={dependencyTaskId}
+          isOpen={!!dependencyTaskId}
+          onClose={() => setDependencyTaskId(null)}
+        />
+      )}
     </div>
   );
 }

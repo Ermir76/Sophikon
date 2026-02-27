@@ -20,55 +20,67 @@ export function TaskDependencyList({ projectId, taskId }: TaskDependencyListProp
     const taskDependencies = dependenciesData?.items?.filter(d => d.successor_id === taskId) || [];
 
     return (
-        <div className="space-y-4 pt-4 border-t mt-6">
-            <div className="flex justify-between items-center">
-                <h4 className="font-semibold text-sm">Dependencies</h4>
+        <div className="flex flex-col h-full bg-card">
+            {/* Header Area */}
+            <div className="flex justify-between items-center px-5 py-4 border-b border-border/50 bg-muted/10">
+                <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm tracking-tight">Dependencies</h4>
+                    {taskDependencies.length > 0 && (
+                        <span className="flex h-5 items-center justify-center rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary">
+                            {taskDependencies.length}
+                        </span>
+                    )}
+                </div>
                 <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
+                    className="h-8 text-xs font-medium"
                     onClick={() => setIsDependencyDialogOpen(true)}
                 >
                     Add Dependency
                 </Button>
             </div>
 
-            {isLoadingDeps ? (
-                <div className="flex justify-center py-4"><Loader2 className="size-4 animate-spin text-muted-foreground" /></div>
-            ) : taskDependencies.length === 0 ? (
-                <div className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-md">
-                    No dependencies set for this task.
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    {taskDependencies.map((dep) => {
-                        const predecessorTask = tasksData?.items?.find(t => t.id === dep.predecessor_id);
-                        return (
-                            <div key={dep.id} className="flex items-center justify-between p-2 rounded-md border text-sm">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono text-muted-foreground">
-                                        {predecessorTask ? predecessorTask.wbs_code : dep.predecessor_id.slice(0, 6)}
-                                    </span>
-                                    <span className="truncate max-w-[150px]">
-                                        {predecessorTask ? predecessorTask.name : "Unknown Task"}
-                                    </span>
-                                    <span className="font-semibold px-2 py-0.5 bg-muted rounded">
-                                        {dep.type}
-                                    </span>
+            {/* List Body */}
+            <div className="p-0">
+                {isLoadingDeps ? (
+                    <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground/50" /></div>
+                ) : taskDependencies.length === 0 ? (
+                    <div className="text-sm text-muted-foreground/60 text-center py-8 flex flex-col items-center justify-center gap-2">
+                        <span className="text-xs">No dependencies set</span>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-border/50">
+                        {taskDependencies.map((dep) => {
+                            const predecessorTask = tasksData?.items?.find(t => t.id === dep.predecessor_id);
+                            return (
+                                <div key={dep.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 px-4 gap-3 bg-transparent hover:bg-muted/30 transition-colors">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <span className="inline-flex items-center rounded bg-muted/60 px-1.5 py-0.5 text-xs font-mono font-medium text-muted-foreground shrink-0 border border-border/40">
+                                            {predecessorTask ? predecessorTask.wbs_code : dep.predecessor_id.slice(0, 6)}
+                                        </span>
+                                        <span className="truncate text-sm font-medium text-foreground/90">
+                                            {predecessorTask ? predecessorTask.name : "Unknown Task"}
+                                        </span>
+                                        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-blue-500 uppercase border border-blue-500/20 shrink-0">
+                                            {dep.type}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all rounded-full"
+                                        disabled={deleteDependency.isPending}
+                                        onClick={() => deleteDependency.mutate(dep.id)}
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                    </Button>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-6 text-destructive hover:bg-destructive/10"
-                                    disabled={deleteDependency.isPending}
-                                    onClick={() => deleteDependency.mutate(dep.id)}
-                                >
-                                    <Trash2 className="size-4" />
-                                </Button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
 
             <AddDependencyDialog
                 projectId={projectId}

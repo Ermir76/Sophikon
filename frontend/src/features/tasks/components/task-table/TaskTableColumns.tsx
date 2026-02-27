@@ -3,7 +3,21 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Checkbox } from "@/shared/ui/checkbox";
 import type { Task } from "@/features/tasks/types";
 import { TaskInlineEdit } from "@/features/tasks/components/task-table/TaskInlineEdit";
-import { ChevronDown, GripVertical } from "lucide-react";
+import { TaskRowActions } from "@/features/tasks/components/task-table/TaskRowActions";
+import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+
+declare module "@tanstack/react-table" {
+    interface TableMeta<TData> {
+        collapsedTaskIds?: Set<string>;
+        toggleTaskCollapse?: (taskId: string) => void;
+        onIndent?: (taskId: string) => void;
+        onOutdent?: (taskId: string) => void;
+        onAddDependency?: (taskId: string) => void;
+        onViewDetails?: (taskId: string) => void;
+        isIndentPending?: boolean;
+        isOutdentPending?: boolean;
+    }
+}
 
 const columnHelper = createColumnHelper<Task>();
 
@@ -52,11 +66,25 @@ export const taskColumns = [
             // Visual indentation based on outline_level
             const paddingLeft = `${(task.outline_level - 1) * 20}px`;
             const isSummary = task.is_summary;
+            const meta = info.table.options.meta;
+            const isCollapsed = meta?.collapsedTaskIds?.has(task.id);
 
             return (
                 <div style={{ paddingLeft }} className="flex items-center gap-2 w-full">
                     {isSummary ? (
-                        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                        <div
+                            className="cursor-pointer hover:bg-muted rounded-sm p-0.5"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                meta?.toggleTaskCollapse?.(task.id);
+                            }}
+                        >
+                            {isCollapsed ? (
+                                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform" />
+                            ) : (
+                                <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform" />
+                            )}
+                        </div>
                     ) : (
                         <div className="size-4 shrink-0" /> // Placeholder for alignment
                     )}
@@ -98,5 +126,24 @@ export const taskColumns = [
     columnHelper.accessor("percent_complete", {
         header: "% Complete",
         cell: (info) => `${info.getValue()}%`,
+    }),
+    columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: (info) => {
+            const task = info.row.original;
+            const meta = info.table.options.meta;
+            return (
+                <TaskRowActions
+                    task={task}
+                    onIndent={meta?.onIndent}
+                    onOutdent={meta?.onOutdent}
+                    onAddDependency={meta?.onAddDependency}
+                    onViewDetails={meta?.onViewDetails}
+                    isIndentPending={meta?.isIndentPending}
+                    isOutdentPending={meta?.isOutdentPending}
+                />
+            );
+        },
     }),
 ];
