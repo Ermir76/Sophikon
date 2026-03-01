@@ -17,9 +17,11 @@ interface GanttChartProps {
   showCriticalPath: boolean;
   selectedTaskId: string | null;
   onTaskClick: (taskId: string) => void;
+  onTaskHover: (taskId: string | null) => void;
   chartStartDate: Date;
   chartEndDate: Date;
   totalWidth: number;
+  colorMap?: Map<string, string | null>;
 }
 
 export function GanttChart({
@@ -30,9 +32,11 @@ export function GanttChart({
   showCriticalPath,
   selectedTaskId,
   onTaskClick,
+  onTaskHover,
   chartStartDate,
   chartEndDate,
   totalWidth,
+  colorMap,
 }: GanttChartProps) {
   const todayX = useMemo(
     () => dateToX(new Date(), chartStartDate, pxPerDay),
@@ -53,12 +57,11 @@ export function GanttChart({
   }, [tasks]);
 
   const bodyHeight = tasks.length * config.rowHeight;
-  const totalHeight = bodyHeight;
 
   return (
     <svg
       width={totalWidth}
-      height={totalHeight}
+      height={bodyHeight}
       className="block select-none"
       style={{ pointerEvents: "none" }}
     >
@@ -145,6 +148,7 @@ export function GanttChart({
         const barY = y + (config.rowHeight - config.barHeight) / 2;
         const isSelected = task.id === selectedTaskId;
         const isCritical = showCriticalPath && task.is_critical;
+        const taskColor = !isCritical ? (colorMap?.get(task.id) ?? null) : null;
 
         if (task.is_milestone) {
           return (
@@ -157,7 +161,10 @@ export function GanttChart({
               pxPerDay={pxPerDay}
               isCritical={isCritical}
               isSelected={isSelected}
+              color={taskColor}
               onClick={() => onTaskClick(task.id)}
+              onMouseEnter={() => onTaskHover(task.id)}
+              onMouseLeave={() => onTaskHover(null)}
             />
           );
         }
@@ -173,7 +180,10 @@ export function GanttChart({
               pxPerDay={pxPerDay}
               isCritical={isCritical}
               isSelected={isSelected}
+              color={taskColor}
               onClick={() => onTaskClick(task.id)}
+              onMouseEnter={() => onTaskHover(task.id)}
+              onMouseLeave={() => onTaskHover(null)}
             />
           );
         }
@@ -194,7 +204,10 @@ export function GanttChart({
             className="cursor-pointer"
             style={{ pointerEvents: "auto" }}
             onClick={() => onTaskClick(task.id)}
+            onMouseEnter={() => onTaskHover(task.id)}
+            onMouseLeave={() => onTaskHover(null)}
           >
+            {/* Background bar */}
             <rect
               x={x}
               y={barY}
@@ -202,10 +215,18 @@ export function GanttChart({
               height={config.barHeight}
               rx={config.barRadius}
               ry={config.barRadius}
-              className={isCritical ? "fill-destructive/70" : "fill-primary/70"}
-              stroke={isSelected ? "hsl(var(--ring))" : "none"}
-              strokeWidth={isSelected ? 2 : 0}
+              className={isCritical ? "fill-destructive/70" : undefined}
+              style={
+                isCritical
+                  ? undefined
+                  : taskColor
+                    ? { fill: taskColor, fillOpacity: 0.45 }
+                    : { fill: "transparent", stroke: "var(--border)", strokeWidth: 1.5 }
+              }
+              stroke={isSelected ? "hsl(var(--ring))" : undefined}
+              strokeWidth={isSelected ? 2 : undefined}
             />
+            {/* Progress bar */}
             {progressWidth > 0 && (
               <rect
                 x={x}
@@ -214,16 +235,24 @@ export function GanttChart({
                 height={config.barHeight}
                 rx={config.barRadius}
                 ry={config.barRadius}
-                className={isCritical ? "fill-destructive" : "fill-primary"}
+                className={isCritical ? "fill-destructive" : undefined}
+                style={
+                  isCritical
+                    ? undefined
+                    : taskColor
+                      ? { fill: taskColor, fillOpacity: 0.85 }
+                      : { fill: "var(--foreground)", fillOpacity: 0.15 }
+                }
               />
             )}
+            {/* Label */}
             {barWidth > 60 && (
               <text
                 x={x + 6}
                 y={barY + config.barHeight / 2}
                 dy="0.35em"
-                className="fill-primary-foreground text-[11px]"
-                style={{ pointerEvents: "none" }}
+                className={isCritical ? "fill-primary-foreground text-[11px]" : (taskColor ? "text-[11px]" : "fill-foreground text-[11px]")}
+                style={taskColor && !isCritical ? { fill: "#fff", pointerEvents: "none" } : { pointerEvents: "none" }}
               >
                 {task.name.length > barWidth / 7
                   ? task.name.slice(0, Math.floor(barWidth / 7) - 1) + "\u2026"
@@ -285,7 +314,10 @@ function MilestoneMarker({
   pxPerDay,
   isCritical,
   isSelected,
+  color,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   task: Task;
   y: number;
@@ -294,14 +326,17 @@ function MilestoneMarker({
   pxPerDay: number;
   isCritical: boolean;
   isSelected: boolean;
+  color: string | null;
   onClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) {
   const cx = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
   const cy = y + config.rowHeight / 2;
   const size = config.milestoneSize / 2;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick}>
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <rect
         x={cx - size}
         y={cy - size}
@@ -310,9 +345,10 @@ function MilestoneMarker({
         rx={2}
         ry={2}
         transform={`rotate(45 ${cx} ${cy})`}
-        className={isCritical ? "fill-destructive" : "fill-primary"}
-        stroke={isSelected ? "hsl(var(--ring))" : "none"}
-        strokeWidth={isSelected ? 2 : 0}
+        className={isCritical ? "fill-destructive" : (!color ? "fill-foreground" : undefined)}
+        style={!isCritical && color ? { fill: color } : undefined}
+        stroke={isSelected ? "hsl(var(--ring))" : (!isCritical && !color ? "var(--border)" : "none")}
+        strokeWidth={isSelected ? 2 : (!isCritical && !color ? 1.5 : 0)}
       />
     </g>
   );
@@ -326,7 +362,10 @@ function SummaryBar({
   pxPerDay,
   isCritical,
   isSelected,
+  color,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   task: Task;
   y: number;
@@ -335,7 +374,10 @@ function SummaryBar({
   pxPerDay: number;
   isCritical: boolean;
   isSelected: boolean;
+  color: string | null;
   onClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) {
   const x = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
   const barWidth = Math.max(
@@ -346,28 +388,44 @@ function SummaryBar({
     4,
   );
   const cy = y + config.rowHeight / 2;
-  const summaryHeight = 8;
-  const triSize = 5;
-  const fillClass = isCritical ? "fill-destructive" : "fill-primary";
+  const h = 12;
+  const tri = 6;
+  const r = 2;
+  const top = cy - h / 2;
+  const bot = cy + h / 2;
+  const right = x + barWidth;
+
+  // Single path: rounded top-left → rounded top-right → right triangle → bar bottom → left triangle
+  const d = [
+    `M ${x + r},${top}`,
+    `H ${right - r}`,
+    `Q ${right},${top} ${right},${top + r}`,
+    `V ${bot}`,
+    `L ${right},${bot + tri}`,
+    `L ${right - tri},${bot}`,
+    `H ${x + tri}`,
+    `L ${x},${bot + tri}`,
+    `L ${x},${bot}`,
+    `V ${top + r}`,
+    `Q ${x},${top} ${x + r},${top}`,
+    "Z",
+  ].join(" ");
+
+  const fillStyle = isCritical
+    ? undefined
+    : color
+      ? { fill: color, fillOpacity: 0.45 }
+      : { fill: "transparent", stroke: "var(--border)", strokeWidth: 1.5 };
+  const fillClass = isCritical ? "fill-destructive" : undefined;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick}>
-      <rect
-        x={x}
-        y={cy - summaryHeight / 2}
-        width={barWidth}
-        height={summaryHeight}
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <path
+        d={d}
         className={fillClass}
-        stroke={isSelected ? "hsl(var(--ring))" : "none"}
-        strokeWidth={isSelected ? 2 : 0}
-      />
-      <polygon
-        points={`${x},${cy + summaryHeight / 2} ${x + triSize},${cy + summaryHeight / 2} ${x},${cy + summaryHeight / 2 + triSize}`}
-        className={fillClass}
-      />
-      <polygon
-        points={`${x + barWidth},${cy + summaryHeight / 2} ${x + barWidth - triSize},${cy + summaryHeight / 2} ${x + barWidth},${cy + summaryHeight / 2 + triSize}`}
-        className={fillClass}
+        style={fillStyle}
+        stroke={isSelected ? "hsl(var(--ring))" : undefined}
+        strokeWidth={isSelected ? 2 : undefined}
       />
     </g>
   );

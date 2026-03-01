@@ -30,6 +30,7 @@ export interface Task {
     fixed_cost: number;
     total_slack: number;
     free_slack: number;
+    color?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -48,6 +49,7 @@ export interface TaskCreate {
     constraint_date?: string;
     deadline?: string;
     priority?: number;
+    color?: string | null;
 }
 
 export interface TaskUpdate {
@@ -66,6 +68,7 @@ export interface TaskUpdate {
     constraint_type?: string;
     constraint_date?: string | null;
     deadline?: string | null;
+    color?: string | null;
 }
 
 export interface TaskReorder {

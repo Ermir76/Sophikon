@@ -4,6 +4,7 @@ export interface Project {
   name: string;
   description?: string;
   status: "active" | "archived" | "completed";
+  color?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -17,10 +18,12 @@ export interface ProjectCreate {
   currency?: string;
   budget?: number;
   settings?: Record<string, unknown>;
+  color?: string | null;
 }
 
 export interface ProjectUpdate {
   name?: string;
   description?: string;
   status?: "active" | "archived" | "completed";
+  color?: string | null;
 }

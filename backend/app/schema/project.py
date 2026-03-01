@@ -24,6 +24,7 @@ class ProjectCreate(BaseModel):
     currency: str = Field(default="USD", min_length=3, max_length=3)
     budget: Decimal | None = None
     settings: dict | None = None
+    color: str | None = None
 
 
 class ProjectUpdate(BaseModel):
@@ -48,6 +49,7 @@ class ProjectUpdate(BaseModel):
     status_date: date | None = None
     default_calendar_id: uuid.UUID | None = None
     budget: Decimal | None = None
+    color: str | None = None
 
 
 # ── Response Schemas ──
@@ -65,6 +67,7 @@ class ProjectListItem(BaseModel):
     status: ProjectStatus
     start_date: date
     finish_date: date | None
+    color: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -88,5 +91,6 @@ class ProjectDetail(BaseModel):
     budget: Decimal | None
     currency: str
     settings: dict
+    color: str | None
     created_at: datetime
     updated_at: datetime

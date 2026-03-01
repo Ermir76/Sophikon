@@ -3,7 +3,9 @@ import { useParams } from "react-router";
 import { Loader2, BarChart3 } from "lucide-react";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
 import { useDependencies } from "@/features/tasks/hooks/useDependencies";
+import { useProject } from "@/features/projects/hooks/useProjects";
 import { useCollapsedTree } from "@/shared/hooks/useCollapsedTree";
+import { buildColorInheritanceMap } from "../utils/colorInheritance";
 import { QueryError } from "@/shared/components/QueryError";
 import type { Task } from "@/features/tasks/types";
 import type { ZoomLevel } from "../types";
@@ -20,6 +22,7 @@ export default function GanttPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { data: taskData, isLoading: tasksLoading, error: tasksError } = useTasks(projectId);
   const { data: depData, isLoading: depsLoading, error: depsError } = useDependencies(projectId);
+  const { data: project } = useProject(projectId ?? "");
 
   const [zoom, setZoom] = useState<ZoomLevel>("week");
   const [customPxPerDay, setCustomPxPerDay] = useState<number | null>(null);
@@ -44,6 +47,11 @@ export default function GanttPage() {
 
   const totalDays = differenceInCalendarDays(chartEndDate, chartStartDate);
   const config = DEFAULT_GANTT_CONFIG;
+
+  const colorMap = useMemo(
+    () => buildColorInheritanceMap(tasks, project?.color ?? null),
+    [tasks, project?.color],
+  );
 
   const handleContainerResize = useCallback((width: number) => {
     containerWidthRef.current = width;
@@ -176,6 +184,7 @@ export default function GanttPage() {
         onContainerResize={handleContainerResize}
         onZoomAtPoint={handleZoomAtPoint}
         chartScrollRef={chartScrollRef}
+        colorMap={colorMap}
       />
     </div>
   );

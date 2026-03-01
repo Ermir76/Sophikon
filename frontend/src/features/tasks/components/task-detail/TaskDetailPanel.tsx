@@ -134,6 +134,12 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 localData={localData}
                                 setLocalData={setLocalData}
                                 handleBlur={handleBlur}
+                                onColorChange={(color) => {
+                                    updateTask.mutate(
+                                        { taskId: task.id, data: { color } },
+                                        { onError: () => toast.error("Failed to update color") },
+                                    );
+                                }}
                             />
 
                             <div className="h-px w-full bg-border/50 rounded-full" />

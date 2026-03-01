@@ -34,11 +34,13 @@ import {
 } from "@/shared/ui/popover";
 import { toast } from "sonner";
 import { useCreateProject } from "@/features/projects/hooks/useProjects";
+import { ColorPicker } from "@/shared/components/ColorPicker";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   start_date: z.date(),
+  color: z.string().nullable().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -68,6 +70,7 @@ export function CreateProjectDialog({
         name: data.name,
         description: data.description,
         start_date: format(data.start_date, "yyyy-MM-dd"),
+        color: data.color ?? null,
       });
 
       toast.success("Project created", {
@@ -163,6 +166,22 @@ export function CreateProjectDialog({
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color</FormLabel>
+                  <FormControl>
+                    <ColorPicker
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -272,6 +272,12 @@ class Task(Base):
         server_default=text("0"),
     )
 
+    # Display
+    color: Mapped[str | None] = mapped_column(
+        String(80),
+        nullable=True,
+    )
+
     # External Integration (for import from other systems)
     external_id: Mapped[str | None] = mapped_column(
         String(100),

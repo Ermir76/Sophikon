@@ -3,6 +3,11 @@ import { Diamond, ChevronDown, ChevronRight } from "lucide-react";
 import type { Task } from "@/features/tasks/types";
 import type { GanttConfig } from "../types";
 import { format } from "../utils/dateUtils";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/shared/ui/tooltip";
 
 interface GanttTableProps {
   tasks: Task[];
@@ -13,6 +18,30 @@ interface GanttTableProps {
   onToggleCollapse: (taskId: string) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
+}
+
+export function GanttTableHeader() {
+  return (
+    <div
+      className="flex h-full bg-muted/50 text-xs font-medium text-muted-foreground"
+    >
+      <div className="w-14 shrink-0 flex items-center justify-center border-r border-border">
+        WBS
+      </div>
+      <div className="flex-1 min-w-0 flex items-center px-2 border-r border-border">
+        Task Name
+      </div>
+      <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
+        Start
+      </div>
+      <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
+        Finish
+      </div>
+      <div className="w-12 shrink-0 flex items-center justify-center">
+        Dur.
+      </div>
+    </div>
+  );
 }
 
 export function GanttTable({
@@ -31,31 +60,7 @@ export function GanttTable({
       className="h-full overflow-y-auto overflow-x-hidden"
       onScroll={onScroll}
     >
-      <div className="flex flex-col">
-        {/* Table header */}
-        <div
-          className="flex border-b border-border bg-muted/50 text-xs font-medium text-muted-foreground sticky top-0 z-10"
-          style={{ height: config.headerHeight }}
-        >
-          <div className="w-14 shrink-0 flex items-center justify-center border-r border-border">
-            WBS
-          </div>
-          <div className="flex-1 min-w-0 flex items-center px-2 border-r border-border">
-            Task Name
-          </div>
-          <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
-            Start
-          </div>
-          <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
-            Finish
-          </div>
-          <div className="w-12 shrink-0 flex items-center justify-center">
-            Dur.
-          </div>
-        </div>
-
-        {/* Table rows */}
-        {tasks.map((task, i) => {
+      {tasks.map((task, i) => {
           const isSelected = task.id === selectedTaskId;
           return (
             <div
@@ -91,11 +96,23 @@ export function GanttTable({
                 {task.is_milestone && (
                   <Diamond className="size-3 shrink-0 text-primary" />
                 )}
-                <span
-                  className={`truncate ${task.is_summary ? "font-semibold" : ""}`}
-                >
-                  {task.name}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={`truncate ${task.is_summary ? "font-semibold" : ""}`}
+                    >
+                      {task.name}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={4} className="max-w-xs">
+                    <div className="space-y-0.5">
+                      <div className="font-medium">{task.name}</div>
+                      <div className="text-[10px] opacity-80">
+                        {task.wbs_code} · {format(new Date(task.start_date), "MM/dd/yyyy")} – {format(new Date(task.finish_date), "MM/dd/yyyy")} · {task.duration}m
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <div className="w-20 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
                 {format(new Date(task.start_date), "MM/dd")}
@@ -104,12 +121,11 @@ export function GanttTable({
                 {format(new Date(task.finish_date), "MM/dd")}
               </div>
               <div className="w-12 shrink-0 flex items-center justify-center text-muted-foreground">
-                {task.duration}d
+                {task.duration}m
               </div>
             </div>
           );
         })}
-      </div>
     </div>
   );
 }

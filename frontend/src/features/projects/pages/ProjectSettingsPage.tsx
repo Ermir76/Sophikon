@@ -38,10 +38,12 @@ import {
 import { useProject, useUpdateProject, useDeleteProject } from "@/features/projects/hooks/useProjects";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { QueryError } from "@/shared/components/QueryError";
+import { ColorPicker } from "@/shared/components/ColorPicker";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
+  color: z.string().nullable().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -75,6 +77,7 @@ export default function ProjectSettingsPage() {
       form.reset({
         name: project.name,
         description: project.description || "",
+        color: project.color ?? null,
       });
     }
   }, [project, form]);
@@ -167,6 +170,23 @@ export default function ProjectSettingsPage() {
                           placeholder="Project description..."
                           className="resize-none"
                           {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gantt Color</FormLabel>
+                      <FormControl>
+                        <ColorPicker
+                          value={field.value ?? null}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />

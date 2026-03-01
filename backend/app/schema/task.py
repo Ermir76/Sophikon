@@ -29,6 +29,7 @@ class TaskCreate(BaseModel):
     deadline: date | None = None
     priority: int = Field(default=500, ge=0, le=1000)
     fixed_cost: Decimal = Decimal("0")
+    color: str | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -56,6 +57,7 @@ class TaskUpdate(BaseModel):
     notes: str | None = None
     constraint_date: date | None = None
     deadline: date | None = None
+    color: str | None = None
 
 
 class TaskReorder(BaseModel):
@@ -139,6 +141,7 @@ class TaskResponse(BaseModel):
     fixed_cost: Decimal
     total_cost: Decimal
     actual_cost: Decimal
+    color: str | None
     created_at: datetime
     updated_at: datetime
 

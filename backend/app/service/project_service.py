@@ -109,6 +109,7 @@ async def create_project(
         currency=data.currency,
         budget=data.budget,
         settings=data.settings or {},
+        color=data.color,
     )
     db.add(project)
     await db.commit()

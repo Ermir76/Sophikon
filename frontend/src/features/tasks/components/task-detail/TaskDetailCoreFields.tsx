@@ -1,5 +1,6 @@
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
+import { ColorPicker } from "@/shared/components/ColorPicker";
 import type { Task, TaskUpdate } from "@/features/tasks/types";
 
 interface TaskDetailCoreFieldsProps {
@@ -7,13 +8,15 @@ interface TaskDetailCoreFieldsProps {
     localData: Partial<TaskUpdate>;
     setLocalData: (data: Partial<TaskUpdate>) => void;
     handleBlur: (field: keyof TaskUpdate) => void;
+    onColorChange?: (color: string | null) => void;
 }
 
 export function TaskDetailCoreFields({
     task,
     localData,
     setLocalData,
-    handleBlur
+    handleBlur,
+    onColorChange,
 }: TaskDetailCoreFieldsProps) {
     return (
         <div className="space-y-8 mt-2">
@@ -69,6 +72,19 @@ export function TaskDetailCoreFields({
                         className="bg-transparent transition-all border-border/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 disabled:opacity-50 disabled:bg-muted/30"
                     />
                 </div>
+
+                {/* Color (summary tasks only) */}
+                {task.is_summary && (
+                    <div className="space-y-2.5">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                            Gantt Color
+                        </label>
+                        <ColorPicker
+                            value={task.color ?? null}
+                            onChange={(color) => onColorChange?.(color)}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Notes */}

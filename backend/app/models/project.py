@@ -138,6 +138,12 @@ class Project(Base):
         }'::jsonb"""),
     )
 
+    # Display
+    color: Mapped[str | None] = mapped_column(
+        String(80),
+        nullable=True,
+    )
+
     # Soft delete
     is_deleted: Mapped[bool] = mapped_column(
         Boolean,
