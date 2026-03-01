@@ -25,13 +25,13 @@ export function AppLayout() {
         Skip to content
       </a>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <AppHeader />
         <main
           id="main-content"
           ref={mainRef}
           tabIndex={-1}
-          className="flex-1 overflow-auto outline-none"
+          className="flex-1 overflow-auto outline-none min-w-0"
         >
           <EmailVerificationBanner />
           <Suspense fallback={<PageLoader />}>
