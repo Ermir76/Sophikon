@@ -19,3 +19,6 @@ issues/
 
 CHANGES.md
 DEPLOYMENT_GUIDE.md
+
+# Seed scripts
+backend/scripts/seed_sophikon.py
