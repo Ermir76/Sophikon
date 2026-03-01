@@ -57,7 +57,8 @@ export function GanttTable({
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto overflow-x-hidden"
+      className="overflow-y-auto overflow-x-hidden"
+      style={{ height: tasks.length * config.rowHeight }}
       onScroll={onScroll}
     >
       {tasks.map((task, i) => {

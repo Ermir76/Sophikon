@@ -195,9 +195,9 @@ export function GanttContainer({
 
   return (
     <div
-      className="grid flex-1 overflow-hidden border border-border rounded-md min-w-0 min-h-0 grid-cols-[280px_1fr] sm:grid-cols-[480px_1fr]"
+      className="grid overflow-hidden border border-border rounded-md min-w-0 min-h-0 grid-cols-[280px_1fr] sm:grid-cols-[480px_1fr]"
       style={{
-        gridTemplateRows: `${headerRowHeight}px 1fr`,
+        gridTemplateRows: `${headerRowHeight}px auto`,
       }}
     >
       {/* Table header — col 1, row 1 */}
@@ -257,7 +257,8 @@ export function GanttContainer({
         {containerReady && (
           <div
             ref={chartBodyRef}
-            className="h-full overflow-auto relative"
+            className="overflow-auto relative"
+            style={{ lineHeight: 0 }}
             onScroll={handleChartBodyScroll}
             onWheel={handleChartWheel}
           >
