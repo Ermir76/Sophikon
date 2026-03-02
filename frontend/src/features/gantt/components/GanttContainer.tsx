@@ -1,4 +1,4 @@
-import { useRef, useCallback, useLayoutEffect, useState, useMemo } from "react";
+import { useRef, useLayoutEffect, useState, useMemo } from "react";
 import type { Task, Dependency } from "@/features/tasks/types";
 import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays, dateToX, format } from "../utils/dateUtils";
@@ -7,6 +7,7 @@ import { GanttChart } from "./GanttChart";
 import { TimelineHeader } from "./TimelineHeader";
 import { GanttBarPopover } from "./GanttBarPopover";
 import { useGanttScrollSync } from "../hooks/useGanttScrollSync";
+import { useGanttInteractions } from "../hooks/useGanttInteractions";
 
 interface GanttContainerProps {
   tasks: Task[];
@@ -59,8 +60,19 @@ export function GanttContainer({
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
-  const [clickedTaskId, setClickedTaskId] = useState<string | null>(null);
+
+  const {
+    hoveredTaskId,
+    clickedTaskId,
+    setClickedTaskId,
+    handleTaskHover,
+    handleChartTaskClick,
+    handleChartWheel,
+  } = useGanttInteractions({
+    onTaskClick,
+    onZoomAtPoint,
+    chartBodyRef,
+  });
 
   const taskMap = useMemo(() => {
     const map = new Map<string, { task: Task; index: number }>();
@@ -107,43 +119,7 @@ export function GanttContainer({
 
 
 
-  const handleTaskHover = useCallback((taskId: string | null) => {
-    setHoveredTaskId(taskId);
-  }, []);
 
-  const handleChartTaskClick = useCallback(
-    (taskId: string) => {
-      setClickedTaskId((prev) => (prev === taskId ? null : taskId));
-      onTaskClick(taskId);
-    },
-    [onTaskClick],
-  );
-
-  // Wheel handler on chart body wrapper
-  const handleChartWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
-      e.preventDefault();
-
-      if (e.ctrlKey || e.metaKey) {
-        // Zoom at cursor
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const cursorX = e.clientX - rect.left + (chartBodyRef.current?.scrollLeft ?? 0);
-        onZoomAtPoint(e.deltaY, cursorX);
-        return;
-      }
-
-      const cb = chartBodyRef.current;
-      if (!cb) return;
-
-      if (e.shiftKey) {
-        cb.scrollLeft += e.deltaY;
-      } else {
-        cb.scrollTop += e.deltaY;
-        cb.scrollLeft += e.deltaX;
-      }
-    },
-    [onZoomAtPoint],
-  );
 
   const headerRowHeight = config.headerHeight + 12;
 
