@@ -1,12 +1,12 @@
 import { useRef, useLayoutEffect, useState, useMemo } from "react";
 import type { Task, Dependency } from "@/features/tasks/types";
 import type { GanttConfig, ZoomLevel } from "../types";
-import { differenceInCalendarDays, dateToX } from "../utils/dateUtils";
+import { differenceInCalendarDays } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";
 import { GanttChart } from "./GanttChart";
 import { GanttHoverTooltip } from "./GanttHoverTooltip";
 import { TimelineHeader } from "./TimelineHeader";
-import { GanttBarPopover } from "./GanttBarPopover";
+import { GanttClickPopoverOverlay } from "./GanttClickPopoverOverlay";
 import { useGanttScrollSync } from "../hooks/useGanttScrollSync";
 import { useGanttInteractions } from "../hooks/useGanttInteractions";
 
@@ -220,26 +220,15 @@ export function GanttContainer({
             )}
 
             {/* Click popover overlay */}
-            {clickedTaskId && (() => {
-              const entry = taskMap.get(clickedTaskId);
-              if (!entry) return null;
-              const { task, index } = entry;
-              const barX = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
-              const barY = index * config.rowHeight + config.rowHeight;
-              const containerEl = chartBodyRef.current;
-              const popoverContainerWidth = containerEl?.scrollWidth ?? 800;
-              const popoverContainerHeight = containerEl?.scrollHeight ?? 600;
-              return (
-                <GanttBarPopover
-                  task={task}
-                  x={barX}
-                  y={barY}
-                  containerWidth={popoverContainerWidth}
-                  containerHeight={popoverContainerHeight}
-                  onClose={() => setClickedTaskId(null)}
-                />
-              );
-            })()}
+            <GanttClickPopoverOverlay
+              clickedTaskId={clickedTaskId}
+              taskMap={taskMap}
+              chartStartDate={chartStartDate}
+              pxPerDay={pxPerDay}
+              config={config}
+              chartBodyRef={chartBodyRef}
+              onClose={() => setClickedTaskId(null)}
+            />
           </div>
         )}
       </div>
