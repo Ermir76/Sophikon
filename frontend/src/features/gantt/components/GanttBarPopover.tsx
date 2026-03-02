@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import type { Task } from "@/features/tasks/types";
 import { format } from "../utils/dateUtils";
 
@@ -15,62 +15,37 @@ export function GanttBarPopover({
   task,
   x,
   y,
-  containerWidth,
-  containerHeight,
   onClose,
 }: GanttBarPopoverProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEsc);
-    };
-  }, [onClose]);
-
-  // Position: prefer below-right, flip if near edges
-  const cardWidth = 220;
-  const cardHeight = 100;
-  let left = x + 8;
-  let top = y + 8;
-
-  if (left + cardWidth > containerWidth) {
-    left = x - cardWidth - 8;
-  }
-  if (top + cardHeight > containerHeight) {
-    top = y - cardHeight - 8;
-  }
-  if (left < 0) left = 4;
-  if (top < 0) top = 4;
-
   return (
-    <div
-      ref={ref}
-      className="absolute z-50 rounded-md border border-border bg-popover text-popover-foreground shadow-md p-3 text-xs space-y-1.5"
-      style={{ left, top, width: cardWidth, pointerEvents: "auto" }}
-    >
-      <div className="font-medium text-sm leading-tight">{task.name}</div>
-      <div className="text-muted-foreground">WBS {task.wbs_code}</div>
-      <div className="flex justify-between text-muted-foreground">
-        <span>
-          {format(new Date(task.start_date), "MM/dd/yyyy")} –{" "}
-          {format(new Date(task.finish_date), "MM/dd/yyyy")}
-        </span>
-      </div>
-      <div className="flex justify-between text-muted-foreground">
-        <span>Duration: {task.duration}m</span>
-        <span>Progress: {task.percent_complete}%</span>
-      </div>
-    </div>
+    <Popover open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <PopoverAnchor asChild>
+        {/* Invisible anchor exactly at the bar's x/y coordinate */}
+        <div className="absolute pointer-events-none" style={{ left: x, top: y, width: 0, height: 0 }} />
+      </PopoverAnchor>
+      <PopoverContent
+        data-slot="gantt-popover"
+        side="bottom"
+        align="start"
+        sideOffset={8}
+        className="w-auto p-3 text-xs space-y-1.5"
+        style={{ border: "1px solid color-mix(in oklch, var(--border) 20%, transparent)" }}
+        onInteractOutside={onClose}
+        onEscapeKeyDown={onClose}
+      >
+        <div className="font-medium text-sm leading-tight">{task.name}</div>
+        <div className="text-muted-foreground">WBS {task.wbs_code}</div>
+        <div className="flex justify-between text-muted-foreground gap-4">
+          <span>
+            {format(new Date(task.start_date), "MM/dd/yyyy")} –{" "}
+            {format(new Date(task.finish_date), "MM/dd/yyyy")}
+          </span>
+        </div>
+        <div className="flex justify-between text-muted-foreground gap-4">
+          <span>Duration: {task.duration}m</span>
+          <span>Progress: {task.percent_complete}%</span>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
