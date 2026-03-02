@@ -1,4 +1,3 @@
-import React from "react";
 import { Diamond, ChevronDown, ChevronRight } from "lucide-react";
 import type { Task } from "@/features/tasks/types";
 import type { GanttConfig } from "../types";
@@ -16,8 +15,6 @@ interface GanttTableProps {
   onTaskClick: (taskId: string) => void;
   collapsedIds: Set<string>;
   onToggleCollapse: (taskId: string) => void;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
-  onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
 export function GanttTableHeader() {
@@ -51,16 +48,9 @@ export function GanttTable({
   onTaskClick,
   collapsedIds,
   onToggleCollapse,
-  scrollRef,
-  onScroll,
 }: GanttTableProps) {
   return (
-    <div
-      ref={scrollRef}
-      className="overflow-y-auto overflow-x-hidden"
-      style={{ height: tasks.length * config.rowHeight }}
-      onScroll={onScroll}
-    >
+    <div>
       {tasks.map((task, i) => {
           const isSelected = task.id === selectedTaskId;
           return (

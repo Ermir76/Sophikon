@@ -155,7 +155,7 @@ export default function GanttPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-2 p-4 overflow-hidden min-w-0">
+    <div className="flex flex-1 flex-col gap-2 p-4 overflow-hidden min-w-0 min-h-0">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Gantt Chart</h1>
         <GanttToolbar
@@ -168,24 +168,26 @@ export default function GanttPage() {
         />
       </div>
 
-      <GanttContainer
-        tasks={visibleTasks}
-        dependencies={dependencies}
-        config={config}
-        zoom={zoom}
-        pxPerDay={pxPerDay}
-        showCriticalPath={showCriticalPath}
-        selectedTaskId={selectedTaskId}
-        onTaskClick={handleTaskClick}
-        collapsedIds={collapsedIds}
-        onToggleCollapse={toggleCollapse}
-        chartStartDate={chartStartDate}
-        chartEndDate={chartEndDate}
-        onContainerResize={handleContainerResize}
-        onZoomAtPoint={handleZoomAtPoint}
-        chartScrollRef={chartScrollRef}
-        colorMap={colorMap}
-      />
+      <div className="flex-1 min-h-0">
+        <GanttContainer
+          tasks={visibleTasks}
+          dependencies={dependencies}
+          config={config}
+          zoom={zoom}
+          pxPerDay={pxPerDay}
+          showCriticalPath={showCriticalPath}
+          selectedTaskId={selectedTaskId}
+          onTaskClick={handleTaskClick}
+          collapsedIds={collapsedIds}
+          onToggleCollapse={toggleCollapse}
+          chartStartDate={chartStartDate}
+          chartEndDate={chartEndDate}
+          onContainerResize={handleContainerResize}
+          onZoomAtPoint={handleZoomAtPoint}
+          chartScrollRef={chartScrollRef}
+          colorMap={colorMap}
+        />
+      </div>
     </div>
   );
 }

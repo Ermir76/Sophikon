@@ -28,7 +28,7 @@ export function TimelineHeader({
 
   return (
     <div
-      className="relative border-b border-border bg-muted/80 select-none"
+      className="relative border-b border-border bg-muted select-none"
       style={{ width: totalWidth, height: headerHeight }}
     >
       {/* Top tier */}

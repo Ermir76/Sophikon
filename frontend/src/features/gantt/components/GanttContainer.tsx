@@ -1,15 +1,18 @@
-import { useRef, useLayoutEffect, useState, useMemo } from "react";
+import { useRef, useLayoutEffect, useMemo, useCallback } from "react";
 import type { Task, Dependency } from "@/features/tasks/types";
 import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";
 import { GanttChart } from "./GanttChart";
 import { GanttHoverTooltip } from "./GanttHoverTooltip";
-import { GanttTopScrollbar } from "./GanttTopScrollbar";
 import { TimelineHeader } from "./TimelineHeader";
 import { GanttClickPopoverOverlay } from "./GanttClickPopoverOverlay";
-import { useGanttScrollSync } from "../hooks/useGanttScrollSync";
 import { useGanttInteractions } from "../hooks/useGanttInteractions";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/shared/ui/resizable";
 
 interface GanttContainerProps {
   tasks: Task[];
@@ -50,18 +53,9 @@ export function GanttContainer({
   chartScrollRef,
   colorMap,
 }: GanttContainerProps) {
-  const {
-    tableScrollRef,
-    chartBodyRef,
-    timelineHeaderRef,
-    topScrollRef,
-    handleChartBodyScroll,
-    handleTableScroll,
-    handleTopScroll,
-  } = useGanttScrollSync();
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const [containerReady, setContainerReady] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const containerWidthRef = useRef(0);
 
   const {
     hoveredTaskId,
@@ -73,7 +67,7 @@ export function GanttContainer({
   } = useGanttInteractions({
     onTaskClick,
     onZoomAtPoint,
-    chartBodyRef,
+    chartBodyRef: timelineRef,
   });
 
   const taskMap = useMemo(() => {
@@ -84,15 +78,24 @@ export function GanttContainer({
 
   const totalDays = differenceInCalendarDays(chartEndDate, chartStartDate);
   const chartWidth = totalDays * pxPerDay;
-  const totalWidth = Math.max(chartWidth, containerWidth);
+  const totalWidth = Math.max(chartWidth, containerWidthRef.current);
+
+  // Inline vertical scroll sync
+  const handleScroll = useCallback((source: "table" | "timeline") => {
+    const from = source === "table" ? tableRef.current : timelineRef.current;
+    const to = source === "table" ? timelineRef.current : tableRef.current;
+    if (from && to && to.scrollTop !== from.scrollTop) {
+      to.scrollTop = from.scrollTop;
+    }
+  }, []);
 
   // Expose scrollTo to parent via ref
   useLayoutEffect(() => {
     if (chartScrollRef) {
       (chartScrollRef as React.RefObject<{ scrollTo: (left: number) => void } | null>).current = {
         scrollTo: (left: number) => {
-          if (chartBodyRef.current) {
-            chartBodyRef.current.scrollLeft = left;
+          if (timelineRef.current) {
+            timelineRef.current.scrollLeft = left;
           }
         },
       };
@@ -101,13 +104,12 @@ export function GanttContainer({
 
   // Track right panel width via ResizeObserver
   useLayoutEffect(() => {
-    const el = rightPanelRef.current;
+    const el = timelineRef.current;
     if (!el) return;
 
     const update = (w: number) => {
       onContainerResize(w);
-      setContainerWidth(w);
-      setContainerReady(true);
+      containerWidthRef.current = w;
     };
 
     update(Math.round(el.clientWidth));
@@ -119,117 +121,88 @@ export function GanttContainer({
     return () => observer.disconnect();
   }, [onContainerResize]);
 
-
-
-
-
-  const headerRowHeight = config.headerHeight + 12;
-
   return (
-    <div
-      className="grid overflow-hidden border border-border rounded-md min-w-0 min-h-0 grid-cols-[280px_1fr] sm:grid-cols-[480px_1fr]"
-      style={{
-        gridTemplateRows: `${headerRowHeight}px auto`,
-      }}
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="h-full overflow-hidden border border-border rounded-md"
     >
-      {/* Table header — col 1, row 1 */}
-      <div className="border-r border-b border-border min-w-0">
-        <GanttTableHeader />
-      </div>
+      {/* Left panel: table header + rows */}
+      <ResizablePanel defaultSize="30%" minSize="15%" maxSize="50%">
+        <div className="h-full overflow-auto" ref={tableRef} onScroll={() => handleScroll("table")}>
+          <div className="sticky top-0 z-10 border-b border-border" style={{ height: config.headerHeight }}>
+            <GanttTableHeader />
+          </div>
+          <GanttTable
+            tasks={tasks}
+            config={config}
+            selectedTaskId={selectedTaskId}
+            onTaskClick={onTaskClick}
+            collapsedIds={collapsedIds}
+            onToggleCollapse={onToggleCollapse}
+          />
+        </div>
+      </ResizablePanel>
 
-      {/* Chart header area — col 2, row 1 */}
-      <div className="flex flex-col min-w-0 border-b border-border">
-        {containerReady && (
-          <>
-            {/* Timeline header */}
+      <ResizableHandle withHandle />
+
+      {/* Right panel: timeline header + chart */}
+      <ResizablePanel defaultSize="70%">
             <div
-              ref={timelineHeaderRef}
-              className="overflow-hidden"
-              style={{ height: config.headerHeight }}
+              ref={timelineRef}
+              className="h-full overflow-auto relative"
+              style={{ lineHeight: 0 }}
+              onScroll={() => handleScroll("timeline")}
+              onWheel={handleChartWheel}
             >
-              <TimelineHeader
+              <div className="sticky top-0 z-10">
+                <TimelineHeader
+                  chartStartDate={chartStartDate}
+                  chartEndDate={chartEndDate}
+                  zoom={zoom}
+                  pxPerDay={pxPerDay}
+                  totalWidth={totalWidth}
+                  headerHeight={config.headerHeight}
+                />
+              </div>
+
+              <GanttChart
+                tasks={tasks}
+                dependencies={dependencies}
+                config={config}
+                pxPerDay={pxPerDay}
+                showCriticalPath={showCriticalPath}
+                selectedTaskId={selectedTaskId}
+                onTaskClick={handleChartTaskClick}
+                onTaskHover={handleTaskHover}
                 chartStartDate={chartStartDate}
                 chartEndDate={chartEndDate}
-                zoom={zoom}
-                pxPerDay={pxPerDay}
                 totalWidth={totalWidth}
-                headerHeight={config.headerHeight}
+                colorMap={colorMap}
               />
-            </div>
 
-            {/* Top horizontal scrollbar */}
-            <GanttTopScrollbar
-              ref={topScrollRef}
-              totalWidth={totalWidth}
-              onScroll={handleTopScroll}
-            />
-          </>
-        )}
-      </div>
+              {/* Hover tooltip overlay */}
+              {hoveredTaskId && hoveredTaskId !== clickedTaskId && (
+                <GanttHoverTooltip
+                  hoveredTaskId={hoveredTaskId}
+                  taskMap={taskMap}
+                  chartStartDate={chartStartDate}
+                  pxPerDay={pxPerDay}
+                  config={config}
+                />
+              )}
 
-      {/* Table body — col 1, row 2 */}
-      <div className="border-r border-border min-h-0 min-w-0">
-        <GanttTable
-          tasks={tasks}
-          config={config}
-          selectedTaskId={selectedTaskId}
-          onTaskClick={onTaskClick}
-          collapsedIds={collapsedIds}
-          onToggleCollapse={onToggleCollapse}
-          scrollRef={tableScrollRef}
-          onScroll={handleTableScroll}
-        />
-      </div>
-
-      {/* Chart body — col 2, row 2 */}
-      <div ref={rightPanelRef} className="min-h-0 min-w-0">
-        {containerReady && (
-          <div
-            ref={chartBodyRef}
-            className="overflow-auto relative"
-            style={{ lineHeight: 0 }}
-            onScroll={handleChartBodyScroll}
-            onWheel={handleChartWheel}
-          >
-            <GanttChart
-              tasks={tasks}
-              dependencies={dependencies}
-              config={config}
-              pxPerDay={pxPerDay}
-              showCriticalPath={showCriticalPath}
-              selectedTaskId={selectedTaskId}
-              onTaskClick={handleChartTaskClick}
-              onTaskHover={handleTaskHover}
-              chartStartDate={chartStartDate}
-              chartEndDate={chartEndDate}
-              totalWidth={totalWidth}
-              colorMap={colorMap}
-            />
-
-            {/* Hover tooltip overlay */}
-            {hoveredTaskId && hoveredTaskId !== clickedTaskId && (
-              <GanttHoverTooltip
-                hoveredTaskId={hoveredTaskId}
+              {/* Click popover overlay */}
+              <GanttClickPopoverOverlay
+                clickedTaskId={clickedTaskId}
                 taskMap={taskMap}
                 chartStartDate={chartStartDate}
                 pxPerDay={pxPerDay}
                 config={config}
+                chartBodyRef={timelineRef}
+                onClose={() => setClickedTaskId(null)}
               />
-            )}
-
-            {/* Click popover overlay */}
-            <GanttClickPopoverOverlay
-              clickedTaskId={clickedTaskId}
-              taskMap={taskMap}
-              chartStartDate={chartStartDate}
-              pxPerDay={pxPerDay}
-              config={config}
-              chartBodyRef={chartBodyRef}
-              onClose={() => setClickedTaskId(null)}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+            </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
