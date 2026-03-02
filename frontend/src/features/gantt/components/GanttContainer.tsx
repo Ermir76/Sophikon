@@ -5,6 +5,7 @@ import { differenceInCalendarDays } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";
 import { GanttChart } from "./GanttChart";
 import { GanttHoverTooltip } from "./GanttHoverTooltip";
+import { GanttTopScrollbar } from "./GanttTopScrollbar";
 import { TimelineHeader } from "./TimelineHeader";
 import { GanttClickPopoverOverlay } from "./GanttClickPopoverOverlay";
 import { useGanttScrollSync } from "../hooks/useGanttScrollSync";
@@ -157,14 +158,11 @@ export function GanttContainer({
             </div>
 
             {/* Top horizontal scrollbar */}
-            <div
+            <GanttTopScrollbar
               ref={topScrollRef}
-              className="overflow-x-auto overflow-y-hidden"
-              style={{ height: 12 }}
+              totalWidth={totalWidth}
               onScroll={handleTopScroll}
-            >
-              <div style={{ width: totalWidth, height: 1 }} />
-            </div>
+            />
           </>
         )}
       </div>
