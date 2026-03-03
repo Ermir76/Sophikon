@@ -71,12 +71,13 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
                     <label className="text-sm font-medium text-muted-foreground">Accrue At</label>
                     <Select
                         value={localData.accrue_at ?? "PRORATED"}
-                        onValueChange={(v) => {
+                        onValueChange={async (v) => {
                             setLocalData({ ...localData, accrue_at: v as CostAccrual });
-                            updateResource.mutate(
-                                { resourceId, data: { accrue_at: v as CostAccrual } },
-                                { onError: () => toast.error("Failed to update accrue at") }
-                            );
+                            try {
+                                await updateResource.mutateAsync({ resourceId, data: { accrue_at: v as CostAccrual } });
+                            } catch (error) {
+                                toast.error("Failed to update accrue at");
+                            }
                         }}
                     >
                         <SelectTrigger><SelectValue /></SelectTrigger>

@@ -35,7 +35,7 @@ export function BulkEditDialog({
 
     const bulkUpdate = useBulkUpdateTasks(projectId);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         // Build update payload — only include fields that were changed
         const data: TaskUpdate = {};
 
@@ -57,22 +57,17 @@ export function BulkEditDialog({
             return;
         }
 
-        bulkUpdate.mutate(
-            {
+        try {
+            const result = await bulkUpdate.mutateAsync({
                 tasks: selectedTaskIds.map((id) => ({ id, data })),
-            },
-            {
-                onSuccess: (result) => {
-                    toast.success(`${result.succeeded} task(s) updated`);
-                    resetForm();
-                    onClose();
-                    onSuccess?.();
-                },
-                onError: () => {
-                    toast.error("Failed to update tasks");
-                },
-            }
-        );
+            });
+            toast.success(`${result.succeeded} task(s) updated`);
+            resetForm();
+            onClose();
+            onSuccess?.();
+        } catch (error) {
+            toast.error("Failed to update tasks");
+        }
     };
 
     const resetForm = () => {

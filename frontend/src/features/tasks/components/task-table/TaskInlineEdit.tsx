@@ -50,7 +50,7 @@ export function TaskInlineEdit({
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (isCancelling.current) {
             isCancelling.current = false;
             return;
@@ -75,20 +75,15 @@ export function TaskInlineEdit({
             [field]: type === "number" ? Number(value) : value,
         };
 
-        updateTask.mutate(
-            { taskId: task.id, data: payload },
-            {
-                onSuccess: () => {
-                    isSubmitting.current = false;
-                    if (onSuccess) onSuccess();
-                },
-                onError: () => {
-                    isSubmitting.current = false;
-                    setValue(initialValue); // Revert on failure
-                    toast.error(`Failed to update ${field}`);
-                },
-            }
-        );
+        try {
+            await updateTask.mutateAsync({ taskId: task.id, data: payload });
+            isSubmitting.current = false;
+            if (onSuccess) onSuccess();
+        } catch (error) {
+            isSubmitting.current = false;
+            setValue(initialValue); // Revert on failure
+            toast.error(`Failed to update ${field}`);
+        }
     };
 
     if (!isEditing) {

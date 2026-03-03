@@ -67,7 +67,7 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
         }
     }, [resource]);
 
-    const handleBlur = (field: keyof ResourceUpdate) => {
+    const handleBlur = async (field: keyof ResourceUpdate) => {
         if (!resource || !resourceId) return;
 
         const currentValue = localData[field];
@@ -78,15 +78,12 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
         if (currentValue !== originalValue) {
             const valueToSend = (NULLABLE_FIELDS.includes(field) && currentValue === "") ? null : currentValue;
 
-            updateResource.mutate(
-                { resourceId, data: { [field]: valueToSend } },
-                {
-                    onError: () => {
-                        toast.error(`Failed to update ${field}`);
-                        setLocalData((prev) => ({ ...prev, [field]: originalValue }));
-                    },
-                }
-            );
+            try {
+                await updateResource.mutateAsync({ resourceId, data: { [field]: valueToSend } });
+            } catch (error) {
+                toast.error(`Failed to update ${field}`);
+                setLocalData((prev) => ({ ...prev, [field]: originalValue }));
+            }
         }
     };
 

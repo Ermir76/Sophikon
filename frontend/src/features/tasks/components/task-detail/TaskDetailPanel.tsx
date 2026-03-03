@@ -58,7 +58,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
     }, [task]);
 
     // Only fire the update mutation when the user clicks away, if the value actually changed
-    const handleBlur = (field: keyof TaskUpdate) => {
+    const handleBlur = async (field: keyof TaskUpdate) => {
         if (!task) return;
 
         const currentValue = localData[field];
@@ -71,16 +71,13 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
         }
 
         if (currentValue !== originalValue) {
-            updateTask.mutate(
-                { taskId: task.id, data: { [field]: currentValue } },
-                {
-                    onError: () => {
-                        toast.error(`Failed to update ${field}`);
-                        // Rebound the local state on failure
-                        setLocalData((prev) => ({ ...prev, [field]: originalValue }));
-                    },
-                }
-            );
+            try {
+                await updateTask.mutateAsync({ taskId: task.id, data: { [field]: currentValue } });
+            } catch (error) {
+                toast.error(`Failed to update ${field}`);
+                // Rebound the local state on failure
+                setLocalData((prev) => ({ ...prev, [field]: originalValue }));
+            }
         }
     };
 
@@ -134,11 +131,12 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 localData={localData}
                                 setLocalData={setLocalData}
                                 handleBlur={handleBlur}
-                                onColorChange={(color) => {
-                                    updateTask.mutate(
-                                        { taskId: task.id, data: { color } },
-                                        { onError: () => toast.error("Failed to update color") },
-                                    );
+                                onColorChange={async (color) => {
+                                    try {
+                                        await updateTask.mutateAsync({ taskId: task.id, data: { color } });
+                                    } catch {
+                                        toast.error("Failed to update color");
+                                    }
                                 }}
                             />
 

@@ -66,41 +66,36 @@ export default function TasksPage() {
   }, [tasks.length, isAddingFirstTask]);
 
   // Single task delete handler (used by row actions + detail panel)
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask.mutate(taskId, {
-      onSuccess: () => {
-        toast.success("Task deleted");
-        // Close detail panel if the deleted task was being viewed
-        if (selectedTaskId === taskId) {
-          setSelectedTaskId(null);
-        }
-        // Remove from selection if selected
-        setRowSelection((prev) => {
-          const next = { ...prev };
-          delete next[taskId];
-          return next;
-        });
-      },
-      onError: () => toast.error("Failed to delete task"),
-    });
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask.mutateAsync(taskId);
+      toast.success("Task deleted");
+      // Close detail panel if the deleted task was being viewed
+      if (selectedTaskId === taskId) {
+        setSelectedTaskId(null);
+      }
+      // Remove from selection if selected
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        delete next[taskId];
+        return next;
+      });
+    } catch (error) {
+      toast.error("Failed to delete task");
+    }
   };
 
   // Bulk delete handler
-  const handleBulkDelete = () => {
-    bulkDeleteTasks.mutate(
-      { task_ids: selectedTaskIds },
-      {
-        onSuccess: (result) => {
-          toast.success(`${result.succeeded} task(s) deleted`);
-          setRowSelection({});
-          setShowBulkDeleteConfirm(false);
-        },
-        onError: () => {
-          toast.error("Failed to delete tasks");
-          setShowBulkDeleteConfirm(false);
-        },
-      }
-    );
+  const handleBulkDelete = async () => {
+    try {
+      const result = await bulkDeleteTasks.mutateAsync({ task_ids: selectedTaskIds });
+      toast.success(`${result.succeeded} task(s) deleted`);
+      setRowSelection({});
+      setShowBulkDeleteConfirm(false);
+    } catch (error) {
+      toast.error("Failed to delete tasks");
+      setShowBulkDeleteConfirm(false);
+    }
   };
 
   if (!projectId) {
@@ -156,25 +151,31 @@ export default function TasksPage() {
             setRowSelection={setRowSelection}
             forceAdding={isAddingFirstTask}
             onCancelAdding={() => setIsAddingFirstTask(false)}
-            onIndent={(id) => indentTask.mutate(id, { onError: () => toast.error("Failed to indent task") })}
-            onOutdent={(id) => outdentTask.mutate(id, { onError: () => toast.error("Failed to outdent task") })}
+            onIndent={async (id) => {
+              try { await indentTask.mutateAsync(id); } catch { toast.error("Failed to indent task"); }
+            }}
+            onOutdent={async (id) => {
+              try { await outdentTask.mutateAsync(id); } catch { toast.error("Failed to outdent task"); }
+            }}
             onAddDependency={(id) => setDependencyTaskId(id)}
             onViewDetails={(id) => setSelectedTaskId(id)}
             onDelete={handleDeleteTask}
             isIndentPending={indentTask.isPending}
             isOutdentPending={outdentTask.isPending}
             isDeletePending={deleteTask.isPending}
-            onReorder={(taskId, afterTaskId, beforeTaskId, sortedData) => {
-              reorderTask.mutate({
-                taskId,
-                data: {
-                  after_task_id: afterTaskId || null,
-                  before_task_id: beforeTaskId || null
-                },
-                optimisticData: sortedData
-              }, {
-                onError: () => toast.error("Failed to reorder task")
-              });
+            onReorder={async (taskId, afterTaskId, beforeTaskId, sortedData) => {
+              try {
+                await reorderTask.mutateAsync({
+                  taskId,
+                  data: {
+                    after_task_id: afterTaskId || null,
+                    before_task_id: beforeTaskId || null
+                  },
+                  optimisticData: sortedData
+                });
+              } catch (error) {
+                toast.error("Failed to reorder task");
+              }
             }}
           />
         </div>

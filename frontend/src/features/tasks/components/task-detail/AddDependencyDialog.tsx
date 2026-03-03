@@ -35,30 +35,25 @@ export function AddDependencyDialog({
     // Filter out the current task itself to prevent self-dependency
     const availablePredecessors = tasksData?.items?.filter(t => t.id !== successorTaskId) || [];
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!predecessorId) {
             toast.error("Please select a predecessor task");
             return;
         }
 
-        createDependency.mutate(
-            {
+        try {
+            await createDependency.mutateAsync({
                 predecessor_id: predecessorId,
                 successor_id: successorTaskId,
                 type: dependencyType,
-            },
-            {
-                onSuccess: () => {
-                    toast.success("Dependency added");
-                    setPredecessorId("");
-                    setDependencyType("FS");
-                    onClose();
-                },
-                onError: () => {
-                    toast.error("Failed to add dependency");
-                },
-            }
-        );
+            });
+            toast.success("Dependency added");
+            setPredecessorId("");
+            setDependencyType("FS");
+            onClose();
+        } catch (error) {
+            toast.error("Failed to add dependency");
+        }
     };
 
     return (

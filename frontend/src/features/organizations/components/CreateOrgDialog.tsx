@@ -52,20 +52,18 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
     defaultValues: { name: "", slug: "" },
   });
 
-  const onSubmit = (data: OrgFormValues) => {
-    createMutation.mutate(data, {
-      onSuccess: (newOrg) => {
-        setActiveOrg(newOrg.id);
-        toast.success("Organization created", {
-          description: `You are now working in ${newOrg.name}.`,
-        });
-        form.reset();
-        onOpenChange(false);
-      },
-      onError: (error) => {
-        toast.error("Error", { description: getErrorMessage(error) });
-      },
-    });
+  const onSubmit = async (data: OrgFormValues) => {
+    try {
+      const newOrg = await createMutation.mutateAsync(data);
+      setActiveOrg(newOrg.id);
+      toast.success("Organization created", {
+        description: `You are now working in ${newOrg.name}.`,
+      });
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Error", { description: getErrorMessage(error) });
+    }
   };
 
   return (

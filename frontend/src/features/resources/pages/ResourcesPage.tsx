@@ -40,35 +40,33 @@ export default function ResourcesPage() {
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
   const selectionCount = selectedIds.length;
 
-  const handleDeleteResource = (resourceId: string) => {
-    deleteResource.mutate(resourceId, {
-      onSuccess: () => {
-        toast.success("Resource deleted");
-        if (selectedResourceId === resourceId) {
-          setSelectedResourceId(null);
-        }
-        setRowSelection((prev) => {
-          const next = { ...prev };
-          delete next[resourceId];
-          return next;
-        });
-      },
-      onError: () => toast.error("Failed to delete resource"),
-    });
+  const handleDeleteResource = async (resourceId: string) => {
+    try {
+      await deleteResource.mutateAsync(resourceId);
+      toast.success("Resource deleted");
+      if (selectedResourceId === resourceId) {
+        setSelectedResourceId(null);
+      }
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        delete next[resourceId];
+        return next;
+      });
+    } catch (error) {
+      toast.error("Failed to delete resource");
+    }
   };
 
-  const handleBulkDelete = () => {
-    bulkDeleteResources.mutate(selectedIds, {
-      onSuccess: (result) => {
-        toast.success(`${result.succeeded} resource(s) deleted`);
-        setRowSelection({});
-        setShowBulkDeleteConfirm(false);
-      },
-      onError: () => {
-        toast.error("Failed to delete resources");
-        setShowBulkDeleteConfirm(false);
-      },
-    });
+  const handleBulkDelete = async () => {
+    try {
+      const result = await bulkDeleteResources.mutateAsync(selectedIds);
+      toast.success(`${result.succeeded} resource(s) deleted`);
+      setRowSelection({});
+      setShowBulkDeleteConfirm(false);
+    } catch (error) {
+      toast.error("Failed to delete resources");
+      setShowBulkDeleteConfirm(false);
+    }
   };
 
   if (!projectId) {

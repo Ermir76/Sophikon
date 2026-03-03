@@ -22,12 +22,13 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
                 </div>
                 <Switch
                     checked={localData.is_active ?? true}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={async (checked) => {
                         setLocalData({ ...localData, is_active: checked });
-                        updateResource.mutate(
-                            { resourceId, data: { is_active: checked } },
-                            { onError: () => toast.error("Failed to update active status") }
-                        );
+                        try {
+                            await updateResource.mutateAsync({ resourceId, data: { is_active: checked } });
+                        } catch (error) {
+                            toast.error("Failed to update active status");
+                        }
                     }}
                 />
             </div>
@@ -41,12 +42,13 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
                     </div>
                     <Switch
                         checked={localData.is_generic ?? false}
-                        onCheckedChange={(checked) => {
+                        onCheckedChange={async (checked) => {
                             setLocalData({ ...localData, is_generic: checked });
-                            updateResource.mutate(
-                                { resourceId, data: { is_generic: checked } },
-                                { onError: () => toast.error("Failed to update generic status") }
-                            );
+                            try {
+                                await updateResource.mutateAsync({ resourceId, data: { is_generic: checked } });
+                            } catch (error) {
+                                toast.error("Failed to update generic status");
+                            }
                         }}
                     />
                 </div>

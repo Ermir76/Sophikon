@@ -22,12 +22,13 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                     <label className="text-sm font-medium text-muted-foreground">Type</label>
                     <Select
                         value={localData.type ?? "WORK"}
-                        onValueChange={(v) => {
+                        onValueChange={async (v) => {
                             setLocalData({ ...localData, type: v as ResourceType });
-                            updateResource.mutate(
-                                { resourceId, data: { type: v as ResourceType } },
-                                { onError: () => toast.error("Failed to update type") }
-                            );
+                            try {
+                                await updateResource.mutateAsync({ resourceId, data: { type: v as ResourceType } });
+                            } catch (error) {
+                                toast.error("Failed to update type");
+                            }
                         }}
                     >
                         <SelectTrigger><SelectValue /></SelectTrigger>

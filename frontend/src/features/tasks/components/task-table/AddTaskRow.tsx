@@ -44,7 +44,7 @@ export function AddTaskRow({ projectId, colSpan, forceAdding, onCancelAdding }: 
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (isSubmitting.current) return;
 
         if (!taskName.trim()) {
@@ -54,24 +54,18 @@ export function AddTaskRow({ projectId, colSpan, forceAdding, onCancelAdding }: 
 
         isSubmitting.current = true;
 
-        createTask.mutate(
-            {
+        try {
+            await createTask.mutateAsync({
                 name: taskName.trim(),
                 start_date: format(new Date(), "yyyy-MM-dd"), // Default to today (local timezone safe)
                 duration: 480, // Default 1 day (8 hours * 60 mins)
-            },
-            {
-                onSuccess: () => {
-                    setTaskName("");
-                    isSubmitting.current = false;
-                    // Keep it open for rapid consecutive entry
-                },
-                onError: () => {
-                    isSubmitting.current = false;
-                    toast.error("Failed to create task");
-                },
-            }
-        );
+            });
+            setTaskName("");
+            isSubmitting.current = false;
+        } catch (error) {
+            isSubmitting.current = false;
+            toast.error("Failed to create task");
+        }
     };
 
     if (!isAdding) {

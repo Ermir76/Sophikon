@@ -41,7 +41,7 @@ export function EditDependencyDialog({
         setIsDisabled(dependency.is_disabled);
     }, [dependency]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const data: Record<string, unknown> = {};
 
         if (type !== dependency.type) data.type = type;
@@ -54,18 +54,13 @@ export function EditDependencyDialog({
             return;
         }
 
-        updateDependency.mutate(
-            { dependencyId: dependency.id, data },
-            {
-                onSuccess: () => {
-                    toast.success("Dependency updated");
-                    onClose();
-                },
-                onError: () => {
-                    toast.error("Failed to update dependency");
-                },
-            }
-        );
+        try {
+            await updateDependency.mutateAsync({ dependencyId: dependency.id, data });
+            toast.success("Dependency updated");
+            onClose();
+        } catch (error) {
+            toast.error("Failed to update dependency");
+        }
     };
 
     return (

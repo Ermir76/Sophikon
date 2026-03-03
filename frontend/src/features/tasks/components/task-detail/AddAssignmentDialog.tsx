@@ -37,7 +37,7 @@ export function AddAssignmentDialog({
 
     const availableResources = resourcesData?.items?.filter((r) => r.is_active) ?? [];
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!resourceId) {
             toast.error("Please select a resource");
             return;
@@ -48,23 +48,20 @@ export function AddAssignmentDialog({
             return;
         }
 
-        createAssignment.mutate(
-            {
+        try {
+            await createAssignment.mutateAsync({
                 resource_id: resourceId,
                 units: parseFloat(units) || 1.0,
                 start_date: task.start_date,
                 finish_date: task.finish_date,
-            },
-            {
-                onSuccess: () => {
-                    toast.success("Assignment created");
-                    setResourceId("");
-                    setUnits("1.0");
-                    onClose();
-                },
-                onError: () => toast.error("Failed to create assignment"),
-            }
-        );
+            });
+            toast.success("Assignment created");
+            setResourceId("");
+            setUnits("1.0");
+            onClose();
+        } catch (error) {
+            toast.error("Failed to create assignment");
+        }
     };
 
     const handleOpenChange = (open: boolean) => {
