@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Folder, LayoutGrid, List } from "lucide-react";
+import { Loader2, Folder, LayoutGrid, List, Plus } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { useOrgStore } from "@/features/organizations";
@@ -56,6 +56,15 @@ export default function ProjectsPage() {
               <LayoutGrid className="size-4" />
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="new-project-btn h-8 px-3 text-primary-foreground"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="mr-2 size-4" />
+            New Project
+          </Button>
           <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>
       </div>
