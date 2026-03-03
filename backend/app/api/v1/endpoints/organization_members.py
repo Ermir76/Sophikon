@@ -13,9 +13,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_active_user, get_org_membership_or_404
+from app.api.deps import check_org_role, get_current_active_user, get_org_access_or_404
 from app.core.database import get_db
-from app.core.exceptions import PermissionDeniedError
 from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.organization_member import (
@@ -38,8 +37,8 @@ async def get_my_membership(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get my membership in the organization."""
-    _org, membership = await get_org_membership_or_404(db, org_id, user)
-    return OrgMemberListItem.model_validate(membership)
+    access = await get_org_access_or_404(org_id, db, user)
+    return OrgMemberListItem.model_validate(access.membership)
 
 
 @router.get("", response_model=PaginatedResponse[OrgMemberListItem])
@@ -51,10 +50,10 @@ async def list_members(
     per_page: Annotated[int, Query(ge=1, le=100)] = 20,
 ):
     """List all members of an organization."""
-    org, _membership = await get_org_membership_or_404(db, org_id, user)
+    access = await get_org_access_or_404(org_id, db, user)
 
     members, total = await organization_member_service.list_members(
-        db, org, page=page, per_page=per_page
+        db, access.organization, page=page, per_page=per_page
     )
     return PaginatedResponse(
         items=[OrgMemberListItem(**m) for m in members],
@@ -80,11 +79,12 @@ async def invite_member(
 
     Requires owner or admin role.
     """
-    org, membership = await get_org_membership_or_404(db, org_id, user)
-    if membership.role not in ("owner", "admin"):
-        raise PermissionDeniedError("Owner or admin role required")
+    access = await get_org_access_or_404(org_id, db, user)
+    check_org_role(access, "owner", "admin")
 
-    member = await organization_member_service.invite_member(db, org, body)
+    member = await organization_member_service.invite_member(
+        db, access.organization, body
+    )
     return OrgMemberListItem(**member)
 
 
@@ -101,12 +101,11 @@ async def change_member_role(
 
     Requires owner role.
     """
-    org, membership = await get_org_membership_or_404(db, org_id, user)
-    if membership.role != "owner":
-        raise PermissionDeniedError("Owner role required")
+    access = await get_org_access_or_404(org_id, db, user)
+    check_org_role(access, "owner")
 
     member = await organization_member_service.change_member_role(
-        db, org, member_id, body
+        db, access.organization, member_id, body
     )
     return OrgMemberListItem(**member)
 
@@ -123,8 +122,7 @@ async def remove_member(
 
     Requires owner or admin role.
     """
-    org, membership = await get_org_membership_or_404(db, org_id, user)
-    if membership.role not in ("owner", "admin"):
-        raise PermissionDeniedError("Owner or admin role required")
+    access = await get_org_access_or_404(org_id, db, user)
+    check_org_role(access, "owner", "admin")
 
-    await organization_member_service.remove_member(db, org, member_id)
+    await organization_member_service.remove_member(db, access.organization, member_id)

@@ -68,6 +68,14 @@ async def get_current_active_user(
 # ── Organization Access Dependencies ──
 
 
+class OrgAccess(NamedTuple):
+    """Result of organization access check."""
+
+    organization: Organization
+    membership: OrganizationMember
+    role_name: str
+
+
 async def get_org_membership_or_404(
     db: AsyncSession,
     org_id: UUID,
@@ -105,6 +113,29 @@ async def get_org_membership_or_404(
         raise PermissionDeniedError("You do not have access to this organization")
 
     return org, membership
+
+
+async def get_org_access_or_404(
+    org_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+) -> OrgAccess:
+    """
+    Load an organization and verify the user has access.
+    Returns OrgAccess(organization, membership, role_name).
+    """
+    org, membership = await get_org_membership_or_404(db, org_id, user)
+    return OrgAccess(
+        organization=org,
+        membership=membership,
+        role_name=membership.role,
+    )
+
+
+def check_org_role(access: OrgAccess, *allowed: str) -> None:
+    """Raise 403 if user's organization role is not in allowed roles."""
+    if access.role_name not in allowed:
+        raise PermissionDeniedError(f"Requires role: {', '.join(allowed)}")
 
 
 # ── Project Access Dependencies ──

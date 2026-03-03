@@ -14,9 +14,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_active_user, get_org_membership_or_404
+from app.api.deps import check_org_role, get_current_active_user, get_org_access_or_404
 from app.core.database import get_db
-from app.core.exceptions import PermissionDeniedError
 from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.organization import (
@@ -71,8 +70,8 @@ async def get_organization(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get organization details."""
-    org, _membership = await get_org_membership_or_404(db, org_id, user)
-    return OrganizationDetail.model_validate(org)
+    access = await get_org_access_or_404(org_id, db, user)
+    return OrganizationDetail.model_validate(access.organization)
 
 
 @router.patch("/{org_id}", response_model=OrganizationDetail)
@@ -87,11 +86,10 @@ async def update_organization(
 
     Requires owner role.
     """
-    org, membership = await get_org_membership_or_404(db, org_id, user)
-    if membership.role != "owner":
-        raise PermissionDeniedError("Owner role required")
+    access = await get_org_access_or_404(org_id, db, user)
+    check_org_role(access, "owner")
 
-    org = await organization_service.update_organization(db, org, body)
+    org = await organization_service.update_organization(db, access.organization, body)
     return OrganizationDetail.model_validate(org)
 
 
@@ -106,8 +104,7 @@ async def delete_organization(
 
     Requires owner role.
     """
-    org, membership = await get_org_membership_or_404(db, org_id, user)
-    if membership.role != "owner":
-        raise PermissionDeniedError("Owner role required")
+    access = await get_org_access_or_404(org_id, db, user)
+    check_org_role(access, "owner")
 
-    await organization_service.soft_delete_organization(db, org)
+    await organization_service.soft_delete_organization(db, access.organization)
