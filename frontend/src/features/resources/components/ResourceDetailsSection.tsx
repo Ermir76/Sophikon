@@ -23,6 +23,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                     <Select
                         value={localData.type ?? "WORK"}
                         onValueChange={async (v) => {
+                            // NOTE: Auto-save pattern: discrete selects commit immediately to avoid user confusion
                             setLocalData({ ...localData, type: v as ResourceType });
                             try {
                                 await updateResource.mutateAsync({ resourceId, data: { type: v as ResourceType } });
@@ -45,6 +46,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                     <Input
                         value={localData.initials ?? ""}
                         onChange={(e) => setLocalData({ ...localData, initials: e.target.value })}
+                        // NOTE: Auto-save pattern: text inputs commit on blur to prevent spamming the backend
                         onBlur={() => handleBlur("initials")}
                         maxLength={10}
                         placeholder={

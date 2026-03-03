@@ -9,6 +9,7 @@ import type {
     TaskBulkDelete,
     Task
 } from "@/features/tasks/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
 export const taskKeys = {
     all: ["tasks"] as const,
@@ -133,7 +134,7 @@ export function useReorderTask(projectId: string | undefined) {
             const previousTasks = queryClient.getQueryData(taskKeys.list(projectId));
 
             // Optimistically update to the new value
-            queryClient.setQueryData(taskKeys.list(projectId), (old: any) => {
+            queryClient.setQueryData(taskKeys.list(projectId), (old: PaginatedResponse<Task> | undefined) => {
                 if (!old) return old;
                 return {
                     ...old,

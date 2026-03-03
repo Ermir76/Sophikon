@@ -1,5 +1,5 @@
 import { flexRender } from "@tanstack/react-table";
-import type { Row } from "@tanstack/react-table";
+import type { Row, Cell } from "@tanstack/react-table";
 import { TableRow, TableCell } from "@/shared/ui/table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -28,7 +28,7 @@ export function SortableTableRow({ row }: { row: Row<Task> }) {
             data-state={row.getIsSelected() && "selected"}
             className={isDragging ? "bg-muted shadow-sm z-10 relative" : ""}
         >
-            {row.getVisibleCells().map((cell: any) => (
+            {row.getVisibleCells().map((cell: Cell<Task, unknown>) => (
                 <TableCell
                     key={cell.id}
                     {...(cell.column.id === "drag-handle" ? { ...attributes, ...listeners } : {})}

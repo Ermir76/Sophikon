@@ -34,6 +34,7 @@ export function TaskDetailCoreFields({
                             max={100}
                             value={localData.percent_complete ?? 0}
                             onChange={(e) => setLocalData({ ...localData, percent_complete: Number(e.target.value) })}
+                            // NOTE: Auto-save pattern: text inputs commit on blur to prevent spamming the backend
                             onBlur={() => handleBlur("percent_complete")}
                             className="pr-8 bg-transparent transition-all border-border/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
                         />
@@ -81,6 +82,7 @@ export function TaskDetailCoreFields({
                         </label>
                         <ColorPicker
                             value={task.color ?? null}
+                            // NOTE: Auto-save pattern: discrete selects commit immediately
                             onChange={(color) => onColorChange?.(color)}
                         />
                     </div>

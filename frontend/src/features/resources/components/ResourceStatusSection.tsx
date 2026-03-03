@@ -23,6 +23,7 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
                 <Switch
                     checked={localData.is_active ?? true}
                     onCheckedChange={async (checked) => {
+                        // NOTE: Auto-save pattern: switches commit immediately
                         setLocalData({ ...localData, is_active: checked });
                         try {
                             await updateResource.mutateAsync({ resourceId, data: { is_active: checked } });

@@ -72,6 +72,7 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
                     <Select
                         value={localData.accrue_at ?? "PRORATED"}
                         onValueChange={async (v) => {
+                            // NOTE: Auto-save pattern: discrete selects commit immediately
                             setLocalData({ ...localData, accrue_at: v as CostAccrual });
                             try {
                                 await updateResource.mutateAsync({ resourceId, data: { accrue_at: v as CostAccrual } });

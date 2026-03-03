@@ -62,7 +62,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
         if (!task) return;
 
         const currentValue = localData[field];
-        let originalValue: any = task[field as keyof typeof task];
+        let originalValue = task[field as keyof typeof task] as TaskUpdate[typeof field];
 
         if (field === "start_date" && originalValue) {
             originalValue = String(originalValue).split("T")[0];
