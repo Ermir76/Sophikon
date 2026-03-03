@@ -123,7 +123,7 @@ export function GanttContainer({
 
   return (
     <ResizablePanelGroup
-      direction="horizontal"
+      orientation="horizontal"
       className="h-full overflow-hidden border border-border rounded-md"
     >
       {/* Left panel: table header + rows */}
@@ -147,61 +147,61 @@ export function GanttContainer({
 
       {/* Right panel: timeline header + chart */}
       <ResizablePanel defaultSize="70%">
-            <div
-              ref={timelineRef}
-              className="h-full overflow-auto relative"
-              style={{ lineHeight: 0 }}
-              onScroll={() => handleScroll("timeline")}
-              onWheel={handleChartWheel}
-            >
-              <div className="sticky top-0 z-10">
-                <TimelineHeader
-                  chartStartDate={chartStartDate}
-                  chartEndDate={chartEndDate}
-                  zoom={zoom}
-                  pxPerDay={pxPerDay}
-                  totalWidth={totalWidth}
-                  headerHeight={config.headerHeight}
-                />
-              </div>
+        <div
+          ref={timelineRef}
+          className="h-full overflow-auto relative"
+          style={{ lineHeight: 0 }}
+          onScroll={() => handleScroll("timeline")}
+          onWheel={handleChartWheel}
+        >
+          <div className="sticky top-0 z-10">
+            <TimelineHeader
+              chartStartDate={chartStartDate}
+              chartEndDate={chartEndDate}
+              zoom={zoom}
+              pxPerDay={pxPerDay}
+              totalWidth={totalWidth}
+              headerHeight={config.headerHeight}
+            />
+          </div>
 
-              <GanttChart
-                tasks={tasks}
-                dependencies={dependencies}
-                config={config}
-                pxPerDay={pxPerDay}
-                showCriticalPath={showCriticalPath}
-                selectedTaskId={selectedTaskId}
-                onTaskClick={handleChartTaskClick}
-                onTaskHover={handleTaskHover}
-                chartStartDate={chartStartDate}
-                chartEndDate={chartEndDate}
-                totalWidth={totalWidth}
-                colorMap={colorMap}
-              />
+          <GanttChart
+            tasks={tasks}
+            dependencies={dependencies}
+            config={config}
+            pxPerDay={pxPerDay}
+            showCriticalPath={showCriticalPath}
+            selectedTaskId={selectedTaskId}
+            onTaskClick={handleChartTaskClick}
+            onTaskHover={handleTaskHover}
+            chartStartDate={chartStartDate}
+            chartEndDate={chartEndDate}
+            totalWidth={totalWidth}
+            colorMap={colorMap}
+          />
 
-              {/* Hover tooltip overlay */}
-              {hoveredTaskId && hoveredTaskId !== clickedTaskId && (
-                <GanttHoverTooltip
-                  hoveredTaskId={hoveredTaskId}
-                  taskMap={taskMap}
-                  chartStartDate={chartStartDate}
-                  pxPerDay={pxPerDay}
-                  config={config}
-                />
-              )}
+          {/* Hover tooltip overlay */}
+          {hoveredTaskId && hoveredTaskId !== clickedTaskId && (
+            <GanttHoverTooltip
+              hoveredTaskId={hoveredTaskId}
+              taskMap={taskMap}
+              chartStartDate={chartStartDate}
+              pxPerDay={pxPerDay}
+              config={config}
+            />
+          )}
 
-              {/* Click popover overlay */}
-              <GanttClickPopoverOverlay
-                clickedTaskId={clickedTaskId}
-                taskMap={taskMap}
-                chartStartDate={chartStartDate}
-                pxPerDay={pxPerDay}
-                config={config}
-                chartBodyRef={timelineRef}
-                onClose={() => setClickedTaskId(null)}
-              />
-            </div>
+          {/* Click popover overlay */}
+          <GanttClickPopoverOverlay
+            clickedTaskId={clickedTaskId}
+            taskMap={taskMap}
+            chartStartDate={chartStartDate}
+            pxPerDay={pxPerDay}
+            config={config}
+            chartBodyRef={timelineRef}
+            onClose={() => setClickedTaskId(null)}
+          />
+        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
   );
