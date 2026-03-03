@@ -73,7 +73,9 @@ async def update_dependency(
     if not dependency:
         raise NotFoundError("Dependency not found")
 
-    dependency = await dependency_service.update_dependency(db, dependency, body)
+    dependency = await dependency_service.update_dependency(
+        db, dependency, body, access.project
+    )
     return DependencyResponse.model_validate(dependency)
 
 
@@ -91,4 +93,4 @@ async def delete_dependency(
     if not dependency:
         raise NotFoundError("Dependency not found")
 
-    await dependency_service.delete_dependency(db, dependency)
+    await dependency_service.delete_dependency(db, dependency, access.project)

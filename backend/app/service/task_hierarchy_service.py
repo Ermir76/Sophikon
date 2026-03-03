@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import InvalidOperationError
 from app.models.project import Project
 from app.models.task import Task
+from app.service import scheduling_service
 from app.service.task_service import recalculate_summary, regenerate_wbs_codes
 
 # ---------------------------------------------------------------------------
@@ -161,6 +162,9 @@ async def indent_task(
     await recalculate_summary(db, project.id, task.parent_task_id)
     await regenerate_wbs_codes(db, project.id)
 
+    if project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()
     await db.refresh(task)
     return task
@@ -238,6 +242,10 @@ async def outdent_task(
     await recalculate_summary(db, project.id, task.id)
 
     await regenerate_wbs_codes(db, project.id)
+
+    if project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()
     await db.refresh(task)
     return task
@@ -336,6 +344,10 @@ async def reorder_task(
         await recalculate_summary(db, project.id, p_id)
 
     await regenerate_wbs_codes(db, project.id)
+
+    if project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()
     await db.refresh(task)
     return task

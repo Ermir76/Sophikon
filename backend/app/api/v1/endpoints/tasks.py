@@ -160,7 +160,7 @@ async def update_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    task = await task_service.update_task(db, task, body)
+    task = await task_service.update_task(db, task, body, access.project)
     return TaskResponse.model_validate(task)
 
 
@@ -176,7 +176,7 @@ async def delete_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    await task_service.soft_delete_task(db, task)
+    await task_service.soft_delete_task(db, task, access.project)
     # Unlike soft_delete_project/organization which commit internally,
     # soft_delete_task is recursive (deleting child tasks). We flush
     # internally and commit once here to avoid partial commits.

@@ -19,6 +19,7 @@ from app.models.dependency import Dependency
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.dependency import DependencyCreate, DependencyUpdate
+from app.service import scheduling_service
 
 
 async def list_dependencies(
@@ -138,6 +139,12 @@ async def create_dependency(
 
     try:
         db.add(dependency)
+        await db.flush()
+
+        # Auto-recalculate schedule after dependency creation
+        if project.settings.get("auto_calculate", True):
+            await scheduling_service.calculate_schedule(db, project)
+
         await db.commit()
         await db.refresh(dependency)
         return dependency
@@ -165,11 +172,18 @@ async def update_dependency(
     db: AsyncSession,
     dependency: Dependency,
     data: DependencyUpdate,
+    project: Project | None = None,
 ) -> Dependency:
     """Update a dependency with partial data."""
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(dependency, field, value)
+
+    await db.flush()
+
+    # Auto-recalculate schedule after dependency update
+    if project and project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
 
     await db.commit()
     await db.refresh(dependency)
@@ -179,7 +193,14 @@ async def update_dependency(
 async def delete_dependency(
     db: AsyncSession,
     dependency: Dependency,
+    project: Project | None = None,
 ) -> None:
     """Hard delete a dependency."""
     await db.delete(dependency)
+    await db.flush()
+
+    # Auto-recalculate schedule after dependency deletion
+    if project and project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()

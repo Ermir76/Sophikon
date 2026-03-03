@@ -17,6 +17,17 @@ from app.models.dependency import Dependency
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskCreate, TaskUpdate
+from app.service import scheduling_service
+
+# Fields that affect the schedule — changes trigger auto-recalculation
+_SCHEDULE_FIELDS = {
+    "duration",
+    "start_date",
+    "finish_date",
+    "constraint_type",
+    "constraint_date",
+    "is_milestone",
+}
 
 
 async def list_tasks(
@@ -199,6 +210,11 @@ async def create_task(
         await recalculate_summary(db, project.id, data.parent_task_id)
 
     await regenerate_wbs_codes(db, project.id)
+
+    # Auto-recalculate schedule after task creation
+    if project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()
     await db.refresh(task)
     return task
@@ -224,6 +240,7 @@ async def update_task(
     db: AsyncSession,
     task: Task,
     data: TaskUpdate,
+    project: Project | None = None,
 ) -> Task:
     """Update a task with partial data."""
     update_data = data.model_dump(exclude_unset=True)
@@ -239,6 +256,11 @@ async def update_task(
         # but we can get it from the task object.
         await recalculate_summary(db, task.project_id, task.parent_task_id)
 
+    # Auto-recalculate schedule if scheduling-relevant fields changed
+    if project and update_data.keys() & _SCHEDULE_FIELDS:
+        if project.settings.get("auto_calculate", True):
+            await scheduling_service.calculate_schedule(db, project)
+
     await db.commit()
     await db.refresh(task)
     return task
@@ -247,6 +269,7 @@ async def update_task(
 async def soft_delete_task(
     db: AsyncSession,
     task: Task,
+    project: Project | None = None,
 ) -> None:
     """
     Soft delete a task and cascade to children, assignments (hard), dependencies (hard).
@@ -261,7 +284,8 @@ async def soft_delete_task(
     )
     children = children_result.scalars().all()
     for child in children:
-        await soft_delete_task(db, child)
+        # Pass None for project in recursive calls to prevent redundant recalculations
+        await soft_delete_task(db, child, project=None)
 
     # 2. Hard delete assignments (Assignments belong to task -> remove)
     # Using CORE delete for efficiency
@@ -283,6 +307,10 @@ async def soft_delete_task(
 
     if task.parent_task_id:
         await recalculate_summary(db, task.project_id, task.parent_task_id)
+
+    # Auto-recalculate schedule after task deletion (top-level only)
+    if project and project.settings.get("auto_calculate", True):
+        await scheduling_service.calculate_schedule(db, project)
 
 
 async def recalculate_summary(

@@ -122,23 +122,23 @@
 
 **Backend:**
 
-- [ ] Task CRUD with hierarchy support (indent/outdent, summary roll-up)
-- [ ] WBS code auto-generation and regeneration
-- [ ] Task reordering API (drag-drop support)
-- [ ] Dependency CRUD with validation (circular detection)
-- [ ] Bulk operations (create, update, delete)
-- [ ] Soft-delete cascades to children
+- [x] Task CRUD with hierarchy support (indent/outdent, summary roll-up)
+- [x] WBS code auto-generation and regeneration
+- [x] Task reordering API (drag-drop support)
+- [/] Dependency CRUD with validation (circular detection)
+- [x] Bulk operations (create, update, delete)
+- [x] Soft-delete cascades to children
 
 **Frontend:**
 
-- [ ] Projects list page (`/projects` — cards with status, progress)
-- [ ] Create project dialog
-- [ ] Task table view (spreadsheet-like, inside `/projects/:id/tasks`)
-- [ ] Task detail panel/modal
-- [ ] Inline editing in table
-- [ ] Drag-drop for reordering
-- [ ] Indent/outdent buttons
-- [ ] Dependency creation UI
+- [x] Projects list page (`/projects` — cards with status, progress)
+- [x] Create project dialog
+- [x] Task table view (spreadsheet-like, inside `/projects/:id/tasks`)
+- [x] Task detail panel/modal
+- [x] Inline editing in table
+- [x] Drag-drop for reordering
+- [x] Indent/outdent buttons
+- [x] Dependency creation UI
 
 **Deliverables:**
 
@@ -152,14 +152,14 @@
 
 **Frontend:**
 
-- [ ] Evaluate/integrate Gantt library (options: Frappe Gantt, DHTMLX, custom)
-- [ ] Gantt chart component with task bars
-- [ ] Dependency arrows rendering
-- [ ] Timeline header (zoom levels)
-- [ ] Scroll synchronization (table + chart)
-- [ ] Today line
-- [ ] Milestone display
-- [ ] Progress bar on tasks
+- [x] Evaluate/integrate Gantt library (options: Frappe Gantt, DHTMLX, custom)
+- [x] Gantt chart component with task bars
+- [x] Dependency arrows rendering
+- [x] Timeline header (zoom levels)
+- [x] Scroll synchronization (table + chart)
+- [x] Today line
+- [x] Milestone display
+- [x] Progress bar on tasks
 
 **Backend:**
 

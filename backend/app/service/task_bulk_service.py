@@ -14,7 +14,9 @@ from app.core.exceptions import InvalidOperationError
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskBulkUpdateItem, TaskCreate
+from app.service import scheduling_service
 from app.service.task_service import (
+    _SCHEDULE_FIELDS,
     recalculate_summary,
     regenerate_wbs_codes,
     soft_delete_task,
@@ -120,6 +122,11 @@ async def bulk_create_tasks(
             await recalculate_summary(db, project.id, p_id)
 
         await regenerate_wbs_codes(db, project.id)
+
+        # Auto-recalculate schedule after bulk creation
+        if project.settings.get("auto_calculate", True):
+            await scheduling_service.calculate_schedule(db, project)
+
         await db.commit()
         for t in created_tasks:
             await db.refresh(t)
@@ -144,6 +151,7 @@ async def bulk_update_tasks(
     errors = []
     parent_ids_to_recalc = set()
     needs_wbs_regen = False
+    needs_schedule_recalc = False
 
     for idx, update_item in enumerate(updates):
         try:
@@ -186,6 +194,9 @@ async def bulk_update_tasks(
                             )
                         parent_ids_to_recalc.add(new_p_id)
 
+                if update_data.keys() & _SCHEDULE_FIELDS:
+                    needs_schedule_recalc = True
+
                 for field, value in update_data.items():
                     setattr(task, field, value)
 
@@ -206,6 +217,9 @@ async def bulk_update_tasks(
 
         if needs_wbs_regen:
             await regenerate_wbs_codes(db, project.id)
+
+        if needs_schedule_recalc and project.settings.get("auto_calculate", True):
+            await scheduling_service.calculate_schedule(db, project)
 
         await db.commit()
     else:
@@ -264,6 +278,11 @@ async def bulk_delete_tasks(
             await recalculate_summary(db, project.id, p_id)
 
         await regenerate_wbs_codes(db, project.id)
+
+        # Auto-recalculate schedule after bulk deletion
+        if project.settings.get("auto_calculate", True):
+            await scheduling_service.calculate_schedule(db, project)
+
         await db.commit()
     else:
         await db.rollback()
