@@ -37,17 +37,17 @@ export default function OrgMembersPage() {
   const { role: myRole } = useMyOrgRole();
   const canManage = myRole === "owner" || myRole === "admin";
 
-  const { data: activeOrganization } = useOrganization(activeOrgId || "");
+  const { data: activeOrganization } = useOrganization(activeOrgId);
   const {
     data: membersData,
     isLoading: isLoadingMembers,
     isError: isMembersError,
     refetch: refetchMembers,
-  } = useOrgMembers(activeOrgId || "");
+  } = useOrgMembers(activeOrgId);
 
-  const inviteMutation = useInviteMember(activeOrgId || "");
-  const removeMemberMutation = useRemoveMember(activeOrgId || "");
-  const updateRoleMutation = useUpdateMemberRole(activeOrgId || "");
+  const inviteMutation = useInviteMember(activeOrgId);
+  const removeMemberMutation = useRemoveMember(activeOrgId);
+  const updateRoleMutation = useUpdateMemberRole(activeOrgId);
 
   const [memberToRemove, setMemberToRemove] =
     useState<OrganizationMember | null>(null);

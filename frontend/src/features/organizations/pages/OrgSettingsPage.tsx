@@ -64,8 +64,8 @@ export default function OrgSettingsPage() {
     isLoading,
     isError,
     refetch,
-  } = useOrganization(activeOrgId || "");
-  const updateOrgMutation = useUpdateOrganization(activeOrgId || "");
+  } = useOrganization(activeOrgId);
+  const updateOrgMutation = useUpdateOrganization(activeOrgId);
 
   const form = useForm<OrgFormValues>({
     resolver: zodResolver(orgSchema),
@@ -220,7 +220,8 @@ export default function OrgSettingsPage() {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                deleteOrgMutation.mutate(activeOrgId || "", {
+                if (!activeOrgId) return;
+                deleteOrgMutation.mutate(activeOrgId, {
                   onSuccess: () => {
                     clearOrg();
                     toast.success("Organization deleted", {

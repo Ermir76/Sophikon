@@ -7,8 +7,8 @@ export function useMyOrgRole() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
 
   const { data: membership, isLoading } = useQuery({
-    queryKey: orgKeys.myMembership(activeOrgId || ""),
-    queryFn: () => organizationService.getMyMembership(activeOrgId || ""),
+    queryKey: orgKeys.myMembership(activeOrgId),
+    queryFn: () => organizationService.getMyMembership(activeOrgId!),
     enabled: !!activeOrgId,
   });
 

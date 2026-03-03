@@ -57,10 +57,10 @@ export default function ProjectSettingsPage() {
     isLoading,
     isError,
     refetch
-  } = useProject(projectId || "");
+  } = useProject(projectId);
 
-  const updateProjectMutation = useUpdateProject(projectId || "");
-  const deleteProjectMutation = useDeleteProject(projectId || "");
+  const updateProjectMutation = useUpdateProject(projectId);
+  const deleteProjectMutation = useDeleteProject(projectId);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 

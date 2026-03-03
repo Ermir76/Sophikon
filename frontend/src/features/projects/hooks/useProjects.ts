@@ -5,8 +5,8 @@ import type { ProjectCreate, ProjectUpdate } from "@/features/projects/types";
 
 export const projectKeys = {
   all: ["projects"] as const,
-  list: (orgId: string) => [...projectKeys.all, "list", orgId] as const,
-  detail: (projectId: string) =>
+  list: (orgId: string | null | undefined) => [...projectKeys.all, "list", orgId] as const,
+  detail: (projectId: string | null | undefined) =>
     [...projectKeys.all, "detail", projectId] as const,
 };
 
@@ -14,16 +14,16 @@ export function useProjects() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
 
   return useQuery({
-    queryKey: projectKeys.list(activeOrgId || ""),
+    queryKey: projectKeys.list(activeOrgId),
     queryFn: () => projectService.list(activeOrgId!),
     enabled: !!activeOrgId,
   });
 }
 
-export function useProject(projectId: string) {
+export function useProject(projectId?: string | null) {
   return useQuery({
     queryKey: projectKeys.detail(projectId),
-    queryFn: () => projectService.get(projectId),
+    queryFn: () => projectService.get(projectId!),
     enabled: !!projectId,
   });
 }
@@ -47,16 +47,21 @@ export function useCreateProject() {
   });
 }
 
-export function useUpdateProject(projectId: string) {
+export function useUpdateProject(projectId?: string | null) {
   const queryClient = useQueryClient();
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
 
   return useMutation({
-    mutationFn: (data: ProjectUpdate) => projectService.update(projectId, data),
+    mutationFn: (data: ProjectUpdate) => {
+      if (!projectId) throw new Error("No project ID provided");
+      return projectService.update(projectId, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: projectKeys.detail(projectId),
-      });
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: projectKeys.detail(projectId),
+        });
+      }
       if (activeOrgId) {
         queryClient.invalidateQueries({
           queryKey: projectKeys.list(activeOrgId),
@@ -66,12 +71,15 @@ export function useUpdateProject(projectId: string) {
   });
 }
 
-export function useDeleteProject(projectId: string) {
+export function useDeleteProject(projectId?: string | null) {
   const queryClient = useQueryClient();
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
 
   return useMutation({
-    mutationFn: () => projectService.delete(projectId),
+    mutationFn: () => {
+      if (!projectId) throw new Error("No project ID provided");
+      return projectService.delete(projectId);
+    },
     onSuccess: () => {
       if (activeOrgId) {
         queryClient.invalidateQueries({

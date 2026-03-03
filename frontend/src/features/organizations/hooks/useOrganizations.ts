@@ -10,9 +10,9 @@ import type {
 export const orgKeys = {
   all: ["organizations"] as const,
   list: ["organizations", "list"] as const,
-  detail: (orgId: string) => ["organizations", "detail", orgId] as const,
-  members: (orgId: string) => ["organizations", "members", orgId] as const,
-  myMembership: (orgId: string) =>
+  detail: (orgId: string | null | undefined) => ["organizations", "detail", orgId] as const,
+  members: (orgId: string | null | undefined) => ["organizations", "members", orgId] as const,
+  myMembership: (orgId: string | null | undefined) =>
     ["organizations", "members", "me", orgId] as const,
 };
 
@@ -23,23 +23,27 @@ export function useOrganizations() {
   });
 }
 
-export function useOrganization(orgId: string) {
+export function useOrganization(orgId?: string | null) {
   return useQuery({
     queryKey: orgKeys.detail(orgId),
-    queryFn: () => organizationService.get(orgId),
+    queryFn: () => organizationService.get(orgId!),
     enabled: !!orgId,
   });
 }
 
-export function useUpdateOrganization(orgId: string) {
+export function useUpdateOrganization(orgId?: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: OrganizationUpdate) =>
-      organizationService.update(orgId, data),
+    mutationFn: (data: OrganizationUpdate) => {
+      if (!orgId) throw new Error("No organization ID provided");
+      return organizationService.update(orgId, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.detail(orgId) });
-      queryClient.invalidateQueries({ queryKey: orgKeys.list });
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: orgKeys.detail(orgId) });
+        queryClient.invalidateQueries({ queryKey: orgKeys.list });
+      }
     },
   });
 }
@@ -68,39 +72,47 @@ export function useDeleteOrganization() {
   });
 }
 
-export function useOrgMembers(orgId: string) {
+export function useOrgMembers(orgId?: string | null) {
   return useQuery({
     queryKey: orgKeys.members(orgId),
-    queryFn: () => organizationService.listMembers(orgId),
+    queryFn: () => organizationService.listMembers(orgId!),
     enabled: !!orgId,
   });
 }
 
-export function useInviteMember(orgId: string) {
+export function useInviteMember(orgId?: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: InviteMemberRequest) =>
-      organizationService.inviteMember(orgId, data),
+    mutationFn: (data: InviteMemberRequest) => {
+      if (!orgId) throw new Error("No organization ID provided");
+      return organizationService.inviteMember(orgId, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      }
     },
   });
 }
 
-export function useRemoveMember(orgId: string) {
+export function useRemoveMember(orgId?: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberId: string) =>
-      organizationService.removeMember(orgId, memberId),
+    mutationFn: (memberId: string) => {
+      if (!orgId) throw new Error("No organization ID provided");
+      return organizationService.removeMember(orgId, memberId);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      }
     },
   });
 }
 
-export function useUpdateMemberRole(orgId: string) {
+export function useUpdateMemberRole(orgId?: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -110,9 +122,14 @@ export function useUpdateMemberRole(orgId: string) {
     }: {
       memberId: string;
       data: UpdateMemberRoleRequest;
-    }) => organizationService.updateMemberRole(orgId, memberId, data),
+    }) => {
+      if (!orgId) throw new Error("No organization ID provided");
+      return organizationService.updateMemberRole(orgId, memberId, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: orgKeys.members(orgId) });
+      }
     },
   });
 }

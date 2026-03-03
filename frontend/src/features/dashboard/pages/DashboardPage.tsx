@@ -9,7 +9,7 @@ export default function DashboardPage() {
     isLoading,
     isError,
     error,
-  } = useOrganization(activeOrgId || "");
+  } = useOrganization(activeOrgId);
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading dashboard...</div>;

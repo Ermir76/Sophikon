@@ -32,7 +32,7 @@ export function OrgSwitcher() {
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
 
   const { data: organizationsData, isLoading } = useOrganizations();
-  const { data: activeOrgData } = useOrganization(activeOrgId || "");
+  const { data: activeOrgData } = useOrganization(activeOrgId);
 
   const organizations = React.useMemo(
     () => organizationsData?.items || [],
