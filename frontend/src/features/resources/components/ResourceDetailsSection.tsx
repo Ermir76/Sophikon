@@ -1,6 +1,6 @@
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import type { ResourceUpdate, ResourceType } from "@/features/resources/types";
+import type { ResourceUpdate, ResourceType, Resource } from "@/features/resources/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -8,7 +8,7 @@ interface ResourceDetailsSectionProps {
     localData: Partial<ResourceUpdate>;
     setLocalData: (data: Partial<ResourceUpdate>) => void;
     handleBlur: (field: keyof ResourceUpdate) => void;
-    updateResource: UseMutationResult<any, any, { resourceId: string; data: ResourceUpdate }, any>;
+    updateResource: UseMutationResult<Resource, Error, { resourceId: string; data: ResourceUpdate }>;
     resourceId: string;
 }
 

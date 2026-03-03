@@ -71,7 +71,7 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
         if (!resource || !resourceId) return;
 
         const currentValue = localData[field];
-        let originalValue: any = resource[field as keyof typeof resource];
+        let originalValue = resource[field as keyof typeof resource] as ResourceUpdate[typeof field];
 
         if (NULLABLE_FIELDS.includes(field) && !originalValue) originalValue = "";
 

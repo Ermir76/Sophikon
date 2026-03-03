@@ -75,6 +75,13 @@ export function useDeleteResource(projectId: string | undefined) {
     });
 }
 
+/**
+ * INTENTIONAL ARCHITECTURE EXCEPTION:
+ * Bulk delete is intentionally client-emulated via `Promise.allSettled` over single delete calls.
+ * This is an accepted constraint due to the current backend not supporting a native bulk-delete endpoint
+ * for resources, and the feature only requiring very small delete batches.
+ * Do not flag this as accidental architectural drift during consistency audits.
+ */
 export function useBulkDeleteResources(projectId: string | undefined) {
     const queryClient = useQueryClient();
 

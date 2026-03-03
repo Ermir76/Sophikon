@@ -1,12 +1,12 @@
 import { Switch } from "@/shared/ui/switch";
-import type { ResourceUpdate } from "@/features/resources/types";
+import type { ResourceUpdate, Resource } from "@/features/resources/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface ResourceStatusSectionProps {
     localData: Partial<ResourceUpdate>;
     setLocalData: (data: Partial<ResourceUpdate>) => void;
-    updateResource: UseMutationResult<any, any, { resourceId: string; data: ResourceUpdate }, any>;
+    updateResource: UseMutationResult<Resource, Error, { resourceId: string; data: ResourceUpdate }>;
     resourceId: string;
 }
 
