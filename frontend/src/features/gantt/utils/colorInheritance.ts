@@ -1,4 +1,4 @@
-import type { Task } from "@/features/tasks/types";
+import type { Task } from "@/features/tasks";
 
 /**
  * Build a map of taskId → resolved color for Gantt bar rendering.

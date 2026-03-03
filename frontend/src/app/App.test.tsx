@@ -6,7 +6,7 @@ import { ThemeProvider } from "next-themes";
 import App from "./App";
 import { authService } from "@/features/auth/api/auth.service";
 
-// Mock the services that the store calls
+// Mock the actual module that checkSession dynamically imports
 vi.mock("@/features/auth/api/auth.service", () => ({
   authService: {
     me: vi.fn(),

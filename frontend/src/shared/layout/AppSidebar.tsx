@@ -26,8 +26,7 @@ import {
   SidebarRail,
 } from "@/shared/ui/sidebar";
 import { NavUser } from "@/shared/layout/NavUser";
-import { OrgSwitcher } from "@/features/organizations/components/OrgSwitcher";
-import { useMyOrgRole } from "@/features/organizations/hooks/useMyOrgRole";
+import { OrgSwitcher, useMyOrgRole } from "@/features/organizations";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
@@ -46,9 +45,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: "Projects", url: "/projects", icon: FolderKanban },
     ...(isAdminOrOwner
       ? [
-          { title: "Members", url: "/members", icon: Users },
-          { title: "Settings", url: "/settings", icon: Settings },
-        ]
+        { title: "Members", url: "/members", icon: Users },
+        { title: "Settings", url: "/settings", icon: Settings },
+      ]
       : []),
   ];
 
@@ -93,8 +92,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   item.url === "/"
                     ? location.pathname === "/"
                     : location.pathname === item.url ||
-                      (item.url !== "/projects" &&
-                        location.pathname.startsWith(item.url + "/"));
+                    (item.url !== "/projects" &&
+                      location.pathname.startsWith(item.url + "/"));
 
                 return (
                   <SidebarMenuItem key={item.title}>

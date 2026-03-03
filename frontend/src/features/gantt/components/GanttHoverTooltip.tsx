@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import type { Task } from "@/features/tasks/types";
+import type { Task } from "@/features/tasks";
 import type { GanttConfig } from "../types";
 import { dateToX, format } from "../utils/dateUtils";
 

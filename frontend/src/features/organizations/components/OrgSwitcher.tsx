@@ -20,7 +20,7 @@ import {
 } from "@/shared/ui/sidebar";
 import { useOrgStore } from "@/features/organizations/store/org-store";
 import { useOrganizations, useOrganization } from "@/features/organizations/hooks/useOrganizations";
-import { projectKeys } from "@/features/projects/hooks/useProjects";
+import { projectKeys } from "@/features/projects";
 import { CreateOrgDialog } from "./CreateOrgDialog";
 
 export function OrgSwitcher() {

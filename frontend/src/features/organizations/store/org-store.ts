@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 
 interface OrgState {
   activeOrgId: string | null;

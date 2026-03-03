@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { useOrgStore } from "@/features/organizations/store/org-store";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import type { OrganizationMember, OrgRole } from "@/features/organizations/types";
 import {
   useOrgMembers,

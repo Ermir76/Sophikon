@@ -1,7 +1,7 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useAssignments, useDeleteAssignment } from "@/features/tasks/hooks/useAssignments";
-import { useResources } from "@/features/resources/hooks/useResources";
+import { useResources } from "@/features/resources";
 import { AddAssignmentDialog } from "@/features/tasks/components/task-detail/AddAssignmentDialog";
 import { useState } from "react";
 

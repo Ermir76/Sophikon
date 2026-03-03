@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Task, Dependency } from "@/features/tasks/types";
+import type { Task, Dependency } from "@/features/tasks";
 import type { GanttConfig } from "../types";
 import {
   dateToX,

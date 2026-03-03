@@ -178,12 +178,12 @@
 
 **Backend:**
 
-- [ ] Forward scheduling algorithm
-- [ ] Critical path calculation
-- [ ] Slack/float calculation
-- [ ] Constraint handling (ASAP, ALAP, MSO, etc.)
-- [ ] Recalculate on dependency/date changes
-- [ ] Scheduling API endpoint
+- [x] Forward scheduling algorithm
+- [x] Critical path calculation
+- [x] Slack/float calculation
+- [x] Constraint handling (ASAP, ALAP, MSO, etc.)
+- [x] Recalculate on dependency/date changes
+- [x] Scheduling API endpoint
 
 **Frontend:**
 

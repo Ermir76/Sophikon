@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 
 // ----------------------------------------------------------------------
 // PROTECTED ROUTE

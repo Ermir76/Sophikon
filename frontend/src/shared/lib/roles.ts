@@ -1,4 +1,4 @@
-import type { OrgRole } from "@/features/organizations/types";
+import type { OrgRole } from "@/features/organizations";
 
 export type { OrgRole };
 

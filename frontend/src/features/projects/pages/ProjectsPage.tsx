@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2, Folder, LayoutGrid, List } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { useOrgStore } from "@/features/organizations/store/org-store";
+import { useOrgStore } from "@/features/organizations";
 import { useProjects } from "@/features/projects/hooks/useProjects";
 import { QueryError } from "@/shared/components/QueryError";
 import { CreateProjectDialog } from "@/features/projects/components/CreateProjectDialog";

@@ -2,51 +2,51 @@ import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router";
 
 import { AppLayout } from "@/shared/layout/AppLayout";
-import { ProjectLayout } from "@/features/projects/components/ProjectLayout";
+import { ProjectLayout } from "@/features/projects";
 import { ProtectedRoute } from "@/app/routing/ProtectedRoute";
 import { GuestRoute } from "@/app/routing/GuestRoute";
 import { OrgGuard } from "@/app/routing/OrgGuard";
 import { PageLoader } from "@/shared/components/PageLoader";
 
 // Lazy imports
-const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
-const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
+const LoginPage = lazy(() => import("@/features/auth").then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("@/features/auth").then(m => ({ default: m.RegisterPage })));
 const AuthLayout = lazy(() => import("@/shared/layout/AuthLayout"));
 const DashboardPage = lazy(
-  () => import("@/features/dashboard/pages/DashboardPage"),
+  () => import("@/features/dashboard").then(m => ({ default: m.DashboardPage }))
 );
-const TasksPage = lazy(() => import("@/features/tasks/pages/TasksPage"));
-const GanttPage = lazy(() => import("@/features/gantt/pages/GanttPage"));
+const TasksPage = lazy(() => import("@/features/tasks").then(m => ({ default: m.TasksPage })));
+const GanttPage = lazy(() => import("@/features/gantt").then(m => ({ default: m.GanttPage })));
 const ResourcesPage = lazy(
-  () => import("@/features/resources/pages/ResourcesPage"),
+  () => import("@/features/resources").then(m => ({ default: m.ResourcesPage }))
 );
 const CalendarPage = lazy(
-  () => import("@/features/calendar/pages/CalendarPage"),
+  () => import("@/features/calendar").then(m => ({ default: m.CalendarPage }))
 );
 const ProjectsPage = lazy(
-  () => import("@/features/projects/pages/ProjectsPage"),
+  () => import("@/features/projects").then(m => ({ default: m.ProjectsPage }))
 );
 const ReportsPage = lazy(
-  () => import("@/features/reports/pages/ReportsPage"),
+  () => import("@/features/reports").then(m => ({ default: m.ReportsPage }))
 );
 const OrgSettingsPage = lazy(
-  () => import("@/features/organizations/pages/OrgSettingsPage"),
+  () => import("@/features/organizations").then(m => ({ default: m.OrgSettingsPage }))
 );
 const OrgMembersPage = lazy(
-  () => import("@/features/organizations/pages/OrgMembersPage"),
+  () => import("@/features/organizations").then(m => ({ default: m.OrgMembersPage }))
 );
 const ProjectSettingsPage = lazy(
-  () => import("@/features/projects/pages/ProjectSettingsPage"),
+  () => import("@/features/projects").then(m => ({ default: m.ProjectSettingsPage }))
 );
 const ProjectOverviewPage = lazy(
-  () => import("@/features/projects/pages/ProjectOverviewPage"),
+  () => import("@/features/projects").then(m => ({ default: m.ProjectOverviewPage }))
 );
 const NotFoundPage = lazy(() => import("@/app/NotFoundPage"));
 const VerifyEmailPage = lazy(
-  () => import("@/features/auth/pages/VerifyEmailPage"),
+  () => import("@/features/auth").then(m => ({ default: m.VerifyEmailPage }))
 );
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import { useEffect } from "react";
 
 function App() {

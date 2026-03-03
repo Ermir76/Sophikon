@@ -1,5 +1,4 @@
-import { useOrgStore } from "@/features/organizations/store/org-store";
-import { useOrganization } from "@/features/organizations/hooks/useOrganizations";
+import { useOrgStore, useOrganization } from "@/features/organizations";
 import { QueryError } from "@/shared/components/QueryError";
 import { getErrorMessage } from "@/shared/lib/errors";
 

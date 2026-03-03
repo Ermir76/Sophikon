@@ -10,7 +10,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { useResources } from "@/features/resources/hooks/useResources";
+import { useResources } from "@/features/resources";
 import { useCreateAssignment } from "@/features/tasks/hooks/useAssignments";
 import { useTask } from "@/features/tasks/hooks/useTasks";
 import { toast } from "sonner";

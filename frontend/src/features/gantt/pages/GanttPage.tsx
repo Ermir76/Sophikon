@@ -1,13 +1,11 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { Loader2, BarChart3 } from "lucide-react";
-import { useTasks } from "@/features/tasks/hooks/useTasks";
-import { useDependencies } from "@/features/tasks/hooks/useDependencies";
-import { useProject } from "@/features/projects/hooks/useProjects";
+import { useTasks, useDependencies, type Task } from "@/features/tasks";
+import { useProject } from "@/features/projects";
 import { useCollapsedTree } from "@/shared/hooks/useCollapsedTree";
 import { buildColorInheritanceMap } from "../utils/colorInheritance";
 import { QueryError } from "@/shared/components/QueryError";
-import type { Task } from "@/features/tasks/types";
 import type { ZoomLevel } from "../types";
 import { DEFAULT_GANTT_CONFIG, ZOOM_PX_PER_DAY } from "../types";
 import { getProjectDateRange, dateToX, differenceInCalendarDays } from "../utils/dateUtils";

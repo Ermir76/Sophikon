@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { useOrgStore } from "@/features/organizations/store/org-store";
+import { useOrgStore } from "@/features/organizations";
 
 export function OrgGuard() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);

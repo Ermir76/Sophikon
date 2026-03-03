@@ -8,7 +8,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import {

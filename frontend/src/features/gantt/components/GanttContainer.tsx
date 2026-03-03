@@ -1,5 +1,5 @@
 import { useRef, useLayoutEffect, useMemo, useCallback } from "react";
-import type { Task, Dependency } from "@/features/tasks/types";
+import type { Task, Dependency } from "@/features/tasks";
 import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";

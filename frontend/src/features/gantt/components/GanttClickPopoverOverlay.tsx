@@ -1,4 +1,4 @@
-import type { Task } from "@/features/tasks/types";
+import type { Task } from "@/features/tasks";
 import type { GanttConfig } from "../types";
 import { dateToX } from "../utils/dateUtils";
 import { GanttBarPopover } from "./GanttBarPopover";

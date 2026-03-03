@@ -1,5 +1,5 @@
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
-import type { Task } from "@/features/tasks/types";
+import type { Task } from "@/features/tasks";
 import { format } from "../utils/dateUtils";
 
 interface GanttBarPopoverProps {

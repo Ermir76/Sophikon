@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectService } from "@/features/projects/api/project.service";
-import { useOrgStore } from "@/features/organizations/store/org-store";
+import { useOrgStore } from "@/features/organizations";
 import type { ProjectCreate, ProjectUpdate } from "@/features/projects/types";
 
 export const projectKeys = {
