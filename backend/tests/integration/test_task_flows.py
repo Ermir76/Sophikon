@@ -226,6 +226,8 @@ async def test_summary_rollup_flow(client: AsyncClient):
                 "start_date": "2024-01-05",
                 "duration": 480,
                 "parent_task_id": p_id,
+                "constraint_type": "SNET",
+                "constraint_date": "2024-01-05",
             },
         )
     ).json()["id"]
@@ -237,6 +239,8 @@ async def test_summary_rollup_flow(client: AsyncClient):
                 "start_date": "2024-01-10",
                 "duration": 480,
                 "parent_task_id": p_id,
+                "constraint_type": "SNET",
+                "constraint_date": "2024-01-10",
             },
         )
     ).json()["id"]
