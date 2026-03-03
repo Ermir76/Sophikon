@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/shared/ui/button";
 import {
@@ -22,10 +21,9 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
-import { organizationService } from "@/features/organizations/api/organization.service";
-import { useOrgStore } from "@/features/organizations/store/org-store";
 import { getErrorMessage } from "@/shared/lib/errors";
-import { orgKeys } from "@/features/organizations/hooks/useOrganizations";
+import { useCreateOrganization } from "@/features/organizations/hooks/useOrganizations";
+import { useOrgStore } from "@/features/organizations/store/org-store";
 
 const orgSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -47,31 +45,27 @@ interface CreateOrgDialogProps {
 
 export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
-  const queryClient = useQueryClient();
+  const createMutation = useCreateOrganization();
 
   const form = useForm<OrgFormValues>({
     resolver: zodResolver(orgSchema),
     defaultValues: { name: "", slug: "" },
   });
 
-  const createMutation = useMutation({
-    mutationFn: organizationService.create,
-    onSuccess: (newOrg) => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.list });
-      setActiveOrg(newOrg.id);
-      toast.success("Organization created", {
-        description: `You are now working in ${newOrg.name}.`,
-      });
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: (error) => {
-      toast.error("Error", { description: getErrorMessage(error) });
-    },
-  });
-
   const onSubmit = (data: OrgFormValues) => {
-    createMutation.mutate(data);
+    createMutation.mutate(data, {
+      onSuccess: (newOrg) => {
+        setActiveOrg(newOrg.id);
+        toast.success("Organization created", {
+          description: `You are now working in ${newOrg.name}.`,
+        });
+        form.reset();
+        onOpenChange(false);
+      },
+      onError: (error) => {
+        toast.error("Error", { description: getErrorMessage(error) });
+      },
+    });
   };
 
   return (

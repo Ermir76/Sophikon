@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { organizationService } from "@/features/organizations/api/organization.service";
 import type {
+  OrganizationCreate,
   OrganizationUpdate,
   InviteMemberRequest,
   UpdateMemberRoleRequest,
@@ -39,6 +40,30 @@ export function useUpdateOrganization(orgId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.detail(orgId) });
       queryClient.invalidateQueries({ queryKey: orgKeys.list });
+    },
+  });
+}
+
+export function useCreateOrganization() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: OrganizationCreate) =>
+      organizationService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orgKeys.list });
+    },
+  });
+}
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orgId: string) => organizationService.delete(orgId),
+    onSuccess: (_, orgId) => {
+      queryClient.invalidateQueries({ queryKey: orgKeys.list });
+      queryClient.invalidateQueries({ queryKey: orgKeys.detail(orgId) });
     },
   });
 }

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
@@ -28,11 +27,10 @@ import { useOrgStore } from "@/features/organizations/store/org-store";
 import {
   useOrganization,
   useUpdateOrganization,
+  useDeleteOrganization,
 } from "@/features/organizations/hooks/useOrganizations";
 import { QueryError } from "@/shared/components/QueryError";
 import { getErrorMessage } from "@/shared/lib/errors";
-import { organizationService } from "@/features/organizations/api/organization.service";
-import { orgKeys } from "@/features/organizations/hooks/useOrganizations";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,7 +65,6 @@ export default function OrgSettingsPage() {
     isError,
     refetch,
   } = useOrganization(activeOrgId || "");
-  const queryClient = useQueryClient();
   const updateOrgMutation = useUpdateOrganization(activeOrgId || "");
 
   const form = useForm<OrgFormValues>({
@@ -102,22 +99,7 @@ export default function OrgSettingsPage() {
   };
 
   // Add Delete Mutation
-  const deleteOrgMutation = useMutation({
-    mutationFn: () => organizationService.delete(activeOrgId || ""),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: orgKeys.list });
-      clearOrg();
-      toast.success("Organization deleted", {
-        description: "The organization has been permanently deleted.",
-      });
-      navigate("/");
-    },
-    onError: (error) => {
-      toast.error("Error", {
-        description: getErrorMessage(error),
-      });
-    },
-  });
+  const deleteOrgMutation = useDeleteOrganization();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -237,7 +219,22 @@ export default function OrgSettingsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => deleteOrgMutation.mutate()}
+              onClick={() => {
+                deleteOrgMutation.mutate(activeOrgId || "", {
+                  onSuccess: () => {
+                    clearOrg();
+                    toast.success("Organization deleted", {
+                      description: "The organization has been permanently deleted.",
+                    });
+                    navigate("/");
+                  },
+                  onError: (error) => {
+                    toast.error("Error", {
+                      description: getErrorMessage(error),
+                    });
+                  },
+                });
+              }}
               disabled={deleteOrgMutation.isPending}
             >
               {deleteOrgMutation.isPending ? "Deleting..." : "Delete Organization"}
