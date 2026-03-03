@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/shared/ui/switch";
 import { useUpdateDependency } from "@/features/tasks/hooks/useDependencies";
 import { toast } from "sonner";
-import type { Dependency } from "@/features/tasks/types";
+import type { Dependency, DependencyUpdate } from "@/features/tasks/types";
 
 interface EditDependencyDialogProps {
     projectId: string;
@@ -42,7 +42,7 @@ export function EditDependencyDialog({
     }, [dependency]);
 
     const handleSubmit = async () => {
-        const data: Record<string, unknown> = {};
+        const data: Partial<DependencyUpdate> = {};
 
         if (type !== dependency.type) data.type = type;
         if (lag !== dependency.lag) data.lag = lag;

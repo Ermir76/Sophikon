@@ -59,8 +59,6 @@ export function GanttContainer({
 
   const {
     hoveredTaskId,
-    clickedTaskId,
-    setClickedTaskId,
     handleTaskHover,
     handleChartTaskClick,
     handleChartWheel,
@@ -181,7 +179,7 @@ export function GanttContainer({
           />
 
           {/* Hover tooltip overlay */}
-          {hoveredTaskId && hoveredTaskId !== clickedTaskId && (
+          {hoveredTaskId && hoveredTaskId !== selectedTaskId && (
             <GanttHoverTooltip
               hoveredTaskId={hoveredTaskId}
               taskMap={taskMap}
@@ -193,13 +191,17 @@ export function GanttContainer({
 
           {/* Click popover overlay */}
           <GanttClickPopoverOverlay
-            clickedTaskId={clickedTaskId}
+            clickedTaskId={selectedTaskId}
             taskMap={taskMap}
             chartStartDate={chartStartDate}
             pxPerDay={pxPerDay}
             config={config}
             chartBodyRef={timelineRef}
-            onClose={() => setClickedTaskId(null)}
+            onClose={() => {
+              if (selectedTaskId) {
+                onTaskClick(selectedTaskId);
+              }
+            }}
           />
         </div>
       </ResizablePanel>

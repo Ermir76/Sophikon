@@ -12,7 +12,6 @@ export function useGanttInteractions({
     chartBodyRef,
 }: UseGanttInteractionsProps) {
     const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
-    const [clickedTaskId, setClickedTaskId] = useState<string | null>(null);
 
     const handleTaskHover = useCallback((taskId: string | null) => {
         setHoveredTaskId(taskId);
@@ -20,7 +19,6 @@ export function useGanttInteractions({
 
     const handleChartTaskClick = useCallback(
         (taskId: string) => {
-            setClickedTaskId((prev) => (prev === taskId ? null : taskId));
             onTaskClick(taskId);
         },
         [onTaskClick]
@@ -54,8 +52,6 @@ export function useGanttInteractions({
     return {
         hoveredTaskId,
         setHoveredTaskId,
-        clickedTaskId,
-        setClickedTaskId,
         handleTaskHover,
         handleChartTaskClick,
         handleChartWheel,
