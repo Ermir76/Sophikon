@@ -83,7 +83,11 @@ async def client(
             expire_on_commit=False,
         )
         async with session:
-            yield session
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
 
     app.dependency_overrides[get_db] = _override_get_db
 

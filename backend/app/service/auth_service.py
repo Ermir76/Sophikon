@@ -101,7 +101,7 @@ async def register_user(
     await db.flush()  # populate user.id
 
     # Create personal organization
-    await create_personal_organization(db, user)
+    await create_personal_organization(db, user, commit=False)
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     await db.commit()

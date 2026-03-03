@@ -79,6 +79,8 @@ async def create_organization(
 async def create_personal_organization(
     db: AsyncSession,
     user: User,
+    *,
+    commit: bool = True,
 ) -> Organization:
     """
     Create a personal organization for a user.
@@ -108,7 +110,9 @@ async def create_personal_organization(
         counter += 1
 
     org_name = f"{user.full_name}'s Org"
-    return await _create_org_internal(db, user, org_name, slug, is_personal=True)
+    return await _create_org_internal(
+        db, user, org_name, slug, is_personal=True, commit=commit
+    )
 
 
 async def _create_org_internal(
@@ -117,6 +121,8 @@ async def _create_org_internal(
     name: str,
     slug: str,
     is_personal: bool,
+    *,
+    commit: bool = True,
 ) -> Organization:
     """Internal helper to create org + owner member."""
     org = Organization(
@@ -135,8 +141,12 @@ async def _create_org_internal(
     )
     db.add(member)
 
-    await db.commit()
-    await db.refresh(org)
+    if commit:
+        await db.commit()
+        await db.refresh(org)
+    else:
+        await db.flush()
+
     return org
 
 
