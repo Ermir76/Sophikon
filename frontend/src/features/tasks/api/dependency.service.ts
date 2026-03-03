@@ -1,9 +1,10 @@
 import { api } from "@/shared/api/api";
 import type { Dependency, DependencyCreate, DependencyUpdate } from "@/features/tasks/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
 export const dependencyService = {
     list: async (projectId: string) => {
-        const response = await api.get<{ items: Dependency[]; total: number }>(`/projects/${projectId}/dependencies`);
+        const response = await api.get<PaginatedResponse<Dependency>>(`/projects/${projectId}/dependencies`);
         return response.data;
     },
 

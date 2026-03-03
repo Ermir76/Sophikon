@@ -1,9 +1,10 @@
 import { api } from "@/shared/api/api";
 import type { Resource, ResourceCreate, ResourceUpdate } from "@/features/resources/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
 export const resourceService = {
     list: async (projectId: string) => {
-        const response = await api.get<{ items: Resource[]; total: number }>(`/projects/${projectId}/resources?include_inactive=true`);
+        const response = await api.get<PaginatedResponse<Resource>>(`/projects/${projectId}/resources?include_inactive=true`);
         return response.data;
     },
 

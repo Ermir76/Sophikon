@@ -10,10 +10,11 @@ import type {
     TaskBulkCreateResponse,
     BulkOperationResponse
 } from "@/features/tasks/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
 export const taskService = {
     list: async (projectId: string) => {
-        const response = await api.get<{ items: Task[]; total: number }>(`/projects/${projectId}/tasks`, {
+        const response = await api.get<PaginatedResponse<Task>>(`/projects/${projectId}/tasks`, {
             params: { per_page: 1000 },
         });
         return response.data;

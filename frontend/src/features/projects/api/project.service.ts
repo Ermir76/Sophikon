@@ -1,9 +1,10 @@
 import { api } from "@/shared/api/api";
 import type { Project, ProjectCreate, ProjectUpdate } from "@/features/projects/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
 export const projectService = {
   list: async (orgId: string) => {
-    const response = await api.get<{ items: Project[]; total: number }>(
+    const response = await api.get<PaginatedResponse<Project>>(
       "/projects",
       { params: { organization_id: orgId } },
     );
