@@ -29,11 +29,35 @@ declare module "@tanstack/react-table" {
 function resourceTypeBadge(type: Resource["type"]) {
     switch (type) {
         case "WORK":
-            return <Badge variant="outline" className="text-[10px] font-bold tracking-wide border-blue-500/30 text-blue-500 bg-blue-500/10">Work</Badge>;
+            return (
+                <Badge
+                    variant="outline"
+                    className="resource-type-badge text-[10px] font-bold tracking-wide"
+                    data-resource-type="WORK"
+                >
+                    Work
+                </Badge>
+            );
         case "MATERIAL":
-            return <Badge variant="outline" className="text-[10px] font-bold tracking-wide border-amber-500/30 text-amber-500 bg-amber-500/10">Material</Badge>;
+            return (
+                <Badge
+                    variant="outline"
+                    className="resource-type-badge text-[10px] font-bold tracking-wide"
+                    data-resource-type="MATERIAL"
+                >
+                    Material
+                </Badge>
+            );
         case "COST":
-            return <Badge variant="outline" className="text-[10px] font-bold tracking-wide border-emerald-500/30 text-emerald-500 bg-emerald-500/10">Cost</Badge>;
+            return (
+                <Badge
+                    variant="outline"
+                    className="resource-type-badge text-[10px] font-bold tracking-wide"
+                    data-resource-type="COST"
+                >
+                    Cost
+                </Badge>
+            );
     }
 }
 

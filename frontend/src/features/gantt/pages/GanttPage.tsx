@@ -181,7 +181,7 @@ export default function GanttPage() {
   }
 
   return (
-    <PageShell className="flex-1 space-y-2 p-4 overflow-hidden min-w-0">
+    <PageShell className="flex-1 overflow-hidden min-w-0">
       <PageHeader
         title="Gantt Chart"
         action={

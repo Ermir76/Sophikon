@@ -1,10 +1,20 @@
+import { BarChart3 } from "lucide-react";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
+
 export default function ReportsPage() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Reports</h1>
-      <p className="text-muted-foreground">
-        Analyze project health, budget, and performance metrics.
-      </p>
-    </div>
+    <PageShell>
+      <PageHeader
+        title="Reports"
+        description="Analyze project health, budget, and performance metrics."
+      />
+      <PageEmpty
+        icon={BarChart3}
+        title="Reports coming soon"
+        description="Performance and budget reporting widgets will be available here."
+      />
+    </PageShell>
   );
 }

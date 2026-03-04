@@ -6,19 +6,19 @@ const features = [
     icon: RefreshCw,
     title: "Real-time collaboration",
     description: "Sync with your team across the globe instantly.",
-    color: "oklch(0.56 0.08 196)",
+    tone: "collab",
   },
   {
     icon: TrendingUp,
     title: "Advanced analytics",
     description: "Data-driven insights to optimize your output.",
-    color: "oklch(0.69 0.08 130)",
+    tone: "analytics",
   },
   {
     icon: Sparkles,
     title: "Automated Task Management",
     description: "Let AI handle the routine while you focus on the big picture.",
-    color: "oklch(0.52 0.12 310)",
+    tone: "automation",
   },
 ];
 
@@ -37,11 +37,11 @@ export default function AuthLayout() {
                 <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
               </svg>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Sophikon</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">Sophikon</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl font-bold leading-tight text-white mb-6">
+          <h1 className="text-5xl font-bold leading-tight text-foreground mb-6">
             Empower Your <span className="text-primary">Workflow</span>
           </h1>
           <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
@@ -50,16 +50,16 @@ export default function AuthLayout() {
 
           {/* Features */}
           <ul className="space-y-6">
-            {features.map(({ icon: Icon, title, description, color }) => (
+            {features.map(({ icon: Icon, title, description, tone }) => (
               <li key={title} className="flex items-center gap-4">
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                  style={{ background: `color-mix(in oklch, ${color} 15%, transparent)`, border: `1px solid color-mix(in oklch, ${color} 30%, transparent)` }}
+                  className="auth-feature-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                  data-auth-tone={tone}
                 >
-                  <Icon className="size-5" style={{ color }} />
+                  <Icon className="auth-feature-glyph size-5" data-auth-tone={tone} />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">{title}</p>
+                  <p className="font-semibold text-foreground">{title}</p>
                   <p className="text-sm text-muted-foreground">{description}</p>
                 </div>
               </li>

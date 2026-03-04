@@ -46,11 +46,11 @@ export default function ProjectsPage() {
         description="Manage your organization's projects."
         action={
           <>
-            <div className="view-toggle flex items-center gap-1 rounded-lg p-1">
+            <div className="flex items-center gap-1 rounded-lg p-1">
               <Button
                 variant="ghost"
                 size="sm"
-                className={`size-8 p-0 ${viewMode === "table" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                className={`ui-subtle-outline size-8 p-0 ${viewMode === "table" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                 onClick={() => setViewMode("table")}
               >
                 <List className="size-4" />
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`size-8 p-0 ${viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                className={`ui-subtle-outline size-8 p-0 ${viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                 onClick={() => setViewMode("grid")}
               >
                 <LayoutGrid className="size-4" />
@@ -67,7 +67,7 @@ export default function ProjectsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="new-project-btn h-8 px-3 text-primary-foreground"
+              className="ui-subtle-outline h-8 px-3 text-primary-foreground"
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="mr-2 size-4" />

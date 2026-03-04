@@ -1,4 +1,3 @@
-import { Loader2, BarChart3 } from "lucide-react";
 import {
     BarChart,
     Bar,
@@ -15,7 +14,6 @@ import {
 export interface UtilizationChartProps {
     chartData: Record<string, unknown>[];
     resourceNames: string[];
-    isLoading: boolean;
     resourceColors: string[];
     overAllocatedColor: string;
 }
@@ -23,32 +21,9 @@ export interface UtilizationChartProps {
 export function UtilizationChart({
     chartData,
     resourceNames,
-    isLoading,
     resourceColors,
     overAllocatedColor,
 }: UtilizationChartProps) {
-    if (isLoading) {
-        return (
-            <div className="flex justify-center p-12">
-                <Loader2 className="size-8 animate-spin text-muted-foreground" />
-            </div>
-        );
-    }
-
-    if (chartData.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center animate-in fade-in-50">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent">
-                    <BarChart3 className="size-6 text-muted-foreground" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">No utilization data</h3>
-                <p className="mb-4 mt-2 text-sm text-muted-foreground">
-                    Assign resources to tasks to see their utilization here.
-                </p>
-            </div>
-        );
-    }
-
     return (
         <div className="rounded-lg border bg-card p-4">
             <ResponsiveContainer width="100%" height={400}>
@@ -56,21 +31,21 @@ export function UtilizationChart({
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                     <XAxis
                         dataKey="dateLabel"
-                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                     />
                     <YAxis
-                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                         label={{
                             value: "Units",
                             angle: -90,
                             position: "insideLeft",
-                            style: { fill: "hsl(var(--muted-foreground))", fontSize: 12 },
+                            style: { fill: "var(--muted-foreground)", fontSize: 12 },
                         }}
                     />
                     <Tooltip
                         contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
                             fontSize: "12px",
                         }}

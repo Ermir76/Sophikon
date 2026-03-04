@@ -41,7 +41,7 @@ export default function VerifyEmailPage() {
     // Error — token invalid/expired/already used
     if (queryStatus === "error") {
         return (
-            <div className="text-center rounded-xl border-2 border-destructive/50 bg-destructive/5 p-6 -m-2">
+            <div className="text-center rounded-xl border-2 border-destructive/50 bg-destructive/5 p-6">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                     <XCircle className="h-6 w-6 text-destructive" />
                 </div>
@@ -62,7 +62,7 @@ export default function VerifyEmailPage() {
 
     // No status param — user navigated here directly without a valid link
     return (
-        <div className="text-center rounded-xl border-2 border-destructive/50 bg-destructive/5 p-6 -m-2">
+        <div className="text-center rounded-xl border-2 border-destructive/50 bg-destructive/5 p-6">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                 <XCircle className="h-6 w-6 text-destructive" />
             </div>

@@ -9,6 +9,10 @@ import { Label } from "@/shared/ui/label";
 import { QueryError } from "@/shared/components/QueryError";
 import { useProjectUtilization, useOverAllocations } from "@/features/resources/hooks/useUtilization";
 import type { DailyAllocation, ResourceUtilization } from "@/features/resources/types";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 import { UtilizationChart } from "../components/UtilizationChart";
 import { OverAllocationList } from "../components/OverAllocationList";
@@ -16,17 +20,17 @@ import { UtilizationSummaryCards } from "../components/UtilizationSummaryCards";
 
 // ── Color palette for resource bars ──
 const RESOURCE_COLORS = [
-    "hsl(221, 83%, 53%)",  // blue
-    "hsl(262, 83%, 58%)",  // violet
-    "hsl(142, 71%, 45%)",  // green
-    "hsl(38, 92%, 50%)",   // amber
-    "hsl(340, 82%, 52%)",  // rose
-    "hsl(199, 89%, 48%)",  // sky
-    "hsl(25, 95%, 53%)",   // orange
-    "hsl(173, 80%, 40%)",  // teal
+    "var(--resource-series-1)",
+    "var(--resource-series-2)",
+    "var(--resource-series-3)",
+    "var(--resource-series-4)",
+    "var(--resource-series-5)",
+    "var(--resource-series-6)",
+    "var(--resource-series-7)",
+    "var(--resource-series-8)",
 ];
 
-const OVER_ALLOCATED_COLOR = "hsl(0, 84%, 60%)";
+const OVER_ALLOCATED_COLOR = "var(--status-overallocated)";
 
 export default function UtilizationPage() {
     const { projectId } = useParams<{ projectId: string }>();
@@ -94,76 +98,99 @@ export default function UtilizationPage() {
         return <Navigate to="/projects" replace />;
     }
 
-    if (isError) {
-        return (
-            <div className="p-6">
-                <QueryError message="Failed to load utilization data." onRetry={() => refetch()} />
-            </div>
-        );
-    }
-
+  if (isError) {
     return (
-        <div className="space-y-6 p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-2xl font-medium">Resource Utilization</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Time-phased resource allocation across the project.
-                    </p>
-                </div>
-                {overAllocationCount > 0 && (
-                    <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-                        <AlertTriangle className="size-4" />
-                        {overAllocationCount} over-allocation{overAllocationCount !== 1 ? "s" : ""}
-                    </div>
-                )}
-            </div>
-
-            {/* Date Range Controls */}
-            <div className="flex items-end gap-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="util-start">Start Date</Label>
-                    <Input
-                        id="util-start"
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-40"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="util-end">End Date</Label>
-                    <Input
-                        id="util-end"
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-40"
-                    />
-                </div>
-                <Button variant="outline" size="sm" onClick={() => refetch()}>
-                    Refresh
-                </Button>
-            </div>
-
-            <UtilizationChart
-                chartData={chartData}
-                resourceNames={resourceNames}
-                isLoading={isLoading}
-                resourceColors={RESOURCE_COLORS}
-                overAllocatedColor={OVER_ALLOCATED_COLOR}
-            />
-
-            <OverAllocationList
-                overAllocations={overAllocations}
-                overAllocationCount={overAllocationCount}
-            />
-
-            <UtilizationSummaryCards
-                resources={utilization?.resources ?? []}
-                resourceColors={RESOURCE_COLORS}
-            />
-        </div>
+      <PageShell>
+        <QueryError message="Failed to load utilization data." onRetry={() => refetch()} />
+      </PageShell>
     );
+  }
+
+  if (isLoading) {
+    return (
+      <PageShell>
+        <PageHeader
+          title="Resource Utilization"
+          description="Time-phased resource allocation across the project."
+        />
+        <PageLoading message="Loading utilization data..." />
+      </PageShell>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <PageShell>
+        <PageHeader
+          title="Resource Utilization"
+          description="Time-phased resource allocation across the project."
+        />
+        <PageEmpty
+          title="No utilization data"
+          description="Assign resources to tasks to see utilization over time."
+        />
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell>
+      <PageHeader
+        title="Resource Utilization"
+        description="Time-phased resource allocation across the project."
+        action={
+          overAllocationCount > 0 ? (
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+              <AlertTriangle className="size-4" />
+              {overAllocationCount} over-allocation{overAllocationCount !== 1 ? "s" : ""}
+            </div>
+          ) : null
+        }
+      />
+
+      {/* Date Range Controls */}
+      <div className="flex items-end gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="util-start">Start Date</Label>
+          <Input
+            id="util-start"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-40"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="util-end">End Date</Label>
+          <Input
+            id="util-end"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-40"
+          />
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Refresh
+        </Button>
+      </div>
+
+      <UtilizationChart
+        chartData={chartData}
+        resourceNames={resourceNames}
+        resourceColors={RESOURCE_COLORS}
+        overAllocatedColor={OVER_ALLOCATED_COLOR}
+      />
+
+      <OverAllocationList
+        overAllocations={overAllocations}
+        overAllocationCount={overAllocationCount}
+      />
+
+      <UtilizationSummaryCards
+        resources={utilization?.resources ?? []}
+        resourceColors={RESOURCE_COLORS}
+      />
+    </PageShell>
+  );
 }

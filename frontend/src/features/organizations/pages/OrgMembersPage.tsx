@@ -33,6 +33,8 @@ import {
 
 import { PageShell } from "@/shared/components/layout/PageShell";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 export default function OrgMembersPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
@@ -124,12 +126,18 @@ export default function OrgMembersPage() {
           message="Failed to load members."
           onRetry={() => refetchMembers()}
         />
+      ) : isLoadingMembers ? (
+        <PageLoading message="Loading members..." />
+      ) : members.length === 0 ? (
+        <PageEmpty
+          title="No members yet"
+          description="Invite members to start collaborating in this organization."
+        />
       ) : (
         <Card>
           <CardContent className="p-0">
             <MembersTable
               members={members}
-              isLoading={isLoadingMembers}
               currentUserId={currentUser?.id}
               onUpdateRole={onUpdateRole}
               onRemove={setMemberToRemove}

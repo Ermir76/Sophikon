@@ -39,6 +39,9 @@ import { useProject, useUpdateProject, useDeleteProject } from "@/features/proje
 import { getErrorMessage } from "@/shared/lib/errors";
 import { QueryError } from "@/shared/components/QueryError";
 import { ColorPicker } from "@/shared/components/ColorPicker";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -112,29 +115,32 @@ export default function ProjectSettingsPage() {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading project details...</div>;
+    return (
+      <PageShell>
+        <PageLoading message="Loading project details..." />
+      </PageShell>
+    );
   }
 
   if (isError) {
     return (
-      <QueryError
-        message="Failed to load project settings."
-        onRetry={() => refetch()}
-      />
+      <PageShell>
+        <QueryError
+          message="Failed to load project settings."
+          onRetry={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-8 p-6">
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-2xl font-medium">Project Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage settings for project: {project?.name}
-          </p>
-        </div>
-        <Separator />
+    <PageShell className="space-y-8">
+      <PageHeader
+        title="Project Settings"
+        description={`Manage settings for project: ${project?.name}`}
+      />
 
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>General Information</CardTitle>
@@ -254,6 +260,6 @@ export default function ProjectSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageShell>
   );
 }

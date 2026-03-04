@@ -6,13 +6,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table";
-import { Loader2 } from "lucide-react";
 import type { OrganizationMember, OrgRole } from "@/features/organizations/types";
 import { MemberActions } from "./MemberActions";
 
 interface MembersTableProps {
   members: OrganizationMember[];
-  isLoading: boolean;
   currentUserId?: string;
   onUpdateRole: (member: OrganizationMember, newRole: OrgRole) => void;
   onRemove: (member: OrganizationMember) => void;
@@ -21,7 +19,6 @@ interface MembersTableProps {
 
 export function MembersTable({
   members,
-  isLoading,
   currentUserId,
   onUpdateRole,
   onRemove,
@@ -37,13 +34,7 @@ export function MembersTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {isLoading ? (
-          <TableRow>
-            <TableCell colSpan={3} className="h-24 text-center">
-              <Loader2 className="mx-auto size-6 animate-spin" />
-            </TableCell>
-          </TableRow>
-        ) : members.length === 0 ? (
+        {members.length === 0 ? (
           <TableRow>
             <TableCell colSpan={3} className="h-24 text-center">
               No members found.

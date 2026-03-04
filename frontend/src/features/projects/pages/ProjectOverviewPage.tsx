@@ -1,12 +1,23 @@
 import { useParams } from "react-router";
+import { LayoutDashboard } from "lucide-react";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 export default function ProjectOverviewPage() {
   const { projectId } = useParams();
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Project Overview</h1>
-      <p className="text-muted-foreground">Overview for project {projectId}.</p>
-    </div>
+    <PageShell>
+      <PageHeader
+        title="Project Overview"
+        description={`Overview for project ${projectId}.`}
+      />
+      <PageEmpty
+        icon={LayoutDashboard}
+        title="Overview widgets coming soon"
+        description="Project summary, progress, and risk indicators will be shown here."
+      />
+    </PageShell>
   );
 }

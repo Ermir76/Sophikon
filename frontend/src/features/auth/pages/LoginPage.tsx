@@ -9,6 +9,8 @@ import { getErrorMessage } from "@/shared/lib/errors";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Label } from "@/shared/ui/label";
 import {
   Form,
   FormControl,
@@ -102,12 +104,10 @@ export default function LoginPage() {
           />
 
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="remember"
-              className="h-4 w-4 rounded border-border bg-transparent text-primary"
-            />
-            <label htmlFor="remember" className="text-sm text-muted-foreground">Keep me logged in</label>
+            <Checkbox id="remember" />
+            <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
+              Keep me logged in
+            </Label>
           </div>
 
           <Button
