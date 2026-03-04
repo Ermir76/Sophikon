@@ -1,12 +1,16 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
-import { Loader2, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { useTasks, useDependencies, type Task } from "@/features/tasks";
 import { useProject, useUpdateProject } from "@/features/projects";
 import { useCollapsedTree } from "@/shared/hooks/useCollapsedTree";
 import { buildColorInheritanceMap } from "../utils/colorInheritance";
 import { QueryError } from "@/shared/components/QueryError";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 import type { ZoomLevel } from "../types";
 import { DEFAULT_GANTT_CONFIG, ZOOM_PX_PER_DAY } from "../types";
 import { getProjectDateRange, dateToX, differenceInCalendarDays } from "../utils/dateUtils";
@@ -154,47 +158,47 @@ export default function GanttPage() {
 
   if (error) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <PageShell>
         <QueryError message="Failed to load Gantt chart data." />
-      </div>
+      </PageShell>
     );
   }
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-        <BarChart3 className="size-12" />
-        <p className="text-lg font-medium">No tasks to display</p>
-        <p className="text-sm">Add tasks to your project to see them on the Gantt chart.</p>
-      </div>
+      <PageShell>
+        <PageEmpty
+          icon={BarChart3}
+          title="No tasks to display"
+          description="Add tasks to your project to see them on the Gantt chart."
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-2 p-4 overflow-hidden min-w-0 min-h-0">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Gantt Chart</h1>
-        <GanttToolbar
-          zoom={zoom}
-          onZoomChange={handleZoomChange}
-          showCriticalPath={showCriticalPath}
-          onToggleCriticalPath={() => setShowCriticalPath((v) => !v)}
-          onScrollToToday={handleScrollToToday}
-          onZoomToFit={handleZoomToFit}
-          autoCalculate={autoCalculate}
-          onToggleAutoCalculate={handleToggleAutoCalculate}
-          onManualCalculate={handleManualCalculate}
-          isCalculating={calculateSchedule.isPending}
-        />
-      </div>
+    <PageShell className="flex-1 space-y-2 p-4 overflow-hidden min-w-0">
+      <PageHeader
+        title="Gantt Chart"
+        action={
+          <GanttToolbar
+            zoom={zoom}
+            onZoomChange={handleZoomChange}
+            showCriticalPath={showCriticalPath}
+            onToggleCriticalPath={() => setShowCriticalPath((v) => !v)}
+            onScrollToToday={handleScrollToToday}
+            onZoomToFit={handleZoomToFit}
+            autoCalculate={autoCalculate}
+            onToggleAutoCalculate={handleToggleAutoCalculate}
+            onManualCalculate={handleManualCalculate}
+            isCalculating={calculateSchedule.isPending}
+          />
+        }
+      />
 
       <div className="flex-1 min-h-0">
         <GanttContainer
@@ -216,6 +220,6 @@ export default function GanttPage() {
           colorMap={colorMap}
         />
       </div>
-    </div>
+    </PageShell>
   );
 }

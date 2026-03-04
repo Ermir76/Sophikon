@@ -85,8 +85,8 @@ The steps before deploy are:
 
 - [x] **Production Docker setup** — Dockerfile for backend, multi-stage build, auto migrations
 - [x] **Nginx config** — reverse proxy, security headers, SSL config ready
-- [ ] **Environment config** — production .env, CORS origins, secret keys (CORS done)
-- [ ] **Deploy to hosting** (Railway / Render / VPS / university server)
+- [x] **Environment config** — production .env, CORS origins, secret keys (CORS done)
+- [x] **Deploy to hosting** (Railway / Render / VPS / university server)
 
 **Phase 1 total: ~1 day**
 
@@ -98,27 +98,27 @@ Each week: build feature → deploy it → teacher sees progress.
 
 ### Week 3: Task Management
 
-- [ ] Task table view (the core of a PM app)
-- [ ] Task CRUD with hierarchy
-- [ ] Inline editing, drag-drop reordering
+- [x] Task table view (the core of a PM app)
+- [x] Task CRUD with hierarchy
+- [x] Inline editing, drag-drop reordering
 - [ ] Add project-level RBAC to sidebar as pages get content
 
 ### Week 4: Gantt Chart
 
-- [ ] Gantt chart component (visual wow factor)
-- [ ] Dependency arrows
-- [ ] Timeline with zoom
+- [x] Gantt chart component (visual wow factor)
+- [x] Dependency arrows
+- [/] Timeline with zoom
 
 ### Week 5: Scheduling Engine
 
-- [ ] Auto date calculation from dependencies
-- [ ] Critical path highlighting
-- [ ] Add domain exceptions before this (complex logic needs clean errors)
+- [x] Auto date calculation from dependencies
+- [x] Critical path highlighting
+- [x] Add domain exceptions before this (complex logic needs clean errors)
 - [ ] Add structured logging before this (need to debug scheduling)
 
 ### Week 6+: If Time Permits
 
-- [ ] Resource management
+- [x] Resource management
 - [ ] AI integration MVP
 - [ ] Import/export
 - [ ] Pagination on assignments list

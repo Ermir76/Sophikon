@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router";
-import { Loader2, ListTodo, Trash2, Pencil } from "lucide-react";
+import { ListTodo, Trash2, Pencil } from "lucide-react";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import {
@@ -21,6 +21,11 @@ import { AddDependencyDialog } from "@/features/tasks/components/task-detail/Add
 import { BulkEditDialog } from "@/features/tasks/components/BulkEditDialog";
 import { toast } from "sonner";
 import type { Task } from "@/features/tasks/types";
+
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 const EMPTY_TASKS: Task[] = [];
 
@@ -104,44 +109,36 @@ export default function TasksPage() {
 
   if (isError) {
     return (
-      <div className="p-6">
+      <PageShell>
         <QueryError
           message="Failed to load project tasks."
           onRetry={() => refetch()}
         />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <PageShell>
       {/* Header section */}
-      <div className="flex items-center">
-        <div>
-          <h3 className="text-2xl font-medium">Tasks</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage project tasks, subtasks, and dependencies.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Tasks"
+        description="Manage project tasks, subtasks, and dependencies."
+      />
 
       {isLoading ? (
-        <div className="flex justify-center p-8">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
+        <PageLoading />
       ) : tasks.length === 0 && !isAddingFirstTask ? (
-        <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-8 text-center animate-in fade-in-50">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent">
-            <ListTodo className="size-6 text-muted-foreground" />
-          </div>
-          <h3 className="mt-4 text-lg font-semibold">No tasks</h3>
-          <p className="mb-4 mt-2 text-sm text-muted-foreground">
-            You haven't added any tasks to this project yet.
-          </p>
-          <Button variant="outline" onClick={() => setIsAddingFirstTask(true)}>
-            Add task
-          </Button>
-        </div>
+        <PageEmpty
+          icon={ListTodo}
+          title="No tasks"
+          description="You haven't added any tasks to this project yet."
+          action={
+            <Button variant="outline" onClick={() => setIsAddingFirstTask(true)}>
+              Add task
+            </Button>
+          }
+        />
       ) : (
         <div className="animate-in fade-in duration-200">
           <TaskTable
@@ -249,19 +246,24 @@ export default function TasksPage() {
         <AddDependencyDialog
           projectId={projectId}
           successorTaskId={dependencyTaskId}
-          isOpen={!!dependencyTaskId}
+          isOpen={true}
           onClose={() => setDependencyTaskId(null)}
         />
       )}
 
       {/* Bulk Edit Dialog */}
-      <BulkEditDialog
-        projectId={projectId}
-        selectedTaskIds={selectedTaskIds}
-        isOpen={showBulkEdit}
-        onClose={() => setShowBulkEdit(false)}
-        onSuccess={() => setRowSelection({})}
-      />
-    </div>
+      {showBulkEdit && (
+        <BulkEditDialog
+          projectId={projectId}
+          selectedTaskIds={selectedTaskIds}
+          isOpen={showBulkEdit}
+          onClose={() => setShowBulkEdit(false)}
+          onSuccess={() => {
+            setRowSelection({});
+            setShowBulkEdit(false);
+          }}
+        />
+      )}
+    </PageShell>
   );
 }

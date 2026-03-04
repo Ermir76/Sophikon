@@ -5,14 +5,16 @@ import { Button } from "@/shared/ui/button";
 interface QueryErrorProps {
   message?: string;
   onRetry?: () => void;
+  className?: string;
 }
 
 export function QueryError({
   message = "Failed to load data. Please try again.",
   onRetry,
+  className,
 }: QueryErrorProps) {
   return (
-    <Alert variant="destructive" className="mx-6 mt-6">
+    <Alert variant="destructive" className={className}>
       <AlertCircle className="size-4" />
       <AlertTitle>Error</AlertTitle>
       <AlertDescription className="flex items-center justify-between">

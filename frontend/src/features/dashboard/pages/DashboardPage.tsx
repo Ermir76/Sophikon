@@ -1,6 +1,10 @@
 import { useOrgStore, useOrganization } from "@/features/organizations";
 import { QueryError } from "@/shared/components/QueryError";
 import { getErrorMessage } from "@/shared/lib/errors";
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 export default function DashboardPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
@@ -12,36 +16,34 @@ export default function DashboardPage() {
   } = useOrganization(activeOrgId);
 
   if (isLoading) {
-    return <div className="p-8 text-center">Loading dashboard...</div>;
+    return <PageLoading message="Loading dashboard..." />;
   }
 
   if (isError) {
-    return <QueryError message={getErrorMessage(error)} />;
+    return (
+      <PageShell>
+        <QueryError message={getErrorMessage(error)} />
+      </PageShell>
+    );
   }
 
   if (!activeOrganization) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-4">
-        <h1 className="text-2xl font-semibold mb-2">Welcome to Sophikon</h1>
-        <p className="text-muted-foreground">
-          Please select or create an organization to get started.
-        </p>
-      </div>
+      <PageShell>
+        <PageEmpty
+          title="Welcome to Sophikon"
+          description="Please select or create an organization to get started."
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {activeOrganization
-            ? `${activeOrganization.name} Dashboard`
-            : "Dashboard"}
-        </h1>
-        <p className="text-muted-foreground">
-          Overview of your projects and organization metrics.
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title={activeOrganization ? `${activeOrganization.name} Dashboard` : "Dashboard"}
+        description="Overview of your projects and organization metrics."
+      />
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
         <div className="aspect-video rounded-xl bg-muted/50 flex items-center justify-center p-4 text-center">
           <span className="text-sm font-medium">Projects Overview</span>
@@ -59,6 +61,6 @@ export default function DashboardPage() {
           No recent activity to show.
         </p>
       </div>
-    </div>
+    </PageShell>
   );
 }

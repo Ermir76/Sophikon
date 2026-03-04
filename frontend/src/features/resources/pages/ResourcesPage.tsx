@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Navigate } from "react-router";
-import { Loader2, Users, Plus, Trash2 } from "lucide-react";
+import { Users, Plus, Trash2 } from "lucide-react";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import {
@@ -22,6 +22,11 @@ import { ResourceDetailPanel } from "@/features/resources/components/ResourceDet
 import { CreateResourceDialog } from "@/features/resources/components/CreateResourceDialog";
 import { toast } from "sonner";
 import type { Resource } from "@/features/resources/types";
+
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 const EMPTY_RESOURCES: Resource[] = [];
 
@@ -87,48 +92,42 @@ export default function ResourcesPage() {
 
   if (isError) {
     return (
-      <div className="p-6">
+      <PageShell>
         <QueryError
           message="Failed to load project resources."
           onRetry={() => refetch()}
         />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <PageShell>
       {/* Header section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-medium">Resources</h3>
-          <p className="text-sm text-muted-foreground">
-            Allocate team members and manage resource utilization.
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5">
-          <Plus className="size-4" />
-          Add Resource
-        </Button>
-      </div>
+      <PageHeader
+        title="Resources"
+        description="Allocate team members and manage resource utilization."
+        action={
+          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="size-4" />
+            Add Resource
+          </Button>
+        }
+      />
 
       {isLoading ? (
-        <div className="flex justify-center p-8">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
+        <PageLoading />
       ) : resources.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-8 text-center animate-in fade-in-50">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent">
-            <Users className="size-6 text-muted-foreground" />
-          </div>
-          <h3 className="mt-4 text-lg font-semibold">No resources</h3>
-          <p className="mb-4 mt-2 text-sm text-muted-foreground">
-            You haven't added any resources to this project yet.
-          </p>
-          <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
-            Add resource
-          </Button>
-        </div>
+        <PageEmpty
+          icon={Users}
+          title="No resources"
+          description="You haven't added any resources to this project yet."
+          action={
+            <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+              Add resource
+            </Button>
+          }
+        />
       ) : (
         <div className="animate-in fade-in duration-200">
           <ResourceTable
@@ -203,6 +202,6 @@ export default function ResourcesPage() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
-    </div>
+    </PageShell>
   );
 }

@@ -55,6 +55,10 @@ const orgSchema = z.object({
 
 type OrgFormValues = z.infer<typeof orgSchema>;
 
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+
 export default function OrgSettingsPage() {
   const navigate = useNavigate(); // Add hook
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
@@ -104,28 +108,32 @@ export default function OrgSettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (isLoading) {
-    return <div className="p-4">Loading organization details...</div>;
+    return (
+      <PageShell>
+        <PageLoading message="Loading organization details..." />
+      </PageShell>
+    );
   }
 
   if (isError) {
     return (
-      <QueryError
-        message="Failed to load organization settings."
-        onRetry={() => refetch()}
-      />
+      <PageShell>
+        <QueryError
+          message="Failed to load organization settings."
+          onRetry={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-8 p-6">
+    <PageShell>
+      <PageHeader
+        title="Organization Settings"
+        description="Manage your organization details."
+      />
+
       <div className="space-y-6">
-        <div>
-          <h3 className="text-2xl font-medium">Organization Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage your organization details.
-          </p>
-        </div>
-        <Separator />
         <Card>
           <CardHeader>
             <CardTitle>General Information</CardTitle>
@@ -243,6 +251,6 @@ export default function OrgSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageShell>
   );
 }

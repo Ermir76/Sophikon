@@ -31,6 +31,9 @@ import {
   type InviteFormValues,
 } from "@/features/organizations/components/InviteMemberDialog";
 
+import { PageShell } from "@/shared/components/layout/PageShell";
+import { PageHeader } from "@/shared/components/layout/PageHeader";
+
 export default function OrgMembersPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const currentUser = useAuthStore((state) => state.user);
@@ -99,22 +102,20 @@ export default function OrgMembersPage() {
   const members = membersData?.items || [];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-medium">Members</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage who has access to this organization.
-          </p>
-        </div>
-        {canManage && (
-          <InviteMemberDialog
-            orgName={activeOrganization?.name}
-            onInvite={onInvite}
-            isPending={inviteMutation.isPending}
-          />
-        )}
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Members"
+        description="Manage who has access to this organization."
+        action={
+          canManage && (
+            <InviteMemberDialog
+              orgName={activeOrganization?.name}
+              onInvite={onInvite}
+              isPending={inviteMutation.isPending}
+            />
+          )
+        }
+      />
 
       <Separator />
 
@@ -164,6 +165,6 @@ export default function OrgMembersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageShell>
   );
 }
