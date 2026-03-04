@@ -34,8 +34,11 @@ export function GanttTableHeader() {
       <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
         Finish
       </div>
-      <div className="w-12 shrink-0 flex items-center justify-center">
+      <div className="w-12 shrink-0 flex items-center justify-center border-r border-border">
         Dur.
+      </div>
+      <div className="w-12 shrink-0 flex items-center justify-center">
+        Slack
       </div>
     </div>
   );
@@ -110,8 +113,11 @@ export function GanttTable({
             <div className="w-20 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
               {format(new Date(task.finish_date), "MM/dd")}
             </div>
-            <div className="w-12 shrink-0 flex items-center justify-center text-muted-foreground">
+            <div className="w-12 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
               {task.duration}m
+            </div>
+            <div className="w-12 shrink-0 flex items-center justify-center text-muted-foreground">
+              {task.is_summary || task.is_milestone ? "—" : `${Math.round(task.total_slack / 480)}d`}
             </div>
           </div>
         );

@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { Loader2, BarChart3 } from "lucide-react";
+import { toast } from "sonner";
 import { useTasks, useDependencies, type Task } from "@/features/tasks";
-import { useProject } from "@/features/projects";
+import { useProject, useUpdateProject } from "@/features/projects";
 import { useCollapsedTree } from "@/shared/hooks/useCollapsedTree";
 import { buildColorInheritanceMap } from "../utils/colorInheritance";
 import { QueryError } from "@/shared/components/QueryError";
@@ -11,6 +12,7 @@ import { DEFAULT_GANTT_CONFIG, ZOOM_PX_PER_DAY } from "../types";
 import { getProjectDateRange, dateToX, differenceInCalendarDays } from "../utils/dateUtils";
 import { GanttToolbar } from "../components/GanttToolbar";
 import { GanttContainer } from "../components/GanttContainer";
+import { useCalculateSchedule } from "../hooks/useSchedule";
 
 const EMPTY_TASKS: Task[] = [];
 const getParentId = (t: Task) => t.parent_task_id;
@@ -50,6 +52,30 @@ export default function GanttPage() {
     () => buildColorInheritanceMap(tasks, project?.color ?? null),
     [tasks, project?.color],
   );
+
+  // Schedule hooks
+  const calculateSchedule = useCalculateSchedule(projectId);
+  const updateProject = useUpdateProject(projectId);
+  const autoCalculate = project?.settings?.auto_calculate ?? true;
+
+  const handleManualCalculate = async () => {
+    try {
+      const data = await calculateSchedule.mutateAsync();
+      toast.success(`Schedule recalculated — ${data.tasks_updated} tasks updated`);
+    } catch {
+      toast.error("Failed to recalculate schedule");
+    }
+  };
+
+  const handleToggleAutoCalculate = async () => {
+    const newValue = !autoCalculate;
+    try {
+      await updateProject.mutateAsync({ settings: { auto_calculate: newValue } });
+      toast.success(`Scheduling mode: ${newValue ? "Auto" : "Manual"}`);
+    } catch {
+      toast.error("Failed to update scheduling mode");
+    }
+  };
 
   const handleContainerResize = useCallback((width: number) => {
     containerWidthRef.current = width;
@@ -163,6 +189,10 @@ export default function GanttPage() {
           onToggleCriticalPath={() => setShowCriticalPath((v) => !v)}
           onScrollToToday={handleScrollToToday}
           onZoomToFit={handleZoomToFit}
+          autoCalculate={autoCalculate}
+          onToggleAutoCalculate={handleToggleAutoCalculate}
+          onManualCalculate={handleManualCalculate}
+          isCalculating={calculateSchedule.isPending}
         />
       </div>
 

@@ -67,6 +67,11 @@ export function GanttHoverTooltip({
             <div className="opacity-80 text-[10px]">
                 {format(new Date(task.start_date), "MM/dd")} – {format(new Date(task.finish_date), "MM/dd")} · {task.duration}m · {task.percent_complete}%
             </div>
+            {!task.is_summary && !task.is_milestone && (task.total_slack > 0 || task.free_slack > 0) && (
+                <div className="opacity-60 text-[10px]">
+                    Slack: {Math.round(task.total_slack / 480)}d total · {Math.round(task.free_slack / 480)}d free
+                </div>
+            )}
         </div>
     );
 }

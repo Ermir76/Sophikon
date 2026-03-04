@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays, Calculator, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import type { ZoomLevel } from "../types";
 
@@ -9,6 +9,10 @@ interface GanttToolbarProps {
   onToggleCriticalPath: () => void;
   onScrollToToday: () => void;
   onZoomToFit: () => void;
+  autoCalculate: boolean;
+  onToggleAutoCalculate: () => void;
+  onManualCalculate: () => void;
+  isCalculating: boolean;
 }
 
 const ZOOM_ORDER: ZoomLevel[] = ["month", "week", "day"];
@@ -20,6 +24,10 @@ export function GanttToolbar({
   onToggleCriticalPath,
   onScrollToToday,
   onZoomToFit,
+  autoCalculate,
+  onToggleAutoCalculate,
+  onManualCalculate,
+  isCalculating,
 }: GanttToolbarProps) {
   const zoomIndex = ZOOM_ORDER.indexOf(zoom);
 
@@ -87,6 +95,36 @@ export function GanttToolbar({
       >
         <Route className="size-4" />
       </Button>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* Schedule controls */}
+      <Button
+        variant="outline"
+        size="icon-sm"
+        onClick={onManualCalculate}
+        disabled={isCalculating}
+        title="Recalculate schedule"
+      >
+        {isCalculating ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Calculator className="size-4" />
+        )}
+      </Button>
+
+      <button
+        onClick={onToggleAutoCalculate}
+        title={autoCalculate ? "Switch to manual scheduling" : "Switch to auto scheduling"}
+        className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-xs hover:bg-muted/50 transition-colors"
+      >
+        <span
+          className={`inline-block size-2 rounded-full ${autoCalculate ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
+        />
+        <span className="text-muted-foreground">
+          {autoCalculate ? "Auto" : "Manual"}
+        </span>
+      </button>
     </div>
   );
 }

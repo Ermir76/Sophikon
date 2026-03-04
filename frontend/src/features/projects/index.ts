@@ -8,6 +8,6 @@ export { CreateProjectDialog } from './components/CreateProjectDialog';
 export { ProjectsTable } from './components/ProjectsTable';
 export { ProjectsGrid } from './components/ProjectsGrid';
 
-export { useProjects, projectKeys, useProject } from './hooks/useProjects';
+export { useProjects, projectKeys, useProject, useUpdateProject } from './hooks/useProjects';
 
 export * from './types';
