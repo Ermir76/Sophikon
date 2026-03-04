@@ -187,10 +187,10 @@
 
 **Frontend:**
 
-- [ ] Critical path highlighting
-- [ ] Slack display
-- [ ] Auto-recalculate indicator
-- [ ] Manual vs auto scheduling toggle
+- [x] Critical path highlighting
+- [x] Slack display
+- [x] Auto-recalculate indicator
+- [x] Manual vs auto scheduling toggle
 
 **Deliverables:**
 
@@ -206,11 +206,11 @@
 
 **Backend:**
 
-- [ ] Resource CRUD
-- [ ] Assignment CRUD
-- [ ] Resource utilization calculation
-- [ ] Over-allocation detection
-- [ ] Calendar model (basic)
+- [x] Resource CRUD
+- [x] Assignment CRUD
+- [x] Resource utilization calculation
+- [x] Over-allocation detection
+- [x] Calendar model (basic)
 
 **Frontend:**
 
