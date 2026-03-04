@@ -15,6 +15,8 @@ import {
 } from "@/shared/ui/alert-dialog";
 import { QueryError } from "@/shared/components/QueryError";
 import { useResources, useDeleteResource, useBulkDeleteResources } from "@/features/resources/hooks/useResources";
+import { useOverAllocations } from "@/features/resources/hooks/useUtilization";
+import { format, addDays } from "date-fns";
 import { ResourceTable } from "@/features/resources/components/ResourceTable";
 import { ResourceDetailPanel } from "@/features/resources/components/ResourceDetailPanel";
 import { CreateResourceDialog } from "@/features/resources/components/CreateResourceDialog";
@@ -34,6 +36,16 @@ export default function ResourcesPage() {
   const { data, isLoading, isError, refetch } = useResources(projectId);
   const deleteResource = useDeleteResource(projectId);
   const bulkDeleteResources = useBulkDeleteResources(projectId);
+
+  // Get over-allocations for the next 30 days to show warnings
+  const today = new Date();
+  const startDate = format(today, "yyyy-MM-dd");
+  const endDate = format(addDays(today, 30), "yyyy-MM-dd");
+  const { data: overAllocations } = useOverAllocations(projectId, startDate, endDate);
+
+  const overAllocatedIds = new Set(
+    overAllocations?.items.map(item => item.resource_id) ?? []
+  );
 
   const resources = data?.items ?? EMPTY_RESOURCES;
 
@@ -126,6 +138,7 @@ export default function ResourcesPage() {
             onViewDetails={(id) => setSelectedResourceId(id)}
             onDelete={handleDeleteResource}
             isDeletePending={deleteResource.isPending}
+            overAllocatedResourceIds={overAllocatedIds}
           />
         </div>
       )}

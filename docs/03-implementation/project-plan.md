@@ -214,10 +214,10 @@
 
 **Frontend:**
 
-- [ ] Resource sheet view
-- [ ] Resource assignment UI (in task detail)
-- [ ] Resource utilization view (basic)
-- [ ] Over-allocation warning display
+- [x] Resource sheet view
+- [x] Resource assignment UI (in task detail)
+- [x] Resource utilization view (basic)
+- [x] Over-allocation warning display
 
 **Deliverables:**
 

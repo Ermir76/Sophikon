@@ -62,6 +62,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Users,
     },
     {
+      title: "Utilization",
+      url: `/projects/${projectId}/utilization`,
+      icon: BarChart3,
+    },
+    {
       title: "Calendar",
       url: `/projects/${projectId}/calendar`,
       icon: Calendar,

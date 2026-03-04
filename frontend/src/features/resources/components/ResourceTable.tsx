@@ -23,6 +23,7 @@ interface ResourceTableProps {
     onViewDetails?: (resourceId: string) => void;
     onDelete?: (resourceId: string) => void;
     isDeletePending?: boolean;
+    overAllocatedResourceIds?: Set<string>;
 }
 
 export function ResourceTable({
@@ -32,6 +33,7 @@ export function ResourceTable({
     onViewDetails,
     onDelete,
     isDeletePending,
+    overAllocatedResourceIds,
 }: ResourceTableProps) {
     const table = useReactTable({
         data,
@@ -44,6 +46,7 @@ export function ResourceTable({
             onViewDetails,
             onDeleteResource: onDelete,
             isDeleteResourcePending: isDeletePending,
+            overAllocatedResourceIds,
         },
     });
 

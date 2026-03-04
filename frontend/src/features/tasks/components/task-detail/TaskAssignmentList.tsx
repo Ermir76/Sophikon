@@ -1,9 +1,10 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useAssignments, useDeleteAssignment } from "@/features/tasks/hooks/useAssignments";
-import { useResources } from "@/features/resources";
+import { useResources, useOverAllocations, OverAllocationBadge } from "@/features/resources";
 import { AddAssignmentDialog } from "@/features/tasks/components/task-detail/AddAssignmentDialog";
 import { useState } from "react";
+import { format, addDays } from "date-fns";
 
 interface TaskAssignmentListProps {
     projectId: string;
@@ -15,6 +16,16 @@ export function TaskAssignmentList({ projectId, taskId }: TaskAssignmentListProp
     const { data: resourcesData } = useResources(projectId);
     const deleteAssignment = useDeleteAssignment(projectId, taskId);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+    // Get over-allocations for the next 30 days to show warnings
+    const today = new Date();
+    const startDate = format(today, "yyyy-MM-dd");
+    const endDate = format(addDays(today, 30), "yyyy-MM-dd");
+    const { data: overAllocations } = useOverAllocations(projectId, startDate, endDate);
+
+    const overAllocatedIds = new Set(
+        overAllocations?.items.map(item => item.resource_id) ?? []
+    );
 
     const resources = resourcesData?.items ?? [];
 
@@ -63,6 +74,9 @@ export function TaskAssignmentList({ projectId, taskId }: TaskAssignmentListProp
                                         <span className="truncate text-sm font-medium text-foreground/90">
                                             {resource ? resource.name : assignment.resource_id.slice(0, 8)}
                                         </span>
+                                        {overAllocatedIds.has(assignment.resource_id) && (
+                                            <OverAllocationBadge />
+                                        )}
                                         <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-blue-500 uppercase border border-blue-500/20 shrink-0">
                                             {Math.round(Number(assignment.units) * 100)}%
                                         </span>

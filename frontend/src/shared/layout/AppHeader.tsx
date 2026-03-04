@@ -16,6 +16,7 @@ const segmentLabels: Record<string, string> = {
   tasks: "Tasks",
   gantt: "Gantt",
   resources: "Resources",
+  utilization: "Utilization",
   calendar: "Calendar",
   reports: "Reports",
 };

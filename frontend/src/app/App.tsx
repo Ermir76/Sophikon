@@ -20,6 +20,9 @@ const GanttPage = lazy(() => import("@/features/gantt").then(m => ({ default: m.
 const ResourcesPage = lazy(
   () => import("@/features/resources").then(m => ({ default: m.ResourcesPage }))
 );
+const UtilizationPage = lazy(
+  () => import("@/features/resources").then(m => ({ default: m.UtilizationPage }))
+);
 const CalendarPage = lazy(
   () => import("@/features/calendar").then(m => ({ default: m.CalendarPage }))
 );
@@ -109,6 +112,7 @@ function App() {
               <Route path="tasks" element={<TasksPage />} />
               <Route path="gantt" element={<GanttPage />} />
               <Route path="resources" element={<ResourcesPage />} />
+              <Route path="utilization" element={<UtilizationPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="settings" element={<ProjectSettingsPage />} />

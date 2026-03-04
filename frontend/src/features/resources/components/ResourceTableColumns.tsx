@@ -2,6 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Badge } from "@/shared/ui/badge";
 import type { Resource } from "@/features/resources/types";
+import { OverAllocationBadge } from "@/features/resources/components/OverAllocationBadge";
 import { MoreHorizontal, Trash2, PanelRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
@@ -19,6 +20,7 @@ declare module "@tanstack/react-table" {
         onViewDetails?: (resourceId: string) => void;
         onDeleteResource?: (resourceId: string) => void;
         isDeleteResourcePending?: boolean;
+        overAllocatedResourceIds?: Set<string>;
     }
 }
 
@@ -65,6 +67,8 @@ export const resourceColumns = [
         header: "Name",
         cell: (info) => {
             const resource = info.row.original;
+            const meta = info.table.options.meta;
+            const isOverAllocated = meta?.overAllocatedResourceIds?.has(resource.id);
             return (
                 <div className="flex items-center gap-2">
                     {resource.initials && (
@@ -73,6 +77,7 @@ export const resourceColumns = [
                         </span>
                     )}
                     <span className="font-medium truncate">{info.getValue()}</span>
+                    {isOverAllocated && <OverAllocationBadge />}
                     {!resource.is_active && (
                         <Badge variant="outline" className="text-[10px] opacity-60">Inactive</Badge>
                     )}
