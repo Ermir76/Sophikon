@@ -28,6 +28,11 @@ export const useAuthStore = create<AuthState>((set) => {
       });
     },
 
+    /**
+     * @architecture intentional deviation
+     * Dynamic imports are used here to break circular dependency deadlocks with api/react-query
+     * during the initial application bootstrap phase.
+     */
     logout: async () => {
       // Call backend to clear cookies
       try {
@@ -49,6 +54,11 @@ export const useAuthStore = create<AuthState>((set) => {
       });
     },
 
+    /**
+     * @architecture intentional deviation
+     * Dynamic import is used here to avoid circular dependency deadlocks with auth.service
+     * which itself depends on this store during bootstrap.
+     */
     checkSession: async () => {
       try {
         const { authService } = await import("@/features/auth/api/auth.service");
