@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useMemo, useCallback } from "react";
+import { useRef, useLayoutEffect, useImperativeHandle, useMemo, useCallback } from "react";
 import type { Task, Dependency } from "@/features/tasks";
 import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays } from "../utils/dateUtils";
@@ -29,9 +29,9 @@ interface GanttContainerProps {
   chartEndDate: Date;
   onContainerResize: (width: number) => void;
   onZoomAtPoint: (deltaY: number, cursorX: number) => void;
-  chartScrollRef: React.RefObject<{
+  chartScrollRef: React.Ref<{
     scrollTo: (left: number) => void;
-  } | null>;
+  }>;
   colorMap?: Map<string, string | null>;
 }
 
@@ -88,17 +88,13 @@ export function GanttContainer({
   }, []);
 
   // Expose scrollTo to parent via ref
-  useLayoutEffect(() => {
-    if (chartScrollRef) {
-      (chartScrollRef as React.RefObject<{ scrollTo: (left: number) => void } | null>).current = {
-        scrollTo: (left: number) => {
-          if (timelineRef.current) {
-            timelineRef.current.scrollLeft = left;
-          }
-        },
-      };
-    }
-  });
+  useImperativeHandle(chartScrollRef, () => ({
+    scrollTo: (left: number) => {
+      if (timelineRef.current) {
+        timelineRef.current.scrollLeft = left;
+      }
+    },
+  }), []);
 
   // Track right panel width via ResizeObserver
   useLayoutEffect(() => {
@@ -196,7 +192,6 @@ export function GanttContainer({
             chartStartDate={chartStartDate}
             pxPerDay={pxPerDay}
             config={config}
-            chartBodyRef={timelineRef}
             onClose={() => {
               if (selectedTaskId) {
                 onTaskClick(selectedTaskId);

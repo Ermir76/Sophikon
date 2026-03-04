@@ -6,8 +6,6 @@ interface GanttBarPopoverProps {
   task: Task;
   x: number;
   y: number;
-  containerWidth: number;
-  containerHeight: number;
   onClose: () => void;
 }
 
