@@ -5,6 +5,7 @@ node_modules/
 review/
 
 .coverage
+.vscode/
 
 # Playwright
 test-results/
