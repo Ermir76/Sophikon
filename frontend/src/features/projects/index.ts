@@ -9,5 +9,6 @@ export { ProjectsTable } from './components/ProjectsTable';
 export { ProjectsGrid } from './components/ProjectsGrid';
 
 export { useProjects, projectKeys, useProject, useUpdateProject } from './hooks/useProjects';
+export { useProjectOverviewInsights } from './hooks/useProjectOverviewInsights';
 
 export * from './types';

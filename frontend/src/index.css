@@ -235,6 +235,32 @@
   animation: ui-border-spin 3.5s linear infinite;
 }
 
+.ui-border-anim-destructive {
+  position: relative;
+  isolation: isolate;
+}
+
+.ui-border-anim-destructive::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--ui-border-angle),
+    color-mix(in oklch, var(--destructive) 0%, transparent) 0deg,
+    color-mix(in oklch, var(--destructive) 0%, transparent) 300deg,
+    color-mix(in oklch, var(--destructive) 78%, transparent) 330deg,
+    color-mix(in oklch, var(--destructive) 0%, transparent) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ui-border-spin 3.5s linear infinite;
+}
+
 @keyframes ui-border-spin {
   to {
     --ui-border-angle: 360deg;
@@ -242,7 +268,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-border-anim-primary::after {
+  .ui-border-anim-primary::after,
+  .ui-border-anim-destructive::after {
     animation: none;
   }
 }

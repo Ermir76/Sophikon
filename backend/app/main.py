@@ -15,6 +15,7 @@ from app.api.v1.endpoints.assignments import (
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.calendars import router as calendars_router
 from app.api.v1.endpoints.dependencies import router as dependencies_router
+from app.api.v1.endpoints.insights import router as insights_router
 from app.api.v1.endpoints.organization_members import router as org_members_router
 from app.api.v1.endpoints.organizations import router as orgs_router
 from app.api.v1.endpoints.projects import router as projects_router
@@ -106,6 +107,7 @@ app.include_router(projects_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(resources_router, prefix="/api/v1")
 app.include_router(dependencies_router, prefix="/api/v1")
+app.include_router(insights_router, prefix="/api/v1")
 app.include_router(schedule_router, prefix="/api/v1")
 app.include_router(utilization_router, prefix="/api/v1")
 app.include_router(calendars_router, prefix="/api/v1")
