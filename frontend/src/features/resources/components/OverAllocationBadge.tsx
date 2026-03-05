@@ -1,4 +1,6 @@
 import { AlertTriangle } from "lucide-react";
+import { Badge } from "@/shared/ui/badge";
+import { cn } from "@/shared/lib/utils";
 
 interface OverAllocationBadgeProps {
     className?: string;
@@ -6,11 +8,12 @@ interface OverAllocationBadgeProps {
 
 export function OverAllocationBadge({ className }: OverAllocationBadgeProps) {
     return (
-        <span
-            className={`inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-destructive border border-destructive/20 ${className ?? ""}`}
+        <Badge
+            variant="outline"
+            className={cn("gap-1 border-destructive/40 text-destructive", className)}
         >
             <AlertTriangle className="size-3" />
             Over-allocated
-        </span>
+        </Badge>
     );
 }

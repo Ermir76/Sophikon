@@ -21,7 +21,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
   return (
     <div className="projects-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {projects.map((project) => (
-        <Card key={project.id} className="transition-colors hover:bg-muted/50">
+        <Card key={project.id} className="transition-colors hover:bg-muted/20">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-medium">
               <Link

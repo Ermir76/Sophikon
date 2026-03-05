@@ -188,8 +188,8 @@ export default function OrgSettingsPage() {
             Irreversible actions for your organization.
           </p>
         </div>
-        <Separator className="gradient-divider-destructive" />
-        <Card className="gradient-border-destructive bg-destructive/5">
+        <Separator />
+        <Card className="border-destructive/50 bg-destructive/5">
           <CardHeader>
             <CardTitle className="text-destructive">Delete Organization</CardTitle>
             <CardDescription>

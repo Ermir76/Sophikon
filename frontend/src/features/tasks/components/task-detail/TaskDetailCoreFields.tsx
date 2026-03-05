@@ -19,11 +19,11 @@ export function TaskDetailCoreFields({
     onColorChange,
 }: TaskDetailCoreFieldsProps) {
     return (
-        <div className="space-y-8 mt-2">
+        <div className="mt-2 space-y-8">
             <div className="grid grid-cols-2 gap-x-6 gap-y-8">
                 {/* % Complete */}
                 <div className="space-y-2.5">
-                    <label htmlFor="percent_complete" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                    <label htmlFor="percent_complete" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         % Complete
                     </label>
                     <div className="relative flex items-center">
@@ -36,15 +36,15 @@ export function TaskDetailCoreFields({
                             onChange={(e) => setLocalData({ ...localData, percent_complete: Number(e.target.value) })}
                             // NOTE: Auto-save pattern: text inputs commit on blur to prevent spamming the backend
                             onBlur={() => handleBlur("percent_complete")}
-                            className="pr-8 bg-transparent transition-all border-border/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+                            className="pr-8"
                         />
-                        <span className="absolute right-3 text-sm text-muted-foreground/50 pointer-events-none">%</span>
+                        <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground">%</span>
                     </div>
                 </div>
 
                 {/* Start Date */}
                 <div className="space-y-2.5">
-                    <label htmlFor="start_date" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                    <label htmlFor="start_date" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Start Date
                     </label>
                     <Input
@@ -53,15 +53,14 @@ export function TaskDetailCoreFields({
                         value={localData.start_date ?? ""}
                         onChange={(e) => setLocalData({ ...localData, start_date: e.target.value })}
                         onBlur={() => handleBlur("start_date")}
-                        className="bg-transparent transition-all border-border/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 text-foreground"
                     />
                 </div>
 
                 {/* Duration */}
                 <div className="space-y-2.5 col-span-2 sm:col-span-1">
-                    <label htmlFor="duration" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 hover:text-muted-foreground transition-colors">
+                    <label htmlFor="duration" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Duration
-                        <span className="text-[10px] font-medium normal-case bg-muted/60 px-1.5 py-0.5 rounded text-muted-foreground">mins</span>
+                        <span className="rounded border px-1.5 py-0.5 text-[10px] font-medium normal-case text-muted-foreground">mins</span>
                     </label>
                     <Input
                         id="duration"
@@ -70,14 +69,13 @@ export function TaskDetailCoreFields({
                         onChange={(e) => setLocalData({ ...localData, duration: Number(e.target.value) })}
                         onBlur={() => handleBlur("duration")}
                         disabled={task.is_summary}
-                        className="bg-transparent transition-all border-border/60 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 disabled:opacity-50 disabled:bg-muted/30"
                     />
                 </div>
 
                 {/* Color (summary tasks only) */}
                 {task.is_summary && (
                     <div className="space-y-2.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Gantt Color
                         </label>
                         <ColorPicker
@@ -91,19 +89,17 @@ export function TaskDetailCoreFields({
 
             {/* Notes */}
             <div className="space-y-3 pt-2">
-                <label htmlFor="notes" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                <label htmlFor="notes" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Notes
                 </label>
-                <div className="relative group">
-                    <Textarea
-                        id="notes"
-                        placeholder="Add task notes..."
-                        value={localData.notes ?? ""}
-                        onChange={(e) => setLocalData({ ...localData, notes: e.target.value })}
-                        onBlur={() => handleBlur("notes")}
-                        className="min-h-[140px] resize-y bg-transparent placeholder:text-muted-foreground/40 border-border/60 transition-all focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 leading-relaxed"
-                    />
-                </div>
+                <Textarea
+                    id="notes"
+                    placeholder="Add task notes..."
+                    value={localData.notes ?? ""}
+                    onChange={(e) => setLocalData({ ...localData, notes: e.target.value })}
+                    onBlur={() => handleBlur("notes")}
+                    className="min-h-[140px] resize-y leading-relaxed"
+                />
             </div>
         </div>
     );

@@ -35,7 +35,7 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
                         />
                     </div>
 
-                    {/* Overtime Rate — only for WORK */}
+                    {/* Overtime Rate - only for WORK */}
                     {localData.type === "WORK" && (
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-muted-foreground">Overtime Rate ($/h)</label>

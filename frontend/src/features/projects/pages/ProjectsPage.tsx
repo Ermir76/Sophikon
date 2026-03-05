@@ -48,26 +48,26 @@ export default function ProjectsPage() {
           <>
             <div className="flex items-center gap-1 rounded-lg p-1">
               <Button
-                variant="ghost"
+                variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="sm"
-                className={`ui-subtle-outline size-8 p-0 ${viewMode === "table" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                className="size-8 p-0"
                 onClick={() => setViewMode("table")}
               >
                 <List className="size-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="sm"
-                className={`ui-subtle-outline size-8 p-0 ${viewMode === "grid" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                className="size-8 p-0"
                 onClick={() => setViewMode("grid")}
               >
                 <LayoutGrid className="size-4" />
               </Button>
             </div>
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
-              className="ui-subtle-outline h-8 px-3 text-primary-foreground"
+              className="h-8 px-3"
               onClick={() => setCreateOpen(true)}
             >
               <Plus className="mr-2 size-4" />

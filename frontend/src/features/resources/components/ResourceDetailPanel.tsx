@@ -97,21 +97,21 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
 
     return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-md md:max-w-2xl overflow-y-auto p-0 border-l border-border/50 shadow-2xl">
+            <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-md md:max-w-2xl">
                 {isLoading || !resource ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />
                     </div>
                 ) : (
-                    <div className="flex flex-col h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="flex h-full flex-col bg-background">
                         {/* Header */}
-                        <div className="px-6 py-6 border-b border-border/50 bg-muted/20">
+                        <div className="border-b px-6 py-6">
                             <SheetHeader className="space-y-4">
                                 <SheetTitle className="flex justify-between items-start gap-4 pr-8">
                                     <div className="flex flex-col gap-3 flex-1">
                                         <div className="flex items-center gap-2">
                                             {resource.initials && (
-                                                <span className="inline-flex items-center justify-center size-8 rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                                <span className="inline-flex size-8 items-center justify-center rounded-full border text-xs font-bold">
                                                     {resource.initials}
                                                 </span>
                                             )}
@@ -124,7 +124,7 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                className="size-8"
                                                 disabled={isDeletePending}
                                                 onClick={() => setShowDeleteConfirm(true)}
                                             >
@@ -135,12 +135,12 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                                             value={localData.name ?? ""}
                                             onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
                                             onBlur={() => handleBlur("name")}
-                                            className="text-2xl font-bold h-auto px-3 py-1.5 bg-transparent border-none hover:bg-muted/30 focus-visible:ring-0 focus-visible:outline-none focus-visible:shadow-none shadow-none rounded-md transition-colors w-full"
+                                            className="h-auto w-full border-0 px-3 py-1.5 text-2xl font-bold shadow-none focus-visible:ring-0"
                                             placeholder="Resource Name"
                                         />
                                     </div>
                                 </SheetTitle>
-                                <SheetDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                                <SheetDescription className="text-xs font-medium uppercase tracking-wider">
                                     Created on {format(parseISO(resource.created_at), "MMMM do, yyyy")}
                                 </SheetDescription>
                             </SheetHeader>
@@ -149,9 +149,9 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                         {/* Body */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-10">
                             <ResourceDetailsSection {...sectionProps} />
-                            <div className="h-px w-full bg-border/50 rounded-full" />
+                            <div className="h-px w-full bg-border rounded-full" />
                             <ResourceRatesSection {...sectionProps} />
-                            <div className="h-px w-full bg-border/50 rounded-full" />
+                            <div className="h-px w-full bg-border rounded-full" />
                             <ResourceStatusSection {...sectionProps} />
                         </div>
                     </div>

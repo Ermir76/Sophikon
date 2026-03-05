@@ -28,7 +28,7 @@ export const taskColumns = [
         id: "drag-handle",
         header: "",
         cell: () => (
-            <div className="flex items-center justify-center text-muted-foreground/50 hover:text-foreground">
+            <div className="flex items-center justify-center text-muted-foreground">
                 <GripVertical className="size-4" />
             </div>
         ),
@@ -119,11 +119,11 @@ export const taskColumns = [
     }),
     columnHelper.accessor("start_date", {
         header: "Start",
-        cell: (info) => info.getValue() ? format(parseISO(info.getValue()), "MMM d, yyyy") : "—",
+        cell: (info) => info.getValue() ? format(parseISO(info.getValue()), "MMM d, yyyy") : "-",
     }),
     columnHelper.accessor("finish_date", {
         header: "Finish",
-        cell: (info) => info.getValue() ? format(parseISO(info.getValue()), "MMM d, yyyy") : "—",
+        cell: (info) => info.getValue() ? format(parseISO(info.getValue()), "MMM d, yyyy") : "-",
     }),
     columnHelper.accessor("percent_complete", {
         header: "% Complete",

@@ -22,7 +22,6 @@ export function GanttBarPopover({
         <div className="absolute pointer-events-none" style={{ left: x, top: y, width: 0, height: 0 }} />
       </PopoverAnchor>
       <PopoverContent
-        data-slot="gantt-popover"
         side="bottom"
         align="start"
         sideOffset={8}

@@ -24,15 +24,15 @@ const features = [
 
 export default function AuthLayout() {
   return (
-    <div className="auth-layout flex min-h-screen">
+    <div className="flex min-h-screen">
 
       {/* Left panel */}
-      <div className="auth-panel relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden ">
+      <div className="relative hidden items-center justify-center overflow-hidden border-r bg-muted/20 lg:flex lg:w-1/2">
 
         <div className="relative z-10 max-w-lg px-12">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-12">
-            <div className="bg-primary p-2 rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_30px_8px_oklch(0.50_0.18_251/30%),inset_0_1px_0_rgba(255,255,255,0.25)]">
+            <div className="rounded-lg bg-primary p-2">
               <svg className="w-8 h-8 text-background" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                 <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
               </svg>
@@ -52,11 +52,8 @@ export default function AuthLayout() {
           <ul className="space-y-6">
             {features.map(({ icon: Icon, title, description, tone }) => (
               <li key={title} className="flex items-center gap-4">
-                <div
-                  className="auth-feature-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                  data-auth-tone={tone}
-                >
-                  <Icon className="auth-feature-glyph size-5" data-auth-tone={tone} />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-muted">
+                  <Icon className="size-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">{title}</p>
@@ -70,7 +67,7 @@ export default function AuthLayout() {
 
       {/* Right panel */}
       <div className="auth-form-side flex w-full lg:w-1/2 items-center justify-center p-8">
-        <div className="w-full max-w-md gradient-border bg-transparent backdrop-blur-xl rounded-2xl p-8 shadow-[0_0_120px_40px_oklch(0.50_0.18_251/10%)]">
+        <div className="ui-border-anim-primary w-full max-w-md rounded-2xl border bg-card p-8 text-card-foreground shadow-sm">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
             <div className="bg-primary p-2 rounded-lg">

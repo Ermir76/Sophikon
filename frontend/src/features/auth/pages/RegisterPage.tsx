@@ -1,14 +1,13 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Link } from "react-router";
 import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { Link } from "react-router";
+import { z } from "zod";
 
 import { useRegister } from "@/features/auth/hooks/useAuth";
 import { getErrorMessage } from "@/shared/lib/errors";
-
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import {
   Form,
   FormControl,
@@ -17,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import { Alert, AlertDescription } from "@/shared/ui/alert";
+import { Input } from "@/shared/ui/input";
 
 const registerSchema = z
   .object({
@@ -30,7 +29,7 @@ const registerSchema = z
       .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
         /[^a-zA-Z0-9]/,
-        "Password must contain at least one special character",
+        "Password must contain at least one special character"
       ),
     confirmPassword: z.string().min(8, "Password confirmation is required."),
   })
@@ -62,15 +61,15 @@ export default function RegisterPage() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Create an account</h2>
-        <p className="text-muted-foreground text-sm">Enter your information to get started.</p>
+        <h2 className="mb-2 text-3xl font-semibold">Create an account</h2>
+        <p className="text-sm text-muted-foreground">
+          Enter your information to get started.
+        </p>
       </div>
 
       {registerMutation.isError && (
         <Alert variant="destructive" className="mb-5">
-          <AlertDescription>
-            {getErrorMessage(registerMutation.error)}
-          </AlertDescription>
+          <AlertDescription>{getErrorMessage(registerMutation.error)}</AlertDescription>
         </Alert>
       )}
 
@@ -83,12 +82,7 @@ export default function RegisterPage() {
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input
-                    className="h-11 px-4 text-sm"
-                    placeholder="John Doe"
-                    autoComplete="name"
-                    {...field}
-                  />
+                  <Input placeholder="John Doe" autoComplete="name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -103,7 +97,6 @@ export default function RegisterPage() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    className="h-11 px-4 text-sm"
                     placeholder="name@example.com"
                     autoComplete="email"
                     {...field}
@@ -122,9 +115,8 @@ export default function RegisterPage() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input
-                    className="h-11 px-4 text-sm"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="********"
                     autoComplete="new-password"
                     {...field}
                   />
@@ -142,9 +134,8 @@ export default function RegisterPage() {
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
                   <Input
-                    className="h-11 px-4 text-sm"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="********"
                     autoComplete="new-password"
                     {...field}
                   />
@@ -154,11 +145,7 @@ export default function RegisterPage() {
             )}
           />
 
-          <Button
-            type="submit"
-            className="w-full h-11 font-bold"
-            disabled={registerMutation.isPending}
-          >
+          <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
             {registerMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -171,9 +158,9 @@ export default function RegisterPage() {
         </form>
       </Form>
 
-      <p className="text-center text-sm text-muted-foreground mt-7">
+      <p className="mt-7 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/login" className="font-semibold text-primary hover:text-primary/80">
+        <Link to="/login" className="underline">
           Sign in
         </Link>
       </p>

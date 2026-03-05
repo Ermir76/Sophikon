@@ -89,7 +89,7 @@ export function AddAssignmentDialog({
                         ) : (
                             <Select value={resourceId} onValueChange={setResourceId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a resource…" />
+                                    <SelectValue placeholder="Select a resource..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableResources.length === 0 ? (
@@ -101,7 +101,7 @@ export function AddAssignmentDialog({
                                             <SelectItem key={resource.id} value={resource.id}>
                                                 <div className="flex items-center gap-2">
                                                     {resource.initials && (
-                                                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-primary/10 text-[8px] font-bold text-primary shrink-0">
+                                                        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border text-[8px] font-bold">
                                                             {resource.initials}
                                                         </span>
                                                     )}
@@ -141,7 +141,7 @@ export function AddAssignmentDialog({
                         {createAssignment.isPending ? (
                             <>
                                 <Loader2 className="size-4 animate-spin" />
-                                Adding…
+                                Adding...
                             </>
                         ) : (
                             "Add Assignment"

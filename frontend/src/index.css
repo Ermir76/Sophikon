@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "./components.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -55,25 +54,25 @@
 /* ─── LIGHT MODE ─────────────────────────────────────────────────────────── */
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.986 0.006 228);
+  --background: oklch(0.98 0.01 105.85);
   --foreground: oklch(0.245 0.022 246);
-  --card: oklch(0.997 0.003 220);
+  --card: oklch(0.92 0.01 83.01);
   --card-foreground: oklch(0.245 0.022 246);
-  --popover: oklch(0.997 0.003 220);
+  --popover: oklch(96.427% 0.01097 89.715);
   --popover-foreground: oklch(0.245 0.022 246);
   --primary: oklch(0.64 0.162 204);
   --primary-foreground: oklch(0.985 0.005 228);
-  --secondary: oklch(0.95 0.012 224);
+  --secondary: oklch(0.92 0.02 91.4);
   --secondary-foreground: oklch(0.275 0.02 246);
   --muted: oklch(0.955 0.008 224);
   --muted-foreground: oklch(0.49 0.024 242);
-  --accent: oklch(0.954 0.024 84);
+  --accent: oklch(88.866% 0.02122 79.036);
   --accent-foreground: oklch(0.3 0.03 72);
-  --destructive: oklch(0.61 0.22 28);
+  --destructive: oklch(60.723% 0.24402 29.3);
   --destructive-foreground: oklch(0.99 0.002 220);
-  --border: oklch(0.78 0.02 230 / 45%);
+  --border: oklch(84.73% 0.05361 6.477 / 0.45);
   --input: oklch(0.78 0.02 230 / 55%);
-  --ring: oklch(0.64 0.162 204);
+  --ring: oklch(19.731% 0.00253 325.259);
   --chart-1: oklch(0.64 0.162 204);
   --chart-2: oklch(0.63 0.156 162);
   --chart-3: oklch(0.72 0.17 82);
@@ -82,13 +81,13 @@
   --chart-6: oklch(0.67 0.14 194);
   --chart-7: oklch(0.66 0.145 116);
   --chart-8: oklch(0.64 0.17 340);
-  --sidebar: oklch(0.972 0.01 224);
+  --sidebar: oklch(0.93 0.01 106.42);
   --sidebar-foreground: oklch(0.245 0.022 246);
   --sidebar-primary: oklch(0.64 0.162 204);
   --sidebar-primary-foreground: oklch(0.985 0.005 228);
-  --sidebar-accent: oklch(0.955 0.012 224);
+  --sidebar-accent: oklch(88.866% 0.02122 79.036);
   --sidebar-accent-foreground: oklch(0.275 0.02 246);
-  --sidebar-border: oklch(0.78 0.02 230 / 50%);
+  --sidebar-border: oklch(0.87 0.04 68.02);
   --sidebar-ring: oklch(0.64 0.162 204);
   --route-dashboard: oklch(0.58 0.18 166);
   --route-projects: oklch(0.56 0.17 236);
@@ -100,6 +99,7 @@
   --route-resources: oklch(0.61 0.16 198);
   --route-calendar: oklch(0.64 0.17 24);
   --route-reports: oklch(0.7 0.15 94);
+  /* Reserved auth accent tokens for future auth feature/icon theming. */
   --auth-feature-collab: oklch(0.56 0.08 196);
   --auth-feature-analytics: oklch(0.69 0.08 130);
   --auth-feature-automation: oklch(0.52 0.12 310);
@@ -119,15 +119,15 @@
 
 /* ─── DARK MODE ──────────────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.2 0.015 244);
+  --background: oklch(29.25% 0.016 264.30);
   --foreground: oklch(0.955 0.008 220);
-  --card: oklch(0.245 0.016 244 / 0.72);
+  --card: oklch(0.25 0.01 257.9 / 0.72);
   --card-foreground: oklch(0.955 0.008 220);
   --popover: oklch(0.245 0.016 244 / 0.92);
   --popover-foreground: oklch(0.955 0.008 220);
   --primary: oklch(0.72 0.145 198);
   --primary-foreground: oklch(0.2 0.015 244);
-  --secondary: oklch(0.29 0.014 242 / 0.7);
+  --secondary: oklch(0.19 0.02 286.9 / 0.97);
   --secondary-foreground: oklch(0.955 0.008 220);
   --muted: oklch(0.265 0.013 242);
   --muted-foreground: oklch(0.77 0.012 232);
@@ -146,11 +146,11 @@
   --chart-6: oklch(0.74 0.13 194);
   --chart-7: oklch(0.73 0.13 112);
   --chart-8: oklch(0.73 0.16 340);
-  --sidebar: oklch(0.235 0.015 244 / 0.95);
+  --sidebar: oklch(0.26 0.01 261.59);
   --sidebar-foreground: oklch(0.955 0.008 220);
   --sidebar-primary: oklch(0.72 0.145 198);
   --sidebar-primary-foreground: oklch(0.2 0.015 244);
-  --sidebar-accent: oklch(0.3 0.014 242 / 0.75);
+  --sidebar-accent: oklch(21.079% 0.00785 285.672);
   --sidebar-accent-foreground: oklch(0.955 0.008 220);
   --sidebar-border: oklch(0.7 0.07 204 / 26%);
   --sidebar-ring: oklch(0.72 0.145 198);
@@ -164,6 +164,7 @@
   --route-resources: oklch(0.83 0.18 198);
   --route-calendar: oklch(0.84 0.19 24);
   --route-reports: oklch(0.89 0.16 94);
+  /* Reserved auth accent tokens for future auth feature/icon theming. */
   --auth-feature-collab: oklch(0.74 0.12 196);
   --auth-feature-analytics: oklch(0.79 0.11 130);
   --auth-feature-automation: oklch(0.72 0.15 310);
@@ -182,126 +183,66 @@
 }
 
 /* ─── BASE ───────────────────────────────────────────────────────────────── */
+
+/* 03 BASE RESET */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(circle at 8% -20%, color-mix(in oklch, var(--primary) 10%, transparent) 0%, transparent 48%),
-      radial-gradient(circle at 100% 0%, color-mix(in oklch, var(--accent) 20%, transparent) 0%, transparent 42%);
-    background-attachment: fixed;
   }
 }
 
-.dark body {
-  background-image:
-    radial-gradient(circle at 12% -12%, color-mix(in oklch, var(--primary) 15%, transparent) 0%, transparent 44%),
-    radial-gradient(circle at 88% 8%, color-mix(in oklch, var(--accent) 9%, transparent) 0%, transparent 42%),
-    linear-gradient(to bottom, transparent, color-mix(in oklch, var(--background) 92%, black 8%));
+/* 04 ACCESSIBILITY BASE */
+@layer base {
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring/40;
+  }
 }
 
-/* ─── UTILITIES ──────────────────────────────────────────────────────────── */
+/* 05 EXPERIMENTAL BORDER ANIMATION */
+@property --ui-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
 
-@utility gradient-border {
+.ui-border-anim-primary {
   position: relative;
-  border: none;
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklch, var(--primary) 48%, transparent),
-      color-mix(in oklch, var(--accent) 36%, transparent)
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
+  isolation: isolate;
 }
 
-/* ─── EXCEPTION UTILITIES (explicit destructive variants only) ───────────── */
-
-@utility gradient-border-destructive {
-  position: relative;
-  border: none;
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, oklch(0.65 0.22 25 / 35%), oklch(0.60 0.18 350 / 35%));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  &:is(.dark *) {
-    &::after {
-      background: linear-gradient(135deg, oklch(0.65 0.25 25 / 60%), oklch(0.60 0.20 350 / 50%));
-    }
-  }
-}
-
-@utility gradient-divider-destructive {
-  &[data-orientation="horizontal"] {
-    background: linear-gradient(to right, transparent 0%, oklch(0.65 0.22 25 / 35%) 15%, oklch(0.60 0.18 350 / 35%) 85%, transparent 100%);
-  }
-
-  &:is(.dark *) {
-    &[data-orientation="horizontal"] {
-      background: linear-gradient(to right, transparent 0%, oklch(0.65 0.25 25 / 50%) 15%, oklch(0.60 0.20 350 / 50%) 85%, transparent 100%);
-    }
-  }
-}
-
-
-/* ─── FOCUS ──────────────────────────────────────────────────────────────── */
-
-*:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--primary) 72%, transparent);
-  outline-offset: 2px;
-}
-
-/* Reusable subtle outline for compact controls */
-.ui-subtle-outline {
-  position: relative;
-}
-
-.ui-subtle-outline::after {
-  content: '';
+.ui-border-anim-primary::after {
+  content: "";
   position: absolute;
-  inset: 0;
+  inset: -1px;
   border-radius: inherit;
-  padding: 1px;
-  background: var(--border);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--ui-border-angle),
+    color-mix(in oklch, var(--border) 0%, transparent) 0deg,
+    color-mix(in oklch, var(--border) 0%, transparent) 300deg,
+    color-mix(in oklch, var(--border) 78%, transparent) 330deg,
+    color-mix(in oklch, var(--border) 0%, transparent) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  pointer-events: none;
+  animation: ui-border-spin 3.5s linear infinite;
 }
 
-.dark *:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--primary) 84%, transparent);
-  outline-offset: 2px;
-  box-shadow: 0 0 14px color-mix(in oklch, var(--primary) 38%, transparent);
+@keyframes ui-border-spin {
+  to {
+    --ui-border-angle: 360deg;
+  }
 }
 
-.dark [data-slot="input"]:focus,
-.dark [data-slot="textarea"]:focus {
-  border-color: color-mix(in oklch, var(--primary) 58%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 24%, transparent);
+@media (prefers-reduced-motion: reduce) {
+  .ui-border-anim-primary::after {
+    animation: none;
+  }
 }

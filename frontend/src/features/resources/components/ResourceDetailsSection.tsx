@@ -58,7 +58,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                 </div>
             </div>
 
-            {/* Email — only for WORK */}
+            {/* Email - only for WORK */}
             {localData.type === "WORK" && (
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -84,7 +84,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                 </div>
             )}
 
-            {/* Group — for MATERIAL and COST (no email row) */}
+            {/* Group - for MATERIAL and COST (no email row) */}
             {localData.type !== "WORK" && (
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Group</label>
@@ -113,7 +113,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                     />
                 </div>
 
-                {/* Max Units — only for WORK */}
+                {/* Max Units - only for WORK */}
                 {localData.type === "WORK" && (
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-muted-foreground">Max Units</label>
@@ -129,7 +129,7 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                 )}
             </div>
 
-            {/* Material Label — only for MATERIAL */}
+            {/* Material Label - only for MATERIAL */}
             {localData.type === "MATERIAL" && (
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Material Label</label>

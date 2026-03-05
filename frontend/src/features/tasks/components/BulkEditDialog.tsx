@@ -36,7 +36,7 @@ export function BulkEditDialog({
     const bulkUpdate = useBulkUpdateTasks(projectId);
 
     const handleSubmit = async () => {
-        // Build update payload — only include fields that were changed
+        // Build update payload - only include fields that were changed
         const data: TaskUpdate = {};
 
         if (percentComplete !== "") {
@@ -137,7 +137,7 @@ export function BulkEditDialog({
                         {bulkUpdate.isPending ? (
                             <>
                                 <Loader2 className="size-4 animate-spin" />
-                                Updating…
+                                Updating...
                             </>
                         ) : (
                             "Apply Changes"

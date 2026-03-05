@@ -65,7 +65,7 @@ export default function GanttPage() {
   const handleManualCalculate = async () => {
     try {
       const data = await calculateSchedule.mutateAsync();
-      toast.success(`Schedule recalculated — ${data.tasks_updated} tasks updated`);
+      toast.success(`Schedule recalculated - ${data.tasks_updated} tasks updated`);
     } catch {
       toast.error("Failed to recalculate schedule");
     }

@@ -1,5 +1,6 @@
 import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays, Calculator, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Separator } from "@/shared/ui/separator";
 import type { ZoomLevel } from "../types";
 
 interface GanttToolbarProps {
@@ -76,7 +77,7 @@ export function GanttToolbar({
         <Maximize2 className="size-4" />
       </Button>
 
-      <div className="w-px h-5 bg-border mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
       <Button
         variant="outline"
@@ -96,7 +97,7 @@ export function GanttToolbar({
         <Route className="size-4" />
       </Button>
 
-      <div className="w-px h-5 bg-border mx-1" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
       {/* Schedule controls */}
       <Button
@@ -113,10 +114,12 @@ export function GanttToolbar({
         )}
       </Button>
 
-      <button
+      <Button
+        variant="outline"
+        size="sm"
         onClick={onToggleAutoCalculate}
         title={autoCalculate ? "Switch to manual scheduling" : "Switch to auto scheduling"}
-        className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border text-xs hover:bg-muted/50 transition-colors"
+        className="h-7 gap-1.5 px-2 text-xs"
       >
         <span
           className={`inline-block size-2 rounded-full ${autoCalculate ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
@@ -124,7 +127,7 @@ export function GanttToolbar({
         <span className="text-muted-foreground">
           {autoCalculate ? "Auto" : "Manual"}
         </span>
-      </button>
+      </Button>
     </div>
   );
 }

@@ -145,11 +145,11 @@ export default function ResourcesPage() {
       {/* Floating bulk-action toolbar */}
       {selectionCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-xl px-5 py-3 shadow-2xl">
+          <div className="flex items-center gap-3 rounded-xl border bg-card px-5 py-3 shadow-sm">
             <span className="text-sm font-semibold text-primary">
               {selectionCount} selected
             </span>
-            <div className="h-5 w-px bg-primary/20" />
+            <div className="h-5 w-px bg-border" />
             <Button
               variant="destructive"
               size="sm"
@@ -180,7 +180,7 @@ export default function ResourcesPage() {
               disabled={bulkDeleteResources.isPending}
               onClick={handleBulkDelete}
             >
-              {bulkDeleteResources.isPending ? "Deleting…" : "Delete"}
+              {bulkDeleteResources.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

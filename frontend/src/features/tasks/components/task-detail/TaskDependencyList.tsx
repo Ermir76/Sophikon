@@ -1,5 +1,6 @@
 import { Loader2, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
 import { useDependencies, useDeleteDependency } from "@/features/tasks/hooks/useDependencies";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
 import { AddDependencyDialog } from "@/features/tasks/components/task-detail/AddDependencyDialog";
@@ -25,13 +26,13 @@ export function TaskDependencyList({ projectId, taskId }: TaskDependencyListProp
     return (
         <div className="flex flex-col h-full bg-card">
             {/* Header Area */}
-            <div className="flex justify-between items-center px-5 py-4 border-b border-border/50 bg-muted/10">
+            <div className="flex items-center justify-between border-b px-5 py-4">
                 <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-sm tracking-tight">Dependencies</h4>
                     {taskDependencies.length > 0 && (
-                        <span className="flex h-5 items-center justify-center rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary">
+                        <Badge variant="outline" className="h-5 px-2 text-[10px] font-semibold">
                             {taskDependencies.length}
-                        </span>
+                        </Badge>
                     )}
                 </div>
                 <Button
@@ -47,43 +48,43 @@ export function TaskDependencyList({ projectId, taskId }: TaskDependencyListProp
             {/* List Body */}
             <div className="p-0">
                 {isLoadingDeps ? (
-                    <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground/50" /></div>
+                    <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
                 ) : taskDependencies.length === 0 ? (
-                    <div className="text-sm text-muted-foreground/60 text-center py-8 flex flex-col items-center justify-center gap-2">
+                    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground">
                         <span className="text-xs">No dependencies set</span>
                     </div>
                 ) : (
-                    <div className="divide-y divide-border/50">
+                    <div className="divide-y divide-border">
                         {taskDependencies.map((dep) => {
                             const predecessorTask = tasksData?.items?.find(t => t.id === dep.predecessor_id);
                             return (
-                                <div key={dep.id} className={`group flex flex-col sm:flex-row sm:items-center justify-between p-3 px-4 gap-3 bg-transparent hover:bg-muted/30 transition-colors ${dep.is_disabled ? "opacity-50" : ""}`}>
+                                <div key={dep.id} className={`group flex flex-col justify-between gap-3 p-3 px-4 hover:bg-muted/30 sm:flex-row sm:items-center ${dep.is_disabled ? "opacity-50" : ""}`}>
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <span className="inline-flex items-center rounded bg-muted/60 px-1.5 py-0.5 text-xs font-mono font-medium text-muted-foreground shrink-0 border border-border/40">
+                                        <Badge variant="outline" className="shrink-0 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground">
                                             {predecessorTask ? predecessorTask.wbs_code : dep.predecessor_id.slice(0, 6)}
-                                        </span>
-                                        <span className="truncate text-sm font-medium text-foreground/90">
+                                        </Badge>
+                                        <span className="truncate text-sm font-medium">
                                             {predecessorTask ? predecessorTask.name : "Unknown Task"}
                                         </span>
-                                        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-blue-500 uppercase border border-blue-500/20 shrink-0">
+                                        <Badge variant="outline" className="shrink-0 text-[10px] font-bold uppercase tracking-wide">
                                             {dep.type}
-                                        </span>
+                                        </Badge>
                                         {dep.lag !== 0 && (
-                                            <span className="text-[10px] font-medium text-muted-foreground shrink-0">
+                                            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
                                                 {dep.lag > 0 ? `+${dep.lag}m` : `${dep.lag}m`}
                                             </span>
                                         )}
                                         {dep.is_disabled && (
-                                            <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
+                                            <Badge variant="outline" className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                                 disabled
-                                            </span>
+                                            </Badge>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0">
+                                    <div className="flex shrink-0 items-center gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="size-7 text-muted-foreground/50 hover:text-foreground hover:bg-muted shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all rounded-full"
+                                            className="size-7 shrink-0 rounded-full opacity-100 transition-all sm:opacity-0 group-hover:opacity-100"
                                             onClick={() => setEditingDependency(dep)}
                                         >
                                             <Pencil className="size-3.5" />
@@ -91,7 +92,7 @@ export function TaskDependencyList({ projectId, taskId }: TaskDependencyListProp
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="size-7 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all rounded-full"
+                                            className="size-7 shrink-0 rounded-full opacity-100 transition-all sm:opacity-0 group-hover:opacity-100"
                                             disabled={deleteDependency.isPending}
                                             onClick={() => deleteDependency.mutate(dep.id)}
                                         >

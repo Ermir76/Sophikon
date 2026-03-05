@@ -218,9 +218,9 @@ export default function ProjectSettingsPage() {
             Irreversible actions for your project.
           </p>
         </div>
-        <Separator className="gradient-divider-destructive" />
+        <Separator />
 
-        <Card className="gradient-border-destructive bg-destructive/5">
+        <Card className="border-destructive/50 bg-destructive/5">
           <CardHeader>
             <CardTitle className="text-destructive">Delete Project</CardTitle>
             <CardDescription>

@@ -106,7 +106,7 @@ export function EditDependencyDialog({
                         </p>
                     </div>
 
-                    <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
+                    <div className="flex items-center justify-between rounded-md border px-4 py-3">
                         <div className="space-y-0.5">
                             <label htmlFor="dep-disabled" className="text-sm font-medium">
                                 Disabled

@@ -90,17 +90,17 @@ export function TaskInlineEdit({
         if (disabled) {
             return (
                 <div
-                    className="p-1 -m-1 truncate min-h-[28px] w-full text-muted-foreground cursor-default"
+                    className="-m-1 min-h-[28px] w-full cursor-default truncate p-1 text-muted-foreground"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {initialValue !== "" && initialValue != null ? initialValue : "—"}
+                    {initialValue !== "" && initialValue != null ? initialValue : "-"}
                 </div>
             );
         }
 
         return (
             <div
-                className="cursor-text rounded border border-transparent hover:border-border hover:bg-muted/50 p-1 -m-1 truncate min-h-[28px] w-full transition-colors"
+                className="-m-1 min-h-[28px] w-full cursor-text truncate rounded p-1"
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsEditing(true);
@@ -109,7 +109,7 @@ export function TaskInlineEdit({
                 {initialValue !== "" && initialValue != null ? (
                     initialValue
                 ) : (
-                    <span className="text-muted-foreground">—</span>
+                    <span className="text-muted-foreground">-</span>
                 )}
             </div>
         );
@@ -124,7 +124,7 @@ export function TaskInlineEdit({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSubmit}
-            className="h-7 w-full border-primary rounded-sm outline-none m-0 shadow-none px-1"
+            className="m-0 h-7 w-full rounded-sm px-1"
             disabled={updateTask.isPending}
         />
     );

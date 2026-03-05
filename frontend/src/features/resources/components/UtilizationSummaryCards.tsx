@@ -1,5 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import type { ResourceUtilization } from "@/features/resources/types";
+import { Card, CardContent } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
 
 export interface UtilizationSummaryCardsProps {
     resources: ResourceUtilization[];
@@ -15,12 +17,10 @@ export function UtilizationSummaryCards({
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {resources.map((resource, i) => (
-                <div
-                    key={resource.resource_id}
-                    className="rounded-lg border bg-card p-4 space-y-2"
-                >
+                <Card key={resource.resource_id}>
+                    <CardContent className="space-y-2 p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div
@@ -30,10 +30,10 @@ export function UtilizationSummaryCards({
                             <span className="text-sm font-medium">{resource.resource_name}</span>
                         </div>
                         {Number(resource.peak_units) > Number(resource.max_units) && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
+                            <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive">
                                 <AlertTriangle className="size-3" />
                                 Over
-                            </span>
+                            </Badge>
                         )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -50,7 +50,8 @@ export function UtilizationSummaryCards({
                             Average
                         </div>
                     </div>
-                </div>
+                    </CardContent>
+                </Card>
             ))}
         </div>
     );

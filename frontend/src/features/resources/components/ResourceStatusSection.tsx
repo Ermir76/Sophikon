@@ -15,7 +15,7 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
         <div className="space-y-4">
             <h3 className="text-lg font-semibold tracking-tight">Status</h3>
 
-            <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-md border px-4 py-3">
                 <div className="space-y-0.5">
                     <label className="text-sm font-medium">Active</label>
                     <p className="text-xs text-muted-foreground">Inactive resources cannot be assigned to new tasks</p>
@@ -34,9 +34,9 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
                 />
             </div>
 
-            {/* Generic toggle — only for WORK */}
+            {/* Generic toggle - only for WORK */}
             {localData.type === "WORK" && (
-                <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
+                <div className="flex items-center justify-between rounded-md border px-4 py-3">
                     <div className="space-y-0.5">
                         <label className="text-sm font-medium">Generic</label>
                         <p className="text-xs text-muted-foreground">Generic resources represent a role rather than a specific person</p>

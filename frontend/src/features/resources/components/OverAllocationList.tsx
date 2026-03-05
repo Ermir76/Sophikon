@@ -51,8 +51,8 @@ export function OverAllocationList({
                     </div>
                 ))}
                 {overAllocations.items.length > 10 && (
-                    <p className="text-xs text-muted-foreground pt-2">
-                        … and {overAllocations.items.length - 10} more
+                    <p className="pt-2 text-xs text-muted-foreground">
+                        ... and {overAllocations.items.length - 10} more
                     </p>
                 )}
             </div>

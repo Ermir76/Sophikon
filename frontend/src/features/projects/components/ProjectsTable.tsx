@@ -47,7 +47,7 @@ export function ProjectsTable({ projects }: ProjectsTableProps) {
               </Link>
             </TableCell>
             <TableCell className="text-muted-foreground max-w-sm truncate">
-              {project.description || "—"}
+              {project.description || "-"}
             </TableCell>
             <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
               {format(new Date(project.updated_at), "MMM d, yyyy")}

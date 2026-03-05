@@ -1,12 +1,13 @@
-import { Diamond, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Diamond } from "lucide-react";
+
 import type { Task } from "@/features/tasks";
-import type { GanttConfig } from "../types";
-import { format } from "../utils/dateUtils";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/shared/ui/tooltip";
+import type { GanttConfig } from "../types";
+import { format } from "../utils/dateUtils";
 
 interface GanttTableProps {
   tasks: Task[];
@@ -19,27 +20,13 @@ interface GanttTableProps {
 
 export function GanttTableHeader() {
   return (
-    <div
-      className="flex h-full bg-muted/50 text-xs font-medium text-muted-foreground"
-    >
-      <div className="w-14 shrink-0 flex items-center justify-center border-r border-border">
-        WBS
-      </div>
-      <div className="flex-1 min-w-0 flex items-center px-2 border-r border-border">
-        Task Name
-      </div>
-      <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
-        Start
-      </div>
-      <div className="w-20 shrink-0 flex items-center justify-center border-r border-border">
-        Finish
-      </div>
-      <div className="w-12 shrink-0 flex items-center justify-center border-r border-border">
-        Dur.
-      </div>
-      <div className="w-12 shrink-0 flex items-center justify-center">
-        Slack
-      </div>
+    <div className="flex h-full bg-muted/50 text-xs font-medium text-muted-foreground">
+      <div className="flex w-14 shrink-0 items-center justify-center border-r">WBS</div>
+      <div className="flex min-w-0 flex-1 items-center border-r px-2">Task Name</div>
+      <div className="flex w-20 shrink-0 items-center justify-center border-r">Start</div>
+      <div className="flex w-20 shrink-0 items-center justify-center border-r">Finish</div>
+      <div className="flex w-12 shrink-0 items-center justify-center border-r">Dur.</div>
+      <div className="flex w-12 shrink-0 items-center justify-center">Slack</div>
     </div>
   );
 }
@@ -56,24 +43,27 @@ export function GanttTable({
     <div>
       {tasks.map((task, i) => {
         const isSelected = task.id === selectedTaskId;
+
         return (
           <div
             key={task.id}
-            className={`flex border-b border-border text-xs cursor-pointer hover:bg-muted/40 transition-colors ${isSelected ? "bg-accent/50" : i % 2 !== 0 ? "bg-muted/15" : ""
-              }`}
+            className={`flex cursor-pointer border-b text-xs transition-colors hover:bg-muted/40 ${
+              isSelected ? "bg-accent/50" : i % 2 !== 0 ? "bg-muted/15" : ""
+            }`}
             style={{ height: config.rowHeight }}
             onClick={() => onTaskClick(task.id)}
           >
-            <div className="w-14 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
+            <div className="flex w-14 shrink-0 items-center justify-center border-r text-muted-foreground">
               {task.wbs_code}
             </div>
+
             <div
-              className="flex-1 min-w-0 flex items-center px-2 border-r border-border gap-1 overflow-hidden"
+              className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden border-r px-2"
               style={{ paddingLeft: `${8 + task.outline_level * 16}px` }}
             >
               {task.is_summary ? (
                 <button
-                  className="shrink-0 flex items-center justify-center size-4 hover:bg-muted/50 rounded border-none bg-transparent outline-none"
+                  className="flex size-4 shrink-0 items-center justify-center rounded bg-transparent outline-none hover:bg-muted/50"
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleCollapse(task.id);
@@ -86,38 +76,40 @@ export function GanttTable({
                   )}
                 </button>
               ) : null}
-              {task.is_milestone && (
-                <Diamond className="size-3 shrink-0 text-primary" />
-              )}
+
+              {task.is_milestone && <Diamond className="size-3 shrink-0 text-primary" />}
+
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span
-                    className={`truncate ${task.is_summary ? "font-semibold" : ""}`}
-                  >
+                  <span className={`truncate ${task.is_summary ? "font-semibold" : ""}`}>
                     {task.name}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={4} className="max-w-xs">
                   <div className="space-y-0.5">
                     <div className="font-medium">{task.name}</div>
-                    <div className="text-[10px] opacity-80">
-                      {task.wbs_code} · {format(new Date(task.start_date), "MM/dd/yyyy")} – {format(new Date(task.finish_date), "MM/dd/yyyy")} · {task.duration}m
+                    <div className="text-[10px] text-muted-foreground">
+                      {task.wbs_code} · {format(new Date(task.start_date), "MM/dd/yyyy")} -{" "}
+                      {format(new Date(task.finish_date), "MM/dd/yyyy")} · {task.duration}m
                     </div>
                   </div>
                 </TooltipContent>
               </Tooltip>
             </div>
-            <div className="w-20 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
+
+            <div className="flex w-20 shrink-0 items-center justify-center border-r text-muted-foreground">
               {format(new Date(task.start_date), "MM/dd")}
             </div>
-            <div className="w-20 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
+            <div className="flex w-20 shrink-0 items-center justify-center border-r text-muted-foreground">
               {format(new Date(task.finish_date), "MM/dd")}
             </div>
-            <div className="w-12 shrink-0 flex items-center justify-center border-r border-border text-muted-foreground">
+            <div className="flex w-12 shrink-0 items-center justify-center border-r text-muted-foreground">
               {task.duration}m
             </div>
-            <div className="w-12 shrink-0 flex items-center justify-center text-muted-foreground">
-              {task.is_summary || task.is_milestone ? "—" : `${Math.round(task.total_slack / 480)}d`}
+            <div className="flex w-12 shrink-0 items-center justify-center text-muted-foreground">
+              {task.is_summary || task.is_milestone
+                ? "-"
+                : `${Math.round(task.total_slack / 480)}d`}
             </div>
           </div>
         );

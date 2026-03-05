@@ -44,8 +44,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     title: string;
     url: string;
     icon: React.ComponentType<{ className?: string }>;
-    routeKey: string;
-    routeColor: string;
   };
 
   const globalNavItems: NavItem[] = [
@@ -53,15 +51,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
-      routeKey: "dashboard",
-      routeColor: "var(--route-dashboard)",
     },
     {
       title: "Projects",
       url: "/projects",
       icon: FolderKanban,
-      routeKey: "projects",
-      routeColor: "var(--route-projects)",
     },
     ...(isAdminOrOwner
       ? [
@@ -69,15 +63,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "Members",
             url: "/members",
             icon: Users,
-            routeKey: "members",
-            routeColor: "var(--route-members)",
           },
           {
             title: "Settings",
             url: "/settings",
             icon: Settings,
-            routeKey: "settings",
-            routeColor: "var(--route-settings)",
           },
         ]
       : []),
@@ -88,57 +78,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Back to Projects",
       url: "/projects",
       icon: ArrowLeft,
-      routeKey: "projects",
-      routeColor: "var(--route-projects)",
     },
     {
       title: "Overview",
       url: `/projects/${projectId}`,
       icon: LayoutDashboard,
-      routeKey: "overview",
-      routeColor: "var(--route-overview)",
     },
     {
       title: "Tasks",
       url: `/projects/${projectId}/tasks`,
       icon: ListTodo,
-      routeKey: "tasks",
-      routeColor: "var(--route-tasks)",
     },
     {
       title: "Gantt",
       url: `/projects/${projectId}/gantt`,
       icon: GanttChart,
-      routeKey: "gantt",
-      routeColor: "var(--route-gantt)",
     },
     {
       title: "Resources",
       url: `/projects/${projectId}/resources`,
       icon: Users,
-      routeKey: "resources",
-      routeColor: "var(--route-resources)",
     },
     {
       title: "Utilization",
       url: `/projects/${projectId}/utilization`,
       icon: BarChart3,
-      routeKey: "utilization",
-      routeColor: "var(--route-resources)",
     },
     {
       title: "Calendar",
       url: `/projects/${projectId}/calendar`,
       icon: Calendar,
-      routeKey: "calendar",
-      routeColor: "var(--route-calendar)",
     },
     {
       title: "Reports",
       url: `/projects/${projectId}/reports`,
       icon: BarChart3,
-      routeKey: "reports",
-      routeColor: "var(--route-reports)",
     },
   ];
 
@@ -170,8 +144,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       asChild
                       isActive={isActive}
                       tooltip={item.title}
-                      data-route={item.routeKey}
-                      style={{ "--route-color": item.routeColor } as React.CSSProperties}
                     >
                       <Link to={item.url}>
                         <item.icon />

@@ -52,7 +52,7 @@ export function TaskRowActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-muted-foreground hover:text-foreground"
+                        className="size-8"
                     >
                         <MoreHorizontal className="size-4" />
                         <span className="sr-only">Open actions menu</span>
