@@ -26,6 +26,7 @@ import {
 } from "@/shared/ui/table";
 
 export default function DashboardPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const [healthSort, setHealthSort] = useState<"risk" | "completion">("risk");
   const {
@@ -59,7 +60,7 @@ export default function DashboardPage() {
 
   if (isOrgError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError message={getErrorMessage(orgError)} />
       </PageShell>
     );
@@ -67,7 +68,7 @@ export default function DashboardPage() {
 
   if (!activeOrganization) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageEmpty
           title="Welcome to Sophikon"
           description="Please select or create an organization to get started."
@@ -78,7 +79,7 @@ export default function DashboardPage() {
 
   if (isInsightsError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageHeader
           title={`${activeOrganization.name} Dashboard`}
           description="Overview of your projects and organization metrics."
@@ -114,7 +115,7 @@ export default function DashboardPage() {
   ) : null;
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       <PageHeader
         title={`${activeOrganization.name} Dashboard`}
         description="Overview of your projects and organization metrics."
