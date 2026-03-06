@@ -50,7 +50,7 @@ export default function AuthLayout() {
 
           {/* Features */}
           <ul className="space-y-6">
-            {features.map(({ icon: Icon, title, description, tone }) => (
+            {features.map(({ icon: Icon, title, description }) => (
               <li key={title} className="flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-muted">
                   <Icon className="size-5 text-muted-foreground" />
