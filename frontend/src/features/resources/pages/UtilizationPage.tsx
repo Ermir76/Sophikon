@@ -33,6 +33,7 @@ const RESOURCE_COLORS = [
 const OVER_ALLOCATED_COLOR = "var(--status-overallocated)";
 
 export default function UtilizationPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const { projectId } = useParams<{ projectId: string }>();
 
   const today = new Date();
@@ -95,7 +96,7 @@ export default function UtilizationPage() {
 
   if (isError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError message="Failed to load utilization data." onRetry={() => refetch()} />
       </PageShell>
     );
@@ -103,10 +104,10 @@ export default function UtilizationPage() {
 
   if (isLoading) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageHeader
           title="Resource Utilization"
-          description="Time-phased resource allocation across the project."
+          description="Monitor workload trends and over-allocation risk."
         />
         <PageLoading message="Loading utilization data..." />
       </PageShell>
@@ -115,10 +116,10 @@ export default function UtilizationPage() {
 
   if (chartData.length === 0) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageHeader
           title="Resource Utilization"
-          description="Time-phased resource allocation across the project."
+          description="Monitor workload trends and over-allocation risk."
         />
         <PageEmpty
           title="No utilization data"
@@ -129,10 +130,10 @@ export default function UtilizationPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       <PageHeader
         title="Resource Utilization"
-        description="Time-phased resource allocation across the project."
+        description="Monitor workload trends and over-allocation risk."
         action={
           overAllocationCount > 0 ? (
             <Badge
@@ -146,7 +147,7 @@ export default function UtilizationPage() {
         }
       />
 
-      <div className="flex items-end gap-4">
+      <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="util-start">Start Date</Label>
           <Input

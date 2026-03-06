@@ -14,12 +14,12 @@ interface ResourceDetailsSectionProps {
 
 export function ResourceDetailsSection({ localData, setLocalData, handleBlur, updateResource, resourceId }: ResourceDetailsSectionProps) {
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold tracking-tight">Details</h3>
+        <div className="space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h3>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Type</label>
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</label>
                     <Select
                         value={localData.type ?? "WORK"}
                         onValueChange={async (v) => {
@@ -41,8 +41,8 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                     </Select>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Initials</label>
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Initials</label>
                     <Input
                         value={localData.initials ?? ""}
                         onChange={(e) => setLocalData({ ...localData, initials: e.target.value })}
@@ -60,9 +60,9 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
 
             {/* Email - only for WORK */}
             {localData.type === "WORK" && (
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Email</label>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email</label>
                         <Input
                             value={localData.email ?? ""}
                             onChange={(e) => setLocalData({ ...localData, email: e.target.value })}
@@ -72,8 +72,8 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Group</label>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Group</label>
                         <Input
                             value={localData.group_name ?? ""}
                             onChange={(e) => setLocalData({ ...localData, group_name: e.target.value })}
@@ -86,8 +86,8 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
 
             {/* Group - for MATERIAL and COST (no email row) */}
             {localData.type !== "WORK" && (
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Group</label>
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Group</label>
                     <Input
                         value={localData.group_name ?? ""}
                         onChange={(e) => setLocalData({ ...localData, group_name: e.target.value })}
@@ -97,9 +97,9 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Code</label>
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Code</label>
                     <Input
                         value={localData.code ?? ""}
                         onChange={(e) => setLocalData({ ...localData, code: e.target.value })}
@@ -115,8 +115,8 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
 
                 {/* Max Units - only for WORK */}
                 {localData.type === "WORK" && (
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Max Units</label>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Max Units</label>
                         <Input
                             type="number"
                             value={localData.max_units ?? ""}
@@ -131,8 +131,8 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
 
             {/* Material Label - only for MATERIAL */}
             {localData.type === "MATERIAL" && (
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Material Label</label>
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Material Label</label>
                     <Input
                         value={localData.material_label ?? ""}
                         onChange={(e) => setLocalData({ ...localData, material_label: e.target.value })}

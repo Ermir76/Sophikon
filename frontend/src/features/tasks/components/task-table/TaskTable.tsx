@@ -119,49 +119,51 @@ export function TaskTable({
             modifiers={[restrictToVerticalAxis]}
             onDragEnd={handleDragEnd}
         >
-            <Table>
-                <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <TableHead
-                                    key={header.id}
-                                    className={header.id === "actions" ? "sticky right-0 bg-background z-10 w-12" : ""}
-                                >
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(header.column.columnDef.header, header.getContext())}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    <SortableContext
-                        items={visibleData.map((t) => t.id)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <SortableTableRow key={row.id} row={row} />
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={taskColumns.length} className="h-24 text-center">
-                                    No tasks found. Create one below.
-                                </TableCell>
+            <div className="overflow-hidden rounded-lg border bg-card/70">
+                <Table>
+                    <TableHeader className="sticky top-0 z-20 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        className={header.id === "actions" ? "sticky right-0 z-10 w-12 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85" : ""}
+                                    >
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(header.column.columnDef.header, header.getContext())}
+                                    </TableHead>
+                                ))}
                             </TableRow>
-                        )}
-                    </SortableContext>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        <SortableContext
+                            items={visibleData.map((t) => t.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <SortableTableRow key={row.id} row={row} />
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={taskColumns.length} className="h-24 text-center">
+                                        No tasks found. Create one below.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </SortableContext>
 
-                    <AddTaskRow
-                        projectId={projectId}
-                        colSpan={taskColumns.length}
-                        forceAdding={forceAdding}
-                        onCancelAdding={onCancelAdding}
-                    />
-                </TableBody>
-            </Table>
+                        <AddTaskRow
+                            projectId={projectId}
+                            colSpan={taskColumns.length}
+                            forceAdding={forceAdding}
+                            onCancelAdding={onCancelAdding}
+                        />
+                    </TableBody>
+                </Table>
+            </div>
         </DndContext>
     );
 }

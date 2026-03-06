@@ -7,6 +7,7 @@ import {
 } from "@/shared/ui/chart";
 import type { TrendPoint } from "@/shared/types/insights";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { cn } from "@/shared/lib/utils";
 
 const chartConfig = {
   created: { label: "Created", color: "var(--chart-2)" },
@@ -17,26 +18,36 @@ const chartConfig = {
 interface InsightsTrendCardProps {
   title: string;
   data: TrendPoint[];
+  className?: string;
+  chartClassName?: string;
+  contentClassName?: string;
 }
 
-export function InsightsTrendCard({ title, data }: InsightsTrendCardProps) {
+export function InsightsTrendCard({
+  title,
+  data,
+  className,
+  chartClassName,
+  contentClassName,
+}: InsightsTrendCardProps) {
   return (
-    <Card className="py-4">
+    <Card className={cn("py-4", className)}>
       <CardHeader className="px-4">
         <CardTitle className="text-sm font-semibold">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="px-2">
-        <ChartContainer config={chartConfig} className="h-[280px] w-full">
+      <CardContent className={cn("px-2", contentClassName)}>
+        <ChartContainer config={chartConfig} className={cn("h-[280px] w-full", chartClassName)}>
           <LineChart data={data} margin={{ left: 6, right: 10, top: 8, bottom: 4 }}>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.45} />
             <XAxis
               dataKey="date"
               tickLine={false}
               axisLine={false}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
               minTickGap={24}
               tickFormatter={(v: string) => new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             />
-            <YAxis allowDecimals={false} width={28} />
+            <YAxis allowDecimals={false} width={30} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Line
               dataKey="created_tasks"
@@ -50,7 +61,7 @@ export function InsightsTrendCard({ title, data }: InsightsTrendCardProps) {
               dataKey="completed_tasks"
               name="completed"
               stroke="var(--color-completed)"
-              strokeWidth={2}
+              strokeWidth={2.25}
               dot={false}
               type="monotone"
             />

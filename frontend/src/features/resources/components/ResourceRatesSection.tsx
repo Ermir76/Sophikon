@@ -14,15 +14,15 @@ interface ResourceRatesSectionProps {
 
 export function ResourceRatesSection({ localData, setLocalData, handleBlur, updateResource, resourceId }: ResourceRatesSectionProps) {
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold tracking-tight">
+        <div className="space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 {localData.type === "COST" ? "Cost" : "Rates"}
             </h3>
 
             {localData.type !== "COST" && (
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Standard Rate ({localData.type === "MATERIAL" ? "$/unit" : "$/h"})
                         </label>
                         <Input
@@ -37,8 +37,8 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
 
                     {/* Overtime Rate - only for WORK */}
                     {localData.type === "WORK" && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-muted-foreground">Overtime Rate ($/h)</label>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Overtime Rate ($/h)</label>
                             <Input
                                 type="number"
                                 value={localData.overtime_rate ?? ""}
@@ -52,9 +52,9 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {localData.type === "COST" ? "Cost Amount ($)" : "Cost per Use ($)"}
                     </label>
                     <Input
@@ -67,8 +67,8 @@ export function ResourceRatesSection({ localData, setLocalData, handleBlur, upda
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Accrue At</label>
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Accrue At</label>
                     <Select
                         value={localData.accrue_at ?? "PRORATED"}
                         onValueChange={async (v) => {

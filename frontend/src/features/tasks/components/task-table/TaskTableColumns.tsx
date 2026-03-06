@@ -1,13 +1,14 @@
-import { format, parseISO } from "date-fns";
-import { createColumnHelper } from "@tanstack/react-table";
+import { format, isValid, parseISO, startOfDay } from "date-fns";
+import { createColumnHelper, type RowData } from "@tanstack/react-table";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Badge } from "@/shared/ui/badge";
 import type { Task } from "@/features/tasks/types";
 import { TaskInlineEdit } from "@/features/tasks/components/task-table/TaskInlineEdit";
 import { TaskRowActions } from "@/features/tasks/components/task-table/TaskRowActions";
 import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 
 declare module "@tanstack/react-table" {
-    interface TableMeta<TData> {
+    interface TableMeta<TData extends RowData> {
         collapsedTaskIds?: Set<string>;
         toggleTaskCollapse?: (taskId: string) => void;
         onIndent?: (taskId: string) => void;
@@ -22,6 +23,26 @@ declare module "@tanstack/react-table" {
 }
 
 const columnHelper = createColumnHelper<Task>();
+
+function isPastDueDate(dateValue: string, now: Date): boolean {
+    const parsed = parseISO(dateValue);
+    if (!isValid(parsed)) return false;
+    return parsed < startOfDay(now);
+}
+
+function getTaskStatus(task: Task): "completed" | "overdue" | "in-progress" | "not-started" {
+    const now = new Date();
+    if (task.percent_complete >= 100) return "completed";
+    if (task.finish_date && isPastDueDate(task.finish_date, now)) return "overdue";
+    if (task.percent_complete > 0) return "in-progress";
+    return "not-started";
+}
+
+function getPriorityLabel(priority: number): "High" | "Medium" | "Low" {
+    if (priority >= 700) return "High";
+    if (priority >= 400) return "Medium";
+    return "Low";
+}
 
 export const taskColumns = [
     columnHelper.display({
@@ -99,6 +120,56 @@ export const taskColumns = [
                         />
                     </span>
                 </div>
+            );
+        },
+    }),
+    columnHelper.display({
+        id: "status",
+        header: "Status",
+        cell: (info) => {
+            const status = getTaskStatus(info.row.original);
+            if (status === "completed") {
+                return (
+                    <Badge variant="outline" className="border-emerald-500/45 bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
+                        Completed
+                    </Badge>
+                );
+            }
+            if (status === "overdue") {
+                return (
+                    <Badge variant="outline" className="border-destructive/45 bg-destructive/12 text-destructive">
+                        Overdue
+                    </Badge>
+                );
+            }
+            if (status === "in-progress") {
+                return (
+                    <Badge variant="outline" className="border-primary/45 bg-primary/12 text-primary">
+                        In Progress
+                    </Badge>
+                );
+            }
+            return (
+                <Badge variant="outline" className="border-muted-foreground/30 bg-muted/35 text-muted-foreground">
+                    Not Started
+                </Badge>
+            );
+        },
+    }),
+    columnHelper.accessor("priority", {
+        header: "Priority",
+        cell: (info) => {
+            const label = getPriorityLabel(Number(info.getValue() ?? 0));
+            const className =
+                label === "High"
+                    ? "border-destructive/45 bg-destructive/10 text-destructive"
+                    : label === "Medium"
+                        ? "border-chart-3/45 bg-chart-3/12 text-chart-3"
+                        : "border-primary/40 bg-primary/10 text-primary";
+            return (
+                <Badge variant="outline" className={className}>
+                    {label}
+                </Badge>
             );
         },
     }),

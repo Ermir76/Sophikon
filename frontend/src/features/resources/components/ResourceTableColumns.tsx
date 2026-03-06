@@ -1,4 +1,4 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type RowData } from "@tanstack/react-table";
 import { MoreHorizontal, PanelRight, Trash2 } from "lucide-react";
 
 import { OverAllocationBadge } from "@/features/resources/components/OverAllocationBadge";
@@ -16,7 +16,7 @@ import {
 
 // Type augmentation for table meta
 declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
+  interface TableMeta<TData extends RowData> {
     onViewDetails?: (resourceId: string) => void;
     onDeleteResource?: (resourceId: string) => void;
     isDeleteResourcePending?: boolean;

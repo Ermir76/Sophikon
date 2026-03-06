@@ -35,7 +35,7 @@ export function MemberActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="size-8 p-0">
+        <Button variant="ghost" size="icon-sm" className="size-7 p-0">
           <span className="sr-only">Open menu</span>
           <MoreHorizontal className="size-4" />
         </Button>

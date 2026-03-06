@@ -84,7 +84,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
 
     return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-md md:max-w-2xl">
+            <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-md md:max-w-xl">
                 {isLoading || !task ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -92,10 +92,10 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                 ) : (
                     <div className="flex h-full flex-col bg-background">
                         {/* Header Section */}
-                        <div className="border-b px-6 py-6">
-                            <SheetHeader className="space-y-4">
-                                <SheetTitle className="flex justify-between items-start gap-4 pr-8">
-                                    <div className="flex flex-col gap-3 flex-1">
+                        <div className="sticky top-0 z-10 border-b bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:px-5">
+                            <SheetHeader className="space-y-3">
+                                <SheetTitle className="flex items-start justify-between gap-4 pr-8">
+                                    <div className="flex flex-1 flex-col gap-2.5">
                                         <div className="flex items-center gap-2">
                                             <Badge variant="outline" className="rounded-md px-2 py-1 font-mono text-xs font-medium">
                                                 {task.wbs_code}
@@ -114,19 +114,19 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                             value={localData.name ?? ""}
                                             onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
                                             onBlur={() => handleBlur("name")}
-                                            className="h-auto w-full border-0 px-3 py-1.5 text-2xl font-bold shadow-none focus-visible:ring-0"
+                                            className="h-auto w-full border-0 px-2.5 py-1 text-xl font-bold shadow-none focus-visible:ring-0"
                                             placeholder="Task Name"
                                         />
                                     </div>
                                 </SheetTitle>
-                                <SheetDescription className="text-xs font-medium uppercase tracking-wider">
+                                <SheetDescription className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/90">
                                     Created on {format(parseISO(task.created_at), "MMMM do, yyyy")}
                                 </SheetDescription>
                             </SheetHeader>
                         </div>
 
                         {/* Scrolling Body content */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                        <div className="flex-1 space-y-6 overflow-y-auto p-4 sm:p-5">
                             <TaskDetailCoreFields
                                 task={task}
                                 localData={localData}
@@ -141,19 +141,19 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 }}
                             />
 
-                            <div className="h-px w-full bg-border rounded-full" />
+                            <div className="h-px w-full rounded-full bg-border/80" />
 
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold tracking-tight">Dependencies</h3>
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Dependencies</h3>
                                 <div className="overflow-hidden rounded-xl border bg-card">
                                     <TaskDependencyList projectId={projectId} taskId={task.id} />
                                 </div>
                             </div>
 
-                            <div className="h-px w-full bg-border rounded-full" />
+                            <div className="h-px w-full rounded-full bg-border/80" />
 
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold tracking-tight">Assignments</h3>
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Assignments</h3>
                                 <div className="overflow-hidden rounded-xl border bg-card">
                                     <TaskAssignmentList projectId={projectId} taskId={task.id} />
                                 </div>

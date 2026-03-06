@@ -16,6 +16,7 @@ import { InsightsActivityCard } from "@/shared/ui/insights-activity-card";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Button } from "@/shared/ui/button";
 import {
   Table,
   TableBody,
@@ -118,7 +119,7 @@ export default function DashboardPage() {
     <PageShell className={shellClassName}>
       <PageHeader
         title={`${activeOrganization.name} Dashboard`}
-        description="Overview of your projects and organization metrics."
+        description="Fast control-center view of execution, risk, and activity."
         action={
           <TimeWindowFilter
             value={windowPreset}
@@ -134,52 +135,78 @@ export default function DashboardPage() {
         <QueryError message="For a custom window, please select both start and end date." />
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <InsightsMetricCard label="Active Projects" value={kpis.active_projects} to="/projects" />
-        <InsightsMetricCard label="Completed Projects" value={kpis.completed_projects} to="/projects" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6 2xl:gap-4">
+        <InsightsMetricCard compact label="Active Projects" value={kpis.active_projects} to="/projects" />
         <InsightsMetricCard
+          compact
+          label="Completed Projects"
+          value={kpis.completed_projects}
+          valueClassName="text-emerald-600 dark:text-emerald-400"
+          to="/projects"
+        />
+        <InsightsMetricCard
+          compact
           label="Task Completion"
           value={`${kpis.task_completion_pct.toFixed(1)}%`}
+          valueClassName="text-primary"
           to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
         />
         <InsightsMetricCard
+          compact
           label="Overdue Tasks"
           value={kpis.overdue_tasks}
+          valueClassName="text-destructive"
           to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
         />
         <InsightsMetricCard
+          compact
           label="Critical Tasks"
           value={kpis.critical_tasks}
+          valueClassName="text-destructive"
           to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
         />
         <InsightsMetricCard
+          compact
           label="Overallocated Resources"
           value={kpis.overallocated_resources}
+          valueClassName="text-destructive"
           to={firstProjectId ? `/projects/${firstProjectId}/utilization` : "/projects"}
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1.05fr)_minmax(0,0.95fr)] xl:items-start">
+        <div className={cn(isInsightsFetching && "opacity-90")}>
+          <InsightsTrendCard
+            title="Execution Trend"
+            data={data?.trend ?? []}
+            chartClassName="h-[280px] 2xl:h-[310px]"
+          />
+        </div>
+
         <Card className="py-4">
           <CardHeader className="px-4">
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-sm font-semibold">Project Health</CardTitle>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2">
                 {refreshingHint}
-                <button
+                <Button
                   type="button"
-                  className="rounded-md border px-2 py-1 text-muted-foreground hover:bg-accent"
+                  size="sm"
+                  variant={healthSort === "risk" ? "secondary" : "outline"}
+                  className="h-7 text-xs"
                   onClick={() => setHealthSort("risk")}
                 >
-                  Sort: Risk
-                </button>
-                <button
+                  Risk
+                </Button>
+                <Button
                   type="button"
-                  className="rounded-md border px-2 py-1 text-muted-foreground hover:bg-accent"
+                  size="sm"
+                  variant={healthSort === "completion" ? "secondary" : "outline"}
+                  className="h-7 text-xs"
                   onClick={() => setHealthSort("completion")}
                 >
-                  Sort: Completion
-                </button>
+                  Completion
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -187,49 +214,50 @@ export default function DashboardPage() {
             {projectHealth.length === 0 ? (
               <p className="text-sm text-muted-foreground">No project health data yet.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Completion</TableHead>
-                    <TableHead className="text-right">Overdue</TableHead>
-                    <TableHead className="text-right">Critical</TableHead>
-                    <TableHead className="text-right">Risk</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {projectHealth.map((row) => (
-                    <TableRow key={row.project_id}>
-                      <TableCell className="font-medium">
-                        <Link to={`/projects/${row.project_id}`} className="hover:underline">
-                          {row.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell className="text-right tabular-nums">{row.completion_pct.toFixed(1)}%</TableCell>
-                      <TableCell className="text-right tabular-nums">{row.overdue_tasks}</TableCell>
-                      <TableCell className="text-right tabular-nums">{row.critical_tasks}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <span className="tabular-nums">{row.risk_score.toFixed(1)}</span>
-                          <Badge
-                            variant={
-                              row.risk_level === "high"
-                                ? "destructive"
-                                : row.risk_level === "medium"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                          >
-                            {row.risk_level}
-                          </Badge>
-                        </div>
-                      </TableCell>
+              <div className="max-h-[320px] overflow-auto pr-1">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Project</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-right text-xs">Done</TableHead>
+                      <TableHead className="text-right text-xs">Overdue</TableHead>
+                      <TableHead className="text-right text-xs">Critical</TableHead>
+                      <TableHead className="text-right text-xs">Risk</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {projectHealth.map((row) => (
+                      <TableRow key={row.project_id} className="h-10">
+                        <TableCell className="font-medium">
+                          <Link to={`/projects/${row.project_id}`} className="hover:underline">
+                            {row.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{row.status}</TableCell>
+                        <TableCell className="text-right tabular-nums">{row.completion_pct.toFixed(1)}%</TableCell>
+                        <TableCell className="text-right tabular-nums">{row.overdue_tasks}</TableCell>
+                        <TableCell className="text-right tabular-nums">{row.critical_tasks}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <span className="tabular-nums">{row.risk_score.toFixed(1)}</span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "capitalize",
+                                row.risk_level === "high" && "border-destructive/50 bg-destructive/15 text-destructive",
+                                row.risk_level === "medium" && "border-chart-3/50 bg-chart-3/15 text-chart-3",
+                              )}
+                            >
+                              {row.risk_level}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -238,13 +266,9 @@ export default function DashboardPage() {
           title="Recent Activity"
           items={data?.recent_activity ?? []}
           emptyMessage="No recent activity to show."
-        />
-      </div>
-
-      <div className={cn(isInsightsFetching && "opacity-90")}>
-        <InsightsTrendCard
-          title="Execution Trend"
-          data={data?.trend ?? []}
+          className="xl:sticky xl:top-6 xl:h-[calc(100dvh-11rem)]"
+          contentClassName="flex h-full min-h-0 flex-col"
+          listClassName="flex-1 overflow-y-auto pr-1"
         />
       </div>
     </PageShell>

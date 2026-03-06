@@ -184,6 +184,7 @@ export default function GanttPage() {
     <PageShell className="flex-1 overflow-hidden min-w-0">
       <PageHeader
         title="Gantt Chart"
+        description="Timeline view for sequencing, dependencies, and critical path."
         action={
           <GanttToolbar
             zoom={zoom}

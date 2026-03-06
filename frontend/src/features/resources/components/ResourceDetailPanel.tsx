@@ -97,7 +97,7 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
 
     return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-md md:max-w-2xl">
+            <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-md md:max-w-xl">
                 {isLoading || !resource ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -105,10 +105,10 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                 ) : (
                     <div className="flex h-full flex-col bg-background">
                         {/* Header */}
-                        <div className="border-b px-6 py-6">
-                            <SheetHeader className="space-y-4">
-                                <SheetTitle className="flex justify-between items-start gap-4 pr-8">
-                                    <div className="flex flex-col gap-3 flex-1">
+                        <div className="sticky top-0 z-10 border-b bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:px-5">
+                            <SheetHeader className="space-y-3">
+                                <SheetTitle className="flex items-start justify-between gap-4 pr-8">
+                                    <div className="flex flex-1 flex-col gap-2.5">
                                         <div className="flex items-center gap-2">
                                             {resource.initials && (
                                                 <span className="inline-flex size-8 items-center justify-center rounded-full border text-xs font-bold">
@@ -135,23 +135,23 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                                             value={localData.name ?? ""}
                                             onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
                                             onBlur={() => handleBlur("name")}
-                                            className="h-auto w-full border-0 px-3 py-1.5 text-2xl font-bold shadow-none focus-visible:ring-0"
+                                            className="h-auto w-full border-0 px-2.5 py-1 text-xl font-bold shadow-none focus-visible:ring-0"
                                             placeholder="Resource Name"
                                         />
                                     </div>
                                 </SheetTitle>
-                                <SheetDescription className="text-xs font-medium uppercase tracking-wider">
+                                <SheetDescription className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/90">
                                     Created on {format(parseISO(resource.created_at), "MMMM do, yyyy")}
                                 </SheetDescription>
                             </SheetHeader>
                         </div>
 
                         {/* Body */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-10">
+                        <div className="flex-1 space-y-6 overflow-y-auto p-4 sm:p-5">
                             <ResourceDetailsSection {...sectionProps} />
-                            <div className="h-px w-full bg-border rounded-full" />
+                            <div className="h-px w-full rounded-full bg-border/80" />
                             <ResourceRatesSection {...sectionProps} />
-                            <div className="h-px w-full bg-border rounded-full" />
+                            <div className="h-px w-full rounded-full bg-border/80" />
                             <ResourceStatusSection {...sectionProps} />
                         </div>
                     </div>

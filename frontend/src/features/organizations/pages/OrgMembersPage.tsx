@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Separator } from "@/shared/ui/separator";
-import { Card, CardContent } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +37,7 @@ import { PageLoading } from "@/shared/components/state/PageLoading";
 import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 export default function OrgMembersPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const currentUser = useAuthStore((state) => state.user);
   const { role: myRole } = useMyOrgRole();
@@ -102,9 +103,12 @@ export default function OrgMembersPage() {
   };
 
   const members = membersData?.items || [];
+  const ownerCount = members.filter((member) => member.role === "owner").length;
+  const adminCount = members.filter((member) => member.role === "admin").length;
+  const standardCount = members.filter((member) => member.role === "member").length;
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       <PageHeader
         title="Members"
         description="Manage who has access to this organization."
@@ -119,7 +123,33 @@ export default function OrgMembersPage() {
         }
       />
 
-      <Separator />
+      {!isLoadingMembers && members.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums">{members.length}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Owners</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{ownerCount}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Admins</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-primary">{adminCount}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Members</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-muted-foreground">{standardCount}</p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex items-center justify-between">
+        <Separator className="flex-1" />
+        <Badge variant="outline" className="ml-3 h-7 px-2.5 text-[11px] text-muted-foreground">
+          Access list
+        </Badge>
+      </div>
 
       {isMembersError ? (
         <QueryError
@@ -134,17 +164,13 @@ export default function OrgMembersPage() {
           description="Invite members to start collaborating in this organization."
         />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <MembersTable
-              members={members}
-              currentUserId={currentUser?.id}
-              onUpdateRole={onUpdateRole}
-              onRemove={setMemberToRemove}
-              canManage={canManage}
-            />
-          </CardContent>
-        </Card>
+        <MembersTable
+          members={members}
+          currentUserId={currentUser?.id}
+          onUpdateRole={onUpdateRole}
+          onRemove={setMemberToRemove}
+          canManage={canManage}
+        />
       )}
 
       <AlertDialog

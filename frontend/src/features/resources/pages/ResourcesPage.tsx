@@ -31,6 +31,7 @@ import { PageEmpty } from "@/shared/components/state/PageEmpty";
 const EMPTY_RESOURCES: Resource[] = [];
 
 export default function ResourcesPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const { projectId } = useParams<{ projectId: string }>();
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -53,6 +54,8 @@ export default function ResourcesPage() {
   );
 
   const resources = data?.items ?? EMPTY_RESOURCES;
+  const activeCount = resources.filter((resource) => resource.is_active).length;
+  const inactiveCount = resources.filter((resource) => !resource.is_active).length;
 
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
   const selectionCount = selectedIds.length;
@@ -69,7 +72,7 @@ export default function ResourcesPage() {
         delete next[resourceId];
         return next;
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete resource");
     }
   };
@@ -80,7 +83,7 @@ export default function ResourcesPage() {
       toast.success(`${result.succeeded} resource(s) deleted`);
       setRowSelection({});
       setShowBulkDeleteConfirm(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete resources");
       setShowBulkDeleteConfirm(false);
     }
@@ -92,7 +95,7 @@ export default function ResourcesPage() {
 
   if (isError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError
           message="Failed to load project resources."
           onRetry={() => refetch()}
@@ -102,18 +105,39 @@ export default function ResourcesPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       {/* Header section */}
       <PageHeader
         title="Resources"
-        description="Allocate team members and manage resource utilization."
+        description="Manage capacity, allocations, and workload health."
         action={
-          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="gap-1.5">
+          <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-8 gap-1.5 px-3 text-xs">
             <Plus className="size-4" />
             Add Resource
           </Button>
         }
       />
+
+      {!isLoading && resources.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums">{resources.length}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Active</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-primary">{activeCount}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Overallocated</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{overAllocatedIds.size}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Inactive</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-muted-foreground">{inactiveCount}</p>
+          </div>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <PageLoading />

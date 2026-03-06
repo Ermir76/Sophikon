@@ -52,6 +52,7 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export default function ProjectSettingsPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const { projectId } = useParams();
   const navigate = useNavigate();
 
@@ -116,7 +117,7 @@ export default function ProjectSettingsPage() {
 
   if (isLoading) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageLoading message="Loading project details..." />
       </PageShell>
     );
@@ -124,7 +125,7 @@ export default function ProjectSettingsPage() {
 
   if (isError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError
           message="Failed to load project settings."
           onRetry={() => refetch()}
@@ -134,14 +135,14 @@ export default function ProjectSettingsPage() {
   }
 
   return (
-    <PageShell className="space-y-8">
+    <PageShell className={shellClassName}>
       <PageHeader
         title="Project Settings"
         description={`Manage settings for project: ${project?.name}`}
       />
 
-      <div className="space-y-6">
-        <Card>
+      <div className="space-y-4">
+        <Card className="bg-card/70">
           <CardHeader>
             <CardTitle>General Information</CardTitle>
             <CardDescription>
@@ -150,7 +151,7 @@ export default function ProjectSettingsPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5">
                 <FormField
                   control={form.control}
                   name="name"
@@ -201,7 +202,7 @@ export default function ProjectSettingsPage() {
                 />
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={updateProjectMutation.isPending}>
+                  <Button type="submit" size="sm" className="h-8 px-3 text-xs" disabled={updateProjectMutation.isPending}>
                     {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
@@ -209,18 +210,15 @@ export default function ProjectSettingsPage() {
             </Form>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
-          <p className="text-sm text-muted-foreground">
+        <div className="pt-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-destructive">Danger Zone</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Irreversible actions for your project.
           </p>
         </div>
         <Separator />
 
-        <Card className="border-destructive/50 bg-destructive/5">
+        <Card className="border-destructive/50 bg-card/70">
           <CardHeader>
             <CardTitle className="text-destructive">Delete Project</CardTitle>
             <CardDescription>
@@ -230,6 +228,8 @@ export default function ProjectSettingsPage() {
           <CardContent>
             <Button
               variant="destructive"
+              size="sm"
+              className="h-8 px-3 text-xs"
               onClick={() => setShowDeleteConfirm(true)}
             >
               Delete Project

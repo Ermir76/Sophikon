@@ -12,10 +12,10 @@ interface ResourceStatusSectionProps {
 
 export function ResourceStatusSection({ localData, setLocalData, updateResource, resourceId }: ResourceStatusSectionProps) {
     return (
-        <div className="space-y-4">
-            <h3 className="text-lg font-semibold tracking-tight">Status</h3>
+        <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Status</h3>
 
-            <div className="flex items-center justify-between rounded-md border px-4 py-3">
+            <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
                 <div className="space-y-0.5">
                     <label className="text-sm font-medium">Active</label>
                     <p className="text-xs text-muted-foreground">Inactive resources cannot be assigned to new tasks</p>
@@ -36,7 +36,7 @@ export function ResourceStatusSection({ localData, setLocalData, updateResource,
 
             {/* Generic toggle - only for WORK */}
             {localData.type === "WORK" && (
-                <div className="flex items-center justify-between rounded-md border px-4 py-3">
+                <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
                     <div className="space-y-0.5">
                         <label className="text-sm font-medium">Generic</label>
                         <p className="text-xs text-muted-foreground">Generic resources represent a role rather than a specific person</p>

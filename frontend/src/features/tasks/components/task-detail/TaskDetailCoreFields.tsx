@@ -19,10 +19,10 @@ export function TaskDetailCoreFields({
     onColorChange,
 }: TaskDetailCoreFieldsProps) {
     return (
-        <div className="mt-2 space-y-8">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8">
+        <div className="mt-1 space-y-6">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-5">
                 {/* % Complete */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                     <label htmlFor="percent_complete" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         % Complete
                     </label>
@@ -43,7 +43,7 @@ export function TaskDetailCoreFields({
                 </div>
 
                 {/* Start Date */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                     <label htmlFor="start_date" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Start Date
                     </label>
@@ -57,7 +57,7 @@ export function TaskDetailCoreFields({
                 </div>
 
                 {/* Duration */}
-                <div className="space-y-2.5 col-span-2 sm:col-span-1">
+                <div className="col-span-2 space-y-2 sm:col-span-1">
                     <label htmlFor="duration" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Duration
                         <span className="rounded border px-1.5 py-0.5 text-[10px] font-medium normal-case text-muted-foreground">mins</span>
@@ -74,7 +74,7 @@ export function TaskDetailCoreFields({
 
                 {/* Color (summary tasks only) */}
                 {task.is_summary && (
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Gantt Color
                         </label>
@@ -88,7 +88,7 @@ export function TaskDetailCoreFields({
             </div>
 
             {/* Notes */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 pt-1">
                 <label htmlFor="notes" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Notes
                 </label>
@@ -98,7 +98,7 @@ export function TaskDetailCoreFields({
                     value={localData.notes ?? ""}
                     onChange={(e) => setLocalData({ ...localData, notes: e.target.value })}
                     onBlur={() => handleBlur("notes")}
-                    className="min-h-[140px] resize-y leading-relaxed"
+                    className="min-h-[112px] resize-y leading-relaxed"
                 />
             </div>
         </div>

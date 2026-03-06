@@ -60,6 +60,7 @@ import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { PageLoading } from "@/shared/components/state/PageLoading";
 
 export default function OrgSettingsPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const navigate = useNavigate(); // Add hook
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const clearOrg = useOrgStore((state) => state.clear); // Add clear action
@@ -109,7 +110,7 @@ export default function OrgSettingsPage() {
 
   if (isLoading) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <PageLoading message="Loading organization details..." />
       </PageShell>
     );
@@ -117,7 +118,7 @@ export default function OrgSettingsPage() {
 
   if (isError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError
           message="Failed to load organization settings."
           onRetry={() => refetch()}
@@ -127,14 +128,14 @@ export default function OrgSettingsPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       <PageHeader
         title="Organization Settings"
         description="Manage your organization details."
       />
 
-      <div className="space-y-6">
-        <Card>
+      <div className="space-y-4">
+        <Card className="bg-card/70">
           <CardHeader>
             <CardTitle>General Information</CardTitle>
             <CardDescription>
@@ -143,7 +144,7 @@ export default function OrgSettingsPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5">
                 <FormField
                   control={form.control}
                   name="name"
@@ -171,7 +172,7 @@ export default function OrgSettingsPage() {
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={updateOrgMutation.isPending}>
+                  <Button type="submit" size="sm" className="h-8 px-3 text-xs" disabled={updateOrgMutation.isPending}>
                     {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
@@ -179,17 +180,14 @@ export default function OrgSettingsPage() {
             </Form>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
-          <p className="text-sm text-muted-foreground">
+        <div className="pt-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-destructive">Danger Zone</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Irreversible actions for your organization.
           </p>
         </div>
         <Separator />
-        <Card className="border-destructive/50 bg-destructive/5">
+        <Card className="border-destructive/50 bg-card/70">
           <CardHeader>
             <CardTitle className="text-destructive">Delete Organization</CardTitle>
             <CardDescription>
@@ -199,6 +197,8 @@ export default function OrgSettingsPage() {
           <CardContent>
             <Button
               variant="destructive"
+              size="sm"
+              className="h-8 px-3 text-xs"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={activeOrganization?.is_personal} // Personal orgs often can't be deleted
             >

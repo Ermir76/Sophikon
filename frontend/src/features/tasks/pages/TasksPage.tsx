@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router";
 import { ListTodo, Trash2, Pencil } from "lucide-react";
+import { isValid, parseISO, startOfDay } from "date-fns";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import {
@@ -29,7 +30,14 @@ import { PageEmpty } from "@/shared/components/state/PageEmpty";
 
 const EMPTY_TASKS: Task[] = [];
 
+function isPastDueDate(dateValue: string, now: Date): boolean {
+  const parsed = parseISO(dateValue);
+  if (!isValid(parsed)) return false;
+  return parsed < startOfDay(now);
+}
+
 export default function TasksPage() {
+  const shellClassName = "h-full overflow-y-auto";
   const { projectId } = useParams<{ projectId: string }>();
 
   // Local state for table row selection
@@ -58,6 +66,14 @@ export default function TasksPage() {
 
   // Ensure data structure safely maps out items array
   const tasks = data?.items ?? EMPTY_TASKS;
+  const now = new Date();
+  const overdueTasks = tasks.filter(
+    (task) => task.percent_complete < 100 && isPastDueDate(task.finish_date, now),
+  ).length;
+  const inProgressTasks = tasks.filter(
+    (task) => task.percent_complete > 0 && task.percent_complete < 100,
+  ).length;
+  const highPriorityTasks = tasks.filter((task) => Number(task.priority) >= 700).length;
 
   // Compute selected task IDs from rowSelection state
   const selectedTaskIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
@@ -85,7 +101,7 @@ export default function TasksPage() {
         delete next[taskId];
         return next;
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete task");
     }
   };
@@ -97,7 +113,7 @@ export default function TasksPage() {
       toast.success(`${result.succeeded} task(s) deleted`);
       setRowSelection({});
       setShowBulkDeleteConfirm(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete tasks");
       setShowBulkDeleteConfirm(false);
     }
@@ -109,7 +125,7 @@ export default function TasksPage() {
 
   if (isError) {
     return (
-      <PageShell>
+      <PageShell className={shellClassName}>
         <QueryError
           message="Failed to load project tasks."
           onRetry={() => refetch()}
@@ -119,12 +135,33 @@ export default function TasksPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell className={shellClassName}>
       {/* Header section */}
       <PageHeader
         title="Tasks"
-        description="Manage project tasks, subtasks, and dependencies."
+        description="Plan, sequence, and update task execution."
       />
+
+      {!isLoading && tasks.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums">{tasks.length}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">In Progress</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-primary">{inProgressTasks}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Overdue</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{overdueTasks}</p>
+          </div>
+          <div className="rounded-md border bg-card/70 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">High Priority</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">{highPriorityTasks}</p>
+          </div>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <PageLoading />
@@ -170,7 +207,7 @@ export default function TasksPage() {
                   },
                   optimisticData: sortedData
                 });
-              } catch (error) {
+              } catch {
                 toast.error("Failed to reorder task");
               }
             }}
