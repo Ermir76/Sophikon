@@ -69,7 +69,7 @@
 - [x] Create API client (Axios/fetch wrapper)
 - [x] Set up state management (Zustand or Redux Toolkit)
 - [x] Create base layout components
-- [ ] Convert landing page mockup to production static HTML
+- [x] Convert landing page mockup to production static HTML
 - [ ] Landing page SEO (meta tags, Open Graph, structured data)
 
 **Architecture Decision:** Landing page is a standalone static HTML file (not React). The React SPA lives under `/app/*`. Nginx routes: `/` → static landing, `/app/*` → React SPA, `/api/*` → FastAPI.
@@ -354,11 +354,11 @@
 ### Backend
 
 ```
-Python 3.12+
+Python 3.13+
 ├── FastAPI (web framework)
 ├── SQLAlchemy 2.0 (ORM)
 ├── Alembic (migrations)
-├── PostgreSQL 16 (database)
+├── PostgreSQL 18 (database)
 ├── Redis (caching, sessions)
 ├── Celery (background tasks)
 ├── Pydantic (validation)

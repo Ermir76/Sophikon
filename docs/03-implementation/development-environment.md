@@ -251,28 +251,20 @@ sophikon/
 │   │   ├── core/
 │   │   │   ├── config.py     # Settings (reads from .env)
 │   │   │   └── database.py   # SQLAlchemy async engine & session
-│   │   ├── models/           # SQLAlchemy ORM models (25 models)
+│   │   ├── models/           # SQLAlchemy ORM models (28 models)
 │   │   ├── schema/           # Pydantic request/response schemas
-│   │   ├── service/          # Business logic layer
-│   │   └── ai/               # AI integration services
+│   │   └── service/          # Business logic layer
 │   ├── tests/                # pytest test suite
 │   ├── pyproject.toml        # Dependencies & project config
 │   ├── uv.lock               # Locked dependency versions
 │   └── .env                  # Local environment variables (gitignored)
 ├── frontend/                 # React + TypeScript SPA (behind /app)
 │   └── src/
-│       ├── components/       # Reusable UI components
-│       ├── hooks/            # Custom React hooks
-│       ├── pages/            # Page-level components
-│       ├── services/         # API client & utilities
-│       ├── store/            # State management
-│       ├── lib/              # Utilities
-│       ├── types/            # Shared TypeScript types
-│       └── assets/           # Static assets
-├── ai-services/              # Standalone AI microservices
-│   ├── assistant/
-│   ├── estimation/
-│   └── planning/
+│       ├── app/              # App.tsx, main.tsx, routing/
+│       ├── features/         # Feature modules (auth, dashboard, projects, tasks, gantt, etc.)
+│       ├── shared/           # Shared UI, layout, components, hooks, api, lib, types
+│       ├── config/           # react-query.ts
+│       └── index.css         # Design tokens (light + dark), base reset
 ├── docs/                     # Project documentation
 │   ├── 01-requirements/
 │   ├── 02-design/

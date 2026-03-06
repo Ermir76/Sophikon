@@ -8,7 +8,7 @@ FastAPI REST API with async SQLAlchemy, PostgreSQL, and Redis.
 app/
   api/v1/endpoints/   Route handlers (auth, projects, tasks, organizations, etc.)
   core/               Config, database, security, rate limiting
-  models/             SQLAlchemy models (25 tables)
+  models/             SQLAlchemy models (28 tables)
   schema/             Pydantic request/response schemas
   service/            Business logic layer
 alembic/              Database migrations

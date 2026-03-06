@@ -11,7 +11,7 @@
 
 | Document                | Path                                                                        | Description              |
 | ----------------------- | --------------------------------------------------------------------------- | ------------------------ |
-| Database Schema         | [database-schema.md](./database-schema.md)                                  | 25 tables, full SQL      |
+| Database Schema         | [database-schema.md](./database-schema.md)                                  | 28 tables, full SQL      |
 | Functional Requirements | [functional-requirements.md](../01-requirements/functional-requirements.md) | Requirements with FR IDs |
 | User Stories            | [user-stories.md](../01-requirements/user-stories.md)                       | Acceptance criteria      |
 
@@ -214,7 +214,7 @@ flowchart TB
 
 ---
 
-## 1. Authentication Endpoints
+## 1. Authentication Endpoints `[V1.0]`
 
 ### POST /auth/register
 
@@ -379,7 +379,7 @@ Handle Google OAuth callback.
 
 ---
 
-## 2. User Endpoints
+## 2. User Endpoints `[V1.1]`
 
 ### GET /users/me
 
@@ -473,7 +473,7 @@ Revoke session.
 
 ---
 
-## 3. Organization Endpoints
+## 3. Organization Endpoints `[V1.0]`
 
 ### GET /organizations
 
@@ -582,7 +582,7 @@ Soft delete organization.
 
 ---
 
-## 4. Organization Member Endpoints
+## 4. Organization Member Endpoints `[V1.0]`
 
 ### GET /organizations/:id/members
 
@@ -675,7 +675,7 @@ Remove a member from the organization.
 
 ---
 
-## 5. Project Endpoints
+## 5. Project Endpoints `[V1.0]`
 
 ### GET /projects
 
@@ -896,7 +896,7 @@ Duplicate project.
 
 ---
 
-## 6. Task Endpoints
+## 6. Task Endpoints `[V1.0]`
 
 ### GET /projects/:id/tasks
 
@@ -1151,7 +1151,7 @@ Outdent task.
 
 ---
 
-## 7. Dependency Endpoints
+## 7. Dependency Endpoints `[V1.0]`
 
 ### GET /projects/:id/dependencies
 
@@ -1230,7 +1230,7 @@ Delete dependency.
 
 ---
 
-## 8. Schedule Endpoints
+## 8. Schedule Endpoints `[V1.0]`
 
 ### POST /projects/:id/schedule/calculate
 
@@ -1279,7 +1279,7 @@ Get critical path.
 
 ---
 
-## 9. Calendar Endpoints
+## 9. Calendar Endpoints `[V1.0]`
 
 ### GET /projects/:id/calendars
 
@@ -1416,7 +1416,7 @@ Delete exception.
 
 ---
 
-## 10. Resource Endpoints
+## 10. Resource Endpoints `[V1.0]`
 
 ### GET /projects/:id/resources
 
@@ -1622,7 +1622,7 @@ Add availability period.
 
 ---
 
-## 11. Assignment Endpoints
+## 11. Assignment Endpoints `[V1.0]`
 
 ### GET /tasks/:taskId/assignments
 
@@ -1712,7 +1712,7 @@ List resource assignments.
 
 ---
 
-## 12. Baseline Endpoints
+## 12. Baseline Endpoints `[V1.1]`
 
 ### GET /projects/:id/baselines
 
@@ -1837,7 +1837,7 @@ Clear baseline.
 
 ---
 
-## 13. Time Entry Endpoints
+## 13. Time Entry Endpoints `[V1.1]`
 
 ### POST /time-entries
 
@@ -1988,7 +1988,7 @@ Or reject:
 
 ---
 
-## 14. Comment Endpoints
+## 14. Comment Endpoints `[V1.1]`
 
 ### GET /comments/entity/:entityType/:entityId
 
@@ -2070,7 +2070,7 @@ Delete comment.
 
 ---
 
-## 15. Attachment Endpoints
+## 15. Attachment Endpoints `[V1.1]`
 
 ### GET /attachments/entity/:entityType/:entityId
 
@@ -2133,7 +2133,7 @@ Delete attachment.
 
 ---
 
-## 16. Notification Endpoints
+## 16. Notification Endpoints `[V1.1]`
 
 ### GET /notifications
 
@@ -2211,7 +2211,7 @@ Get notification settings.
 
 ---
 
-## 17. Activity Log Endpoints
+## 17. Activity Log Endpoints `[V1.0]`
 
 ### GET /projects/:id/activity
 
@@ -2254,7 +2254,7 @@ Get activity log.
 
 ---
 
-## 18. AI Endpoints
+## 18. AI Endpoints `[V1.2]`
 
 ### POST /projects/:id/ai/chat
 
@@ -2350,7 +2350,7 @@ Get AI suggestions.
 
 ---
 
-## 19. Export/Import Endpoints
+## 19. Export/Import Endpoints `[V1.1]`
 
 ### GET /projects/:id/export/csv
 
@@ -2411,7 +2411,7 @@ Export Gantt as PNG.
 
 ---
 
-## 20. WebSocket API
+## 20. WebSocket API `[V1.1]`
 
 ### Connect
 
@@ -2467,7 +2467,7 @@ wss://api.projectlibre.app/ws/projects/:id?token=<access_token>
 
 ---
 
-## 21. Health & Meta
+## 21. Health & Meta `[V1.0]`
 
 ### GET /health
 

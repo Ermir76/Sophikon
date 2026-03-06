@@ -11,7 +11,7 @@
 
 | Document          | Path                                                      | Description                |
 | ----------------- | --------------------------------------------------------- | -------------------------- |
-| Database Schema   | [database-schema.md](../02-design/database-schema.md)     | 25 tables, full SQL        |
+| Database Schema   | [database-schema.md](../02-design/database-schema.md)     | 28 tables, full SQL        |
 | API Specification | [api-specification.md](../02-design/api-specification.md) | REST + WebSocket endpoints |
 | User Stories      | [user-stories.md](./user-stories.md)                      | Acceptance criteria        |
 | AI Features       | [ai-features.md](./ai-features.md)                        | AI implementation details  |
@@ -26,9 +26,10 @@ Sophikon V1 is a modern, AI-powered project management web application. This doc
 
 | Version  | Focus          | Key Features                                           |
 | -------- | -------------- | ------------------------------------------------------ |
-| **V1.0** | Foundation MVP | Full PM core, resources, calendars, baselines, AI chat |
-| **V2.2** | Intelligence   | AI project planner, risk detection, schedule optimizer |
-| **V3.0** | Enterprise     | Multi-tenant, SSO, organizations, integrations         |
+| **V1.0** | Foundation MVP | Multi-tenancy, core PM, tasks, Gantt, scheduling, resources |
+| **V1.1** | Resources      | Baselines, calendars, cost tracking, reports                |
+| **V1.2** | Intelligence   | AI project planner, risk detection, schedule optimizer      |
+| **V2.0** | Enterprise     | SSO, advanced permissions, integrations                     |
 
 ---
 
@@ -36,14 +37,16 @@ Sophikon V1 is a modern, AI-powered project management web application. This doc
 
 > **Source of Truth:** [database-schema.md](../02-design/database-schema.md)
 
-### 2.1 Entity Overview (V1.0 - 25 Tables)
+### 2.1 Entity Overview (V1.0 - 28 Tables)
 
 ```
-Auth & Users (4)          Project Core (3)         Scheduling (2)
-├── user                  ├── project              ├── calendar
-├── role                  ├── project_member       └── calendar_exception
-├── refresh_token         └── project_invitation
-└── password_reset
+Auth & Users (5)          Organizations (2)        Project Core (3)
+├── user                  ├── organization         ├── project
+├── role                  └── organization_member  ├── project_member
+├── refresh_token                                  └── project_invitation
+├── password_reset        Scheduling (2)
+└── email_verification    ├── calendar
+                          └── calendar_exception
 
 Work Items (2)            Dependencies (1)         Resources (3)
 ├── task                  └── dependency           ├── resource

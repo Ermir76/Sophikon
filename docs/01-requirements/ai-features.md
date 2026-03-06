@@ -1,8 +1,10 @@
 # Sophikon V1.0 - AI Features Specification
 
+> **Note:** AI features are **designed but not yet implemented**. Database models exist (`AIConversation`, `AIMessage`, `AIUsage`) but the service layer, endpoints, and frontend components are not built yet. The `app/ai/prompts/` directory referenced in code samples below does not exist — it is a design target. See `docs/ROADMAP.md` for schedule (V1.2).
+
 **Version:** 1.0
 **Date:** 2026-02-06
-**Status:** Aligned with database-schema.md v1.0
+**Status:** Design spec — not yet implemented
 
 ---
 
@@ -78,7 +80,7 @@ This document defines AI-powered features across all versions:
 
 **Priority:** Must Have
 **Complexity:** Medium-High
- 
+
 #### Description
 
 Natural language interface to query and interact with project data.
@@ -394,7 +396,7 @@ class SuggestionService:
             suggestions.extend(await self._get_llm_suggestions(tasks))
         return sorted(suggestions, key=lambda s: s.priority)[:limit]
 ```
-        
+
 ---
 
 ## 4. V1.1 AI Features (Future)

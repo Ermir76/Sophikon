@@ -1,7 +1,7 @@
 # Sophikon V1.0 - Database Schema
 
-**Version:** 2.1  
-**Date:** 2026-02-13  
+**Version:** 2.1
+**Date:** 2026-02-13
 **Status:** Added organization & organization_member tables for multi-tenancy
 
 ---
@@ -26,11 +26,11 @@ CREATE EXTENSION IF NOT EXISTS "pg_uuidv7";      -- For UUIDv7 generation
 
 ## Schema Overview
 
-### V1.0 MVP Tables (27 tables)
+### V1.0 MVP Tables (28 tables)
 
-| Category          | Tables                                         |
-| ----------------- | ---------------------------------------------- |
-| **Auth & Users**  | user, role, refresh_token, password_reset      |
+| Category          | Tables                                                |
+| ----------------- | ----------------------------------------------------- |
+| **Auth & Users**  | user, role, refresh_token, password_reset, email_verification |
 | **Organizations** | organization, organization_member              |
 | **Project Core**  | project, project_member, project_invitation    |
 | **Scheduling**    | calendar, calendar_exception                   |
@@ -1032,4 +1032,4 @@ migrations/
 | Version | Date       | Author | Changes                                                                    |
 | ------- | ---------- | ------ | -------------------------------------------------------------------------- |
 | 1.0     | 2026-02-05 | Ermir  | Initial draft with SQL                                                     |
-| 2.0     | 2026-02-06 | Ermir  | Refactored to markdown tables for readability, added UUIDv7, all 25 tables |
+| 2.0     | 2026-02-06 | Ermir  | Refactored to markdown tables for readability, added UUIDv7, all 28 tables |

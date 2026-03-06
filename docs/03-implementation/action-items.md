@@ -36,8 +36,6 @@
 
 ### Cleanup (2 minutes)
 
-- [x] **Delete `backend/main.py`** — dead entry point
-
 ### Tooling (clean CI, clean commits)
 
 - [x] **Fix ESLint errors** — 30 min
