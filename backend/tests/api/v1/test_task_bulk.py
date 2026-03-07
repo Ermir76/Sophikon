@@ -211,6 +211,69 @@ async def test_bulk_update_tasks_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_bulk_update_syncs_duration_progress_fields_for_leaf_tasks(
+    client: AsyncClient,
+):
+    """Bulk update — leaf duration progress fields are recalculated."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "bu_dur@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "BU Dur",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org BU Dur", "slug": "org-bu-dur"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj BU Dur",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    t1_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    t2_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    payload = {
+        "tasks": [
+            {"id": t1_id, "data": {"percent_complete": 50}},
+            {"id": t2_id, "data": {"duration": 600, "percent_complete": 25}},
+        ]
+    }
+    resp = await client.patch(f"/api/v1/projects/{proj_id}/tasks/bulk", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["succeeded"] == 2
+    assert data["failed"] == 0
+
+    t1 = (await client.get(f"/api/v1/projects/{proj_id}/tasks/{t1_id}")).json()
+    assert t1["actual_duration"] == 240
+    assert t1["remaining_duration"] == 240
+
+    t2 = (await client.get(f"/api/v1/projects/{proj_id}/tasks/{t2_id}")).json()
+    assert t2["actual_duration"] == 150
+    assert t2["remaining_duration"] == 450
+
+
+@pytest.mark.asyncio
 async def test_bulk_update_tasks_nonexistent(client: AsyncClient):
     """Bulk update — nonexistent task partial success."""
     await client.post(
@@ -259,6 +322,73 @@ async def test_bulk_update_tasks_nonexistent(client: AsyncClient):
     assert data["failed"] == 1
     assert len(data["errors"]) == 1
     assert data["errors"][0]["index"] == 1
+
+
+@pytest.mark.asyncio
+async def test_bulk_update_rejects_computed_fields_on_summary_task(client: AsyncClient):
+    """Bulk update — summary rollup fields are rejected per task."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "bu_sum@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "BU Sum",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org BU Sum", "slug": "org-bu-sum"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj BU Sum",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    parent_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Parent", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    leaf_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Leaf", "start_date": "2024-01-02", "duration": 480},
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Child",
+            "start_date": "2024-01-03",
+            "duration": 480,
+            "parent_task_id": parent_id,
+        },
+    )
+
+    payload = {
+        "tasks": [
+            {"id": parent_id, "data": {"percent_complete": 75}},
+            {"id": leaf_id, "data": {"name": "Leaf Updated"}},
+        ]
+    }
+
+    resp = await client.patch(f"/api/v1/projects/{proj_id}/tasks/bulk", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["succeeded"] == 1
+    assert data["failed"] == 1
+    assert "auto-calculate percent_complete" in data["errors"][0]["message"]
+
+    leaf = (await client.get(f"/api/v1/projects/{proj_id}/tasks/{leaf_id}")).json()
+    assert leaf["name"] == "Leaf Updated"
 
 
 @pytest.mark.asyncio

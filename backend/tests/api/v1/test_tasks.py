@@ -636,6 +636,58 @@ async def test_update_task_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_update_task_syncs_duration_progress_fields(client: AsyncClient):
+    """Update — leaf task keeps actual/remaining duration in sync."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_t_dur@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd T Dur",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd Dur", "slug": "org-upd-dur"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Dur",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    task = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Task 1", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()
+    task_id = task["id"]
+    assert task["actual_duration"] == 0
+    assert task["remaining_duration"] == 480
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}", json={"percent_complete": 25}
+    )
+    assert resp.status_code == 200
+    updated = resp.json()
+    assert updated["actual_duration"] == 120
+    assert updated["remaining_duration"] == 360
+
+    resp2 = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}", json={"duration": 600}
+    )
+    assert resp2.status_code == 200
+    updated2 = resp2.json()
+    assert updated2["actual_duration"] == 150
+    assert updated2["remaining_duration"] == 450
+
+
+@pytest.mark.asyncio
 async def test_update_task_viewer_forbidden(
     client: AsyncClient, session: AsyncSession, setup_roles
 ):
@@ -725,6 +777,56 @@ async def test_update_task_invalid_percent(client: AsyncClient):
         f"/api/v1/projects/{proj_id}/tasks/{task_id}", json={"percent_complete": 101}
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_task_rejects_computed_fields_on_summary_task(client: AsyncClient):
+    """Update — summary rollup fields are read-only — 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_t_sum@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd T Sum",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd Sum", "slug": "org-upd-sum"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Sum",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    parent_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Parent", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Child",
+            "start_date": "2024-01-03",
+            "duration": 480,
+            "parent_task_id": parent_id,
+        },
+    )
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{parent_id}",
+        json={"duration": 999},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert "auto-calculate duration" in resp.json()["error"]["message"]
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,9 @@
+from datetime import date
+
 import pytest
 from httpx import AsyncClient
+
+from app.service.calendar_utils import DEFAULT_WORK_WEEK, working_minutes_between
 
 
 @pytest.mark.asyncio
@@ -249,6 +253,29 @@ async def test_summary_rollup_flow(client: AsyncClient):
     assert parent_check["is_summary"] is True
     # The parent takes the min start date of its children
     assert parent_check["start_date"] == "2024-01-05"
+    assert parent_check["finish_date"] == "2024-01-11"
+    assert parent_check["duration"] == working_minutes_between(
+        date(2024, 1, 5),
+        date(2024, 1, 11),
+        DEFAULT_WORK_WEEK,
+        [],
+    )
+
+    await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{c1_id}",
+        json={"percent_complete": 100},
+    )
+    await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{c2_id}",
+        json={"percent_complete": 0},
+    )
+
+    parent_progress = (
+        await client.get(f"/api/v1/projects/{proj_id}/tasks/{p_id}")
+    ).json()
+    assert parent_progress["percent_complete"] == "50.00"
+    assert parent_progress["actual_duration"] == 480
+    assert parent_progress["remaining_duration"] == 480
 
     # Delete children to test cascade summary reset
     await client.delete(f"/api/v1/projects/{proj_id}/tasks/{c1_id}")
@@ -259,6 +286,83 @@ async def test_summary_rollup_flow(client: AsyncClient):
         await client.get(f"/api/v1/projects/{proj_id}/tasks/{p_id}")
     ).json()
     assert parent_check2["is_summary"] is False
+    assert parent_check2["work"] == 0
+    assert parent_check2["percent_complete"] == "0.00"
+    assert parent_check2["actual_duration"] == 0
+    assert parent_check2["remaining_duration"] == 0
+
+
+@pytest.mark.asyncio
+async def test_summary_rollup_updates_ancestors_on_child_update(client: AsyncClient):
+    """Integration: Child updates refresh parent and grandparent rollups."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "roll_ancestor@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Roll Ancestor",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Roll Ancestor", "slug": "org-roll-ancestor"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Roll Ancestor",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    grandparent_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Grandparent", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+    parent_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "Parent",
+                "start_date": "2024-01-02",
+                "duration": 480,
+                "parent_task_id": grandparent_id,
+            },
+        )
+    ).json()["id"]
+    child_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "Child",
+                "start_date": "2024-01-03",
+                "duration": 480,
+                "parent_task_id": parent_id,
+                "constraint_type": "SNET",
+                "constraint_date": "2024-01-03",
+            },
+        )
+    ).json()["id"]
+
+    await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{child_id}",
+        json={"start_date": "2024-01-08", "constraint_date": "2024-01-08"},
+    )
+
+    parent = (await client.get(f"/api/v1/projects/{proj_id}/tasks/{parent_id}")).json()
+    grandparent = (
+        await client.get(f"/api/v1/projects/{proj_id}/tasks/{grandparent_id}")
+    ).json()
+
+    assert parent["start_date"] == "2024-01-08"
+    assert grandparent["start_date"] == "2024-01-08"
 
 
 @pytest.mark.asyncio
