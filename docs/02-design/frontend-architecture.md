@@ -9,6 +9,7 @@
 ## Directory Structure
 
 ```
+
 src/
 ├── app/
 │   ├── App.tsx
@@ -101,9 +102,21 @@ src/
 │   │   │   └── ResourcesPage.tsx
 │   │   └── index.ts
 │   │
-│   └── reports/
-│       ├── pages/
-│       │   └── ReportsPage.tsx
+│   ├── reports/
+│   │   ├── pages/
+│   │   │   └── ReportsPage.tsx
+│   │   └── index.ts
+│   │
+│   └── ai/
+│       ├── components/
+│       │   └── AiDockedPanel.tsx
+│       ├── hooks/
+│       │   └── useAi.ts
+│       ├── api/
+│       │   └── ai.service.ts
+│       ├── store/
+│       │   └── ai-panel-store.ts
+│       ├── types.ts
 │       └── index.ts
 │
 ├── shared/

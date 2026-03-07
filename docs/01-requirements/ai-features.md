@@ -1,10 +1,10 @@
 # Sophikon V1.0 - AI Features Specification
 
-> **Note:** AI features are **designed but not yet implemented**. Database models exist (`AIConversation`, `AIMessage`, `AIUsage`) but the service layer, endpoints, and frontend components are not built yet. The `app/ai/prompts/` directory referenced in code samples below does not exist — it is a design target. See `docs/ROADMAP.md` for schedule (V1.2).
+> **Note:** V1.0 AI MVP (Chat, Estimate, Suggestions) is implemented. The architecture differs from this original spec — see `docs/03-implementation/ai-action-plan.md` for the current implementation. Code samples and route paths below reflect the original design and may not match the current codebase exactly. V1.1/V1.2 features remain planned.
 
 **Version:** 1.0
 **Date:** 2026-02-06
-**Status:** Design spec — not yet implemented
+**Status:** V1.0 MVP implemented; V1.1+ features remain design spec
 
 ---
 
@@ -13,7 +13,7 @@
 | Document                   | Relationship                                     |
 | -------------------------- | ------------------------------------------------ |
 | database-schema.md         | AI tables: ai_conversation, ai_message, ai_usage |
-| api-specification.md       | AI endpoints: /api/v1/ai/\*                      |
+| api-specification.md       | AI endpoints: /api/v1/projects/{id}/ai/\*        |
 | user-stories.md            | Epic 5: AI Assistant user stories                |
 | functional-requirements.md | FR-AI-\* requirements                            |
 
@@ -23,56 +23,54 @@
 
 This document defines AI-powered features across all versions:
 
-| Version  | AI Features                                                          |
-| -------- | -------------------------------------------------------------------- |
-| **V1.0** | Chat Assistant, Task Estimation, Basic Suggestions                   |
-| **V1.1** | Resource Optimization suggestions                                    |
-| **V1.2** | Project Planner, Risk Detector, Schedule Optimizer, Report Generator |
+| Version  | AI Features                                                          | Status      |
+| -------- | -------------------------------------------------------------------- | ----------- |
+| **V1.0** | Chat Assistant, Task Estimation, Basic Suggestions                   | Implemented |
+| **V1.1** | Resource Optimization suggestions                                    | Planned     |
+| **V1.2** | Project Planner, Risk Detector, Schedule Optimizer, Report Generator | Planned     |
 
 ---
 
 ## 2. AI Architecture
 
+Current implemented architecture (3-tier separation):
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend (React)                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │ AI Chat     │  │ AI Suggest  │  │ Estimation UI           │ │
-│  │ Panel       │  │ Toasts      │  │                         │ │
-│  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘ │
-└─────────┼────────────────┼─────────────────────┼───────────────┘
-          │                │                     │
-          ▼                ▼                     ▼
+│                    Frontend (React)                              │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │            AiDockedPanel (features/ai/)                   │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────────────────────┐  │   │
+│  │  │ Chat Tab │  │ Estimate │  │ Suggestions Tab        │  │   │
+│  │  │ (SSE)    │  │ Tab      │  │                        │  │   │
+│  │  └──────────┘  └──────────┘  └────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Backend (FastAPI)                           │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    /api/v1/ai/                           │   │
-│  │  POST /chat          - Chat with project                 │   │
-│  │  POST /estimate      - Estimate task duration            │   │
-│  │  GET  /suggestions   - Get contextual suggestions        │   │
-│  │  POST /plan          - Generate project plan (V1.2)      │   │
-│  │  GET  /risks         - Detect risks (V1.2)               │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                              │                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                  AI Service Layer                        │   │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐│   │
-│  │  │ ChatService │ │ Estimator   │ │ PromptManager       ││   │
-│  │  └─────────────┘ └─────────────┘ └─────────────────────┘│   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│               Backend Control Plane (FastAPI)                    │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │        /api/v1/projects/{project_id}/ai/                  │   │
+│  │  POST /chat          - Stream AI chat (SSE)               │   │
+│  │  POST /estimate      - Generate task estimates            │   │
+│  │  GET  /suggestions   - Get project suggestions            │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│  Auth, RBAC, project isolation, conversation/usage persistence  │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │ (service-to-service, shared secret)
+                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      LLM Provider Layer                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │ Claude API   │  │ OpenAI API   │  │ Local LLM (future)   │  │
-│  │ (Primary)    │  │ (Fallback)   │  │ Ollama               │  │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+│                 AI Service (ai-service/)                         │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  POST /v1/brain/chat        - Streaming reasoning         │   │
+│  │  POST /v1/brain/estimate    - Duration estimation          │   │
+│  │  POST /v1/brain/suggestions - Project suggestions          │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│  Currently mock mode; provider abstraction ready for LLM APIs   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 ---
-
 
 ## 3. V1.0 AI Features
 

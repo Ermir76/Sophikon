@@ -1,8 +1,8 @@
 # Sophikon V1.0 - Database Schema
 
-**Version:** 2.1
+**Version:** 2.2
 **Date:** 2026-02-13
-**Status:** Added organization & organization_member tables for multi-tenancy
+**Status:** 28 tables. Auth, organizations, projects, tasks, dependencies, calendars, resources, assignments, AI tables are actively used. Baselines, time tracking, collaboration, and audit tables are schema-only (no API/UI yet).
 
 ---
 
@@ -28,20 +28,22 @@ CREATE EXTENSION IF NOT EXISTS "pg_uuidv7";      -- For UUIDv7 generation
 
 ### V1.0 MVP Tables (28 tables)
 
-| Category          | Tables                                                |
-| ----------------- | ----------------------------------------------------- |
-| **Auth & Users**  | user, role, refresh_token, password_reset, email_verification |
-| **Organizations** | organization, organization_member              |
-| **Project Core**  | project, project_member, project_invitation    |
-| **Scheduling**    | calendar, calendar_exception                   |
-| **Work Items**    | task, task_baseline                            |
-| **Dependencies**  | dependency                                     |
-| **Resources**     | resource, resource_rate, resource_availability |
-| **Assignments**   | assignment, assignment_baseline                |
-| **Time Tracking** | time_entry                                     |
-| **Collaboration** | comment, attachment, notification              |
-| **AI**            | ai_conversation, ai_message, ai_usage          |
-| **Audit**         | activity_log                                   |
+| Category          | Tables                                                        |
+| ----------------- | ------------------------------------------------------------- |
+| Category          | Tables                                                        | Runtime Status |
+| ----------------- | ------------------------------------------------------------- | -------------- |
+| **Auth & Users**  | user, role, refresh_token, password_reset, email_verification | Active         |
+| **Organizations** | organization, organization_member                             | Active         |
+| **Project Core**  | project, project_member, project_invitation                   | Active         |
+| **Scheduling**    | calendar, calendar_exception                                  | Active         |
+| **Work Items**    | task, task_baseline                                           | Active (task_baseline schema-only) |
+| **Dependencies**  | dependency                                                    | Active         |
+| **Resources**     | resource, resource_rate, resource_availability                | Active         |
+| **Assignments**   | assignment, assignment_baseline                               | Active (assignment_baseline schema-only) |
+| **Time Tracking** | time_entry                                                    | Schema-only    |
+| **Collaboration** | comment, attachment, notification                             | Schema-only    |
+| **AI**            | ai_conversation, ai_message, ai_usage                         | Active         |
+| **Audit**         | activity_log                                                  | Schema-only    |
 
 ---
 
@@ -743,7 +745,7 @@ Baseline snapshots of assignments.
 
 ---
 
-### 9. TIME TRACKING
+### 9. TIME TRACKING (Schema-only)
 
 #### TIME_ENTRY
 
@@ -777,7 +779,7 @@ Time logging with approval workflow.
 
 ---
 
-### 10. COLLABORATION
+### 10. COLLABORATION (Schema-only)
 
 #### COMMENT
 
@@ -863,7 +865,9 @@ User notifications for events.
 
 ---
 
-### 11. AI
+### 11. AI (Active)
+
+All three AI tables are actively used by the chat, estimation, and suggestion flows.
 
 #### AI_CONVERSATION
 
@@ -888,7 +892,7 @@ AI chat conversations scoped to projects.
 
 #### AI_MESSAGE
 
-Individual messages in AI conversations.
+Individual messages in AI conversations. Currently populated: role, content, model, tokens_in, tokens_out, finish_reason. Not yet populated: latency_ms, tool_calls, tool_results.
 
 | Column              | Type         | Constraints                           | Default            | Description                |
 | ------------------- | ------------ | ------------------------------------- | ------------------ | -------------------------- |
@@ -934,7 +938,7 @@ AI usage tracking for cost management and rate limiting.
 
 ---
 
-### 12. AUDIT
+### 12. AUDIT (Schema-only)
 
 #### ACTIVITY_LOG
 
@@ -968,12 +972,11 @@ Audit trail of all project changes.
 
 | Version  | New Tables                         | Total |
 | -------- | ---------------------------------- | ----- |
-| V1.0 MVP | 25                                 | 25    |
-| V1.1     | 0 (all included)                   | 25    |
-| V1.2     | +risk, +report_template            | 27    |
-| V2.0     | +organization, +team, +integration | 30+   |
+| V1.0 MVP | 28 (includes org + AI tables)      | 28    |
+| V1.2     | +risk, +report_template            | 30    |
+| V2.0     | +team, +integration                | 32+   |
 
-### V1.0 MVP Tables (25)
+### V1.0 MVP Tables (28)
 
 | #   | Table                 | Category      | Records Expected    |
 | --- | --------------------- | ------------- | ------------------- |
@@ -981,27 +984,30 @@ Audit trail of all project changes.
 | 2   | role                  | Auth          | 6 (seeded) + custom |
 | 3   | refresh_token         | Auth          | 1-5 per user        |
 | 4   | password_reset        | Auth          | Temporary           |
-| 5   | project               | Project       | 10-50 per user      |
-| 6   | project_member        | Project       | 1-20 per project    |
-| 7   | project_invitation    | Project       | Temporary           |
-| 8   | calendar              | Scheduling    | 1-5 per project     |
-| 9   | calendar_exception    | Scheduling    | 10-50 per calendar  |
-| 10  | task                  | Work Items    | 50-500 per project  |
-| 11  | task_baseline         | Work Items    | 0-11 per task       |
-| 12  | dependency            | Dependencies  | ~50% of tasks       |
-| 13  | resource              | Resources     | 5-50 per project    |
-| 14  | resource_rate         | Resources     | 1-5 per resource    |
-| 15  | resource_availability | Resources     | 1-3 per resource    |
-| 16  | assignment            | Assignments   | 1-3 per task        |
-| 17  | assignment_baseline   | Assignments   | 0-11 per assignment |
-| 18  | time_entry            | Time Tracking | High volume         |
-| 19  | comment               | Collaboration | 0-10 per task       |
-| 20  | attachment            | Collaboration | 0-5 per task        |
-| 21  | notification          | Collaboration | High volume         |
-| 22  | ai_conversation       | AI            | 1-10 per project    |
-| 23  | ai_message            | AI            | 10-100 per convo    |
-| 24  | ai_usage              | AI            | 1 per AI call       |
-| 25  | activity_log          | Audit         | High volume         |
+| 5   | email_verification    | Auth          | Temporary           |
+| 6   | organization          | Organizations | 1-10 per user       |
+| 7   | organization_member   | Organizations | 1-50 per org        |
+| 8   | project               | Project       | 10-50 per user      |
+| 9   | project_member        | Project       | 1-20 per project    |
+| 10  | project_invitation    | Project       | Temporary           |
+| 11  | calendar              | Scheduling    | 1-5 per project     |
+| 12  | calendar_exception    | Scheduling    | 10-50 per calendar  |
+| 13  | task                  | Work Items    | 50-500 per project  |
+| 14  | task_baseline         | Work Items    | 0-11 per task       |
+| 15  | dependency            | Dependencies  | ~50% of tasks       |
+| 16  | resource              | Resources     | 5-50 per project    |
+| 17  | resource_rate         | Resources     | 1-5 per resource    |
+| 18  | resource_availability | Resources     | 1-3 per resource    |
+| 19  | assignment            | Assignments   | 1-3 per task        |
+| 20  | assignment_baseline   | Assignments   | 0-11 per assignment |
+| 21  | time_entry            | Time Tracking | High volume         |
+| 22  | comment               | Collaboration | 0-10 per task       |
+| 23  | attachment            | Collaboration | 0-5 per task        |
+| 24  | notification          | Collaboration | High volume         |
+| 25  | ai_conversation       | AI            | 1-10 per project    |
+| 26  | ai_message            | AI            | 10-100 per convo    |
+| 27  | ai_usage              | AI            | 1 per AI call       |
+| 28  | activity_log          | Audit         | High volume         |
 
 ---
 

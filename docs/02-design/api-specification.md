@@ -896,6 +896,28 @@ Duplicate project.
 
 ---
 
+## 5A. Insights Endpoints `[Current mounted in codebase]`
+
+### GET /organizations/:org_id/insights/dashboard
+
+Return organization dashboard/control-center insights.
+
+**Query Parameters:** `window_preset`, `start_date`, `end_date`
+
+**Response:** `200 OK`
+
+---
+
+### GET /projects/:project_id/insights/overview
+
+Return project overview insights.
+
+**Query Parameters:** `window_preset`, `start_date`, `end_date`
+
+**Response:** `200 OK`
+
+---
+
 ## 6. Task Endpoints `[V1.0]`
 
 ### GET /projects/:id/tasks
@@ -1622,6 +1644,38 @@ Add availability period.
 
 ---
 
+## 10A. Utilization Endpoints `[Current mounted in codebase]`
+
+### GET /projects/:project_id/utilization
+
+Get project utilization summary for all active resources in a date range.
+
+**Query Parameters:** `start_date`, `end_date`
+
+**Response:** `200 OK`
+
+---
+
+### GET /projects/:project_id/utilization/over-allocations
+
+Detect over-allocated resources in a date range.
+
+**Query Parameters:** `start_date`, `end_date`
+
+**Response:** `200 OK`
+
+---
+
+### GET /projects/:project_id/utilization/:resource_id
+
+Get time-phased utilization for a single resource.
+
+**Query Parameters:** `start_date`, `end_date`
+
+**Response:** `200 OK`
+
+---
+
 ## 11. Assignment Endpoints `[V1.0]`
 
 ### GET /tasks/:taskId/assignments
@@ -2254,7 +2308,7 @@ Get activity log.
 
 ---
 
-## 18. AI Endpoints `[V1.2]`
+## 18. AI Endpoints `[V1.0]`
 
 ### POST /projects/:id/ai/chat
 

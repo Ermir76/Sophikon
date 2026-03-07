@@ -203,13 +203,13 @@
 
 **Acceptance Criteria:**
 
-- [ ] Can click "Estimate with AI" on task
-- [ ] AI analyzes task name and description
-- [ ] AI provides optimistic/likely/pessimistic estimates
-- [ ] AI shows reasoning for estimate
+- [ ] Can click "Estimate with AI" on task (available via AI panel, not task row)
+- [x] AI analyzes task name and description
+- [x] AI provides optimistic/likely/pessimistic estimates
+- [x] AI shows reasoning for estimate
 - [ ] AI shows similar historical tasks (if available)
-- [ ] Can accept, modify, or reject estimate
-- [ ] Can bulk-estimate multiple tasks
+- [x] Can accept, modify, or reject estimate
+- [x] Can bulk-estimate multiple tasks
 
 ---
 
@@ -382,11 +382,11 @@
 
 **Acceptance Criteria:**
 
-- [ ] Chat panel accessible from any view
-- [ ] Can ask about task status, dates, assignments
+- [x] Chat panel accessible from any view
+- [x] Can ask about task status, dates, assignments
 - [ ] Can ask about resource workload
-- [ ] Can ask about project progress
-- [ ] Responses are contextual to current project
+- [x] Can ask about project progress
+- [x] Responses are contextual to current project
 - [ ] Can click entities in responses to navigate
 
 ---
@@ -585,4 +585,3 @@
 | ------- | ---------- | --------- | ------------------------------------------- |
 | 1.0     | 2026-02-05 | Ermir | Initial draft                               |
 | 2.0     | 2026-02-06 | Ermir | Aligned with schema v3.0, added doc refs    |
-
