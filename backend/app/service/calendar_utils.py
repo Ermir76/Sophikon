@@ -190,7 +190,7 @@ def next_working_day(
     return d
 
 
-def working_days_between(
+def working_minutes_between(
     start: date,
     end: date,
     work_week: list[dict | None],
@@ -210,3 +210,13 @@ def working_days_between(
         total += get_working_minutes_on_date(current, work_week, exceptions)
         current += timedelta(days=1)
     return total
+
+
+# Backward-compatible alias: historical name kept temporarily.
+def working_days_between(
+    start: date,
+    end: date,
+    work_week: list[dict | None],
+    exceptions: list[CalendarException] | None = None,
+) -> int:
+    return working_minutes_between(start, end, work_week, exceptions)

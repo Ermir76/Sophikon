@@ -14,6 +14,7 @@ from app.service.calendar_utils import (
     next_working_day,
     subtract_working_duration,
     working_days_between,
+    working_minutes_between,
 )
 
 # ── Fixtures ──
@@ -159,25 +160,44 @@ def test_next_working_day_sunday():
 # ── working_days_between ──
 
 
-def test_working_days_between_same_day():
+def test_working_minutes_between_same_day():
     """Same working day = that day's minutes."""
-    total = working_days_between(date(2024, 1, 1), date(2024, 1, 1), DEFAULT_WORK_WEEK)
+    total = working_minutes_between(
+        date(2024, 1, 1), date(2024, 1, 1), DEFAULT_WORK_WEEK
+    )
     assert total == 420  # Mon-Fri has 420 min/day
 
 
-def test_working_days_between_week():
+def test_working_minutes_between_week():
     """Full work week (Mon-Fri) = 5 × 420 minutes."""
-    total = working_days_between(date(2024, 1, 1), date(2024, 1, 5), DEFAULT_WORK_WEEK)
+    total = working_minutes_between(
+        date(2024, 1, 1), date(2024, 1, 5), DEFAULT_WORK_WEEK
+    )
     assert total == 5 * 420
 
 
-def test_working_days_between_spans_weekend():
+def test_working_minutes_between_spans_weekend():
     """Mon to next Mon (8 calendar days) = 6 working days."""
-    total = working_days_between(date(2024, 1, 1), date(2024, 1, 8), DEFAULT_WORK_WEEK)
+    total = working_minutes_between(
+        date(2024, 1, 1), date(2024, 1, 8), DEFAULT_WORK_WEEK
+    )
     assert total == 6 * 420
 
 
-def test_working_days_between_inverted():
+def test_working_minutes_between_inverted():
     """Start > end returns 0."""
-    total = working_days_between(date(2024, 1, 5), date(2024, 1, 1), DEFAULT_WORK_WEEK)
+    total = working_minutes_between(
+        date(2024, 1, 5), date(2024, 1, 1), DEFAULT_WORK_WEEK
+    )
     assert total == 0
+
+
+def test_working_days_between_alias_matches_minutes_function():
+    """Legacy alias is preserved and returns the same value."""
+    total_alias = working_days_between(
+        date(2024, 1, 1), date(2024, 1, 5), DEFAULT_WORK_WEEK
+    )
+    total_new = working_minutes_between(
+        date(2024, 1, 1), date(2024, 1, 5), DEFAULT_WORK_WEEK
+    )
+    assert total_alias == total_new
