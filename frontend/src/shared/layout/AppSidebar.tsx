@@ -10,6 +10,7 @@ import {
   Users,
   FolderKanban,
   ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -27,6 +28,7 @@ import {
 } from "@/shared/ui/sidebar";
 import { NavUser } from "@/shared/layout/NavUser";
 import { OrgSwitcher, useMyOrgRole } from "@/features/organizations";
+import { useAiPanelStore } from "@/features/ai";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
@@ -36,6 +38,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const projectMatch = location.pathname.match(/^\/projects\/([^/]+)/);
   const projectId = projectMatch ? projectMatch[1] : null;
   const isProjectContext = !!projectId;
+  const isAiPanelOpen = useAiPanelStore((state) =>
+    projectId ? (state.projects[projectId]?.isOpen ?? false) : false,
+  );
+  const toggleAiPanel = useAiPanelStore((state) => state.togglePanel);
+  const setAiActiveTab = useAiPanelStore((state) => state.setActiveTab);
 
   const { role: currentRole } = useMyOrgRole();
   const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
@@ -153,6 +160,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuItem>
                 );
               })}
+              {isProjectContext ? (
+                <SidebarMenuItem key="AI Assistant">
+                  <SidebarMenuButton
+                    type="button"
+                    isActive={isAiPanelOpen}
+                    tooltip="AI Assistant"
+                    onClick={() => {
+                      if (!projectId) return;
+                      setAiActiveTab(projectId, "chat");
+                      toggleAiPanel(projectId);
+                    }}
+                  >
+                    <Sparkles />
+                    <span>AI Assistant</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

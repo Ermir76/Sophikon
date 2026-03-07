@@ -38,14 +38,14 @@ The Vite dev server proxies `/api` requests to `localhost:8000` (backend).
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server |
-| `npm run build` | Type-check + production build |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
-| `npm test` | Vitest (unit tests) |
-| `npm run test:e2e` | Playwright (E2E tests) |
+| Command            | Description                   |
+| ------------------ | ----------------------------- |
+| `npm run dev`      | Start dev server              |
+| `npm run build`    | Type-check + production build |
+| `npm run lint`     | ESLint                        |
+| `npm run format`   | Prettier                      |
+| `npm test`         | Vitest (unit tests)           |
+| `npm run test:e2e` | Playwright (E2E tests)        |
 
 ## Testing
 

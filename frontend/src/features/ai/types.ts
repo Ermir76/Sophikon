@@ -1,0 +1,103 @@
+export type AiTab = "chat" | "estimate" | "suggestions";
+
+export interface UiContext {
+  current_view: string;
+  selected_task_id?: string | null;
+  selected_task_ids?: string[];
+}
+
+export type AiMessageRole = "user" | "assistant" | "system";
+
+export interface AiChatMessage {
+  id: string;
+  role: AiMessageRole;
+  content: string;
+  createdAt: number;
+}
+
+export interface AiChatRequest {
+  message: string;
+  conversation_id?: string | null;
+  ui_context?: UiContext;
+  history?: Array<{
+    role: AiMessageRole;
+    content: string;
+  }>;
+}
+
+export interface AiUsageMeta {
+  tokens_in: number;
+  tokens_out: number;
+  model?: string | null;
+}
+
+export type AiChatEvent =
+  | {
+      type: "start";
+      conversation_id?: string;
+      model?: string;
+    }
+  | {
+      type: "chunk";
+      content: string;
+    }
+  | {
+      type: "done";
+      message_id?: string;
+      usage?: AiUsageMeta;
+      model?: string;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
+
+export interface AiEstimateRequest {
+  task_ids?: string[];
+  task_name?: string;
+  task_description?: string;
+  include_reasoning?: boolean;
+  ui_context?: UiContext;
+}
+
+export interface AiEstimateItem {
+  task_id?: string | null;
+  task_name: string;
+  optimistic_minutes: number;
+  likely_minutes: number;
+  pessimistic_minutes: number;
+  recommended_minutes: number;
+  confidence: number;
+  reasoning?: string | null;
+}
+
+export interface AiEstimateResponse {
+  estimates: AiEstimateItem[];
+  usage: AiUsageMeta;
+}
+
+export type AiSuggestionActionType =
+  | "NONE"
+  | "UPDATE_TASK"
+  | "ADD_DEPENDENCY"
+  | "SET_PRIORITY";
+
+export interface AiSuggestionAction {
+  type: AiSuggestionActionType;
+  payload: Record<string, unknown>;
+}
+
+export interface AiSuggestion {
+  id: string;
+  type: string;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+  title: string;
+  description: string;
+  affected_task_id?: string | null;
+  suggested_action?: AiSuggestionAction | null;
+}
+
+export interface AiSuggestionsResponse {
+  suggestions: AiSuggestion[];
+  usage: AiUsageMeta;
+}
