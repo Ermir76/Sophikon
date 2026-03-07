@@ -70,6 +70,7 @@ Current implemented architecture (3-tier separation):
 │  Currently mock mode; provider abstraction ready for LLM APIs   │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
 ---
 
 ## 3. V1.0 AI Features
@@ -605,8 +606,8 @@ AI_LIMITS = {
 
 ## Document History
 
-| Version | Date       | Author    | Changes                                          |
-| ------- | ---------- | --------- | ------------------------------------------------ |
-| 1.0     | 2026-02-05 | Ermir | Initial draft                                    |
-| 2.0     | 2026-02-05 | Ermir | Scoped to versions, added implementation details |
-| 3.0     | 2026-02-06 | Ermir | Aligned with schema v3.0, added doc references   |
+| Version | Date       | Author | Changes                                          |
+| ------- | ---------- | ------ | ------------------------------------------------ |
+| 1.0     | 2026-02-05 | Ermir  | Initial draft                                    |
+| 2.0     | 2026-02-05 | Ermir  | Scoped to versions, added implementation details |
+| 3.0     | 2026-02-06 | Ermir  | Aligned with schema v3.0, added doc references   |

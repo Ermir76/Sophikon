@@ -1,14 +1,27 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+
+
+def _coerce_uuid(value):
+    if value is None or isinstance(value, UUID):
+        return value
+
+    try:
+        return UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        return value
+
+
+SchemaUUID = Annotated[UUID, BeforeValidator(_coerce_uuid)]
 
 
 class UiContext(BaseModel):
     current_view: str = Field(default="overview", max_length=64)
-    selected_task_id: UUID | None = None
-    selected_task_ids: list[UUID] = Field(default_factory=list)
+    selected_task_id: SchemaUUID | None = None
+    selected_task_ids: list[SchemaUUID] = Field(default_factory=list)
 
 
 class ChatHistoryItem(BaseModel):
@@ -18,7 +31,7 @@ class ChatHistoryItem(BaseModel):
 
 class AIChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
-    conversation_id: UUID | None = None
+    conversation_id: SchemaUUID | None = None
     ui_context: UiContext | None = None
     history: list[ChatHistoryItem] = Field(default_factory=list, max_length=30)
 
@@ -30,9 +43,11 @@ class AIUsageMeta(BaseModel):
 
 
 class AIChatEvent(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
     type: Literal["start", "chunk", "done", "error"]
-    conversation_id: UUID | None = None
-    message_id: UUID | None = None
+    conversation_id: SchemaUUID | None = None
+    message_id: SchemaUUID | None = None
     content: str | None = None
     usage: AIUsageMeta | None = None
     error: str | None = None
@@ -40,7 +55,7 @@ class AIChatEvent(BaseModel):
 
 
 class AIEstimateRequest(BaseModel):
-    task_ids: list[UUID] = Field(default_factory=list, max_length=100)
+    task_ids: list[SchemaUUID] = Field(default_factory=list, max_length=100)
     task_name: str | None = Field(default=None, max_length=500)
     task_description: str | None = Field(default=None, max_length=4000)
     include_reasoning: bool = True
@@ -54,7 +69,7 @@ class AIEstimateRequest(BaseModel):
 
 
 class AIEstimateItem(BaseModel):
-    task_id: UUID | None = None
+    task_id: SchemaUUID | None = None
     task_name: str
     optimistic_minutes: int
     likely_minutes: int
@@ -80,7 +95,7 @@ class AISuggestionItem(BaseModel):
     severity: Literal["LOW", "MEDIUM", "HIGH"]
     title: str
     description: str
-    affected_task_id: UUID | None = None
+    affected_task_id: SchemaUUID | None = None
     suggested_action: AISuggestionAction | None = None
 
 
@@ -90,7 +105,7 @@ class AISuggestionsResponse(BaseModel):
 
 
 class ProjectContextTask(BaseModel):
-    id: UUID
+    id: SchemaUUID
     name: str
     notes: str | None = None
     start_date: date
@@ -103,7 +118,7 @@ class ProjectContextTask(BaseModel):
 
 
 class ProjectContext(BaseModel):
-    project_id: UUID
+    project_id: SchemaUUID
     name: str
     description: str | None = None
     status: str
@@ -114,7 +129,7 @@ class ProjectContext(BaseModel):
 
 
 class AIServiceEstimateTaskInput(BaseModel):
-    task_id: UUID | None = None
+    task_id: SchemaUUID | None = None
     task_name: str
     task_description: str | None = None
     duration: int | None = None
@@ -123,8 +138,8 @@ class AIServiceEstimateTaskInput(BaseModel):
 class AIServiceChatRequest(BaseModel):
     message: str
     project_context: ProjectContext
-    conversation_id: UUID | None = None
-    user_id: UUID
+    conversation_id: SchemaUUID | None = None
+    user_id: SchemaUUID
     ui_context: UiContext | None = None
     history: list[ChatHistoryItem] = Field(default_factory=list)
 
