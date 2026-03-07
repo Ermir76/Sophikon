@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # AI (optional for now)
     ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
+    AI_SERVICE_URL: str = "http://localhost:8010"
+    AI_SERVICE_SHARED_SECRET: str = "dev-ai-shared-secret"
+    AI_SERVICE_TIMEOUT_SECONDS: int = 45
 
     # Tell pydantic to read values from a .env file
     model_config = SettingsConfigDict(

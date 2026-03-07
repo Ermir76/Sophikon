@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from app.api.v1.endpoints.ai import router as ai_router
 from app.api.v1.endpoints.assignments import (
     assignments_router,
     task_assignments_router,
@@ -113,6 +114,7 @@ app.include_router(utilization_router, prefix="/api/v1")
 app.include_router(calendars_router, prefix="/api/v1")
 app.include_router(task_assignments_router, prefix="/api/v1")
 app.include_router(assignments_router, prefix="/api/v1")
+app.include_router(ai_router, prefix="/api/v1")
 
 
 # Health check endpoint
