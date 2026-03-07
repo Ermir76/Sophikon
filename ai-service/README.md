@@ -30,6 +30,16 @@ Use `uv` for all dependency changes:
 uv add <package>
 ```
 
+## Tests
+
+From `ai-service/`:
+
+```bash
+uv run pytest
+```
+
+Coverage is enabled through pytest config, matching the backend test workflow.
+
 ## Environment Variables
 
 - `AI_SERVICE_SHARED_SECRET` (required for backend calls)
