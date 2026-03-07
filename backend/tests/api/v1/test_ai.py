@@ -9,17 +9,30 @@ from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
 
+TEST_PASSWORD = "StrongPassword123!"
+
 
 async def _register_user(client: AsyncClient, email: str, full_name: str) -> None:
     response = await client.post(
         "/api/v1/auth/register",
         json={
             "email": email,
-            "password": "StrongPassword123!",
+            "password": TEST_PASSWORD,
             "full_name": full_name,
         },
     )
     assert response.status_code == 201, response.text
+
+
+async def _login_user(client: AsyncClient, email: str) -> None:
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": TEST_PASSWORD,
+        },
+    )
+    assert response.status_code == 200, response.text
 
 
 async def _create_project(client: AsyncClient, email: str, slug: str) -> str:
@@ -157,3 +170,68 @@ async def test_suggestions_forbidden_for_non_member(client: AsyncClient):
     response = await client.get(f"/api/v1/projects/{project_id}/ai/suggestions")
 
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "path_suffix", "json_body", "service_path"),
+    [
+        (
+            "post",
+            "chat",
+            {"message": "Status?"},
+            "app.api.v1.endpoints.ai.ai_service.prepare_chat_stream",
+        ),
+        (
+            "post",
+            "estimate",
+            {"task_name": "Review release plan"},
+            "app.api.v1.endpoints.ai.ai_service.estimate_for_project",
+        ),
+        (
+            "get",
+            "suggestions",
+            None,
+            "app.api.v1.endpoints.ai.ai_service.suggestions_for_project",
+        ),
+    ],
+)
+async def test_ai_endpoints_forbid_access_to_other_project(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    method: str,
+    path_suffix: str,
+    json_body: dict[str, str] | None,
+    service_path: str,
+):
+    project_a_id = await _create_project(
+        client, "ai-owner-a@example.com", "org-ai-isolation-a"
+    )
+    project_b_id = await _create_project(
+        client, "ai-owner-b@example.com", "org-ai-isolation-b"
+    )
+
+    assert project_a_id != project_b_id
+
+    await _login_user(client, "ai-owner-a@example.com")
+
+    called = False
+
+    async def _unexpected_call(*args, **kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("AI service should not run for cross-project access")
+
+    monkeypatch.setattr(service_path, _unexpected_call)
+
+    request = getattr(client, method)
+    if json_body is None:
+        response = await request(f"/api/v1/projects/{project_b_id}/ai/{path_suffix}")
+    else:
+        response = await request(
+            f"/api/v1/projects/{project_b_id}/ai/{path_suffix}",
+            json=json_body,
+        )
+
+    assert response.status_code == 403
+    assert called is False

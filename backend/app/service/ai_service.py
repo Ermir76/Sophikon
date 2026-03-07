@@ -239,7 +239,10 @@ async def request_estimate(body: AIServiceEstimateRequest) -> dict:
             )
         if response.status_code >= 400:
             raise InvalidOperationError(await _extract_error_message(response))
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise InvalidOperationError("Malformed AI estimation response") from exc
     except httpx.RequestError:
         raise InvalidOperationError("AI estimation service is unavailable")
 
@@ -254,7 +257,10 @@ async def request_suggestions(body: AIServiceSuggestionsRequest) -> dict:
             )
         if response.status_code >= 400:
             raise InvalidOperationError(await _extract_error_message(response))
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise InvalidOperationError("Malformed AI suggestions response") from exc
     except httpx.RequestError:
         raise InvalidOperationError("AI suggestions service is unavailable")
 

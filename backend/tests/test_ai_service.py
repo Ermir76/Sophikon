@@ -2,13 +2,14 @@ import json
 import uuid
 from uuid import UUID
 
+import httpx
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import InvalidOperationError, NotFoundError
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
 from app.models.ai_usage import AIUsage
@@ -21,6 +22,8 @@ from app.schema.ai import (
     AIChatRequest,
     AIEstimateRequest,
     AIServiceChatRequest,
+    AIServiceEstimateRequest,
+    AIServiceSuggestionsRequest,
     AIUsageMeta,
 )
 from app.service import ai_service
@@ -83,6 +86,18 @@ async def _seed_project_with_task(
     ).scalar_one()
     task = (await session.execute(select(Task).where(Task.id == task_id))).scalar_one()
     return user, project, task
+
+
+def _service_project_context_payload() -> dict:
+    return {
+        "project_id": str(uuid.uuid4()),
+        "name": "AI Reliability Project",
+        "status": "ACTIVE",
+        "start_date": "2026-01-01",
+        "finish_date": None,
+        "updated_at": "2026-01-02T00:00:00Z",
+        "tasks": [],
+    }
 
 
 @pytest.mark.asyncio
@@ -281,4 +296,166 @@ async def test_estimate_for_project_rejects_missing_task_ids(
             project=project,
             user_id=user.id,
             body=AIEstimateRequest(task_ids=[uuid.uuid4()]),
+        )
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class FakeStreamResponse:
+        status_code = 200
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def aiter_lines(self):
+            yield f"data: {json.dumps({'type': 'start', 'conversation_id': str(uuid.uuid4())})}"
+            yield "data: {bad-json"
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        def stream(self, *args, **kwargs):
+            return FakeStreamResponse()
+
+    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FakeAsyncClient)
+
+    events = [
+        event
+        async for event in ai_service.stream_chat(
+            AIServiceChatRequest(
+                message="Status?",
+                project_context=_service_project_context_payload(),
+                conversation_id=uuid.uuid4(),
+                user_id=uuid.uuid4(),
+            )
+        )
+    ]
+
+    assert events[0].type == "start"
+    assert events[1] == AIChatEvent(
+        type="error",
+        error="Malformed AI stream event",
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class FailingAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        def stream(self, *args, **kwargs):
+            raise httpx.ReadTimeout("timed out")
+
+    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FailingAsyncClient)
+
+    with pytest.raises(InvalidOperationError, match="AI service is unavailable"):
+        events = ai_service.stream_chat(
+            AIServiceChatRequest(
+                message="Status?",
+                project_context=_service_project_context_payload(),
+                conversation_id=uuid.uuid4(),
+                user_id=uuid.uuid4(),
+            )
+        )
+        async for _ in events:
+            pass
+
+
+@pytest.mark.asyncio
+async def test_request_estimate_rejects_malformed_ai_response(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            raise json.JSONDecodeError("Expecting value", "", 0)
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FakeAsyncClient)
+
+    with pytest.raises(InvalidOperationError, match="Malformed AI estimation response"):
+        await ai_service.request_estimate(
+            AIServiceEstimateRequest(
+                project_context=_service_project_context_payload(),
+                task_inputs=[
+                    {
+                        "task_id": uuid.uuid4(),
+                        "task_name": "Estimate release prep",
+                        "task_description": "Prepare release",
+                        "duration": 480,
+                    }
+                ],
+                include_reasoning=True,
+            )
+        )
+
+
+@pytest.mark.asyncio
+async def test_request_suggestions_rejects_malformed_ai_response(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            raise json.JSONDecodeError("Expecting value", "", 0)
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FakeAsyncClient)
+
+    with pytest.raises(
+        InvalidOperationError,
+        match="Malformed AI suggestions response",
+    ):
+        await ai_service.request_suggestions(
+            AIServiceSuggestionsRequest(
+                project_context=_service_project_context_payload(),
+                limit=5,
+            )
         )
