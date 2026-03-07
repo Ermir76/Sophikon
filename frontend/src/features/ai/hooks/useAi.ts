@@ -27,5 +27,8 @@ export function useAiSuggestions(
     queryKey: aiKeys.suggestions(projectId, limit),
     queryFn: () => aiService.suggestions(projectId!, limit),
     enabled: Boolean(projectId) && enabled,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }

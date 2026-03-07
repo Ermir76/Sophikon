@@ -1,0 +1,129 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("axios", () => ({
+  default: {
+    create: vi.fn(() => ({
+      get: vi.fn(),
+      post: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() },
+      },
+    })),
+    post: vi.fn(),
+  },
+}));
+
+vi.mock("@/features/auth/store/auth-store", () => ({
+  useAuthStore: {
+    setState: vi.fn(),
+  },
+}));
+
+vi.mock("@/features/auth/lib/auth", () => ({
+  clearAuth: vi.fn(),
+}));
+
+import axios from "axios";
+
+import { aiService } from "./ai.service";
+
+function createStreamResponse(
+  chunks: string[],
+  overrides: Partial<Response> = {},
+): Response {
+  let index = 0;
+
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      getReader: () => ({
+        read: vi.fn(async () => {
+          if (index >= chunks.length) {
+            return { done: true, value: undefined };
+          }
+
+          const value = new TextEncoder().encode(chunks[index]);
+          index += 1;
+          return { done: false, value };
+        }),
+      }),
+    } as ReadableStream<Uint8Array>,
+    ...overrides,
+  } as Response;
+}
+
+describe("aiService.streamChat", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("refreshes the session and retries once after a 401 response", async () => {
+    const onEvent = vi.fn();
+    const fetchMock = vi.mocked(fetch);
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        body: null,
+      } as Response)
+      .mockResolvedValueOnce(
+        createStreamResponse([
+          'data: {"type":"chunk","content":"Recovered"}\n\n',
+        ]),
+      );
+
+    vi.mocked(axios.post).mockResolvedValue({} as never);
+
+    await aiService.streamChat(
+      "project-1",
+      { message: "Status?" },
+      onEvent,
+    );
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "/api/v1/auth/refresh",
+      {},
+      { withCredentials: true },
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onEvent).toHaveBeenCalledWith({
+      type: "chunk",
+      content: "Recovered",
+    });
+  });
+
+  it("emits an error event when the streaming payload is malformed", async () => {
+    const onEvent = vi.fn();
+
+    vi.mocked(fetch).mockResolvedValue(
+      createStreamResponse(['data: {"type":"chunk"\n\n']),
+    );
+
+    await aiService.streamChat(
+      "project-1",
+      { message: "Status?" },
+      onEvent,
+    );
+
+    expect(onEvent).toHaveBeenCalledWith({
+      type: "error",
+      error: "Malformed streaming response",
+    });
+  });
+
+  it("throws when the chat stream has no response body", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: null,
+    } as Response);
+
+    await expect(
+      aiService.streamChat("project-1", { message: "Status?" }, vi.fn()),
+    ).rejects.toThrow("AI chat stream is not available");
+  });
+});

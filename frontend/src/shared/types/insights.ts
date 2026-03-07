@@ -53,36 +53,3 @@ export interface DashboardInsightsResponse {
   trend: TrendPoint[];
   recent_activity: RecentActivityItem[];
 }
-
-export interface ProjectOverviewKpis {
-  total_tasks: number;
-  completion_pct: number;
-  overdue_tasks: number;
-  critical_tasks: number;
-  total_resources: number;
-  overallocated_resources: number;
-}
-
-export interface ProjectOverviewSchedule {
-  start_date: string;
-  finish_date?: string | null;
-  days_remaining?: number | null;
-  milestones_due_soon: number;
-}
-
-export interface ProjectRiskItem {
-  task_id: string;
-  name: string;
-  reason: string;
-  finish_date: string;
-  percent_complete: number;
-  is_critical: boolean;
-}
-
-export interface ProjectOverviewInsightsResponse {
-  kpis: ProjectOverviewKpis;
-  schedule: ProjectOverviewSchedule;
-  trend: TrendPoint[];
-  risk_items: ProjectRiskItem[];
-  recent_activity: RecentActivityItem[];
-}

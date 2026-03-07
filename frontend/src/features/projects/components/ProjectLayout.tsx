@@ -12,17 +12,20 @@ import { Drawer, DrawerContent } from "@/shared/ui/drawer";
 export function ProjectLayout() {
   const { projectId } = useParams<{ projectId: string }>();
   const isMobile = useIsMobile();
+  const resolvedProjectId = projectId ?? "";
 
-  if (!projectId) {
-    return <Navigate to="/projects" replace />;
-  }
-
-  const projectPanelState = useAiPanelStore((state) => state.projects[projectId]);
+  const projectPanelState = useAiPanelStore(
+    (state) => state.projects[resolvedProjectId],
+  );
   const isOpen = projectPanelState?.isOpen ?? false;
   const panelSize = projectPanelState?.panelSize ?? 34;
 
   const setPanelOpen = useAiPanelStore((state) => state.setPanelOpen);
   const setPanelSize = useAiPanelStore((state) => state.setPanelSize);
+
+  if (!projectId) {
+    return <Navigate to="/projects" replace />;
+  }
 
   if (isMobile) {
     return (

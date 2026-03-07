@@ -1,5 +1,12 @@
 import { api } from "@/shared/api/api";
-import type { Project, ProjectCreate, ProjectUpdate } from "@/features/projects/types";
+import { buildInsightsWindowParams } from "@/shared/api/insights-params";
+import type { TimeWindowSelection } from "@/shared/types/insights";
+import type {
+  Project,
+  ProjectCreate,
+  ProjectDashboard,
+  ProjectUpdate,
+} from "@/features/projects/types";
 import type { PaginatedResponse } from "@/shared/types/api";
 
 export const projectService = {
@@ -13,6 +20,16 @@ export const projectService = {
 
   get: async (projectId: string) => {
     const response = await api.get<Project>(`/projects/${projectId}`);
+    return response.data;
+  },
+
+  getDashboard: async (
+    projectId: string,
+    window: TimeWindowSelection = { windowPreset: "30d" },
+  ) => {
+    const response = await api.get<ProjectDashboard>(`/projects/${projectId}/dashboard`, {
+      params: buildInsightsWindowParams(window),
+    });
     return response.data;
   },
 
