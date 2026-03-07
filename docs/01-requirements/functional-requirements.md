@@ -652,8 +652,8 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-TM-010 | Set task type (scheduling)        | Should   | PATCH /tasks/:taskId               | 🔶  |
 | FR-TM-011 | Update progress                   | Must     | PATCH /tasks/:taskId               | ✅  |
 | FR-TM-012 | Add notes                         | Should   | PATCH /tasks/:taskId               | ✅  |
-| FR-TM-013 | Summary tasks auto-calculate      | Must     | Automatic                          | 🔶  |
-| FR-TM-014 | Bulk operations                   | Should   | POST /tasks/bulk                   | ✅  |
+| FR-TM-013 | Summary tasks auto-calculate      | Must     | Automatic                          | ✅  |
+| FR-TM-014 | Bulk operations                   | Should   | POST/PATCH/DELETE /tasks/bulk      | ✅  |
 | FR-TM-015 | Set work (effort)                 | Should   | PATCH /tasks/:taskId               | 🔶  |
 | FR-TM-016 | Track actual dates                | Should   | PATCH /tasks/:taskId               | 🔶  |
 
@@ -677,7 +677,7 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-SE-001 | Calculate successor dates  | Must     | POST /projects/:id/schedule/calculate    | ✅  |
 | FR-SE-002 | Calculate critical path    | Must     | GET /projects/:id/schedule/critical-path | ✅  |
 | FR-SE-003 | Calculate slack/float      | Should   | Automatic                                | 🔶  |
-| FR-SE-004 | Respect ASAP constraint    | Must     | Automatic                                | 🔶  |
+| FR-SE-004 | Respect ASAP constraint    | Must     | Automatic                                | ✅  |
 | FR-SE-005 | Respect ALAP constraint    | Should   | Automatic                                | 🔶  |
 | FR-SE-006 | Respect date constraints   | Should   | Automatic                                | 🔶  |
 | FR-SE-007 | Auto-recalculate on change | Must     | Automatic                                | ✅  |

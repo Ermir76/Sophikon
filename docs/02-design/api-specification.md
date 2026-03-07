@@ -1067,6 +1067,10 @@ Get task details.
 
 Update task.
 
+Summary task note: `start_date`, `finish_date`, `duration`, and `percent_complete`
+are auto-calculated from child tasks. Patching those fields on a summary task
+returns `422`.
+
 **Request:**
 
 ```json
@@ -1120,6 +1124,72 @@ Bulk create tasks.
 ```
 
 **Response:** `201 Created`
+
+---
+
+### PATCH /projects/:id/tasks/bulk
+
+Bulk update tasks.
+
+Summary-task note: updates to computed rollup fields (`start_date`, `finish_date`,
+`duration`, `percent_complete`) are rejected per item for summary tasks.
+
+**Request:**
+
+```json
+{
+  "tasks": [
+    {
+      "id": "task-1",
+      "data": { "name": "Updated task name" }
+    },
+    {
+      "id": "task-2",
+      "data": { "percent_complete": 50 }
+    }
+  ]
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "succeeded": 1,
+  "failed": 1,
+  "errors": [
+    {
+      "index": 1,
+      "task_id": "task-2",
+      "message": "Summary tasks auto-calculate percent_complete from their children"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /projects/:id/tasks/bulk
+
+Bulk soft-delete tasks.
+
+**Request:**
+
+```json
+{
+  "task_ids": ["task-1", "task-2"]
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "succeeded": 2,
+  "failed": 0,
+  "errors": []
+}
+```
 
 ---
 

@@ -82,8 +82,8 @@ This document records what is evidenced by the current codebase review.
 | FR-TM-010 | Partial     | A4       | Task-type fields exist in current task model/types; full UX parity was not fully audited.                    |
 | FR-TM-011 | Implemented | A4       | Progress fields and update flow exist.                                                                       |
 | FR-TM-012 | Implemented | A4       | Task notes field and edit flow exist.                                                                        |
-| FR-TM-013 | Partial     | A4       | Summary-task fields exist; automatic rollup behavior was not fully verified in this pass.                    |
-| FR-TM-014 | Implemented | A4       | Bulk create/update/delete task flows exist.                                                                  |
+| FR-TM-013 | Implemented | A4       | Summary tasks auto-roll up span dates/duration, work, cost, and progress across child changes and scheduling; computed summary fields are rejected on direct update. |
+| FR-TM-014 | Implemented | A4       | Bulk create/update/delete task flows exist, including per-item success/failure reporting for PATCH `/tasks/bulk` validation outcomes. |
 | FR-TM-015 | Partial     | A4       | Work fields exist in current task model/types; end-to-end workflow not fully audited.                        |
 | FR-TM-016 | Partial     | A4       | Actual-date fields exist in current task model/types; end-to-end workflow not fully audited.                 |
 
@@ -107,7 +107,7 @@ This document records what is evidenced by the current codebase review.
 | FR-SE-001 | Implemented   | A5       | Schedule calculation endpoint exists.                                                    |
 | FR-SE-002 | Implemented   | A5       | Critical-path endpoint exists.                                                           |
 | FR-SE-003 | Partial       | A5       | Slack fields exist in models; current end-to-end behavior was not fully audited.         |
-| FR-SE-004 | Partial       | A4, A5   | ASAP exists in current constraint types; behavior-level verification was not completed.  |
+| FR-SE-004 | Implemented   | A4, A5   | ASAP behavior is evidenced by the scheduler's earliest-start forward-pass default when no stricter constraint applies, and integration scheduling flows cover dependency-driven earliest-start outcomes. |
 | FR-SE-005 | Partial       | A4, A5   | ALAP exists in current constraint types; behavior-level verification was not completed.  |
 | FR-SE-006 | Partial       | A4, A5   | Constraint fields exist; behavior-level verification was not completed.                  |
 | FR-SE-007 | Not evidenced | A4, A5   | No clear automatic recalculation trigger was verified from this pass.                    |
