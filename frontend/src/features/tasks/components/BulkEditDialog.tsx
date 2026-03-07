@@ -13,11 +13,12 @@ import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { useBulkUpdateTasks } from "@/features/tasks/hooks/useTasks";
 import { toast } from "sonner";
-import type { TaskUpdate } from "@/features/tasks/types";
+import type { Task, TaskUpdate } from "@/features/tasks/types";
 
 interface BulkEditDialogProps {
     projectId: string;
     selectedTaskIds: string[];
+    selectedTasks: Task[];
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
@@ -26,6 +27,7 @@ interface BulkEditDialogProps {
 export function BulkEditDialog({
     projectId,
     selectedTaskIds,
+    selectedTasks,
     isOpen,
     onClose,
     onSuccess,
@@ -34,10 +36,14 @@ export function BulkEditDialog({
     const [priority, setPriority] = useState<string>("");
 
     const bulkUpdate = useBulkUpdateTasks(projectId);
+    const allSelectedAreSummary =
+        selectedTasks.length > 0 && selectedTasks.every((task) => task.is_summary);
+    const percentEditOnly = percentComplete !== "" && priority === "";
+    const summaryPercentBlocked = percentEditOnly && allSelectedAreSummary;
 
     const handleSubmit = async () => {
-        // Build update payload - only include fields that were changed
-        const data: TaskUpdate = {};
+        let percentCompleteValue: number | null = null;
+        let priorityValue: number | null = null;
 
         if (percentComplete !== "") {
             const val = parseFloat(percentComplete);
@@ -45,27 +51,71 @@ export function BulkEditDialog({
                 toast.error("% Complete must be between 0 and 100");
                 return;
             }
-            data.percent_complete = val;
+            percentCompleteValue = val;
         }
 
         if (priority !== "") {
-            data.priority = parseInt(priority, 10);
+            priorityValue = parseInt(priority, 10);
         }
 
-        if (Object.keys(data).length === 0) {
+        if (percentCompleteValue === null && priorityValue === null) {
             toast.error("No changes specified");
+            return;
+        }
+
+        const payloadTasks = selectedTasks
+            .map((task) => {
+                const itemData: TaskUpdate = {};
+                if (priorityValue !== null) {
+                    itemData.priority = priorityValue;
+                }
+                if (percentCompleteValue !== null && !task.is_summary) {
+                    itemData.percent_complete = percentCompleteValue;
+                }
+                return Object.keys(itemData).length > 0
+                    ? { id: task.id, data: itemData }
+                    : null;
+            })
+            .filter((item): item is { id: string; data: TaskUpdate } => item !== null);
+
+        const skippedSummaryCount =
+            percentCompleteValue !== null
+                ? selectedTasks.filter((task) => task.is_summary).length
+                : 0;
+
+        if (payloadTasks.length === 0) {
+            toast.error(
+                "All selected tasks are summary tasks. % Complete is calculated from subtasks."
+            );
             return;
         }
 
         try {
             const result = await bulkUpdate.mutateAsync({
-                tasks: selectedTaskIds.map((id) => ({ id, data })),
+                tasks: payloadTasks,
             });
-            toast.success(`${result.succeeded} task(s) updated`);
-            resetForm();
-            onClose();
-            onSuccess?.();
-        } catch (error) {
+
+            if (skippedSummaryCount > 0) {
+                toast.info(
+                    `${skippedSummaryCount} summary task(s) skipped — their progress is calculated from subtasks`
+                );
+            }
+
+            if (result.failed > 0) {
+                const firstError = result.errors[0]?.message;
+                toast.error(
+                    `Updated ${result.succeeded} task(s), ${result.failed} failed${firstError ? `: ${firstError}` : ""}`
+                );
+            } else {
+                toast.success(`${result.succeeded} task(s) updated`);
+            }
+
+            if (result.succeeded > 0) {
+                resetForm();
+                onClose();
+                onSuccess?.();
+            }
+        } catch {
             toast.error("Failed to update tasks");
         }
     };
@@ -104,6 +154,11 @@ export function BulkEditDialog({
                             step={5}
                             placeholder="Leave empty to skip"
                         />
+                        {summaryPercentBlocked && (
+                            <p className="text-xs text-muted-foreground">
+                                All selected tasks are summaries. Their % Complete is calculated from subtasks.
+                            </p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -132,7 +187,7 @@ export function BulkEditDialog({
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={bulkUpdate.isPending}
+                        disabled={bulkUpdate.isPending || summaryPercentBlocked}
                     >
                         {bulkUpdate.isPending ? (
                             <>

@@ -78,6 +78,8 @@ export default function TasksPage() {
   // Compute selected task IDs from rowSelection state
   const selectedTaskIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
   const selectionCount = selectedTaskIds.length;
+  const selectedTaskIdSet = new Set(selectedTaskIds);
+  const selectedTasks = tasks.filter((task) => selectedTaskIdSet.has(task.id));
 
   // Reset the "adding first task" state if tasks are successfully loaded from the backend
   useEffect(() => {
@@ -293,6 +295,7 @@ export default function TasksPage() {
         <BulkEditDialog
           projectId={projectId}
           selectedTaskIds={selectedTaskIds}
+          selectedTasks={selectedTasks}
           isOpen={showBulkEdit}
           onClose={() => setShowBulkEdit(false)}
           onSuccess={() => {

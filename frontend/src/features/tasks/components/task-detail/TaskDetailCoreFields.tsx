@@ -18,8 +18,15 @@ export function TaskDetailCoreFields({
     handleBlur,
     onColorChange,
 }: TaskDetailCoreFieldsProps) {
+    const isSummary = task.is_summary;
+
     return (
         <div className="mt-1 space-y-6">
+            {isSummary && (
+                <p className="text-sm text-muted-foreground">
+                    Schedule and progress for summary tasks are computed from subtasks.
+                </p>
+            )}
             <div className="grid grid-cols-2 gap-x-4 gap-y-5">
                 {/* % Complete */}
                 <div className="space-y-2">
@@ -37,6 +44,7 @@ export function TaskDetailCoreFields({
                             // NOTE: Auto-save pattern: text inputs commit on blur to prevent spamming the backend
                             onBlur={() => handleBlur("percent_complete")}
                             className="pr-8"
+                            disabled={isSummary}
                         />
                         <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground">%</span>
                     </div>
@@ -53,6 +61,7 @@ export function TaskDetailCoreFields({
                         value={localData.start_date ?? ""}
                         onChange={(e) => setLocalData({ ...localData, start_date: e.target.value })}
                         onBlur={() => handleBlur("start_date")}
+                        disabled={isSummary}
                     />
                 </div>
 
@@ -68,12 +77,12 @@ export function TaskDetailCoreFields({
                         value={localData.duration ?? 0}
                         onChange={(e) => setLocalData({ ...localData, duration: Number(e.target.value) })}
                         onBlur={() => handleBlur("duration")}
-                        disabled={task.is_summary}
+                        disabled={isSummary}
                     />
                 </div>
 
                 {/* Color (summary tasks only) */}
-                {task.is_summary && (
+                {isSummary && (
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Gantt Color

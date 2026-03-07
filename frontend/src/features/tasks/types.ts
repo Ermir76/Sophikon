@@ -6,6 +6,8 @@ export interface Task {
     start_date: string;
     finish_date: string;
     duration: number;
+    actual_duration?: number;
+    remaining_duration?: number;
     work: number;
     percent_complete: number;
     percent_work_complete: number;
