@@ -50,11 +50,26 @@ services:
       # Email verification redirect URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8010}
+      AI_SERVICE_SHARED_SECRET: ${AI_SERVICE_SHARED_SECRET:-dev-ai-shared-secret}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+      ai-service:
+        condition: service_started
+
+  ai-service:
+    build:
+      context: ./ai-service
+    container_name: sophikon-ai-service
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      AI_MODE: ${AI_MODE:-mock}
+      AI_SERVICE_SHARED_SECRET: ${AI_SERVICE_SHARED_SECRET:-dev-ai-shared-secret}
 
   mailpit:
     image: axllent/mailpit:latest
