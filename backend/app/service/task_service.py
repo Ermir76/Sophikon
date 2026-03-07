@@ -5,7 +5,6 @@ Handles listing, creating, updating, and soft-deleting tasks.
 """
 
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import delete, func, select
@@ -18,6 +17,13 @@ from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskCreate, TaskUpdate
 from app.service import scheduling_service
+from app.service.task_rollup_service import (
+    apply_summary_rollup,
+    clear_summary_rollup,
+    load_project_rollup_calendar,
+    sync_leaf_duration_progress,
+    validate_summary_rollup_edit,
+)
 
 # Fields that affect the schedule — changes trigger auto-recalculation
 _SCHEDULE_FIELDS = {
@@ -181,6 +187,8 @@ async def create_task(
     duration_days = (
         max(1, data.duration // minutes_per_day) if not data.is_milestone else 0
     )
+    # TODO(2026-03-07): Align finish_date convention with scheduling/calendar math
+    # (inclusive vs exclusive end date) across create, rollup, and scheduler flows.
     finish_date = data.start_date + timedelta(days=duration_days)
 
     task = Task(
@@ -194,6 +202,7 @@ async def create_task(
         start_date=data.start_date,
         finish_date=finish_date,
         duration=data.duration,
+        actual_duration=0,
         remaining_duration=data.duration,
         is_milestone=data.is_milestone,
         task_type=data.task_type,
@@ -204,6 +213,7 @@ async def create_task(
         priority=data.priority,
         fixed_cost=data.fixed_cost,
     )
+    sync_leaf_duration_progress(task)
     db.add(task)
     await db.flush()
     if data.parent_task_id:
@@ -244,8 +254,12 @@ async def update_task(
 ) -> Task:
     """Update a task with partial data."""
     update_data = data.model_dump(exclude_unset=True)
+    validate_summary_rollup_edit(task, update_data)
+
     for field, value in update_data.items():
         setattr(task, field, value)
+    if not task.is_summary:
+        sync_leaf_duration_progress(task)
 
     # If parent changed, recalculate for both old and new parents
     # But update_task doesn't currently allow changing parent_task_id directly based on schema
@@ -323,6 +337,12 @@ async def recalculate_summary(
     if parent_task_id is None:
         return
 
+    project_result = await db.execute(select(Project).where(Project.id == project_id))
+    project = project_result.scalar_one_or_none()
+    if not project:
+        return
+    work_week, exceptions = await load_project_rollup_calendar(db, project)
+
     parent_result = await db.execute(
         select(Task).where(
             Task.id == parent_task_id,
@@ -344,41 +364,12 @@ async def recalculate_summary(
     children = list(children_result.scalars().all())
 
     if not children:
-        parent.is_summary = False
+        clear_summary_rollup(parent, work_week, exceptions)
         await db.flush()
         # Recurse up in case this parent is itself a child
         await recalculate_summary(db, project_id, parent.parent_task_id)
         return
 
-    parent.is_summary = True
-    parent.start_date = min(c.start_date for c in children)
-    parent.finish_date = max(c.finish_date for c in children)
-
-    # SUM fields
-    parent.work = sum(c.work for c in children)
-    parent.actual_work = sum(c.actual_work for c in children)
-    parent.actual_cost = sum(c.actual_cost for c in children)
-    parent.total_cost = sum(c.total_cost for c in children)
-
-    # Weighted percent complete by duration
-    total_duration = sum(c.duration for c in children)
-    if total_duration > 0:
-        weighted_pc = (
-            sum(c.percent_complete * c.duration for c in children) / total_duration
-        )
-        parent.percent_complete = weighted_pc
-    else:
-        parent.percent_complete = Decimal(0)
-
-    # actual_start = MIN (where not null)
-    actual_starts = [c.actual_start for c in children if c.actual_start is not None]
-    parent.actual_start = min(actual_starts) if actual_starts else None
-
-    # actual_finish = MAX (only if ALL children have it)
-    if all(c.actual_finish is not None for c in children):
-        parent.actual_finish = max(c.actual_finish for c in children)  # type: ignore
-    else:
-        parent.actual_finish = None
-
+    apply_summary_rollup(parent, children, work_week, exceptions)
     await db.flush()
     await recalculate_summary(db, project_id, parent.parent_task_id)

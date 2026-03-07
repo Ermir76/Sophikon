@@ -123,6 +123,8 @@ class TaskResponse(BaseModel):
     is_summary: bool
     is_critical: bool
     duration: int
+    actual_duration: int
+    remaining_duration: int
     work: int
     start_date: date
     finish_date: date

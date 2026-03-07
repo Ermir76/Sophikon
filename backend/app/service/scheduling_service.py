@@ -12,21 +12,22 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models.calendar import Calendar
 from app.models.calendar_exception import CalendarException
 from app.models.dependency import Dependency
 from app.models.enums import ConstraintType, DependencyType
 from app.models.project import Project
 from app.models.task import Task
 from app.service.calendar_utils import (
-    DEFAULT_WORK_WEEK,
     add_working_duration,
     get_working_minutes_on_date,
     next_working_day,
     subtract_working_duration,
-    working_days_between,
+    working_minutes_between,
+)
+from app.service.task_rollup_service import (
+    apply_summary_rollup,
+    load_project_rollup_calendar,
 )
 
 # ── Result Dataclass ──
@@ -67,31 +68,6 @@ class _TaskScheduleData:
 
 
 # ── Calendar Resolution ──
-
-
-async def _load_calendar_data(
-    db: AsyncSession,
-    project: Project,
-) -> tuple[list[dict | None], list[CalendarException]]:
-    """
-    Load the project's default calendar work_week and exceptions.
-
-    Falls back to the hardcoded standard work week if no calendar is set.
-    """
-    if not project.default_calendar_id:
-        return DEFAULT_WORK_WEEK, []
-
-    result = await db.execute(
-        select(Calendar)
-        .options(selectinload(Calendar.exceptions))
-        .where(Calendar.id == project.default_calendar_id)
-    )
-    calendar = result.scalar_one_or_none()
-
-    if not calendar:
-        return DEFAULT_WORK_WEEK, []
-
-    return calendar.work_week, list(calendar.exceptions)
 
 
 def _get_task_work_week(
@@ -236,7 +212,7 @@ async def calculate_schedule(
     )
     all_deps = list(deps_result.scalars().all())
 
-    work_week, exceptions = await _load_calendar_data(db, project)
+    work_week, exceptions = await load_project_rollup_calendar(db, project)
 
     # Separate summary and leaf tasks
     task_map: dict[UUID, Task] = {t.id: t for t in all_tasks}
@@ -372,7 +348,7 @@ async def calculate_schedule(
         # Total slack = LS - ES in working minutes
         if sd.ls is not None:
             if sd.ls >= sd.es:
-                sd.total_slack = working_days_between(
+                sd.total_slack = working_minutes_between(
                     sd.es,
                     sd.ls - timedelta(days=1),
                     task_ww,
@@ -390,7 +366,7 @@ async def calculate_schedule(
             if succ_es_dates:
                 min_succ_es = min(succ_es_dates)
                 if min_succ_es > sd.ef:
-                    sd.free_slack = working_days_between(
+                    sd.free_slack = working_minutes_between(
                         sd.ef + timedelta(days=1),
                         min_succ_es - timedelta(days=1),
                         task_ww,
@@ -419,7 +395,7 @@ async def calculate_schedule(
         updated += 1
 
     # 7. Summary task rollup
-    _rollup_summary_tasks(all_tasks, task_map, schedule_data, critical_ids)
+    _rollup_summary_tasks(all_tasks, work_week, exceptions, critical_ids)
 
     # Update project finish date
     all_finish_dates = [t.finish_date for t in all_tasks if not t.is_deleted]
@@ -491,8 +467,8 @@ def _apply_backward_constraints(task: Task, lf: date) -> date:
 
 def _rollup_summary_tasks(
     all_tasks: list[Task],
-    task_map: dict[UUID, Task],
-    schedule_data: dict[UUID, _TaskScheduleData],
+    work_week: list[dict | None],
+    exceptions: list[CalendarException],
     critical_ids: list[UUID],
 ) -> None:
     """
@@ -512,7 +488,6 @@ def _rollup_summary_tasks(
 
     # Process bottom-up: deepest summary tasks first
     summary_tasks = [t for t in all_tasks if t.is_summary and not t.is_deleted]
-    # Sort by outline_level descending for bottom-up processing
     summary_tasks.sort(key=lambda t: t.outline_level, reverse=True)
 
     for summary in summary_tasks:
@@ -520,27 +495,9 @@ def _rollup_summary_tasks(
         if not children:
             continue
 
-        child_starts = [c.start_date for c in children]
-        child_finishes = [c.finish_date for c in children]
-
-        summary.start_date = min(child_starts)
-        summary.finish_date = max(child_finishes)
-
-        # A summary is critical if any child is critical
-        any_critical = any(
-            c.id in {sd.task.id for sd in schedule_data.values() if sd.is_critical}
-            or c.is_critical
-            for c in children
-        )
-        summary.is_critical = any_critical
-        if any_critical:
-            summary.total_slack = 0
+        apply_summary_rollup(summary, children, work_week, exceptions)
+        if summary.is_critical:
             critical_ids.append(summary.id)
-        else:
-            child_slacks = [c.total_slack for c in children]
-            summary.total_slack = min(child_slacks) if child_slacks else 0
-
-        summary.free_slack = 0
 
 
 async def get_critical_path_tasks(
@@ -594,7 +551,7 @@ async def get_critical_path_details(
         )
     )
     all_deps = list(deps_result.scalars().all())
-    work_week, exceptions = await _load_calendar_data(db, project)
+    work_week, exceptions = await load_project_rollup_calendar(db, project)
 
     task_map = {task.id: task for task in critical_leaf_tasks}
     critical_leaf_ids = set(task_map)

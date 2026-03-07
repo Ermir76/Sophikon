@@ -15,6 +15,10 @@ from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskBulkUpdateItem, TaskCreate
 from app.service import scheduling_service
+from app.service.task_rollup_service import (
+    sync_leaf_duration_progress,
+    validate_summary_rollup_edit,
+)
 from app.service.task_service import (
     _SCHEDULE_FIELDS,
     recalculate_summary,
@@ -87,6 +91,8 @@ async def bulk_create_tasks(
                     if not task_data.is_milestone
                     else 0
                 )
+                # TODO(2026-03-07): Align finish_date convention with
+                # scheduling/calendar math (inclusive vs exclusive end date).
                 finish_date = task_data.start_date + timedelta(days=duration_days)
 
                 task = Task(
@@ -100,6 +106,7 @@ async def bulk_create_tasks(
                     start_date=task_data.start_date,
                     finish_date=finish_date,
                     duration=task_data.duration,
+                    actual_duration=0,
                     remaining_duration=task_data.duration,
                     is_milestone=task_data.is_milestone,
                     task_type=task_data.task_type,
@@ -110,6 +117,7 @@ async def bulk_create_tasks(
                     priority=task_data.priority,
                     fixed_cost=task_data.fixed_cost,
                 )
+                sync_leaf_duration_progress(task)
                 db.add(task)
                 await db.flush()  # We need the ID
                 created_tasks.append(task)
@@ -197,8 +205,12 @@ async def bulk_update_tasks(
                 if update_data.keys() & _SCHEDULE_FIELDS:
                     needs_schedule_recalc = True
 
+                validate_summary_rollup_edit(task, update_data)
+
                 for field, value in update_data.items():
                     setattr(task, field, value)
+                if not task.is_summary:
+                    sync_leaf_duration_progress(task)
 
                 # Store the current parent if it just changed
                 if task.parent_task_id:
