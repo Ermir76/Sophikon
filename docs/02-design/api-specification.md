@@ -823,55 +823,49 @@ Delete project (soft delete).
 
 Get project dashboard summary.
 
+**Query Parameters:** `window_preset`, `start_date`, `end_date`
+
+**Deferred to V1.1:** `schedule.baseline_finish_date`, `schedule.variance_days`, and the `earned_value` block require baseline/EVM follow-up work and are not part of the mounted V1 dashboard response.
+
 **Response:** `200 OK`
 
 ```json
 {
-  "data": {
-    "summary": {
-      "total_tasks": 45,
-      "completed_tasks": 16,
-      "in_progress_tasks": 12,
-      "not_started_tasks": 17,
-      "overdue_tasks": 3,
-      "milestones": 5,
-      "milestones_completed": 2,
-      "percent_complete": 35.5
-    },
-    "schedule": {
-      "start_date": "2026-02-01",
-      "finish_date": "2026-04-15",
-      "baseline_finish_date": "2026-04-10",
-      "duration_days": 74,
-      "days_elapsed": 5,
-      "days_remaining": 69,
-      "variance_days": 5
-    },
-    "resources": {
-      "total_resources": 8,
-      "overallocated_count": 2
-    },
-    "cost": {
-      "budget": 50000.00,
-      "total_cost": 48500.00,
-      "actual_cost": 17000.00,
-      "remaining_cost": 31500.00
-    },
-    "earned_value": {
-      "bcws": 18000.00,
-      "bcwp": 17000.00,
-      "acwp": 17000.00,
-      "spi": 0.94,
-      "cpi": 1.0
-    },
-    "critical_path": {
-      "task_count": 12,
-      "total_duration_days": 74
-    },
-    "upcoming_milestones": [...],
-    "overdue_tasks": [...],
-    "recent_activity": [...]
-  }
+  "summary": {
+    "total_tasks": 45,
+    "completed_tasks": 16,
+    "in_progress_tasks": 12,
+    "not_started_tasks": 17,
+    "overdue_tasks": 3,
+    "milestones": 5,
+    "milestones_completed": 2,
+    "percent_complete": 35.5
+  },
+  "schedule": {
+    "start_date": "2026-02-01",
+    "finish_date": "2026-04-15",
+    "duration_days": 74,
+    "days_elapsed": 5,
+    "days_remaining": 69
+  },
+  "resources": {
+    "total_resources": 8,
+    "overallocated_count": 2
+  },
+  "cost": {
+    "budget": 50000.0,
+    "total_cost": 48500.0,
+    "actual_cost": 17000.0,
+    "remaining_cost": 31500.0
+  },
+  "critical_path": {
+    "task_count": 12,
+    "total_duration_days": 74,
+    "path_length_days": 61
+  },
+  "upcoming_milestones": [...],
+  "overdue_tasks": [...],
+  "recent_activity": [...]
 }
 ```
 
@@ -901,16 +895,6 @@ Duplicate project.
 ### GET /organizations/:org_id/insights/dashboard
 
 Return organization dashboard/control-center insights.
-
-**Query Parameters:** `window_preset`, `start_date`, `end_date`
-
-**Response:** `200 OK`
-
----
-
-### GET /projects/:project_id/insights/overview
-
-Return project overview insights.
 
 **Query Parameters:** `window_preset`, `start_date`, `end_date`
 
@@ -2347,6 +2331,16 @@ Get AI estimates.
 }
 ```
 
+Or for an ad hoc task:
+
+```json
+{
+  "task_name": "Implement payment integration",
+  "task_description": "Connect the checkout flow to the payment provider and validate callbacks.",
+  "include_reasoning": true
+}
+```
+
 **Response:** `200 OK`
 
 ```json
@@ -2356,10 +2350,10 @@ Get AI estimates.
       {
         "task_id": "uuid",
         "task_name": "Implement payment integration",
-        "optimistic_days": 3,
-        "likely_days": 5,
-        "pessimistic_days": 8,
-        "recommended_days": 5,
+        "optimistic_minutes": 1440,
+        "likely_minutes": 2400,
+        "pessimistic_minutes": 3840,
+        "recommended_minutes": 2400,
         "confidence": 0.75,
         "reasoning": "Payment integrations typically involve..."
       }

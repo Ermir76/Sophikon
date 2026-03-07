@@ -612,202 +612,202 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 
 ### 3.1 Authentication & User Management
 
-| ID        | Requirement                  | Priority | API Endpoint              |    |
-| --------- | ---------------------------- | -------- | ------------------------- | -- |
-| FR-AU-001 | Register with email/password | Must     | POST /auth/register       | ✅ |
-| FR-AU-002 | Login with email/password    | Must     | POST /auth/login          | ✅ |
-| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | ❌ |
-| FR-AU-004 | Logout (revoke token)        | Must     | POST /auth/logout         | ✅ |
-| FR-AU-005 | Password reset via email     | Should   | POST /auth/password-reset | ❌ |
-| FR-AU-006 | Update profile               | Should   | PATCH /users/me           | ❌ |
-| FR-AU-007 | JWT with refresh tokens      | Must     | POST /auth/refresh        | ✅ |
-| FR-AU-008 | Session management           | Should   | GET /users/me/sessions    | ❌ |
+| ID        | Requirement                  | Priority | API Endpoint              |     |
+| --------- | ---------------------------- | -------- | ------------------------- | --- |
+| FR-AU-001 | Register with email/password | Must     | POST /auth/register       | ✅  |
+| FR-AU-002 | Login with email/password    | Must     | POST /auth/login          | ✅  |
+| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | ❌  |
+| FR-AU-004 | Logout (revoke token)        | Must     | POST /auth/logout         | ✅  |
+| FR-AU-005 | Password reset via email     | Should   | POST /auth/password-reset | ❌  |
+| FR-AU-006 | Update profile               | Should   | PATCH /users/me           | ❌  |
+| FR-AU-007 | JWT with refresh tokens      | Must     | POST /auth/refresh        | ✅  |
+| FR-AU-008 | Session management           | Should   | GET /users/me/sessions    | ❌  |
 
 ### 3.2 Project Management
 
-| ID        | Requirement           | Priority | API Endpoint                 |    |
-| --------- | --------------------- | -------- | ---------------------------- | -- |
-| FR-PM-001 | Create project        | Must     | POST /projects               | ✅ |
-| FR-PM-002 | Edit project          | Must     | PATCH /projects/:id          | ✅ |
-| FR-PM-003 | Delete project (soft) | Must     | DELETE /projects/:id         | ✅ |
-| FR-PM-004 | List user's projects  | Must     | GET /projects                | ✅ |
-| FR-PM-005 | Project dashboard     | Must     | GET /projects/:id/dashboard  | 🔶 |
-| FR-PM-006 | Set project status    | Should   | PATCH /projects/:id          | 🔶 |
-| FR-PM-007 | Duplicate project     | Could    | POST /projects/:id/duplicate | ❌ |
-| FR-PM-008 | Set default calendar  | Should   | PATCH /projects/:id          | 🔶 |
+| ID        | Requirement           | Priority | API Endpoint                 |     |
+| --------- | --------------------- | -------- | ---------------------------- | --- |
+| FR-PM-001 | Create project        | Must     | POST /projects               | ✅  |
+| FR-PM-002 | Edit project          | Must     | PATCH /projects/:id          | ✅  |
+| FR-PM-003 | Delete project (soft) | Must     | DELETE /projects/:id         | ✅  |
+| FR-PM-004 | List user's projects  | Must     | GET /projects                | ✅  |
+| FR-PM-005 | Project dashboard     | Must     | GET /projects/:id/dashboard  | ✅  |
+| FR-PM-006 | Set project status    | Should   | PATCH /projects/:id          | 🔶  |
+| FR-PM-007 | Duplicate project     | Could    | POST /projects/:id/duplicate | ❌  |
+| FR-PM-008 | Set default calendar  | Should   | PATCH /projects/:id          | 🔶  |
 
 ### 3.3 Task Management
 
-| ID        | Requirement                       | Priority | API Endpoint                       |    |
-| --------- | --------------------------------- | -------- | ---------------------------------- | -- |
-| FR-TM-001 | Create task                       | Must     | POST /projects/:id/tasks           | ✅ |
-| FR-TM-002 | Edit task                         | Must     | PATCH /projects/:id/tasks/:taskId  | ✅ |
-| FR-TM-003 | Delete task (soft)                | Must     | DELETE /projects/:id/tasks/:taskId | ✅ |
-| FR-TM-004 | Create hierarchy (indent/outdent) | Must     | POST /tasks/:taskId/indent         | ✅ |
-| FR-TM-005 | Auto-generate WBS codes           | Must     | Automatic                          | 🔶 |
-| FR-TM-006 | Reorder tasks (drag/drop)         | Must     | PATCH /projects/:id/tasks/reorder  | ✅ |
-| FR-TM-007 | Set duration                      | Must     | PATCH /tasks/:taskId               | ✅ |
-| FR-TM-008 | Set as milestone                  | Must     | PATCH /tasks/:taskId               | ✅ |
-| FR-TM-009 | Set constraint type               | Should   | PATCH /tasks/:taskId               | 🔶 |
-| FR-TM-010 | Set task type (scheduling)        | Should   | PATCH /tasks/:taskId               | 🔶 |
-| FR-TM-011 | Update progress                   | Must     | PATCH /tasks/:taskId               | ✅ |
-| FR-TM-012 | Add notes                         | Should   | PATCH /tasks/:taskId               | ✅ |
-| FR-TM-013 | Summary tasks auto-calculate      | Must     | Automatic                          | 🔶 |
-| FR-TM-014 | Bulk operations                   | Should   | POST /tasks/bulk                   | ✅ |
-| FR-TM-015 | Set work (effort)                 | Should   | PATCH /tasks/:taskId               | 🔶 |
-| FR-TM-016 | Track actual dates                | Should   | PATCH /tasks/:taskId               | 🔶 |
+| ID        | Requirement                       | Priority | API Endpoint                       |     |
+| --------- | --------------------------------- | -------- | ---------------------------------- | --- |
+| FR-TM-001 | Create task                       | Must     | POST /projects/:id/tasks           | ✅  |
+| FR-TM-002 | Edit task                         | Must     | PATCH /projects/:id/tasks/:taskId  | ✅  |
+| FR-TM-003 | Delete task (soft)                | Must     | DELETE /projects/:id/tasks/:taskId | ✅  |
+| FR-TM-004 | Create hierarchy (indent/outdent) | Must     | POST /tasks/:taskId/indent         | ✅  |
+| FR-TM-005 | Auto-generate WBS codes           | Must     | Automatic                          | ✅  |
+| FR-TM-006 | Reorder tasks (drag/drop)         | Must     | PATCH /projects/:id/tasks/reorder  | ✅  |
+| FR-TM-007 | Set duration                      | Must     | PATCH /tasks/:taskId               | ✅  |
+| FR-TM-008 | Set as milestone                  | Must     | PATCH /tasks/:taskId               | ✅  |
+| FR-TM-009 | Set constraint type               | Should   | PATCH /tasks/:taskId               | 🔶  |
+| FR-TM-010 | Set task type (scheduling)        | Should   | PATCH /tasks/:taskId               | 🔶  |
+| FR-TM-011 | Update progress                   | Must     | PATCH /tasks/:taskId               | ✅  |
+| FR-TM-012 | Add notes                         | Should   | PATCH /tasks/:taskId               | ✅  |
+| FR-TM-013 | Summary tasks auto-calculate      | Must     | Automatic                          | 🔶  |
+| FR-TM-014 | Bulk operations                   | Should   | POST /tasks/bulk                   | ✅  |
+| FR-TM-015 | Set work (effort)                 | Should   | PATCH /tasks/:taskId               | 🔶  |
+| FR-TM-016 | Track actual dates                | Should   | PATCH /tasks/:taskId               | 🔶  |
 
 ### 3.4 Dependency Management
 
-| ID        | Requirement          | Priority | API Endpoint                    |    |
-| --------- | -------------------- | -------- | ------------------------------- | -- |
-| FR-DM-001 | Create FS dependency | Must     | POST /projects/:id/dependencies | ✅ |
-| FR-DM-002 | Create FF dependency | Should   | POST /projects/:id/dependencies | ✅ |
-| FR-DM-003 | Create SS dependency | Should   | POST /projects/:id/dependencies | ✅ |
-| FR-DM-004 | Create SF dependency | Could    | POST /projects/:id/dependencies | ✅ |
-| FR-DM-005 | Set lag time         | Should   | POST /projects/:id/dependencies | ✅ |
-| FR-DM-006 | Delete dependency    | Must     | DELETE /dependencies/:depId     | ✅ |
-| FR-DM-007 | Prevent circular     | Must     | Validation                      | ✅ |
-| FR-DM-008 | Disable dependency   | Should   | PATCH /dependencies/:depId      | ✅ |
+| ID        | Requirement          | Priority | API Endpoint                    |     |
+| --------- | -------------------- | -------- | ------------------------------- | --- |
+| FR-DM-001 | Create FS dependency | Must     | POST /projects/:id/dependencies | ✅  |
+| FR-DM-002 | Create FF dependency | Should   | POST /projects/:id/dependencies | ✅  |
+| FR-DM-003 | Create SS dependency | Should   | POST /projects/:id/dependencies | ✅  |
+| FR-DM-004 | Create SF dependency | Could    | POST /projects/:id/dependencies | ✅  |
+| FR-DM-005 | Set lag time         | Should   | POST /projects/:id/dependencies | ✅  |
+| FR-DM-006 | Delete dependency    | Must     | DELETE /dependencies/:depId     | ✅  |
+| FR-DM-007 | Prevent circular     | Must     | Validation                      | ✅  |
+| FR-DM-008 | Disable dependency   | Should   | PATCH /dependencies/:depId      | ✅  |
 
 ### 3.5 Scheduling Engine
 
-| ID        | Requirement                | Priority | API Endpoint                             |    |
-| --------- | -------------------------- | -------- | ---------------------------------------- | -- |
-| FR-SE-001 | Calculate successor dates  | Must     | POST /projects/:id/schedule/calculate    | ✅ |
-| FR-SE-002 | Calculate critical path    | Must     | GET /projects/:id/schedule/critical-path | ✅ |
-| FR-SE-003 | Calculate slack/float      | Should   | Automatic                                | 🔶 |
-| FR-SE-004 | Respect ASAP constraint    | Must     | Automatic                                | 🔶 |
-| FR-SE-005 | Respect ALAP constraint    | Should   | Automatic                                | 🔶 |
-| FR-SE-006 | Respect date constraints   | Should   | Automatic                                | 🔶 |
-| FR-SE-007 | Auto-recalculate on change | Must     | Automatic                                | ✅ |
-| FR-SE-008 | Forward scheduling         | Must     | Automatic                                | 🔶 |
+| ID        | Requirement                | Priority | API Endpoint                             |     |
+| --------- | -------------------------- | -------- | ---------------------------------------- | --- |
+| FR-SE-001 | Calculate successor dates  | Must     | POST /projects/:id/schedule/calculate    | ✅  |
+| FR-SE-002 | Calculate critical path    | Must     | GET /projects/:id/schedule/critical-path | ✅  |
+| FR-SE-003 | Calculate slack/float      | Should   | Automatic                                | 🔶  |
+| FR-SE-004 | Respect ASAP constraint    | Must     | Automatic                                | 🔶  |
+| FR-SE-005 | Respect ALAP constraint    | Should   | Automatic                                | 🔶  |
+| FR-SE-006 | Respect date constraints   | Should   | Automatic                                | 🔶  |
+| FR-SE-007 | Auto-recalculate on change | Must     | Automatic                                | ✅  |
+| FR-SE-008 | Forward scheduling         | Must     | Automatic                                | 🔶  |
 
 ### 3.6 Gantt Chart
 
-| ID        | Requirement               | Priority | API Endpoint |    |
-| --------- | ------------------------- | -------- | ------------ | -- |
-| FR-GC-001 | Display task bars         | Must     | Frontend     | ✅ |
-| FR-GC-002 | Bar position = dates      | Must     | Frontend     | ✅ |
-| FR-GC-003 | Bar length = duration     | Must     | Frontend     | ✅ |
-| FR-GC-004 | Show hierarchy            | Must     | Frontend     | ✅ |
-| FR-GC-005 | Show dependencies         | Must     | Frontend     | ✅ |
-| FR-GC-006 | Show progress             | Must     | Frontend     | ✅ |
-| FR-GC-007 | Show milestones           | Must     | Frontend     | ✅ |
-| FR-GC-008 | Show summary tasks        | Must     | Frontend     | ✅ |
-| FR-GC-009 | Timeline header           | Must     | Frontend     | ✅ |
-| FR-GC-010 | Zoom levels               | Must     | Frontend     | ✅ |
-| FR-GC-011 | Horizontal scroll         | Must     | Frontend     | ✅ |
-| FR-GC-012 | Vertical scroll           | Must     | Frontend     | ✅ |
-| FR-GC-013 | Today line                | Must     | Frontend     | ✅ |
-| FR-GC-014 | Critical path highlight   | Should   | Frontend     | 🔶 |
-| FR-GC-015 | Click to select           | Must     | Frontend     | ✅ |
-| FR-GC-016 | Double-click for details  | Must     | Frontend     | ❌ |
-| FR-GC-017 | Drag to change dates      | Could    | Frontend     | ❌ |
-| FR-GC-018 | Drag edges for duration   | Could    | Frontend     | ❌ |
-| FR-GC-019 | Drag to create dependency | Could    | Frontend     | ❌ |
-| FR-GC-020 | Context menu              | Should   | Frontend     | ❌ |
+| ID        | Requirement               | Priority | API Endpoint |     |
+| --------- | ------------------------- | -------- | ------------ | --- |
+| FR-GC-001 | Display task bars         | Must     | Frontend     | ✅  |
+| FR-GC-002 | Bar position = dates      | Must     | Frontend     | ✅  |
+| FR-GC-003 | Bar length = duration     | Must     | Frontend     | ✅  |
+| FR-GC-004 | Show hierarchy            | Must     | Frontend     | ✅  |
+| FR-GC-005 | Show dependencies         | Must     | Frontend     | ✅  |
+| FR-GC-006 | Show progress             | Must     | Frontend     | ✅  |
+| FR-GC-007 | Show milestones           | Must     | Frontend     | ✅  |
+| FR-GC-008 | Show summary tasks        | Must     | Frontend     | ✅  |
+| FR-GC-009 | Timeline header           | Must     | Frontend     | ✅  |
+| FR-GC-010 | Zoom levels               | Must     | Frontend     | ✅  |
+| FR-GC-011 | Horizontal scroll         | Must     | Frontend     | ✅  |
+| FR-GC-012 | Vertical scroll           | Must     | Frontend     | ✅  |
+| FR-GC-013 | Today line                | Must     | Frontend     | ✅  |
+| FR-GC-014 | Critical path highlight   | Should   | Frontend     | 🔶  |
+| FR-GC-015 | Click to select           | Must     | Frontend     | ✅  |
+| FR-GC-016 | Double-click for details  | Must     | Frontend     | ❌  |
+| FR-GC-017 | Drag to change dates      | Could    | Frontend     | ❌  |
+| FR-GC-018 | Drag edges for duration   | Could    | Frontend     | ❌  |
+| FR-GC-019 | Drag to create dependency | Could    | Frontend     | ❌  |
+| FR-GC-020 | Context menu              | Should   | Frontend     | ❌  |
 
 ### 3.7 Calendar Management
 
-| ID        | Requirement                 | Priority | API Endpoint                   |    |
-| --------- | --------------------------- | -------- | ------------------------------ | -- |
-| FR-CA-001 | Create calendar             | Must     | POST /projects/:id/calendars   | ✅ |
-| FR-CA-002 | Edit work week              | Must     | PATCH /calendars/:id           | 🔶 |
-| FR-CA-003 | Add exception (holiday)     | Must     | POST /calendars/:id/exceptions | ✅ |
-| FR-CA-004 | Delete exception            | Must     | DELETE /exceptions/:id         | ✅ |
-| FR-CA-005 | Calendar inheritance        | Should   | PATCH /calendars/:id           | 🔶 |
-| FR-CA-006 | Assign calendar to task     | Should   | PATCH /tasks/:taskId           | ❌ |
-| FR-CA-007 | Assign calendar to resource | Should   | PATCH /resources/:id           | ❌ |
+| ID        | Requirement                 | Priority | API Endpoint                   |     |
+| --------- | --------------------------- | -------- | ------------------------------ | --- |
+| FR-CA-001 | Create calendar             | Must     | POST /projects/:id/calendars   | ✅  |
+| FR-CA-002 | Edit work week              | Must     | PATCH /calendars/:id           | 🔶  |
+| FR-CA-003 | Add exception (holiday)     | Must     | POST /calendars/:id/exceptions | ✅  |
+| FR-CA-004 | Delete exception            | Must     | DELETE /exceptions/:id         | ✅  |
+| FR-CA-005 | Calendar inheritance        | Should   | PATCH /calendars/:id           | 🔶  |
+| FR-CA-006 | Assign calendar to task     | Should   | PATCH /tasks/:taskId           | ❌  |
+| FR-CA-007 | Assign calendar to resource | Should   | PATCH /resources/:id           | ❌  |
 
 ### 3.8 Resource Management
 
-| ID        | Requirement              | Priority | API Endpoint                     |    |
-| --------- | ------------------------ | -------- | -------------------------------- | -- |
-| FR-RM-001 | Create work resource     | Must     | POST /projects/:id/resources     | ✅ |
-| FR-RM-002 | Create material resource | Should   | POST /projects/:id/resources     | ✅ |
-| FR-RM-003 | Create cost resource     | Could    | POST /projects/:id/resources     | ✅ |
-| FR-RM-004 | Edit resource            | Must     | PATCH /resources/:id             | ✅ |
-| FR-RM-005 | Delete resource          | Must     | DELETE /resources/:id            | ✅ |
-| FR-RM-006 | Set rates                | Must     | POST /resources/:id/rates        | 🔶 |
-| FR-RM-007 | Set availability         | Should   | POST /resources/:id/availability | ❌ |
-| FR-RM-008 | Link to user             | Should   | PATCH /resources/:id             | ❌ |
-| FR-RM-009 | Resource groups          | Should   | PATCH /resources/:id             | ❌ |
+| ID        | Requirement              | Priority | API Endpoint                     |     |
+| --------- | ------------------------ | -------- | -------------------------------- | --- |
+| FR-RM-001 | Create work resource     | Must     | POST /projects/:id/resources     | ✅  |
+| FR-RM-002 | Create material resource | Should   | POST /projects/:id/resources     | ✅  |
+| FR-RM-003 | Create cost resource     | Could    | POST /projects/:id/resources     | ✅  |
+| FR-RM-004 | Edit resource            | Must     | PATCH /resources/:id             | ✅  |
+| FR-RM-005 | Delete resource          | Must     | DELETE /resources/:id            | ✅  |
+| FR-RM-006 | Set rates                | Must     | POST /resources/:id/rates        | 🔶  |
+| FR-RM-007 | Set availability         | Should   | POST /resources/:id/availability | ❌  |
+| FR-RM-008 | Link to user             | Should   | PATCH /resources/:id             | ❌  |
+| FR-RM-009 | Resource groups          | Should   | PATCH /resources/:id             | ❌  |
 
 ### 3.9 Assignment Management
 
-| ID        | Requirement             | Priority | API Endpoint                              |    |
-| --------- | ----------------------- | -------- | ----------------------------------------- | -- |
-| FR-AS-001 | Assign resource to task | Must     | POST /tasks/:taskId/assignments           | ✅ |
-| FR-AS-002 | Set allocation units    | Must     | PATCH /assignments/:id                    | ✅ |
-| FR-AS-003 | Remove assignment       | Must     | DELETE /assignments/:id                   | ✅ |
-| FR-AS-004 | Set work contour        | Should   | PATCH /assignments/:id                    | 🔶 |
-| FR-AS-005 | Track actual work       | Should   | PATCH /assignments/:id                    | 🔶 |
-| FR-AS-006 | View resource workload  | Must     | GET /resources/:id/workload               | ✅ |
-| FR-AS-007 | Over-allocation warning | Should   | GET /projects/:id/resources/overallocated | ✅ |
+| ID        | Requirement             | Priority | API Endpoint                              |     |
+| --------- | ----------------------- | -------- | ----------------------------------------- | --- |
+| FR-AS-001 | Assign resource to task | Must     | POST /tasks/:taskId/assignments           | ✅  |
+| FR-AS-002 | Set allocation units    | Must     | PATCH /assignments/:id                    | ✅  |
+| FR-AS-003 | Remove assignment       | Must     | DELETE /assignments/:id                   | ✅  |
+| FR-AS-004 | Set work contour        | Should   | PATCH /assignments/:id                    | 🔶  |
+| FR-AS-005 | Track actual work       | Should   | PATCH /assignments/:id                    | 🔶  |
+| FR-AS-006 | View resource workload  | Must     | GET /resources/:id/workload               | ✅  |
+| FR-AS-007 | Over-allocation warning | Should   | GET /projects/:id/resources/overallocated | ✅  |
 
 ### 3.10 Baseline Management
 
-| ID        | Requirement                 | Priority | API Endpoint                             |    |
-| --------- | --------------------------- | -------- | ---------------------------------------- | -- |
-| FR-BL-001 | Save baseline               | Must     | POST /projects/:id/baselines             | ❌ |
-| FR-BL-002 | Name baseline               | Must     | POST /projects/:id/baselines             | ❌ |
-| FR-BL-003 | Multiple baselines (0-10)   | Should   | POST /projects/:id/baselines             | ❌ |
-| FR-BL-004 | View baseline data          | Must     | GET /projects/:id/baselines/:num         | ❌ |
-| FR-BL-005 | Compare current vs baseline | Should   | GET /projects/:id/baselines/:num/compare | ❌ |
-| FR-BL-006 | Delete baseline             | Should   | DELETE /baselines/:id                    | ❌ |
+| ID        | Requirement                 | Priority | API Endpoint                             |     |
+| --------- | --------------------------- | -------- | ---------------------------------------- | --- |
+| FR-BL-001 | Save baseline               | Must     | POST /projects/:id/baselines             | ❌  |
+| FR-BL-002 | Name baseline               | Must     | POST /projects/:id/baselines             | ❌  |
+| FR-BL-003 | Multiple baselines (0-10)   | Should   | POST /projects/:id/baselines             | ❌  |
+| FR-BL-004 | View baseline data          | Must     | GET /projects/:id/baselines/:num         | ❌  |
+| FR-BL-005 | Compare current vs baseline | Should   | GET /projects/:id/baselines/:num/compare | ❌  |
+| FR-BL-006 | Delete baseline             | Should   | DELETE /baselines/:id                    | ❌  |
 
 ### 3.11 Time Tracking
 
-| ID        | Requirement            | Priority | API Endpoint                        |    |
-| --------- | ---------------------- | -------- | ----------------------------------- | -- |
-| FR-TT-001 | Log time entry         | Must     | POST /time-entries                  | ❌ |
-| FR-TT-002 | Edit time entry        | Must     | PATCH /time-entries/:id             | ❌ |
-| FR-TT-003 | Delete time entry      | Must     | DELETE /time-entries/:id            | ❌ |
-| FR-TT-004 | View my timesheet      | Must     | GET /users/me/time-entries          | ❌ |
-| FR-TT-005 | View task time entries | Should   | GET /tasks/:id/time-entries         | ❌ |
-| FR-TT-006 | Approval workflow      | Should   | PATCH /time-entries/:id/approve     | ❌ |
-| FR-TT-007 | Timesheet summary      | Should   | GET /projects/:id/timesheet-summary | ❌ |
+| ID        | Requirement            | Priority | API Endpoint                        |     |
+| --------- | ---------------------- | -------- | ----------------------------------- | --- |
+| FR-TT-001 | Log time entry         | Must     | POST /time-entries                  | ❌  |
+| FR-TT-002 | Edit time entry        | Must     | PATCH /time-entries/:id             | ❌  |
+| FR-TT-003 | Delete time entry      | Must     | DELETE /time-entries/:id            | ❌  |
+| FR-TT-004 | View my timesheet      | Must     | GET /users/me/time-entries          | ❌  |
+| FR-TT-005 | View task time entries | Should   | GET /tasks/:id/time-entries         | ❌  |
+| FR-TT-006 | Approval workflow      | Should   | PATCH /time-entries/:id/approve     | ❌  |
+| FR-TT-007 | Timesheet summary      | Should   | GET /projects/:id/timesheet-summary | ❌  |
 
 ### 3.12 AI Features
 
-| ID        | Requirement               | Priority | API Endpoint                     |    |
-| --------- | ------------------------- | -------- | -------------------------------- | -- |
-| FR-AI-001 | Chat about project        | Must     | POST /projects/:id/ai/chat       | ✅ |
-| FR-AI-002 | Query tasks               | Must     | POST /projects/:id/ai/chat       | ✅ |
-| FR-AI-003 | Query status              | Must     | POST /projects/:id/ai/chat       | 🔶 |
-| FR-AI-004 | Actions with confirmation | Should   | POST /projects/:id/ai/chat       | ❌ |
-| FR-AI-005 | Task estimation           | Must     | POST /projects/:id/ai/estimate   | ✅ |
-| FR-AI-006 | Show reasoning            | Should   | POST /projects/:id/ai/estimate   | ✅ |
-| FR-AI-007 | Bulk estimate             | Should   | POST /projects/:id/ai/estimate   | ✅ |
-| FR-AI-008 | Suggestions               | Should   | GET /projects/:id/ai/suggestions | ✅ |
-| FR-AI-009 | Streaming responses       | Must     | POST /projects/:id/ai/chat       | ✅ |
+| ID        | Requirement               | Priority | API Endpoint                     |     |
+| --------- | ------------------------- | -------- | -------------------------------- | --- |
+| FR-AI-001 | Chat about project        | Must     | POST /projects/:id/ai/chat       | ✅  |
+| FR-AI-002 | Query tasks               | Must     | POST /projects/:id/ai/chat       | ✅  |
+| FR-AI-003 | Query status              | Must     | POST /projects/:id/ai/chat       | 🔶  |
+| FR-AI-004 | Actions with confirmation | Should   | POST /projects/:id/ai/chat       | ❌  |
+| FR-AI-005 | Task estimation           | Must     | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-006 | Show reasoning            | Should   | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-007 | Bulk estimate             | Should   | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-008 | Suggestions               | Should   | GET /projects/:id/ai/suggestions | ✅  |
+| FR-AI-009 | Streaming responses       | Must     | POST /projects/:id/ai/chat       | ✅  |
 
 ### 3.13 Collaboration
 
-| ID        | Requirement              | Priority | API Endpoint                      |    |
-| --------- | ------------------------ | -------- | --------------------------------- | -- |
-| FR-CO-001 | Invite to project        | Must     | POST /projects/:id/members/invite | ❌ |
-| FR-CO-002 | Set member role          | Must     | PATCH /members/:id                | ❌ |
-| FR-CO-003 | Remove member            | Must     | DELETE /members/:id               | ❌ |
-| FR-CO-004 | View members             | Must     | GET /projects/:id/members         | ❌ |
-| FR-CO-005 | Real-time updates        | Must     | WebSocket                         | ❌ |
-| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                         | ❌ |
-| FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity        | ❌ |
-| FR-CO-008 | Comments on tasks        | Should   | POST /tasks/:id/comments          | ❌ |
-| FR-CO-009 | @mentions                | Should   | POST /tasks/:id/comments          | ❌ |
-| FR-CO-010 | File attachments         | Should   | POST /tasks/:id/attachments       | ❌ |
-| FR-CO-011 | Notifications            | Should   | GET /notifications                | ❌ |
+| ID        | Requirement              | Priority | API Endpoint                      |     |
+| --------- | ------------------------ | -------- | --------------------------------- | --- |
+| FR-CO-001 | Invite to project        | Must     | POST /projects/:id/members/invite | ❌  |
+| FR-CO-002 | Set member role          | Must     | PATCH /members/:id                | ❌  |
+| FR-CO-003 | Remove member            | Must     | DELETE /members/:id               | ❌  |
+| FR-CO-004 | View members             | Must     | GET /projects/:id/members         | ❌  |
+| FR-CO-005 | Real-time updates        | Must     | WebSocket                         | ❌  |
+| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                         | ❌  |
+| FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity        | ❌  |
+| FR-CO-008 | Comments on tasks        | Should   | POST /tasks/:id/comments          | ❌  |
+| FR-CO-009 | @mentions                | Should   | POST /tasks/:id/comments          | ❌  |
+| FR-CO-010 | File attachments         | Should   | POST /tasks/:id/attachments       | ❌  |
+| FR-CO-011 | Notifications            | Should   | GET /notifications                | ❌  |
 
 ### 3.14 Import/Export
 
-| ID        | Requirement                | Priority | API Endpoint                 |    |
-| --------- | -------------------------- | -------- | ---------------------------- | -- |
-| FR-IE-001 | Export to CSV              | Must     | GET /projects/:id/export/csv | ❌ |
-| FR-IE-002 | Import from CSV            | Should   | POST /projects/:id/import    | ❌ |
-| FR-IE-003 | Export to MS Project XML   | Should   | GET /projects/:id/export/xml | ❌ |
-| FR-IE-004 | Import from MS Project XML | Should   | POST /projects/:id/import    | ❌ |
-| FR-IE-005 | Export Gantt as PNG        | Could    | GET /projects/:id/export/png | ❌ |
+| ID        | Requirement                | Priority | API Endpoint                 |     |
+| --------- | -------------------------- | -------- | ---------------------------- | --- |
+| FR-IE-001 | Export to CSV              | Must     | GET /projects/:id/export/csv | ❌  |
+| FR-IE-002 | Import from CSV            | Should   | POST /projects/:id/import    | ❌  |
+| FR-IE-003 | Export to MS Project XML   | Should   | GET /projects/:id/export/xml | ❌  |
+| FR-IE-004 | Import from MS Project XML | Should   | POST /projects/:id/import    | ❌  |
+| FR-IE-005 | Export Gantt as PNG        | Could    | GET /projects/:id/export/png | ❌  |
 
 ---
 
@@ -946,9 +946,9 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 
 ## Document History
 
-| Version | Date       | Author | Changes                              |
-| ------- | ---------- | ------ | ------------------------------------ |
-| 1.0     | 2026-02-05 | Ermir  | Initial draft                        |
-| 2.0     | 2026-02-05 | Ermir  | Scoped to V2.0 MVP                   |
-| 3.0     | 2026-02-06 | Ermir  | Aligned with database-schema.md v3.0 |
+| Version | Date       | Author | Changes                                                                                                             |
+| ------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-02-05 | Ermir  | Initial draft                                                                                                       |
+| 2.0     | 2026-02-05 | Ermir  | Scoped to V2.0 MVP                                                                                                  |
+| 3.0     | 2026-02-06 | Ermir  | Aligned with database-schema.md v3.0                                                                                |
 | 4.0     | 2026-03-06 | Ermir  | Added implementation status (✅🔶❌) to all FR tables, updated roadmap with AI MVP in V1.0, fixed table count to 28 |
