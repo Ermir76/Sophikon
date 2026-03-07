@@ -41,6 +41,14 @@ class ScheduleResult:
     tasks_updated: int
 
 
+@dataclass
+class CriticalPathDetails:
+    """Resolved details for one ordered driving critical path."""
+
+    task_ids: list[UUID]
+    path_length_days: int
+
+
 # ── Internal data structures ──
 
 
@@ -550,3 +558,132 @@ async def get_critical_path_tasks(
         .order_by(Task.sort_order.asc())
     )
     return list(result.scalars().all())
+
+
+def _path_span_days(start_date: date, finish_date: date) -> int:
+    return max(0, (finish_date - start_date).days + 1)
+
+
+async def get_critical_path_details(
+    db: AsyncSession,
+    project: Project,
+) -> CriticalPathDetails:
+    """
+    Resolve one ordered critical chain and its exact end-to-end span in days.
+
+    This differs from "all critical tasks": if multiple zero-slack tasks exist,
+    this returns one driving chain through the dependency graph.
+    """
+    tasks_result = await db.execute(
+        select(Task).where(
+            Task.project_id == project.id,
+            Task.is_deleted == False,  # noqa: E712
+        )
+    )
+    all_tasks = list(tasks_result.scalars().all())
+    critical_leaf_tasks = [
+        task for task in all_tasks if not task.is_summary and bool(task.is_critical)
+    ]
+    if not critical_leaf_tasks:
+        return CriticalPathDetails(task_ids=[], path_length_days=0)
+
+    deps_result = await db.execute(
+        select(Dependency).where(
+            Dependency.project_id == project.id,
+            Dependency.is_disabled == False,  # noqa: E712
+        )
+    )
+    all_deps = list(deps_result.scalars().all())
+    work_week, exceptions = await _load_calendar_data(db, project)
+
+    task_map = {task.id: task for task in critical_leaf_tasks}
+    critical_leaf_ids = set(task_map)
+    successors_map: dict[UUID, list[UUID]] = defaultdict(list)
+    predecessors_map: dict[UUID, list[UUID]] = defaultdict(list)
+    dep_map: dict[tuple[UUID, UUID], Dependency] = {}
+
+    for dep in all_deps:
+        if dep.predecessor_id not in critical_leaf_ids:
+            continue
+        if dep.successor_id not in critical_leaf_ids:
+            continue
+        successors_map[dep.predecessor_id].append(dep.successor_id)
+        predecessors_map[dep.successor_id].append(dep.predecessor_id)
+        dep_map[(dep.predecessor_id, dep.successor_id)] = dep
+
+    sorted_ids = _topological_sort(
+        [task.id for task in critical_leaf_tasks], successors_map, predecessors_map
+    )
+    sorted_set = set(sorted_ids)
+    for task in critical_leaf_tasks:
+        if task.id not in sorted_set:
+            sorted_ids.append(task.id)
+
+    schedule_data = {
+        task.id: _TaskScheduleData(task=task, es=task.start_date, ef=task.finish_date)
+        for task in critical_leaf_tasks
+    }
+    chain_start_by_task: dict[UUID, date] = {}
+    predecessor_choice: dict[UUID, UUID | None] = {}
+
+    for task_id in sorted_ids:
+        task = task_map[task_id]
+        task_ww = _get_task_work_week(task, work_week)
+        driving_predecessors: list[UUID] = []
+
+        for predecessor_id in predecessors_map.get(task_id, []):
+            dep = dep_map.get((predecessor_id, task_id))
+            predecessor_data = schedule_data.get(predecessor_id)
+            if not dep or not predecessor_data:
+                continue
+
+            driven_start = _compute_dep_driven_date(
+                dep,
+                predecessor_data,
+                task.duration,
+                task_ww,
+                exceptions,
+            )
+            if driven_start == task.start_date:
+                driving_predecessors.append(predecessor_id)
+
+        if driving_predecessors:
+            best_predecessor = max(
+                driving_predecessors,
+                key=lambda predecessor_id: (
+                    _path_span_days(
+                        chain_start_by_task[predecessor_id], task.finish_date
+                    ),
+                    -task_map[predecessor_id].sort_order,
+                ),
+            )
+            predecessor_choice[task_id] = best_predecessor
+            chain_start_by_task[task_id] = chain_start_by_task[best_predecessor]
+        else:
+            predecessor_choice[task_id] = None
+            chain_start_by_task[task_id] = task.start_date
+
+    terminal_task_id = max(
+        sorted_ids,
+        key=lambda task_id: (
+            _path_span_days(
+                chain_start_by_task[task_id], task_map[task_id].finish_date
+            ),
+            task_map[task_id].finish_date.toordinal(),
+            -task_map[task_id].sort_order,
+        ),
+    )
+
+    ordered_task_ids: list[UUID] = []
+    current_task_id: UUID | None = terminal_task_id
+    while current_task_id is not None:
+        ordered_task_ids.append(current_task_id)
+        current_task_id = predecessor_choice[current_task_id]
+    ordered_task_ids.reverse()
+
+    first_task = task_map[ordered_task_ids[0]]
+    last_task = task_map[ordered_task_ids[-1]]
+    return CriticalPathDetails(
+        task_ids=ordered_task_ids,
+        path_length_days=_path_span_days(first_task.start_date, last_task.finish_date),
+    )

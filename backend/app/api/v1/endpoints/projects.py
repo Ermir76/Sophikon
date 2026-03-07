@@ -1,13 +1,15 @@
 """
-Project CRUD endpoints.
+Project CRUD and dashboard endpoints.
 
-GET    /projects              - List user's projects
-POST   /projects              - Create a new project
-GET    /projects/{project_id} - Get project details
-PATCH  /projects/{project_id} - Update project (owner/manager only)
-DELETE /projects/{project_id} - Soft delete project (owner only)
+GET    /projects                        - List user's projects
+POST   /projects                        - Create a new project
+GET    /projects/{project_id}           - Get project details
+GET    /projects/{project_id}/dashboard - Get project dashboard
+PATCH  /projects/{project_id}           - Update project (owner/manager only)
+DELETE /projects/{project_id}           - Soft delete project (owner only)
 """
 
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
@@ -20,16 +22,18 @@ from app.api.deps import (
     get_org_membership_or_404,
     get_project_or_404,
 )
+from app.api.v1.endpoints._insights_window import resolve_window_or_422
 from app.core.database import get_db
 from app.models.user import User
 from app.schema.common import PaginatedResponse
+from app.schema.insights import InsightsWindowPreset, ProjectDashboardResponse
 from app.schema.project import (
     ProjectCreate,
     ProjectDetail,
     ProjectListItem,
     ProjectUpdate,
 )
-from app.service import project_service
+from app.service import insights_service, project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -88,6 +92,28 @@ async def get_project(
 ):
     """Get project details."""
     return ProjectDetail.model_validate(access.project)
+
+
+@router.get("/{project_id}/dashboard", response_model=ProjectDashboardResponse)
+async def get_project_dashboard(
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    window_preset: Annotated[InsightsWindowPreset, Query()] = "30d",
+    start_date: Annotated[date | None, Query()] = None,
+    end_date: Annotated[date | None, Query()] = None,
+):
+    """Get the dashboard summary for a project."""
+    window_start, window_end = resolve_window_or_422(
+        window_preset,
+        start_date,
+        end_date,
+    )
+    return await insights_service.get_project_dashboard(
+        db,
+        access.project,
+        window_start,
+        window_end,
+    )
 
 
 @router.patch("/{project_id}", response_model=ProjectDetail)

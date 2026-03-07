@@ -1,5 +1,5 @@
 """
-Insights service for dashboard and project overview control-center endpoints.
+Insights service for org dashboard and project dashboard endpoints.
 """
 
 from collections import defaultdict
@@ -17,16 +17,20 @@ from app.models.task import Task
 from app.schema.insights import (
     DashboardInsightsResponse,
     DashboardKpis,
+    OverdueTask,
+    ProjectDashboardCost,
+    ProjectDashboardCriticalPath,
+    ProjectDashboardResources,
+    ProjectDashboardResponse,
+    ProjectDashboardSchedule,
+    ProjectDashboardSummary,
     ProjectHealthItem,
-    ProjectOverviewInsightsResponse,
-    ProjectOverviewKpis,
-    ProjectOverviewSchedule,
-    ProjectRiskItem,
     RecentActivityItem,
     RiskLevel,
     TrendPoint,
+    UpcomingMilestone,
 )
-from app.service import utilization_service
+from app.service import scheduling_service, utilization_service
 
 TODAY_PRESET_DAYS = {
     "7d": 7,
@@ -34,9 +38,11 @@ TODAY_PRESET_DAYS = {
     "90d": 90,
 }
 MILESTONE_SOON_DAYS = 14
-RISK_NEAR_DUE_DAYS = 7
 RECENT_ACTIVITY_LIMIT = 20
-RISK_ITEMS_LIMIT = 8
+
+
+def _leaf_tasks(tasks: list[Task]) -> list[Task]:
+    return [task for task in tasks if not task.is_summary]
 
 
 def resolve_window(
@@ -95,14 +101,15 @@ def _build_day_buckets(
 
 
 def _task_completion_metrics(tasks: list[Task], today: date) -> dict[str, float]:
-    total = len(tasks)
-    completed = sum(1 for t in tasks if _to_float(t.percent_complete) >= 100.0)
+    work_tasks = _leaf_tasks(tasks)
+    total = len(work_tasks)
+    completed = sum(1 for t in work_tasks if _to_float(t.percent_complete) >= 100.0)
     overdue = sum(
         1
-        for t in tasks
+        for t in work_tasks
         if t.finish_date < today and _to_float(t.percent_complete) < 100.0
     )
-    critical = sum(1 for t in tasks if bool(t.is_critical))
+    critical = sum(1 for t in work_tasks if bool(t.is_critical))
     completion_pct = (completed / total * 100) if total else 0.0
     return {
         "total": float(total),
@@ -230,6 +237,152 @@ def _risk_score(
     return _round2(max(0.0, min(100.0, score)))
 
 
+def _task_status_counts(tasks: list[Task], today: date) -> ProjectDashboardSummary:
+    work_tasks = _leaf_tasks(tasks)
+    total_tasks = len(work_tasks)
+    completed_tasks = sum(
+        1 for task in work_tasks if _to_float(task.percent_complete) >= 100.0
+    )
+    in_progress_tasks = sum(
+        1 for task in work_tasks if 0.0 < _to_float(task.percent_complete) < 100.0
+    )
+    not_started_tasks = sum(
+        1 for task in work_tasks if _to_float(task.percent_complete) <= 0.0
+    )
+    overdue_tasks = sum(
+        1
+        for task in work_tasks
+        if task.finish_date < today and _to_float(task.percent_complete) < 100.0
+    )
+    milestones = sum(1 for task in work_tasks if bool(task.is_milestone))
+    milestones_completed = sum(
+        1
+        for task in work_tasks
+        if bool(task.is_milestone) and _to_float(task.percent_complete) >= 100.0
+    )
+    percent_complete = (completed_tasks / total_tasks * 100) if total_tasks else 0.0
+
+    return ProjectDashboardSummary(
+        total_tasks=total_tasks,
+        completed_tasks=completed_tasks,
+        in_progress_tasks=in_progress_tasks,
+        not_started_tasks=not_started_tasks,
+        overdue_tasks=overdue_tasks,
+        milestones=milestones,
+        milestones_completed=milestones_completed,
+        percent_complete=_round2(percent_complete),
+    )
+
+
+def _resolve_project_finish_date(project: Project, tasks: list[Task]) -> date | None:
+    task_finish_date = max((task.finish_date for task in tasks), default=None)
+    if project.finish_date is None:
+        return task_finish_date
+    if task_finish_date is None:
+        return project.finish_date
+    return max(project.finish_date, task_finish_date)
+
+
+def _duration_minutes_to_days(
+    project: Project, duration_minutes: object, is_milestone: bool
+) -> int:
+    if is_milestone:
+        return 0
+
+    hours_per_day = int(project.settings.get("hours_per_day", 8))
+    minutes_per_day = max(1, hours_per_day * 60)
+    duration = int(_to_float(duration_minutes))
+    return max(1, duration // minutes_per_day)
+
+
+def _build_project_schedule(
+    project: Project,
+    finish_date: date | None,
+    today: date,
+) -> ProjectDashboardSchedule:
+    duration_days = None
+    days_remaining = None
+    if finish_date is not None:
+        duration_days = (finish_date - project.start_date).days
+        days_remaining = (finish_date - today).days
+
+    days_elapsed = max(0, (today - project.start_date).days)
+    return ProjectDashboardSchedule(
+        start_date=project.start_date,
+        finish_date=finish_date,
+        duration_days=duration_days,
+        days_elapsed=days_elapsed,
+        days_remaining=days_remaining,
+    )
+
+
+def _build_project_cost(project: Project, tasks: list[Task]) -> ProjectDashboardCost:
+    budget = None if project.budget is None else _round2(_to_float(project.budget))
+    work_tasks = _leaf_tasks(tasks)
+
+    return ProjectDashboardCost(
+        budget=budget,
+        total_cost=_round2(sum(_to_float(task.total_cost) for task in work_tasks)),
+        actual_cost=_round2(sum(_to_float(task.actual_cost) for task in work_tasks)),
+        remaining_cost=_round2(
+            sum(_to_float(task.remaining_cost) for task in work_tasks)
+        ),
+    )
+
+
+def _build_critical_path_summary(
+    project: Project,
+    tasks: list[Task],
+    path_length_days: int,
+) -> ProjectDashboardCriticalPath:
+    critical_tasks = [task for task in _leaf_tasks(tasks) if bool(task.is_critical)]
+    total_duration_days = sum(
+        _duration_minutes_to_days(project, task.duration, bool(task.is_milestone))
+        for task in critical_tasks
+    )
+
+    return ProjectDashboardCriticalPath(
+        task_count=len(critical_tasks),
+        total_duration_days=total_duration_days,
+        path_length_days=path_length_days,
+    )
+
+
+def _build_upcoming_milestones(
+    tasks: list[Task], today: date
+) -> list[UpcomingMilestone]:
+    milestones = [
+        UpcomingMilestone(
+            task_id=task.id,
+            name=task.name,
+            finish_date=task.finish_date,
+            percent_complete=_round2(_to_float(task.percent_complete)),
+        )
+        for task in _leaf_tasks(tasks)
+        if bool(task.is_milestone)
+        and _to_float(task.percent_complete) < 100.0
+        and today <= task.finish_date <= today + timedelta(days=MILESTONE_SOON_DAYS)
+    ]
+    milestones.sort(key=lambda item: (item.finish_date, item.name.lower()))
+    return milestones
+
+
+def _build_overdue_tasks(tasks: list[Task], today: date) -> list[OverdueTask]:
+    overdue_tasks = [
+        OverdueTask(
+            task_id=task.id,
+            name=task.name,
+            finish_date=task.finish_date,
+            percent_complete=_round2(_to_float(task.percent_complete)),
+            days_overdue=(today - task.finish_date).days,
+        )
+        for task in _leaf_tasks(tasks)
+        if task.finish_date < today and _to_float(task.percent_complete) < 100.0
+    ]
+    overdue_tasks.sort(key=lambda item: (item.finish_date, item.name.lower()))
+    return overdue_tasks
+
+
 async def get_org_dashboard_insights(
     db: AsyncSession,
     organization: Organization,
@@ -336,66 +489,12 @@ async def get_org_dashboard_insights(
     )
 
 
-def _build_project_risk_items(tasks: list[Task], today: date) -> list[ProjectRiskItem]:
-    scored_items: list[tuple[float, Task, str]] = []
-
-    for task in tasks:
-        percent = _to_float(task.percent_complete)
-        overdue = task.finish_date < today and percent < 100.0
-        critical = bool(task.is_critical)
-        near_due = (
-            today <= task.finish_date <= today + timedelta(days=RISK_NEAR_DUE_DAYS)
-            and percent < 70.0
-        )
-
-        if not (overdue or critical or near_due):
-            continue
-
-        if overdue and critical:
-            reason = "Overdue + critical path"
-        elif overdue:
-            reason = "Overdue"
-        elif critical:
-            reason = "Critical path"
-        else:
-            reason = "Near due date with low progress"
-
-        score = 0.0
-        if overdue:
-            score += 50
-        if critical:
-            score += 30
-        if near_due:
-            score += 15
-        score += max(0.0, (70.0 - percent) * 0.3)
-
-        scored_items.append((score, task, reason))
-
-    scored_items.sort(
-        key=lambda x: (x[0], -_to_float(x[1].percent_complete)), reverse=True
-    )
-
-    risk_items: list[ProjectRiskItem] = []
-    for _, task, reason in scored_items[:RISK_ITEMS_LIMIT]:
-        risk_items.append(
-            ProjectRiskItem(
-                task_id=task.id,
-                name=task.name,
-                reason=reason,
-                finish_date=task.finish_date,
-                percent_complete=_round2(_to_float(task.percent_complete)),
-                is_critical=bool(task.is_critical),
-            )
-        )
-    return risk_items
-
-
-async def get_project_overview_insights(
+async def get_project_dashboard(
     db: AsyncSession,
     project: Project,
     start_date: date,
     end_date: date,
-) -> ProjectOverviewInsightsResponse:
+) -> ProjectDashboardResponse:
     today = date.today()
 
     tasks_result = await db.execute(
@@ -414,29 +513,23 @@ async def get_project_overview_insights(
     )
     active_resources = list(resources_result.scalars().all())
 
-    overview_metrics = _task_completion_metrics(tasks, today)
+    summary = _task_status_counts(tasks, today)
     overallocated_resources, _ = await _project_overallocation_stats(
         db, project, start_date, end_date
     )
-
-    finish_date = project.finish_date
-    if not finish_date and tasks:
-        finish_date = max(t.finish_date for t in tasks)
-
-    days_remaining = None
-    if finish_date is not None:
-        days_remaining = (finish_date - today).days
-
-    milestones_due_soon = sum(
-        1
-        for t in tasks
-        if t.is_milestone
-        and today <= t.finish_date <= today + timedelta(days=MILESTONE_SOON_DAYS)
-        and _to_float(t.percent_complete) < 100.0
+    finish_date = _resolve_project_finish_date(project, tasks)
+    schedule = _build_project_schedule(project, finish_date, today)
+    cost = _build_project_cost(project, tasks)
+    critical_path_details = await scheduling_service.get_critical_path_details(
+        db, project
     )
-
-    trend = _build_trend(tasks, start_date, end_date)
-    risk_items = _build_project_risk_items(tasks, today)
+    critical_path = _build_critical_path_summary(
+        project,
+        tasks,
+        critical_path_details.path_length_days,
+    )
+    upcoming_milestones = _build_upcoming_milestones(tasks, today)
+    overdue_tasks = _build_overdue_tasks(tasks, today)
     recent_activity = _build_recent_activity(
         projects=[project],
         tasks=tasks,
@@ -444,22 +537,16 @@ async def get_project_overview_insights(
         project_name_by_id={project.id: project.name},
     )
 
-    return ProjectOverviewInsightsResponse(
-        kpis=ProjectOverviewKpis(
-            total_tasks=int(overview_metrics["total"]),
-            completion_pct=_round2(overview_metrics["completion_pct"]),
-            overdue_tasks=int(overview_metrics["overdue"]),
-            critical_tasks=int(overview_metrics["critical"]),
+    return ProjectDashboardResponse(
+        summary=summary,
+        schedule=schedule,
+        resources=ProjectDashboardResources(
             total_resources=len(active_resources),
-            overallocated_resources=overallocated_resources,
+            overallocated_count=overallocated_resources,
         ),
-        schedule=ProjectOverviewSchedule(
-            start_date=project.start_date,
-            finish_date=finish_date,
-            days_remaining=days_remaining,
-            milestones_due_soon=milestones_due_soon,
-        ),
-        trend=trend,
-        risk_items=risk_items,
+        cost=cost,
+        critical_path=critical_path,
+        upcoming_milestones=upcoming_milestones,
+        overdue_tasks=overdue_tasks,
         recent_activity=recent_activity,
     )

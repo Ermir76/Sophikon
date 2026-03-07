@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from httpx import AsyncClient
 
@@ -81,28 +79,8 @@ async def test_dashboard_insights_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_project_overview_insights_success(client: AsyncClient):
-    _, project_id = await _seed_project_with_data(
-        client, email="ins_proj@x.com", slug="org-ins-proj"
-    )
-
-    resp = await client.get(
-        f"/api/v1/projects/{project_id}/insights/overview",
-        params={"window_preset": "30d"},
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "kpis" in data
-    assert "schedule" in data
-    assert "trend" in data
-    assert "risk_items" in data
-    assert "recent_activity" in data
-    assert data["kpis"]["total_tasks"] >= 1
-
-
-@pytest.mark.asyncio
 async def test_insights_custom_window_requires_dates(client: AsyncClient):
-    org_id, project_id = await _seed_project_with_data(
+    org_id, _ = await _seed_project_with_data(
         client, email="ins_val@x.com", slug="org-ins-val"
     )
 
@@ -111,34 +89,3 @@ async def test_insights_custom_window_requires_dates(client: AsyncClient):
         params={"window_preset": "custom"},
     )
     assert org_resp.status_code == 422
-
-    proj_resp = await client.get(
-        f"/api/v1/projects/{project_id}/insights/overview",
-        params={"window_preset": "custom"},
-    )
-    assert proj_resp.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_project_overview_insights_forbidden_non_member(client: AsyncClient):
-    _, project_id = await _seed_project_with_data(
-        client, email="ins_owner@x.com", slug="org-ins-owner"
-    )
-
-    # Different user without membership.
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "ins_intruder@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Intruder",
-        },
-    )
-
-    resp = await client.get(f"/api/v1/projects/{project_id}/insights/overview")
-    assert resp.status_code == 403
-
-    # Random UUID also should not leak details.
-    random_project = str(uuid.uuid4())
-    resp2 = await client.get(f"/api/v1/projects/{random_project}/insights/overview")
-    assert resp2.status_code in (403, 404)

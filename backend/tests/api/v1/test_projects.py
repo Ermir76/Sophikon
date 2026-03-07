@@ -1,10 +1,132 @@
 import uuid
+from datetime import date, timedelta
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.task import Task
 from tests.api.v1.conftest import add_project_member
+
+
+async def _seed_project_dashboard_data(
+    client: AsyncClient,
+    session: AsyncSession,
+    *,
+    email: str,
+    slug: str,
+) -> str:
+    today = date.today()
+
+    register_response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": "StrongPassword123!",
+            "full_name": "Dashboard User",
+        },
+    )
+    assert register_response.status_code == 201, register_response.text
+
+    org_response = await client.post(
+        "/api/v1/organizations",
+        json={"name": f"Org {slug}", "slug": slug},
+    )
+    assert org_response.status_code == 201, org_response.text
+    org_id = org_response.json()["id"]
+
+    project_response = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Dashboard Project",
+            "organization_id": org_id,
+            "start_date": str(today - timedelta(days=14)),
+            "budget": 15000,
+        },
+    )
+    assert project_response.status_code == 201, project_response.text
+    project_id = project_response.json()["id"]
+
+    task_payloads = [
+        {
+            "name": "Completed task",
+            "start_date": str(today - timedelta(days=9)),
+            "duration": 480,
+        },
+        {
+            "name": "Overdue critical task",
+            "start_date": str(today - timedelta(days=5)),
+            "duration": 960,
+        },
+        {
+            "name": "Upcoming milestone",
+            "start_date": str(today + timedelta(days=4)),
+            "duration": 0,
+            "is_milestone": True,
+        },
+        {
+            "name": "Not started task",
+            "start_date": str(today + timedelta(days=1)),
+            "duration": 480,
+        },
+    ]
+
+    for payload in task_payloads:
+        response = await client.post(
+            f"/api/v1/projects/{project_id}/tasks", json=payload
+        )
+        assert response.status_code == 201, response.text
+
+    tasks = list(
+        (
+            await session.execute(
+                select(Task).where(Task.project_id == uuid.UUID(project_id))
+            )
+        ).scalars()
+    )
+    tasks_by_name = {task.name: task for task in tasks}
+
+    tasks_by_name["Completed task"].percent_complete = 100
+    tasks_by_name["Completed task"].finish_date = today - timedelta(days=7)
+    tasks_by_name["Completed task"].total_cost = 2400
+    tasks_by_name["Completed task"].actual_cost = 2400
+    tasks_by_name["Completed task"].remaining_cost = 0
+
+    tasks_by_name["Overdue critical task"].percent_complete = 25
+    tasks_by_name["Overdue critical task"].finish_date = today - timedelta(days=2)
+    tasks_by_name["Overdue critical task"].is_critical = True
+    tasks_by_name["Overdue critical task"].total_cost = 3000
+    tasks_by_name["Overdue critical task"].actual_cost = 1200
+    tasks_by_name["Overdue critical task"].remaining_cost = 1800
+
+    tasks_by_name["Upcoming milestone"].finish_date = today + timedelta(days=5)
+
+    tasks_by_name["Not started task"].finish_date = today + timedelta(days=3)
+    tasks_by_name["Not started task"].total_cost = 1200
+    tasks_by_name["Not started task"].remaining_cost = 1200
+
+    await session.commit()
+
+    resource_response = await client.post(
+        f"/api/v1/projects/{project_id}/resources",
+        json={"name": "Lead Engineer", "max_units": 1.0},
+    )
+    assert resource_response.status_code == 201, resource_response.text
+    resource_id = resource_response.json()["id"]
+
+    assignment_response = await client.post(
+        f"/api/v1/projects/{project_id}/tasks/{tasks_by_name['Overdue critical task'].id}/assignments",
+        json={
+            "resource_id": resource_id,
+            "units": 1.5,
+            "start_date": str(today - timedelta(days=5)),
+            "finish_date": str(today - timedelta(days=2)),
+        },
+    )
+    assert assignment_response.status_code == 201, assignment_response.text
+
+    return project_id
 
 
 @pytest.mark.asyncio
@@ -854,3 +976,120 @@ async def test_update_project_invalid_fields(client: AsyncClient):
         f"/api/v1/projects/{proj_id}", json={"start_date": "invalid-date"}
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_dashboard_returns_full_shape(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    project_id = await _seed_project_dashboard_data(
+        client,
+        session,
+        email="proj_dash_owner@x.com",
+        slug="org-proj-dash",
+    )
+
+    response = await client.get(f"/api/v1/projects/{project_id}/dashboard")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert sorted(data) == [
+        "cost",
+        "critical_path",
+        "overdue_tasks",
+        "recent_activity",
+        "resources",
+        "schedule",
+        "summary",
+        "upcoming_milestones",
+    ]
+    assert data["summary"]["total_tasks"] == 4
+    assert data["summary"]["completed_tasks"] == 1
+    assert data["summary"]["in_progress_tasks"] == 1
+    assert data["summary"]["not_started_tasks"] == 2
+    assert data["summary"]["overdue_tasks"] == 1
+    assert data["summary"]["milestones"] == 1
+    assert data["resources"]["overallocated_count"] == 1
+    assert data["critical_path"]["task_count"] == 1
+    assert "path_length_days" in data["critical_path"]
+    assert data["cost"]["budget"] == 15000.0
+    assert len(data["upcoming_milestones"]) == 1
+    assert len(data["overdue_tasks"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_dashboard_requires_auth(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    project_id = await _seed_project_dashboard_data(
+        client,
+        session,
+        email="proj_dash_auth@x.com",
+        slug="org-proj-dash-auth",
+    )
+
+    client.cookies.clear()
+    response = await client.get(f"/api/v1/projects/{project_id}/dashboard")
+
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_dashboard_forbidden_for_non_member(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    project_id = await _seed_project_dashboard_data(
+        client,
+        session,
+        email="proj_dash_owner2@x.com",
+        slug="org-proj-dash-owner2",
+    )
+
+    register_response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "proj_dash_intruder@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Intruder",
+        },
+    )
+    assert register_response.status_code == 201, register_response.text
+
+    response = await client.get(f"/api/v1/projects/{project_id}/dashboard")
+    assert response.status_code == 403
+
+    random_project = str(uuid.uuid4())
+    random_response = await client.get(f"/api/v1/projects/{random_project}/dashboard")
+    assert random_response.status_code in (403, 404)
+
+
+@pytest.mark.asyncio
+async def test_dashboard_custom_window_validation(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    project_id = await _seed_project_dashboard_data(
+        client,
+        session,
+        email="proj_dash_window@x.com",
+        slug="org-proj-dash-window",
+    )
+
+    missing_dates = await client.get(
+        f"/api/v1/projects/{project_id}/dashboard",
+        params={"window_preset": "custom"},
+    )
+    assert missing_dates.status_code == 422
+
+    invalid_range = await client.get(
+        f"/api/v1/projects/{project_id}/dashboard",
+        params={
+            "window_preset": "custom",
+            "start_date": "2026-04-02",
+            "end_date": "2026-04-01",
+        },
+    )
+    assert invalid_range.status_code == 422
