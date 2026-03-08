@@ -79,11 +79,7 @@ async def list_tasks(
     )
 
 
-@router.post(
-    "",
-    response_model=TaskResponse,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(
     body: TaskCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],

@@ -4,7 +4,6 @@ Insights endpoints for organization-level dashboards.
 
 from datetime import date
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +28,6 @@ router = APIRouter(tags=["insights"])
     response_model=DashboardInsightsResponse,
 )
 async def get_dashboard_insights(
-    org_id: UUID,
     access: Annotated[OrgAccess, Depends(get_org_access_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
     window_preset: Annotated[InsightsWindowPreset, Query()] = "30d",

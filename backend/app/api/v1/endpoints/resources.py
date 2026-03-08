@@ -56,11 +56,7 @@ async def list_resources(
     )
 
 
-@router.post(
-    "",
-    response_model=ResourceResponse,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
 async def create_resource(
     body: ResourceCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],

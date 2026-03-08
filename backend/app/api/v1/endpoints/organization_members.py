@@ -63,11 +63,7 @@ async def list_members(
     )
 
 
-@router.post(
-    "",
-    response_model=OrgMemberListItem,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("", response_model=OrgMemberListItem, status_code=status.HTTP_201_CREATED)
 async def invite_member(
     org_id: UUID,
     body: OrgMemberInvite,
