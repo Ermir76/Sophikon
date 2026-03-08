@@ -17,6 +17,7 @@ ActivityEntityType = Literal[
     "assignment",
     "dependency",
     "project_member",
+    "comment",
 ]
 
 

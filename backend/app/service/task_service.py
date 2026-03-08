@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError
 from app.models.assignment import Assignment
+from app.models.comment import Comment
 from app.models.dependency import Dependency
 from app.models.enums import AuditAction
 from app.models.project import Project
@@ -36,6 +37,25 @@ _SCHEDULE_FIELDS = {
     "constraint_date",
     "is_milestone",
 }
+
+
+async def _load_task_comment_counts(
+    db: AsyncSession,
+    task_ids: list[UUID],
+) -> dict[UUID, int]:
+    if not task_ids:
+        return {}
+
+    result = await db.execute(
+        select(Comment.entity_id, func.count(Comment.id))
+        .where(
+            Comment.entity_type == "task",
+            Comment.entity_id.in_(task_ids),
+            Comment.is_deleted == False,  # noqa: E712
+        )
+        .group_by(Comment.entity_id)
+    )
+    return {entity_id: count for entity_id, count in result.all()}
 
 
 async def list_tasks(
@@ -69,6 +89,9 @@ async def list_tasks(
 
     result = await db.execute(paginated_query)
     tasks = list(result.scalars().all())
+    comment_counts = await _load_task_comment_counts(db, [task.id for task in tasks])
+    for task in tasks:
+        task.comments_count = comment_counts.get(task.id, 0)
 
     return tasks, total
 
@@ -248,6 +271,7 @@ async def create_task(
     )
     await realtime_service.commit_and_publish(db)
     await db.refresh(task)
+    task.comments_count = 0
     return task
 
 
@@ -257,14 +281,30 @@ async def get_task_by_id(
     project_id: UUID,
 ) -> Task | None:
     """Get a task by ID within a project (excludes deleted)."""
+    comment_count_subquery = (
+        select(func.count(Comment.id))
+        .where(
+            Comment.entity_type == "task",
+            Comment.entity_id == Task.id,
+            Comment.is_deleted == False,  # noqa: E712
+        )
+        .correlate(Task)
+        .scalar_subquery()
+    )
     result = await db.execute(
-        select(Task).where(
+        select(Task, comment_count_subquery.label("comments_count")).where(
             Task.id == task_id,
             Task.project_id == project_id,
             Task.is_deleted == False,  # noqa: E712
         )
     )
-    return result.scalar_one_or_none()
+    row = result.one_or_none()
+    if row is None:
+        return None
+
+    task, comments_count = row
+    task.comments_count = int(comments_count or 0)
+    return task
 
 
 async def update_task(
@@ -326,6 +366,8 @@ async def update_task(
 
     await realtime_service.commit_and_publish(db)
     await db.refresh(task)
+    counts = await _load_task_comment_counts(db, [task.id])
+    task.comments_count = counts.get(task.id, 0)
     return task
 
 
@@ -364,9 +406,23 @@ async def soft_delete_task(
         )
     )
 
-    # 4. Soft delete the task itself
+    # 4. Soft delete comments for this task entity
+    comments_result = await db.execute(
+        select(Comment).where(
+            Comment.entity_type == "task",
+            Comment.entity_id == task.id,
+            Comment.is_deleted == False,  # noqa: E712
+        )
+    )
+    comments = comments_result.scalars().all()
+    deleted_at = datetime.now(UTC)
+    for comment in comments:
+        comment.is_deleted = True
+        comment.deleted_at = deleted_at
+
+    # 5. Soft delete the task itself
     task.is_deleted = True
-    task.deleted_at = datetime.now(UTC)
+    task.deleted_at = deleted_at
     await db.flush()
 
     if task.parent_task_id:

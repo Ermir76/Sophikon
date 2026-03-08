@@ -144,6 +144,7 @@ class TaskResponse(BaseModel):
     total_cost: Decimal
     actual_cost: Decimal
     color: str | None
+    comments_count: int = 0
     created_at: datetime
     updated_at: datetime
 
