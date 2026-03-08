@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
+    CheckConstraint,
     ForeignKey,
     Index,
     String,
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
 
 from app.core.database import Base
+from app.models.enums import CommentEntityType
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -44,7 +46,7 @@ class Comment(Base):
     )
 
     # Polymorphic Entity Reference
-    entity_type: Mapped[str] = mapped_column(
+    entity_type: Mapped[CommentEntityType] = mapped_column(
         String(50),
         nullable=False,
         comment="Entity type (task, project)",
@@ -116,6 +118,10 @@ class Comment(Base):
 
     # Indexes
     __table_args__ = (
+        CheckConstraint(
+            "entity_type IN ('project', 'task', 'resource', 'assignment', 'dependency', 'project_member')",
+            name="check_comment_entity_type",
+        ),
         Index(
             "idx_comment_entity",
             entity_type,

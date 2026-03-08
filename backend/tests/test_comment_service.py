@@ -1,6 +1,10 @@
 import re
 import uuid
 
+import pytest
+
+from app.core.exceptions import InvalidOperationError
+from app.models.enums import CommentEntityType
 from app.service import comment_service
 from app.service.comment_service import parse_mention_user_ids
 
@@ -38,3 +42,12 @@ def test_parse_mention_user_ids_ignores_invalid_uuid_tokens(
     mentions = parse_mention_user_ids(content)
 
     assert mentions == []
+
+
+def test_coerce_comment_entity_type_accepts_valid_string() -> None:
+    assert comment_service._coerce_comment_entity_type("task") == CommentEntityType.TASK
+
+
+def test_coerce_comment_entity_type_rejects_invalid_value() -> None:
+    with pytest.raises(InvalidOperationError):
+        comment_service._coerce_comment_entity_type("legacy_type")

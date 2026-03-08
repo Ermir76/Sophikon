@@ -4,18 +4,10 @@ Pydantic schemas for comment endpoints.
 
 import uuid
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, Field
 
-CommentEntityType = Literal[
-    "project",
-    "task",
-    "resource",
-    "assignment",
-    "dependency",
-    "project_member",
-]
+from app.models.enums import CommentEntityType
 
 
 class CommentAuthor(BaseModel):

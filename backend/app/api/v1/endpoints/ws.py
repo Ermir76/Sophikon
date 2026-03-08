@@ -22,6 +22,7 @@ from app.core.user_notification_websocket_manager import (
 from app.core.websocket_manager import websocket_manager
 from app.schema.realtime import (
     PresenceMessage,
+    RealtimeChannel,
     RealtimeErrorMessage,
     SubscribeMessage,
 )
@@ -29,7 +30,14 @@ from app.service import notification_service
 
 router = APIRouter(tags=["ws"])
 
-DEFAULT_CHANNELS = {"tasks", "resources", "members", "activity", "project", "comments"}
+DEFAULT_CHANNELS: set[RealtimeChannel] = {
+    "tasks",
+    "resources",
+    "members",
+    "activity",
+    "project",
+    "comments",
+}
 TERMINAL_PROTOCOL_CLOSE_CODE = 4400
 
 

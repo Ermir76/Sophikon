@@ -11,6 +11,7 @@ DELETE /projects/{project_id}           - Soft delete project (owner only)
 
 from datetime import date
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +47,7 @@ async def list_projects(
     per_page: Annotated[int, Query(ge=1, le=100)] = 20,
     status: Annotated[str | None, Query()] = None,
     search: Annotated[str | None, Query()] = None,
-    organization_id: Annotated[str | None, Query()] = None,
+    organization_id: Annotated[UUID | None, Query()] = None,
 ):
     """List all projects the user owns or is a member of."""
     # Verify org membership before listing (same pattern as create_project)

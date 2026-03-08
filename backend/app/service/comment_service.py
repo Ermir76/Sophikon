@@ -55,10 +55,22 @@ def parse_mention_user_ids(content: str) -> list[UUID]:
     return mention_ids
 
 
+def _coerce_comment_entity_type(
+    entity_type: CommentEntityType | str,
+) -> CommentEntityType:
+    if isinstance(entity_type, CommentEntityType):
+        return entity_type
+    try:
+        return CommentEntityType(entity_type)
+    except ValueError as exc:
+        raise InvalidOperationError("Unsupported comment entity type") from exc
+
+
 def to_comment_item(comment: Comment) -> CommentItem:
+    entity_type = _coerce_comment_entity_type(comment.entity_type)
     return CommentItem(
         id=comment.id,
-        entity_type=comment.entity_type,
+        entity_type=entity_type,
         entity_id=comment.entity_id,
         author=CommentAuthor(
             id=comment.author.id,
@@ -314,9 +326,10 @@ async def update_comment(
     actor_id: UUID,
     activity_context: ActivityContext | None = None,
 ) -> Comment:
+    comment_entity_type = _coerce_comment_entity_type(comment.entity_type)
     context = await resolve_entity_context(
         db,
-        entity_type=comment.entity_type,
+        entity_type=comment_entity_type,
         entity_id=comment.entity_id,
     )
     before = {
@@ -381,9 +394,10 @@ async def soft_delete_comment(
     comment: Comment,
     activity_context: ActivityContext | None = None,
 ) -> None:
+    comment_entity_type = _coerce_comment_entity_type(comment.entity_type)
     context = await resolve_entity_context(
         db,
-        entity_type=comment.entity_type,
+        entity_type=comment_entity_type,
         entity_id=comment.entity_id,
     )
     # TODO(2026-03-08): This currently loads and locks all non-deleted comments

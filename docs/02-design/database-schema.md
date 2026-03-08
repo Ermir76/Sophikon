@@ -788,7 +788,7 @@ Comments on tasks, projects, and other entities.
 | Column                | Type        | Constraints       | Default            | Description                 |
 | --------------------- | ----------- | ----------------- | ------------------ | --------------------------- |
 | **id**                | UUID        | PK                | uuid_generate_v7() | Primary key                 |
-| **entity_type**       | VARCHAR(50) | NOT NULL          | -                  | Entity type (task, project) |
+| **entity_type**       | VARCHAR(50) | NOT NULL, CHECK   | -                  | Entity type (project, task, resource, assignment, dependency, project_member) |
 | **entity_id**         | UUID        | NOT NULL          | -                  | Entity ID (polymorphic)     |
 | **author_id**         | UUID        | NOT NULL, FK→user | -                  | Comment author              |
 | **content**           | TEXT        | NOT NULL          | -                  | Comment text                |
@@ -805,6 +805,10 @@ Comments on tasks, projects, and other entities.
 - `idx_comment_entity` - (entity_type, entity_id) WHERE NOT is_deleted
 - `idx_comment_author` - (author_id) WHERE NOT is_deleted
 - `idx_comment_parent` - (parent_comment_id) WHERE parent_comment_id IS NOT NULL
+
+**Allowed entity types:**
+
+- `project`, `task`, `resource`, `assignment`, `dependency`, `project_member`
 
 ---
 

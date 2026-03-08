@@ -197,6 +197,22 @@ class NotificationType(StrEnum):
 
 
 # ============================================================================
+# COMMENTS
+# ============================================================================
+
+
+class CommentEntityType(StrEnum):
+    """Supported polymorphic entity types for comments."""
+
+    PROJECT = "project"
+    TASK = "task"
+    RESOURCE = "resource"
+    ASSIGNMENT = "assignment"
+    DEPENDENCY = "dependency"
+    PROJECT_MEMBER = "project_member"
+
+
+# ============================================================================
 # AI
 # ============================================================================
 
