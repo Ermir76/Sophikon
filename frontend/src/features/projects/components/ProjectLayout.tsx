@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useParams } from "react-router";
 
 import { AiDockedPanel, useAiPanelStore } from "@/features/ai";
+import { useProjectWebSocket } from "@/features/projects/hooks/useProjectWebSocket";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   ResizableHandle,
@@ -13,6 +14,8 @@ export function ProjectLayout() {
   const { projectId } = useParams<{ projectId: string }>();
   const isMobile = useIsMobile();
   const resolvedProjectId = projectId ?? "";
+
+  useProjectWebSocket(projectId);
 
   const projectPanelState = useAiPanelStore(
     (state) => state.projects[resolvedProjectId],

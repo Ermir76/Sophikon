@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 
 // Use the environment variable, or fallback (useful for local dev proxy)
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 export const api = axios.create({
   baseURL: API_BASE,

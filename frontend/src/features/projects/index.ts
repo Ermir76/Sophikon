@@ -13,6 +13,8 @@ export { ProjectsGrid } from './components/ProjectsGrid';
 export { useProjects, projectKeys, useProject, useUpdateProject } from './hooks/useProjects';
 export { useProjectActivity, projectActivityKeys } from './hooks/useProjectActivity';
 export { useProjectDashboard } from './hooks/useProjectDashboard';
+export { useProjectWebSocket } from './hooks/useProjectWebSocket';
+export { useProjectWebSocketStore } from './store/websocket-store';
 export {
   useAcceptProjectInvitation,
   useInviteProjectMember,

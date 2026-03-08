@@ -139,6 +139,98 @@ export interface ProjectActivityItem {
   created_at: string;
 }
 
+export type ProjectRealtimeChannel =
+  | "tasks"
+  | "resources"
+  | "members"
+  | "activity"
+  | "project";
+
+export type ProjectPresenceStatus = "viewing" | "editing";
+
+export type ProjectPresenceEntityType =
+  | "project"
+  | "task"
+  | "resource"
+  | "assignment"
+  | "dependency"
+  | "project_member";
+
+export type ProjectConnectionStatus =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "error";
+
+export interface ProjectPresenceUser {
+  id: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  status: ProjectPresenceStatus;
+  entity_type: ProjectPresenceEntityType;
+  entity_id?: string | null;
+}
+
+export interface ProjectRealtimeActor {
+  id: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface ProjectPresenceSnapshotMessage {
+  type: "presence_snapshot";
+  project_id: string;
+  users: ProjectPresenceUser[];
+}
+
+export interface ProjectPresenceUpdateMessage {
+  type: "presence_update";
+  project_id: string;
+  users: ProjectPresenceUser[];
+}
+
+export interface ProjectRealtimeEventMessage {
+  type:
+    | "project_created"
+    | "project_updated"
+    | "project_deleted"
+    | "task_created"
+    | "task_updated"
+    | "task_deleted"
+    | "resource_created"
+    | "resource_updated"
+    | "resource_deleted"
+    | "assignment_created"
+    | "assignment_deleted"
+    | "dependency_created"
+    | "dependency_deleted"
+    | "project_member_created"
+    | "project_member_updated"
+    | "project_member_deleted"
+    | "activity_logged";
+  project_id: string;
+  actor?: ProjectRealtimeActor | null;
+  entity_type: ProjectActivityEntityType;
+  action: ProjectActivityAction;
+  entity_id?: string | null;
+  entity_name?: string | null;
+  occurred_at: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface ProjectRealtimeErrorMessage {
+  type: "error";
+  code: string;
+  message: string;
+}
+
+export type ProjectWebSocketMessage =
+  | ProjectPresenceSnapshotMessage
+  | ProjectPresenceUpdateMessage
+  | ProjectRealtimeEventMessage
+  | ProjectRealtimeErrorMessage;
+
 export type ProjectMemberRole = "owner" | "manager" | "member" | "viewer";
 
 export interface ProjectMember {

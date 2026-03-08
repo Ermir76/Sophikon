@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProjectLayout } from "./ProjectLayout";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
+import { useProjectWebSocket } from "@/features/projects/hooks/useProjectWebSocket";
 
 vi.mock("@/features/ai", async () => {
   const actual = await vi.importActual<typeof import("@/features/ai")>(
@@ -34,6 +35,10 @@ vi.mock("@/shared/ui/drawer", () => ({
   DrawerContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock("@/features/projects/hooks/useProjectWebSocket", () => ({
+  useProjectWebSocket: vi.fn(),
+}));
+
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 function renderLayout() {
@@ -60,6 +65,7 @@ describe("ProjectLayout", () => {
 
     expect(screen.getByText("PROJECT CONTENT")).toBeInTheDocument();
     expect(screen.queryByText("AI PANEL docked")).not.toBeInTheDocument();
+    expect(useProjectWebSocket).toHaveBeenCalledWith("project-1");
   });
 
   it("renders the docked AI panel when the project panel state is open", () => {

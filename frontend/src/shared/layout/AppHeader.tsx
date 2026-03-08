@@ -1,6 +1,14 @@
 import { Fragment } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useMatch } from "react-router";
 
+import { useProjectWebSocketStore } from "@/features/projects/store/websocket-store";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+  AvatarImage,
+} from "@/shared/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,7 +31,14 @@ const segmentLabels: Record<string, string> = {
 
 export function AppHeader() {
   const location = useLocation();
+  const projectMatch = useMatch("/projects/:projectId/*") ?? useMatch("/projects/:projectId");
   const segments = location.pathname.split("/").filter(Boolean);
+  const projectId = projectMatch?.params.projectId ?? null;
+  const projectSocketState = useProjectWebSocketStore((state) =>
+    projectId ? state.projects[projectId] : undefined,
+  );
+  const visibleUsers = projectSocketState?.users.slice(0, 4) ?? [];
+  const extraUsers = Math.max((projectSocketState?.users.length ?? 0) - visibleUsers.length, 0);
 
   const isUUID = (str: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -39,6 +54,14 @@ export function AppHeader() {
     }
     return segment.charAt(0).toUpperCase() + segment.slice(1);
   };
+
+  const getInitials = (name?: string | null) =>
+    (name ?? "U")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -85,6 +108,30 @@ export function AppHeader() {
           })}
         </BreadcrumbList>
       </Breadcrumb>
+      {projectId ? (
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {projectSocketState?.status === "connected"
+              ? "Live"
+              : projectSocketState?.status === "reconnecting"
+                ? "Reconnecting"
+                : projectSocketState?.status === "connecting"
+                  ? "Connecting"
+                  : "Offline"}
+          </span>
+          <AvatarGroup>
+            {visibleUsers.map((user) => (
+              <Avatar key={user.id} size="sm" title={user.full_name ?? "Connected user"}>
+                {user.avatar_url ? (
+                  <AvatarImage src={user.avatar_url} alt={user.full_name ?? "Connected user"} />
+                ) : null}
+                <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+              </Avatar>
+            ))}
+            {extraUsers > 0 ? <AvatarGroupCount>+{extraUsers}</AvatarGroupCount> : null}
+          </AvatarGroup>
+        </div>
+      ) : null}
     </header>
   );
 }
