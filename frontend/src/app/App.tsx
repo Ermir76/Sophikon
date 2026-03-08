@@ -41,6 +41,9 @@ const OrgMembersPage = lazy(
 const ProjectSettingsPage = lazy(
   () => import("@/features/projects").then(m => ({ default: m.ProjectSettingsPage }))
 );
+const ProjectInvitationAcceptPage = lazy(
+  () => import("@/features/projects").then(m => ({ default: m.ProjectInvitationAcceptPage }))
+);
 const ProjectOverviewPage = lazy(
   () => import("@/features/projects").then(m => ({ default: m.ProjectOverviewPage }))
 );
@@ -94,6 +97,7 @@ function App() {
             {/* Global Scope */}
             <Route path="/" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
 
             <Route element={<OrgGuard />}>
               <Route

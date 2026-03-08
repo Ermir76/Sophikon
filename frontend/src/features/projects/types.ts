@@ -104,3 +104,41 @@ export interface ProjectDashboard {
   overdue_tasks: OverdueTask[];
   recent_activity: RecentActivityItem[];
 }
+
+export type ProjectMemberRole = "owner" | "manager" | "member" | "viewer";
+
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: ProjectMemberRole;
+  joined_at: string;
+  updated_at: string;
+  user_email?: string | null;
+  user_full_name?: string | null;
+}
+
+export interface ProjectInvitation {
+  id: string;
+  project_id: string;
+  invited_by_id: string;
+  role: ProjectMemberRole;
+  email: string;
+  message?: string | null;
+  expires_at: string;
+  accepted_at?: string | null;
+  is_revoked: boolean;
+  created_at: string;
+  invited_by_email?: string | null;
+  invited_by_full_name?: string | null;
+}
+
+export interface InviteProjectMemberRequest {
+  email: string;
+  role: ProjectMemberRole;
+  message?: string;
+}
+
+export interface AcceptProjectInvitationRequest {
+  token: string;
+}

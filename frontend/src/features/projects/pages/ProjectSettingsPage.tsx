@@ -34,8 +34,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { useProject, useUpdateProject, useDeleteProject } from "@/features/projects/hooks/useProjects";
+import { ProjectMembersTab } from "@/features/projects/components/ProjectMembersTab";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { QueryError } from "@/shared/components/QueryError";
 import { ColorPicker } from "@/shared/components/ColorPicker";
@@ -67,6 +69,7 @@ export default function ProjectSettingsPage() {
   const deleteProjectMutation = useDeleteProject(projectId);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -141,102 +144,125 @@ export default function ProjectSettingsPage() {
         description={`Manage settings for project: ${project?.name}`}
       />
 
-      <div className="space-y-4">
-        <Card className="bg-card/70">
-          <CardHeader>
-            <CardTitle>General Information</CardTitle>
-            <CardDescription>
-              Update your project's name and description.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Project Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList variant="line">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
+        </TabsList>
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Project description..."
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <TabsContent value="general" className="space-y-4">
+          <Card className="bg-card/70">
+            <CardHeader>
+              <CardTitle>General Information</CardTitle>
+              <CardDescription>
+                Update your project's name and description.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Project Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gantt Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker
-                          value={field.value ?? null}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Project description..."
+                            className="resize-none"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="flex justify-end">
-                  <Button type="submit" size="sm" className="h-8 px-3 text-xs" disabled={updateProjectMutation.isPending}>
-                    {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-        <div className="pt-1">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-destructive">Danger Zone</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Irreversible actions for your project.
-          </p>
-        </div>
-        <Separator />
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gantt Color</FormLabel>
+                        <FormControl>
+                          <ColorPicker
+                            value={field.value ?? null}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <Card className="border-destructive/50 bg-card/70">
-          <CardHeader>
-            <CardTitle className="text-destructive">Delete Project</CardTitle>
-            <CardDescription>
-              Permanently delete this project and all its tasks. This action cannot be undone.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-8 px-3 text-xs"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              Delete Project
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="h-8 px-3 text-xs"
+                      disabled={updateProjectMutation.isPending}
+                    >
+                      {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+          <div className="pt-1">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-destructive">Danger Zone</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Irreversible actions for your project.
+            </p>
+          </div>
+          <Separator />
+
+          <Card className="border-destructive/50 bg-card/70">
+            <CardHeader>
+              <CardTitle className="text-destructive">Delete Project</CardTitle>
+              <CardDescription>
+                Permanently delete this project and all its tasks. This action cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 px-3 text-xs"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete Project
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="members">
+          {projectId ? (
+            <ProjectMembersTab projectId={projectId} />
+          ) : (
+            <QueryError
+              message="Missing project ID."
+              onRetry={() => refetch()}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent variant="destructive">
