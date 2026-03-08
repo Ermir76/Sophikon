@@ -19,6 +19,7 @@ from app.service.activity_log_service import ActivityContext
         ("assignment", ["tasks", "resources"]),
         ("dependency", ["tasks"]),
         ("project_member", ["members"]),
+        ("comment", ["comments"]),
     ],
 )
 async def test_queue_entity_event_maps_channels(

@@ -9,6 +9,7 @@ import { projectActivityKeys } from "@/features/projects/hooks/useProjectActivit
 import { projectDashboardKeys } from "@/features/projects/hooks/useProjectDashboard";
 import { useProjectWebSocket } from "@/features/projects/hooks/useProjectWebSocket";
 import { useProjectWebSocketStore } from "@/features/projects/store/websocket-store";
+import { commentKeys } from "@/features/tasks/hooks/useComments";
 import { taskKeys } from "@/features/tasks/hooks/useTasks";
 
 class MockWebSocket {
@@ -102,7 +103,7 @@ describe("useProjectWebSocket", () => {
     expect(socket.sent).toEqual([
       JSON.stringify({
         type: "subscribe",
-        channels: ["tasks", "resources", "members", "activity", "project"],
+        channels: ["tasks", "resources", "members", "activity", "project", "comments"],
       }),
     ]);
 
@@ -151,6 +152,22 @@ describe("useProjectWebSocket", () => {
         metadata: null,
       }),
     });
+    socket.emit("message", {
+      data: JSON.stringify({
+        type: "comment_updated",
+        project_id: "project-1",
+        entity_type: "comment",
+        action: "updated",
+        entity_id: "comment-1",
+        entity_name: "Realtime comment",
+        occurred_at: "2026-03-08T12:00:01Z",
+        actor: null,
+        metadata: {
+          comment_entity_type: "task",
+          comment_entity_id: "task-1",
+        },
+      }),
+    });
 
     await waitFor(() => {
       expect(invalidateQueries).toHaveBeenCalled();
@@ -164,6 +181,9 @@ describe("useProjectWebSocket", () => {
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: taskKeys.list("project-1"),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: commentKeys.byEntity("task", "task-1"),
     });
   });
 });

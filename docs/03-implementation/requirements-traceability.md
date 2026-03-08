@@ -224,8 +224,8 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-005 | Implemented   | A3, A8, A9 | A mounted websocket endpoint now exists at `/api/v1/ws/projects/{project_id}`, project mutation/activity flows publish realtime events after commit, and the frontend mounts a project-scoped websocket hook that invalidates live data on receipt. |
 | FR-CO-006 | Implemented   | A3, A8, A9 | Project presence is tracked over the websocket protocol and surfaced in the app header as connected-user avatars with live connection state on project routes.                                                                        |
 | FR-CO-007 | Implemented   | A3, A8, A9 | Project activity logging is mounted at `GET /projects/{id}/activity`, mutation flows write audit entries, and the project overview page renders the dedicated activity feed from that endpoint. |
-| FR-CO-008 | Not evidenced | A8, A9     | No mounted task-comment flow found.                                                                                                                                                             |
-| FR-CO-009 | Not evidenced | A8, A9     | No mounted mention flow found.                                                                                                                                                                  |
+| FR-CO-008 | Implemented   | A3, A8, A9 | Comments are mounted via `/comments` endpoints, exposed in the task detail panel, and synchronized through websocket comment events.                                                           |
+| FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
 | FR-CO-010 | Not evidenced | A8, A9     | No mounted attachment flow found.                                                                                                                                                               |
 | FR-CO-011 | Not evidenced | A8, A9     | No mounted notification flow found.                                                                                                                                                             |
 
@@ -273,7 +273,7 @@ This document records what is evidenced by the current codebase review.
 | US-5.4 AI Weekly Report            | Not evidenced | A7, A9     | No report-generation flow was evidenced.                                                                                |
 | US-6.1 Invite Team Members         | Implemented   | A3, A8, A9 | Project-team invite, acceptance, and member management flows are mounted in the current collaboration surface.          |
 | US-6.2 Real-time Updates           | Implemented   | A3, A8, A9 | Project-scoped websocket endpoint, presence snapshots/updates, and realtime mutation push flows are mounted in backend and consumed in frontend project routes. |
-| US-6.3 Task Comments               | Not evidenced | A8, A9     | No task-comment flow was evidenced.                                                                                     |
+| US-6.3 Task Comments               | Implemented   | A3, A8, A9 | Task detail comments support create/reply/edit/delete with mention autocomplete, activity entries, and realtime sync updates. |
 | US-7.1 Save Baseline               | Not evidenced | A8, A9     | No baseline flow was evidenced.                                                                                         |
 | US-7.2 Compare to Baseline         | Not evidenced | A8, A9     | No baseline flow was evidenced.                                                                                         |
 | US-8.1 Export to MS Project XML    | Not evidenced | A8, A9     | No export flow was evidenced.                                                                                           |

@@ -218,7 +218,7 @@ flowchart TB
 | Assignments   | 5     | /tasks/:taskId/assignments/\* |
 | Baselines     | 5     | /projects/:id/baselines/\*    |
 | Time Entries  | 6     | /time-entries/\*              |
-| Comments      | 5     | /comments/\*                  |
+| Comments      | 4     | /comments/\*                  |
 | Attachments   | 4     | /attachments/\*               |
 | Notifications | 4     | /notifications/\*             |
 | Activity      | 1     | /projects/:id/activity        |
@@ -2287,9 +2287,18 @@ Or reject:
 
 ## 14. Comment Endpoints `[V1.1]`
 
-### GET /comments/entity/:entityType/:entityId
+### GET /comments/entity/{entity_type}/{entity_id}
 
 Get comments for entity.
+
+Supported `entity_type` values:
+
+- `project`
+- `task`
+- `resource`
+- `assignment`
+- `dependency`
+- `project_member`
 
 **Response:** `200 OK`
 
@@ -2334,16 +2343,18 @@ Create comment.
 {
   "entity_type": "task",
   "entity_id": "uuid",
-  "content": "Looking good! @Jane can you review?",
+  "content": "Looking good! @[Jane Doe](user:uuid) can you review?",
   "parent_comment_id": null
 }
 ```
+
+Mentions use ID-backed tokens: `@[Display Name](user:uuid)`.
 
 **Response:** `201 Created`
 
 ---
 
-### PATCH /comments/:id
+### PATCH /comments/{id}
 
 Edit comment.
 
@@ -2359,7 +2370,7 @@ Edit comment.
 
 ---
 
-### DELETE /comments/:id
+### DELETE /comments/{id}
 
 Delete comment.
 
@@ -2744,7 +2755,7 @@ Default subscriptions on connect:
 ```json
 {
   "type": "subscribe",
-  "channels": ["tasks", "resources", "members", "activity", "project"]
+  "channels": ["tasks", "resources", "members", "activity", "project", "comments"]
 }
 ```
 
@@ -2755,7 +2766,7 @@ Subscribe to a channel set:
 ```json
 {
   "type": "subscribe",
-  "channels": ["tasks", "resources", "members", "activity", "project"]
+  "channels": ["tasks", "resources", "members", "activity", "project", "comments"]
 }
 ```
 
@@ -2842,6 +2853,7 @@ Supported server event types:
 - `assignment_created`, `assignment_deleted`
 - `dependency_created`, `dependency_deleted`
 - `project_member_created`, `project_member_updated`, `project_member_deleted`
+- `comment_created`, `comment_updated`, `comment_deleted`
 - `activity_logged`
 - `error`
 
@@ -2851,6 +2863,7 @@ Channel routing:
 - `tasks` channel: task, dependency, and assignment events
 - `resources` channel: resource and assignment events
 - `members` channel: project member and invitation events
+- `comments` channel: comment lifecycle events
 - `activity` channel: `activity_logged`
 
 Metadata notes:
@@ -2858,6 +2871,7 @@ Metadata notes:
 - assignment events include `task_id` and `resource_id`
 - dependency events include `predecessor_id` and `successor_id`
 - project member events include `subject_type` plus `user_id`, `email`, `role`, or `invitation_id` when relevant
+- comment events include `comment_entity_type`, `comment_entity_id`, `parent_comment_id`, and `mentions`
 - activity events include `activity_id` and `changes`
 
 ## 21. Health & Meta `[V1.0]`

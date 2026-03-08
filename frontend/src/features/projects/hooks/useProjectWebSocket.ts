@@ -16,8 +16,10 @@ import type {
 import { resourceKeys } from "@/features/resources/hooks/useResources";
 import { API_BASE } from "@/shared/api/api";
 import { assignmentKeys } from "@/features/tasks/hooks/useAssignments";
+import { commentKeys } from "@/features/tasks/hooks/useComments";
 import { dependencyKeys } from "@/features/tasks/hooks/useDependencies";
 import { taskKeys } from "@/features/tasks/hooks/useTasks";
+import type { CommentEntityType } from "@/features/tasks/types";
 
 const DEFAULT_CHANNELS: ProjectRealtimeChannel[] = [
   "tasks",
@@ -25,9 +27,18 @@ const DEFAULT_CHANNELS: ProjectRealtimeChannel[] = [
   "members",
   "activity",
   "project",
+  "comments",
 ];
 const TERMINAL_CLOSE_CODES = new Set([4401, 4403, 4404]);
 const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000];
+const COMMENT_ENTITY_TYPES: ReadonlySet<CommentEntityType> = new Set([
+  "project",
+  "task",
+  "resource",
+  "assignment",
+  "dependency",
+  "project_member",
+]);
 
 function buildProjectWebSocketUrl(projectId: string) {
   if (/^https?:\/\//.test(API_BASE)) {
@@ -111,6 +122,32 @@ function invalidateProjectEventQueries(
       queryKey: projectMemberKeys.invitations(projectId),
     });
   }
+
+  if (message.entity_type === "comment") {
+    const commentEntityTypeRaw = typeof message.metadata?.comment_entity_type === "string"
+      ? message.metadata.comment_entity_type
+      : null;
+    const commentEntityType = (
+      commentEntityTypeRaw
+      && COMMENT_ENTITY_TYPES.has(commentEntityTypeRaw as CommentEntityType)
+    )
+      ? commentEntityTypeRaw as CommentEntityType
+      : null;
+    const commentEntityId = typeof message.metadata?.comment_entity_id === "string"
+      ? message.metadata.comment_entity_id
+      : null;
+    if (commentEntityType && commentEntityId) {
+      queryClient.invalidateQueries({
+        queryKey: commentKeys.byEntity(commentEntityType, commentEntityId),
+      });
+      if (commentEntityType === "task") {
+        queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+        queryClient.invalidateQueries({
+          queryKey: taskKeys.detail(projectId, commentEntityId),
+        });
+      }
+    }
+  }
 }
 
 export function useProjectWebSocket(projectId: string | null | undefined) {
@@ -136,10 +173,11 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
     if (!projectId) {
       return;
     }
+    const activeProjectId = projectId;
 
     shouldReconnectRef.current = true;
     reconnectAttemptRef.current = 0;
-    setSubscribedChannels(projectId, DEFAULT_CHANNELS);
+    setSubscribedChannels(activeProjectId, DEFAULT_CHANNELS);
 
     function cleanupSocket() {
       if (reconnectTimerRef.current !== null) {
@@ -155,20 +193,20 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
     function handleProjectExit() {
       shouldReconnectRef.current = false;
       cleanupSocket();
-      clearProject(projectId);
+      clearProject(activeProjectId);
       navigate("/projects", { replace: true });
     }
 
     function connect(mode: "connecting" | "reconnecting") {
-      setStatus(projectId, mode);
+      setStatus(activeProjectId, mode);
 
-      const socket = new WebSocket(buildProjectWebSocketUrl(projectId));
+      const socket = new WebSocket(buildProjectWebSocketUrl(activeProjectId));
       socketRef.current = socket;
 
       socket.addEventListener("open", () => {
         reconnectAttemptRef.current = 0;
-        setReconnectAttempt(projectId, 0);
-        setStatus(projectId, "connected");
+        setReconnectAttempt(activeProjectId, 0);
+        setStatus(activeProjectId, "connected");
         socket.send(
           JSON.stringify({
             type: "subscribe",
@@ -192,16 +230,16 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
         }
 
         if (message.type === "presence_snapshot" || message.type === "presence_update") {
-          setUsers(projectId, message.users);
+          setUsers(activeProjectId, message.users);
           return;
         }
 
         if (message.type === "error") {
-          setStatus(projectId, "error");
+          setStatus(activeProjectId, "error");
           return;
         }
 
-        invalidateProjectEventQueries(queryClient, projectId, message);
+        invalidateProjectEventQueries(queryClient, activeProjectId, message);
 
         if (message.type === "project_deleted") {
           handleProjectExit();
@@ -220,22 +258,22 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
 
       socket.addEventListener("close", (event) => {
         socketRef.current = null;
-        setUsers(projectId, []);
+        setUsers(activeProjectId, []);
 
         if (!shouldReconnectRef.current) {
-          setStatus(projectId, "idle");
+          setStatus(activeProjectId, "idle");
           return;
         }
 
         if (TERMINAL_CLOSE_CODES.has(event.code)) {
-          setStatus(projectId, "error");
+          setStatus(activeProjectId, "error");
           return;
         }
 
         const attempt = reconnectAttemptRef.current + 1;
         reconnectAttemptRef.current = attempt;
-        setReconnectAttempt(projectId, attempt);
-        setStatus(projectId, "reconnecting");
+        setReconnectAttempt(activeProjectId, attempt);
+        setStatus(activeProjectId, "reconnecting");
 
         const delay = RECONNECT_DELAYS_MS[Math.min(attempt - 1, RECONNECT_DELAYS_MS.length - 1)];
         reconnectTimerRef.current = window.setTimeout(() => {
@@ -244,7 +282,7 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
       });
 
       socket.addEventListener("error", () => {
-        setStatus(projectId, "error");
+        setStatus(activeProjectId, "error");
       });
     }
 
@@ -253,7 +291,7 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
     return () => {
       shouldReconnectRef.current = false;
       cleanupSocket();
-      clearProject(projectId);
+      clearProject(activeProjectId);
     };
   }, [
     clearProject,

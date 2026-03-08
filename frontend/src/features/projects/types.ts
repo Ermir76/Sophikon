@@ -108,7 +108,8 @@ export type ProjectActivityEntityType =
   | "resource"
   | "assignment"
   | "dependency"
-  | "project_member";
+  | "project_member"
+  | "comment";
 
 export type ProjectActivityAction = "created" | "updated" | "deleted" | "restored";
 
@@ -144,7 +145,8 @@ export type ProjectRealtimeChannel =
   | "resources"
   | "members"
   | "activity"
-  | "project";
+  | "project"
+  | "comments";
 
 export type ProjectPresenceStatus = "viewing" | "editing";
 
@@ -208,6 +210,9 @@ export interface ProjectRealtimeEventMessage {
     | "project_member_created"
     | "project_member_updated"
     | "project_member_deleted"
+    | "comment_created"
+    | "comment_updated"
+    | "comment_deleted"
     | "activity_logged";
   project_id: string;
   actor?: ProjectRealtimeActor | null;

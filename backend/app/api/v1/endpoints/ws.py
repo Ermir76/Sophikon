@@ -25,7 +25,7 @@ from app.schema.realtime import (
 
 router = APIRouter(tags=["ws"])
 
-DEFAULT_CHANNELS = {"tasks", "resources", "members", "activity", "project"}
+DEFAULT_CHANNELS = {"tasks", "resources", "members", "activity", "project", "comments"}
 TERMINAL_PROTOCOL_CLOSE_CODE = 4400
 
 

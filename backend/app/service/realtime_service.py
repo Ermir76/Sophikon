@@ -24,6 +24,7 @@ ENTITY_CHANNELS: dict[str, list[RealtimeChannel]] = {
     "assignment": ["tasks", "resources"],
     "dependency": ["tasks"],
     "project_member": ["members"],
+    "comment": ["comments"],
 }
 
 

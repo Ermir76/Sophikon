@@ -10,7 +10,14 @@ from pydantic import BaseModel, BeforeValidator, Field
 
 from app.models.enums import AuditAction
 
-RealtimeChannel = Literal["tasks", "resources", "members", "activity", "project"]
+RealtimeChannel = Literal[
+    "tasks",
+    "resources",
+    "members",
+    "activity",
+    "project",
+    "comments",
+]
 PresenceStatus = Literal["viewing", "editing"]
 PresenceEntityType = Literal[
     "project",
@@ -19,6 +26,15 @@ PresenceEntityType = Literal[
     "assignment",
     "dependency",
     "project_member",
+]
+RealtimeEntityType = Literal[
+    "project",
+    "task",
+    "resource",
+    "assignment",
+    "dependency",
+    "project_member",
+    "comment",
 ]
 
 
@@ -72,7 +88,7 @@ class RealtimeEventMessage(BaseModel):
     type: str
     project_id: SchemaUUID
     actor: RealtimeActor | None = None
-    entity_type: PresenceEntityType
+    entity_type: RealtimeEntityType
     action: AuditAction
     entity_id: SchemaUUID | None = None
     entity_name: str | None = None
