@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from app.api.v1.endpoints.activity import router as activity_router
 from app.api.v1.endpoints.ai import router as ai_router
 from app.api.v1.endpoints.assignments import (
     assignments_router,
@@ -107,6 +108,7 @@ app.include_router(orgs_router, prefix="/api/v1")
 app.include_router(org_members_router, prefix="/api/v1")
 app.include_router(projects_router, prefix="/api/v1")
 app.include_router(project_members_router, prefix="/api/v1")
+app.include_router(activity_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(resources_router, prefix="/api/v1")
 app.include_router(dependencies_router, prefix="/api/v1")
