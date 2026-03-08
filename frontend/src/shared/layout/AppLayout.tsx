@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 
+import { useNotificationWebSocket } from "@/features/notifications";
 import { AppHeader } from "@/shared/layout/AppHeader";
 import { AppSidebar } from "@/shared/layout/AppSidebar";
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar";
@@ -10,6 +11,7 @@ import { EmailVerificationBanner } from "@/features/auth/components/EmailVerific
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const location = useLocation();
+  useNotificationWebSocket();
 
   useEffect(() => {
     // Focus main content on route change for screen readers
