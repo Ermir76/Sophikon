@@ -170,6 +170,17 @@ The `projects` feature now also includes:
 
 These files support the dedicated project activity feed used by the project overview page.
 
+The `notifications` feature now also includes:
+
+- `api/notification.service.ts`
+- `hooks/useNotifications.ts`
+- `hooks/useNotificationWebSocket.ts`
+- `store/notification-websocket-store.ts`
+- `types.ts`
+- `index.ts`
+
+These files support the global notifications inbox, settings toggles, and user-scoped realtime badge updates in shared layout surfaces.
+
 ---
 
 ## Rules

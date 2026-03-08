@@ -227,7 +227,7 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-008 | Implemented   | A3, A8, A9 | Comments are mounted via `/comments` endpoints, exposed in the task detail panel, and synchronized through websocket comment events.                                                           |
 | FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
 | FR-CO-010 | Not evidenced | A8, A9     | No mounted attachment flow found.                                                                                                                                                               |
-| FR-CO-011 | Not evidenced | A8, A9     | No mounted notification flow found.                                                                                                                                                             |
+| FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline triggers create rows, and header bell UI consumes live user websocket updates. |
 
 ### 3.14 Import/Export
 

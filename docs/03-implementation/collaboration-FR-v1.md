@@ -155,18 +155,18 @@ Depends on: Phase 3, Phase 4
 
 ### Notifications - Backend
 
-- [ ] Schema `schema/notification.py` - NotificationItem, NotificationListResponse
-- [ ] Service `service/notification_service.py` - `create_notification`, `list_notifications`, `mark_read`, `mark_all_read`
-- [ ] Endpoint `api/v1/endpoints/notifications.py` - list, mark-read, mark-all-read
-- [ ] Triggers: comment mentions, task assignment, deadline approaching (Celery periodic task)
-- [ ] Push new notifications via WebSocket
+- [x] Schema `schema/notification.py` - NotificationItem, NotificationListResponse, NotificationSettings, NotificationSettingsUpdate
+- [x] Service `service/notification_service.py` - `create_notification`, `list_notifications`, `mark_read`, `mark_all_read`, `get_settings`, `update_settings`
+- [x] Endpoint `api/v1/endpoints/notifications.py` - list, mark-read, mark-all-read, settings read/update
+- [x] Triggers: comment mentions, task assignment, deadline approaching (Celery periodic task)
+- [x] Push new notifications via dedicated user WebSocket (`/api/v1/ws/notifications`)
 
 ### Notifications - Frontend
 
-- [ ] Bell icon in app header with unread count badge
-- [ ] Dropdown notification panel with mark-read actions
-- [ ] Hook: `useNotifications.ts`
-- [ ] WebSocket: receive notification events, update badge without polling
+- [x] Bell icon in app header with unread count badge
+- [x] Dropdown notification panel with mark-read and mark-all-read actions
+- [x] Hook: `useNotifications.ts` (+ settings hooks)
+- [x] Global websocket hook receives notification events and updates badge/query state
 
 ### Attachments - Backend
 
@@ -181,7 +181,7 @@ Depends on: Phase 3, Phase 4
 
 ### Tests
 
-- [ ] Notification endpoint and trigger integration tests
+- [x] Notification endpoint and trigger integration tests
 - [ ] Attachment upload/download and storage provider tests
 
 ---

@@ -2445,7 +2445,7 @@ Delete attachment.
 
 ### GET /notifications
 
-Get notifications.
+Get current-user notifications.
 
 **Query Parameters:**
 
@@ -2459,7 +2459,7 @@ Get notifications.
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "id": "uuid",
       "type": "task_assigned",
@@ -2476,9 +2476,11 @@ Get notifications.
       "created_at": "2026-02-06T14:30:00Z"
     }
   ],
-  "meta": {
-    "unread_count": 5
-  }
+  "total": 12,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 1,
+  "unread_count": 5
 }
 ```
 
@@ -2490,6 +2492,25 @@ Mark as read.
 
 **Response:** `200 OK`
 
+```json
+{
+  "id": "uuid",
+  "type": "task_assigned",
+  "title": "You were assigned to a task",
+  "message": "John assigned you to 'Design homepage'",
+  "entity_type": "task",
+  "entity_id": "uuid",
+  "actor": {
+    "id": "uuid",
+    "full_name": "John Doe",
+    "avatar_url": null
+  },
+  "is_read": true,
+  "read_at": "2026-03-08T11:00:00Z",
+  "created_at": "2026-03-08T10:30:00Z"
+}
+```
+
 ---
 
 ### POST /notifications/read-all
@@ -2498,22 +2519,53 @@ Mark all as read.
 
 **Response:** `200 OK`
 
+```json
+{
+  "updated_count": 3,
+  "unread_count": 0
+}
+```
+
 ---
 
 ### GET /notifications/settings
 
-Get notification settings.
+Get current-user notification settings.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "data": {
-    "email_task_assigned": true,
-    "email_mentioned": true,
-    "email_deadline_approaching": true,
-    "push_enabled": false
-  }
+  "email_task_assigned": true,
+  "email_mentioned": true,
+  "email_deadline_approaching": true,
+  "push_enabled": false
+}
+```
+
+---
+
+### PATCH /notifications/settings
+
+Update current-user notification settings.
+
+**Request Body (partial):**
+
+```json
+{
+  "email_mentioned": false,
+  "push_enabled": true
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "email_task_assigned": true,
+  "email_mentioned": false,
+  "email_deadline_approaching": true,
+  "push_enabled": true
 }
 ```
 
@@ -2873,6 +2925,33 @@ Metadata notes:
 - project member events include `subject_type` plus `user_id`, `email`, `role`, or `invitation_id` when relevant
 - comment events include `comment_entity_type`, `comment_entity_id`, `parent_comment_id`, and `mentions`
 - activity events include `activity_id` and `changes`
+
+### User Notifications WebSocket
+
+Connect:
+
+```
+wss://api.sophikon.app/api/v1/ws/notifications
+```
+
+Authentication:
+
+- browser clients use the `access_token` cookie
+- non-browser/test clients may pass `?token=<access_token>`
+- `Authorization: Bearer <access_token>` is also accepted
+
+Close codes:
+
+- `4401` unauthenticated
+- `4400` malformed websocket protocol message
+
+Server -> client message types:
+
+- `notification_snapshot` with `unread_count`
+- `notification_created` with `notification` and `unread_count`
+- `notification_updated` with `notification_id`, `is_read`, `read_at`, and `unread_count`
+- `notifications_read_all` with `unread_count`
+- `error`
 
 ## 21. Health & Meta `[V1.0]`
 

@@ -785,19 +785,19 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 
 ### 3.13 Collaboration
 
-| ID        | Requirement              | Priority | API Endpoint                           |     |
-| --------- | ------------------------ | -------- | -------------------------------------- | --- |
-| FR-CO-001 | Invite to project        | Must     | POST /projects/:id/members/invite      | ✅  |
-| FR-CO-002 | Set member role          | Must     | PATCH /projects/:id/members/:memberId  | ✅  |
-| FR-CO-003 | Remove member            | Must     | DELETE /projects/:id/members/:memberId | ✅  |
-| FR-CO-004 | View members             | Must     | GET /projects/:id/members              | ✅  |
-| FR-CO-005 | Real-time updates        | Must     | WebSocket                              | ✅  |
-| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                              | ✅  |
-| FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity             | ✅  |
-| FR-CO-008 | Comments on tasks        | Should   | GET/POST/PATCH/DELETE /comments        | ✅  |
-| FR-CO-009 | @mentions                | Should   | POST /comments (ID-backed mention parse) | ✅  |
-| FR-CO-010 | File attachments         | Should   | POST /tasks/:id/attachments            | ❌  |
-| FR-CO-011 | Notifications            | Should   | GET /notifications                     | ❌  |
+| ID        | Requirement              | Priority | API Endpoint                            |     |
+| --------- | ------------------------ | -------- | --------------------------------------- | --- |
+| FR-CO-001 | Invite to project        | Must     | POST /projects/:id/members/invite       | ✅  |
+| FR-CO-002 | Set member role          | Must     | PATCH /projects/:id/members/:memberId   | ✅  |
+| FR-CO-003 | Remove member            | Must     | DELETE /projects/:id/members/:memberId  | ✅  |
+| FR-CO-004 | View members             | Must     | GET /projects/:id/members               | ✅  |
+| FR-CO-005 | Real-time updates        | Must     | WebSocket                               | ✅  |
+| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                               | ✅  |
+| FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity              | ✅  |
+| FR-CO-008 | Comments on tasks        | Should   | GET/POST/PATCH/DELETE /comments         | ✅  |
+| FR-CO-009 | @mentions                | Should   | POST /comments(ID-backed mention parse) | ✅  |
+| FR-CO-010 | File attachments         | Should   | POST /tasks/:id/attachments             | ❌  |
+| FR-CO-011 | Notifications            | Should   | GET /notifications                      | ✅  |
 
 ### 3.14 Import/Export
 
