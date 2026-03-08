@@ -77,8 +77,14 @@ def _mock_websocket_manager_globally(monkeypatch):
 
     monkeypatch.setattr("app.main.websocket_manager.start", _noop)
     monkeypatch.setattr("app.main.websocket_manager.stop", _noop)
+    monkeypatch.setattr("app.main.user_notification_websocket_manager.start", _noop)
+    monkeypatch.setattr("app.main.user_notification_websocket_manager.stop", _noop)
     monkeypatch.setattr(
         "app.service.realtime_service.websocket_manager.publish_message",
+        _noop_publish,
+    )
+    monkeypatch.setattr(
+        "app.service.realtime_service.user_notification_websocket_manager.publish_message",
         _noop_publish,
     )
 

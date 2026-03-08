@@ -3,10 +3,14 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi import WebSocketDisconnect
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints import ws as ws_endpoint
 from app.core.config import settings
+from app.models.enums import NotificationType
+from app.models.notification import Notification
+from app.models.user import User
 
 
 async def _register_user(client: AsyncClient, email: str, full_name: str) -> None:
@@ -137,6 +141,24 @@ class FakeWebSocketManager:
         self.disconnect_calls.append((connection_id, str(project_id)))
 
 
+class FakeUserNotificationWebSocketManager:
+    def __init__(self):
+        self.connect_calls: list[dict] = []
+        self.disconnect_calls: list[tuple[str, str]] = []
+
+    async def connect(self, websocket, *, user_id):
+        self.connect_calls.append(
+            {
+                "websocket": websocket,
+                "user_id": str(user_id),
+            }
+        )
+        return "notif-conn-1"
+
+    async def disconnect(self, connection_id, user_id):
+        self.disconnect_calls.append((connection_id, str(user_id)))
+
+
 def _patch_ws_dependencies(
     monkeypatch: pytest.MonkeyPatch,
     session: AsyncSession,
@@ -147,6 +169,22 @@ def _patch_ws_dependencies(
 
     monkeypatch.setattr(ws_endpoint, "_with_session", _with_session)
     monkeypatch.setattr(ws_endpoint, "websocket_manager", manager)
+
+
+def _patch_notification_ws_dependencies(
+    monkeypatch: pytest.MonkeyPatch,
+    session: AsyncSession,
+    manager: FakeUserNotificationWebSocketManager,
+):
+    async def _with_session(handler):
+        return await handler(session)
+
+    monkeypatch.setattr(ws_endpoint, "_with_session", _with_session)
+    monkeypatch.setattr(
+        ws_endpoint,
+        "user_notification_websocket_manager",
+        manager,
+    )
 
 
 @pytest.mark.asyncio
@@ -295,6 +333,39 @@ async def test_project_websocket_closes_on_malformed_payload(
 
 
 @pytest.mark.asyncio
+async def test_project_websocket_closes_on_non_dict_payload(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await _register_user(client, "ws-owner-invalid-shape@example.com", "WS Owner")
+    token = await _login_user(client, "ws-owner-invalid-shape@example.com")
+    project_id = await _create_project(
+        client,
+        org_slug="ws-invalid-shape-org",
+        project_name="Invalid Payload Shape Project",
+    )
+
+    manager = FakeWebSocketManager()
+    _patch_ws_dependencies(monkeypatch, session, manager)
+    websocket = FakeWebSocket(
+        token=token,
+        messages=[[]],
+    )
+
+    await ws_endpoint.project_websocket(websocket, UUID(project_id))
+
+    assert websocket.accepted is True
+    assert websocket.close_code == ws_endpoint.TERMINAL_PROTOCOL_CLOSE_CODE
+    assert websocket.sent[1] == {
+        "type": "error",
+        "code": "INVALID_MESSAGE",
+        "message": "Malformed websocket payload",
+    }
+    assert manager.disconnect_calls == [("conn-1", project_id)]
+
+
+@pytest.mark.asyncio
 async def test_project_websocket_keeps_connection_open_on_unknown_message_type(
     client: AsyncClient,
     session: AsyncSession,
@@ -331,3 +402,124 @@ async def test_project_websocket_keeps_connection_open_on_unknown_message_type(
         },
     ]
     assert manager.disconnect_calls == [("conn-1", project_id)]
+
+
+async def _get_user(client: AsyncClient, session: AsyncSession, email: str) -> User:
+    await _register_user(client, email, "Notification User")
+    await _login_user(client, email)
+    result = await session.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    assert user is not None
+    return user
+
+
+@pytest.mark.asyncio
+async def test_notification_websocket_connects_and_sends_snapshot(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user = await _get_user(client, session, "notif-owner@example.com")
+    session.add(
+        Notification(
+            user_id=user.id,
+            type=NotificationType.MENTIONED,
+            title="You were mentioned",
+            message="Test mention",
+            entity_type="comment",
+            entity_id=uuid4(),
+        )
+    )
+    await session.commit()
+
+    manager = FakeUserNotificationWebSocketManager()
+    _patch_notification_ws_dependencies(monkeypatch, session, manager)
+    websocket = FakeWebSocket(
+        token=client.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME),
+        messages=[WebSocketDisconnect(code=1000)],
+    )
+
+    await ws_endpoint.notification_websocket(websocket)
+
+    assert websocket.accepted is True
+    assert websocket.close_code is None
+    assert websocket.sent == [{"type": "notification_snapshot", "unread_count": 1}]
+    assert manager.connect_calls[0]["user_id"] == str(user.id)
+    assert manager.disconnect_calls == [("notif-conn-1", str(user.id))]
+
+
+@pytest.mark.asyncio
+async def test_notification_websocket_rejects_unauthenticated_client(
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    manager = FakeUserNotificationWebSocketManager()
+    _patch_notification_ws_dependencies(monkeypatch, session, manager)
+    websocket = FakeWebSocket()
+
+    await ws_endpoint.notification_websocket(websocket)
+
+    assert websocket.accepted is True
+    assert websocket.close_code == 4401
+    assert manager.connect_calls == []
+
+
+@pytest.mark.asyncio
+async def test_notification_websocket_keeps_connection_open_on_unknown_message_type(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user = await _get_user(client, session, "notif-unknown@example.com")
+    manager = FakeUserNotificationWebSocketManager()
+    _patch_notification_ws_dependencies(monkeypatch, session, manager)
+    websocket = FakeWebSocket(
+        token=client.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME),
+        messages=[
+            {"type": "ping"},
+            WebSocketDisconnect(code=1000),
+        ],
+    )
+
+    await ws_endpoint.notification_websocket(websocket)
+
+    assert websocket.accepted is True
+    assert websocket.close_code is None
+    assert websocket.sent == [
+        {"type": "notification_snapshot", "unread_count": 0},
+        {
+            "type": "error",
+            "code": "INVALID_MESSAGE_TYPE",
+            "message": "Unsupported websocket message type",
+        },
+    ]
+    assert manager.disconnect_calls == [("notif-conn-1", str(user.id))]
+
+
+@pytest.mark.asyncio
+async def test_notification_websocket_closes_on_malformed_payload(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user = await _get_user(client, session, "notif-invalid@example.com")
+    manager = FakeUserNotificationWebSocketManager()
+    _patch_notification_ws_dependencies(monkeypatch, session, manager)
+    websocket = FakeWebSocket(
+        token=client.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME),
+        messages=[[]],
+    )
+
+    await ws_endpoint.notification_websocket(websocket)
+
+    assert websocket.accepted is True
+    assert websocket.close_code == ws_endpoint.TERMINAL_PROTOCOL_CLOSE_CODE
+    assert websocket.sent == [
+        {"type": "notification_snapshot", "unread_count": 0},
+        {
+            "type": "error",
+            "code": "INVALID_MESSAGE",
+            "message": "Malformed websocket payload",
+        },
+    ]
+    assert manager.disconnect_calls == [("notif-conn-1", str(user.id))]

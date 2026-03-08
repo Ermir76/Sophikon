@@ -90,17 +90,42 @@ async def test_queue_activity_event_targets_activity_channel(session: AsyncSessi
 
 
 @pytest.mark.asyncio
+async def test_queue_user_notification_event_uses_user_queue(session: AsyncSession):
+    realtime_service.clear_pending_events(session)
+    user_id = uuid4()
+
+    realtime_service.queue_user_notification_event(
+        session,
+        user_id=user_id,
+        payload={"type": "notification_created", "unread_count": 3},
+    )
+
+    pending = session.info[realtime_service.PENDING_USER_NOTIFICATION_EVENTS_KEY]
+    assert len(pending) == 1
+    assert pending[0]["user_id"] == str(user_id)
+    assert pending[0]["payload"]["type"] == "notification_created"
+
+
+@pytest.mark.asyncio
 async def test_commit_and_publish_and_rollback_clear_queue(
     session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    published: list[tuple[str, list[str], str]] = []
+    published: list[tuple[str, str]] = []
 
-    async def _capture_publish(*, project_id, channels, payload):
-        published.append((str(project_id), channels, payload["type"]))
+    async def _capture_publish(**kwargs):
+        payload = kwargs["payload"]
+        if "project_id" in kwargs:
+            published.append(("project", payload["type"]))
+            return
+        published.append(("user", payload["type"]))
 
     monkeypatch.setattr(
         "app.service.realtime_service.websocket_manager.publish_message",
+        _capture_publish,
+    )
+    monkeypatch.setattr(
+        "app.service.realtime_service.user_notification_websocket_manager.publish_message",
         _capture_publish,
     )
 
@@ -110,10 +135,19 @@ async def test_commit_and_publish_and_rollback_clear_queue(
         channels=["project"],
         payload={"type": "project_created"},
     )
+    realtime_service.queue_user_notification_event(
+        session,
+        user_id=uuid4(),
+        payload={"type": "notification_created"},
+    )
     await realtime_service.commit_and_publish(session)
 
-    assert published == [(published[0][0], ["project"], "project_created")]
+    assert published == [
+        ("project", "project_created"),
+        ("user", "notification_created"),
+    ]
     assert realtime_service.PENDING_REALTIME_EVENTS_KEY not in session.info
+    assert realtime_service.PENDING_USER_NOTIFICATION_EVENTS_KEY not in session.info
 
     realtime_service.queue_message(
         session,
@@ -121,10 +155,19 @@ async def test_commit_and_publish_and_rollback_clear_queue(
         channels=["tasks"],
         payload={"type": "task_created"},
     )
+    realtime_service.queue_user_notification_event(
+        session,
+        user_id=uuid4(),
+        payload={"type": "notification_created"},
+    )
     await realtime_service.rollback_and_clear(session)
 
-    assert published == [(published[0][0], ["project"], "project_created")]
+    assert published == [
+        ("project", "project_created"),
+        ("user", "notification_created"),
+    ]
     assert realtime_service.PENDING_REALTIME_EVENTS_KEY not in session.info
+    assert realtime_service.PENDING_USER_NOTIFICATION_EVENTS_KEY not in session.info
 
 
 @pytest.mark.asyncio
