@@ -106,6 +106,41 @@ async def send_verification_email(
     await _get_mail_client().send_message(message)
 
 
+async def send_project_invitation_email(
+    *,
+    email: str,
+    inviter_name: str,
+    project_name: str,
+    role_name: str,
+    accept_url: str,
+) -> None:
+    """Send a project invitation email."""
+    html = f"""
+    <h2>You're invited to collaborate in Sophikon</h2>
+    <p><strong>{inviter_name}</strong> invited you to join the project
+    <strong>{project_name}</strong> as <strong>{role_name}</strong>.</p>
+    <p><a href="{accept_url}" style="
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+    ">Accept Invitation</a></p>
+    <p>Or copy this link: {accept_url}</p>
+    <p>This invitation link expires in 7 days.</p>
+    """
+
+    message = MessageSchema(
+        subject=f"Project invitation: {project_name}",
+        recipients=[NameEmail(name="", email=email)],
+        body=html,
+        subtype=MessageType.html,
+    )
+    await _get_mail_client().send_message(message)
+
+
 async def verify_email_token(db: AsyncSession, token: str) -> None:
     """
     Validate a verification token and mark the user's email as verified.

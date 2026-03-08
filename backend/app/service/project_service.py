@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.project import Project
 from app.models.project_member import ProjectMember
+from app.models.role import Role
 from app.models.user import User
 from app.schema.project import ProjectCreate, ProjectUpdate
 
@@ -99,6 +100,19 @@ async def create_project(
     data: ProjectCreate,
 ) -> Project:
     """Create a new project owned by the user."""
+    owner_role_result = await db.execute(
+        select(Role).where(Role.scope == "project", Role.name == "owner")
+    )
+    owner_role = owner_role_result.scalar_one_or_none()
+    if owner_role is None:
+        owner_role = Role(
+            name="owner",
+            scope="project",
+            description="Project owner with full access",
+        )
+        db.add(owner_role)
+        await db.flush()
+
     project = Project(
         owner_id=user.id,
         organization_id=data.organization_id,
@@ -112,6 +126,17 @@ async def create_project(
         color=data.color,
     )
     db.add(project)
+
+    # Keep owner_id for compatibility, but enforce owner-as-member invariant.
+    await db.flush()
+    db.add(
+        ProjectMember(
+            project_id=project.id,
+            user_id=user.id,
+            role_id=owner_role.id,
+        )
+    )
+
     await db.commit()
     await db.refresh(project)
     return project

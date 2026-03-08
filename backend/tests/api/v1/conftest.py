@@ -10,7 +10,7 @@ from app.models.user import User
 @pytest.fixture
 async def setup_roles(session: AsyncSession):
     """Seed default project roles."""
-    for r_name in ["manager", "member", "viewer"]:
+    for r_name in ["owner", "manager", "member", "viewer"]:
         res = await session.execute(select(Role).where(Role.name == r_name))
         if not res.scalar_one_or_none():
             role = Role(name=r_name, scope="project")
