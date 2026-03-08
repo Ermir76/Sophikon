@@ -66,14 +66,18 @@ src/
 │   │   ├── pages/
 │   │   │   ├── ProjectsPage.tsx
 │   │   │   ├── ProjectOverviewPage.tsx
-│   │   │   └── ProjectSettingsPage.tsx
+│   │   │   ├── ProjectSettingsPage.tsx
+│   │   │   └── ProjectInvitationAcceptPage.tsx
 │   │   ├── components/
 │   │   │   ├── CreateProjectDialog.tsx
-│   │   │   └── ProjectLayout.tsx
+│   │   │   ├── ProjectLayout.tsx
+│   │   │   └── ProjectMembersTab.tsx
 │   │   ├── hooks/
-│   │   │   └── useProjects.ts
+│   │   │   ├── useProjects.ts
+│   │   │   └── useProjectMembers.ts
 │   │   ├── api/
-│   │   │   └── project.service.ts
+│   │   │   ├── project.service.ts
+│   │   │   └── project-members.service.ts
 │   │   ├── types.ts
 │   │   └── index.ts
 │   │

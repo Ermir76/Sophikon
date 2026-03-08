@@ -101,6 +101,20 @@ flowchart TB
         P6[GET /:id/dashboard]
     end
 
+    subgraph ProjectMembers["/projects/:id/members"]
+        PM1[GET /]
+        PM2[POST /invite]
+        PM3[GET /invitations]
+        PM4[POST /invitations/:invitationId/resend]
+        PM5[DELETE /invitations/:invitationId]
+        PM6[PATCH /:memberId]
+        PM7[DELETE /:memberId]
+    end
+
+    subgraph ProjectInvitationAccept["/projects/members/invitations"]
+        PIA1[POST /accept]
+    end
+
     subgraph Orgs["/organizations"]
         O1[GET /]
         O2[POST /]
@@ -198,7 +212,7 @@ flowchart TB
 | Tasks         | 12    | /projects/:id/tasks/\*        |
 | Dependencies  | 4     | /projects/:id/dependencies/\* |
 | Schedule      | 2     | /projects/:id/schedule/\*     |
-| Members       | 5     | /projects/:id/members/\*      |
+| Members       | 8     | /projects/:id/members/\*, /projects/members/invitations/\* |
 | Calendars     | 7     | /projects/:id/calendars/\*    |
 | Resources     | 9     | /projects/:id/resources/\*    |
 | Assignments   | 5     | /tasks/:taskId/assignments/\* |
@@ -871,6 +885,181 @@ Get project dashboard summary.
 
 ---
 
+## 5A. Project Member Endpoints `[Current mounted in codebase]`
+
+### GET /projects/:id/members
+
+List active project members.
+
+**Query Parameters:**
+
+| Param    | Type | Default | Description              |
+| -------- | ---- | ------- | ------------------------ |
+| page     | int  | 1       | Page number              |
+| per_page | int  | 20      | Items per page (max 100) |
+
+**Response:** `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "project_id": "uuid",
+      "user_id": "uuid",
+      "role": "owner",
+      "joined_at": "2026-03-08T10:00:00Z",
+      "updated_at": "2026-03-08T10:00:00Z",
+      "user_email": "owner@example.com",
+      "user_full_name": "Owner User"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 1
+}
+```
+
+**Permissions:** Any project member
+
+---
+
+### POST /projects/:id/members/invite
+
+Invite a user to the project by email.
+
+**Request:**
+
+```json
+{
+  "email": "teammate@example.com",
+  "role": "member",
+  "message": "Please join the project."
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "invitation": {
+    "id": "uuid",
+    "project_id": "uuid",
+    "invited_by_id": "uuid",
+    "role": "member",
+    "email": "teammate@example.com",
+    "message": "Please join the project.",
+    "expires_at": "2026-03-15T10:00:00Z",
+    "accepted_at": null,
+    "is_revoked": false,
+    "created_at": "2026-03-08T10:00:00Z",
+    "invited_by_email": "owner@example.com",
+    "invited_by_full_name": "Owner User"
+  }
+}
+```
+
+**Permissions:** owner or manager
+
+**Errors:** `403` - Managers cannot invite owner/manager roles, `409` - User already a member or invitation already exists, `422` - Invalid email format
+
+---
+
+### GET /projects/:id/members/invitations
+
+List pending project invitations.
+
+**Query Parameters:**
+
+| Param    | Type | Default | Description              |
+| -------- | ---- | ------- | ------------------------ |
+| page     | int  | 1       | Page number              |
+| per_page | int  | 20      | Items per page (max 100) |
+
+**Response:** `200 OK`
+
+**Permissions:** owner or manager
+
+---
+
+### POST /projects/:id/members/invitations/:invitationId/resend
+
+Resend a pending invitation and rotate its token.
+
+**Response:** `200 OK`
+
+**Permissions:** owner or manager
+
+---
+
+### DELETE /projects/:id/members/invitations/:invitationId
+
+Revoke a pending invitation.
+
+**Response:** `204 No Content`
+
+**Permissions:** owner or manager
+
+---
+
+### POST /projects/members/invitations/accept
+
+Accept a project invitation for the authenticated user.
+
+**Request:**
+
+```json
+{
+  "token": "invitation-token-from-email"
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "project_id": "uuid",
+  "member_id": "uuid"
+}
+```
+
+**Errors:** `400` - Invalid, expired, revoked, or already accepted invitation, `403` - Invitation email does not match current user
+
+---
+
+### PATCH /projects/:id/members/:memberId
+
+Change a project member's role.
+
+**Request:**
+
+```json
+{
+  "role": "viewer"
+}
+```
+
+**Response:** `200 OK`
+
+**Permissions:** owner only
+
+**Errors:** `400` - Cannot demote the project owner or last owner
+
+---
+
+### DELETE /projects/:id/members/:memberId
+
+Remove a project member.
+
+**Response:** `204 No Content`
+
+**Permissions:** owner or manager
+
+**Errors:** `400` - Cannot remove the project owner or last owner, `403` - Managers can only remove member/viewer roles
+
+---
+
 ### POST /projects/:id/duplicate
 
 Duplicate project.
@@ -890,7 +1079,7 @@ Duplicate project.
 
 ---
 
-## 5A. Insights Endpoints `[Current mounted in codebase]`
+## 5B. Insights Endpoints `[Current mounted in codebase]`
 
 ### GET /organizations/:org_id/insights/dashboard
 

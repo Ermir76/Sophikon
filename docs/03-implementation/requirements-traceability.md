@@ -217,10 +217,10 @@ This document records what is evidenced by the current codebase review.
 
 | ID        | Status        | Evidence   | Note                                                                                       |
 | --------- | ------------- | ---------- | ------------------------------------------------------------------------------------------ |
-| FR-CO-001 | Not evidenced | A2, A8, A9 | Project invite flow was not evidenced; only organization-member management is mounted.     |
-| FR-CO-002 | Not evidenced | A2, A8, A9 | Project member-role flow was not evidenced; only organization-member role flow is mounted. |
-| FR-CO-003 | Not evidenced | A2, A8, A9 | Project member removal flow was not evidenced.                                             |
-| FR-CO-004 | Not evidenced | A2, A8, A9 | Project member list flow was not evidenced.                                                |
+| FR-CO-001 | Implemented   | A3, A8, A9 | Project invite flow is mounted in backend and frontend, including email invitation acceptance routing. |
+| FR-CO-002 | Implemented   | A3, A8, A9 | Project member role change flow is mounted for owners via project member endpoints and settings UI. |
+| FR-CO-003 | Implemented   | A3, A8, A9 | Project member removal flow is mounted with role-aware enforcement and settings UI actions. |
+| FR-CO-004 | Implemented   | A3, A8, A9 | Project member list flow is mounted in backend and displayed in the project settings members tab. |
 | FR-CO-005 | Not evidenced | A8, A9     | No mounted WebSocket/realtime collaboration surface found.                                 |
 | FR-CO-006 | Not evidenced | A8, A9     | No mounted presence surface found.                                                         |
 | FR-CO-007 | Not evidenced | A8, A9     | No mounted activity endpoint/page found.                                                   |
@@ -271,7 +271,7 @@ This document records what is evidenced by the current codebase review.
 | US-5.2 AI Actions via Chat         | Not evidenced | A7, A9     | No free-form chat mutation flow was evidenced.                                                                         |
 | US-5.3 AI Risk Alerts              | Partial       | A7         | Suggestions exist, but not proactive dashboard risk alerts.                                                            |
 | US-5.4 AI Weekly Report            | Not evidenced | A7, A9     | No report-generation flow was evidenced.                                                                               |
-| US-6.1 Invite Team Members         | Not evidenced | A2, A8, A9 | Organization membership exists, but project-team invite flow was not evidenced.                                        |
+| US-6.1 Invite Team Members         | Implemented   | A3, A8, A9 | Project-team invite, acceptance, and member management flows are mounted in the current collaboration surface.          |
 | US-6.2 Real-time Updates           | Not evidenced | A8, A9     | No realtime collaboration surface was evidenced.                                                                       |
 | US-6.3 Task Comments               | Not evidenced | A8, A9     | No task-comment flow was evidenced.                                                                                    |
 | US-7.1 Save Baseline               | Not evidenced | A8, A9     | No baseline flow was evidenced.                                                                                        |
