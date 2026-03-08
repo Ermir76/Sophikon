@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { z } from "zod";
 
 import { useLogin } from "@/features/auth/hooks/useAuth";
@@ -28,7 +28,10 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const loginMutation = useLogin();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next");
+  const loginMutation = useLogin(next);
+  const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -175,7 +178,7 @@ export default function LoginPage() {
 
       <p className="mt-7 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link to="/register" className="underline">
+        <Link to={registerHref} className="underline">
           Sign up
         </Link>
       </p>

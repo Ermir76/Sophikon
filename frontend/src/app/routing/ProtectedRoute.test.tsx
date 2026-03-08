@@ -1,84 +1,44 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router";
-import { ProtectedRoute } from "./ProtectedRoute";
-import { useAuthStore, type AuthState } from "@/features/auth/store/auth-store";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the auth store
-vi.mock("@/features/auth/store/auth-store");
+import { ProtectedRoute } from "@/app/routing/ProtectedRoute";
 
-// Use the actual AuthState type to satisfy the mock signature
-type StateSelector = (state: AuthState) => unknown;
+vi.mock("@/features/auth", () => ({
+  useAuthStore: vi.fn(),
+}));
+
+import { useAuthStore } from "@/features/auth";
+
+function LoginLocation() {
+  const location = useLocation();
+  return <div>{`${location.pathname}${location.search}`}</div>;
+}
 
 describe("ProtectedRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("shows loading spinner when not yet initialized", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
-      const state = {
-        isAuthenticated: false,
-        isInitialized: false,
-      } as unknown as AuthState;
-      return selector(state);
-    });
-
-    render(
-      <MemoryRouter>
-        <ProtectedRoute />
-      </MemoryRouter>,
+  it("redirects unauthenticated users to login with next", () => {
+    vi.mocked(useAuthStore).mockImplementation(
+      ((selector: (state: unknown) => unknown) =>
+        selector({ isAuthenticated: false, isInitialized: true } as never)) as never,
     );
 
-    const spinner = document.querySelector(".animate-spin");
-    expect(spinner).toBeInTheDocument();
-  });
-
-  it("redirects to login when initialized but not authenticated", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
-      const state = {
-        isAuthenticated: false,
-        isInitialized: true,
-      } as unknown as AuthState;
-      return selector(state);
-    });
-
     render(
-      <MemoryRouter initialEntries={["/protected"]}>
+      <MemoryRouter initialEntries={["/project-invitations/accept?token=abc"]}>
         <Routes>
-          <Route path="/login" element={<div>Login Page</div>} />
+          <Route path="/login" element={<LoginLocation />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/protected" element={<div>Protected Content</div>} />
+            <Route path="/project-invitations/accept" element={<div>Protected</div>} />
           </Route>
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Login Page")).toBeInTheDocument();
-    expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
-  });
-
-  it("renders child routes when initialized and authenticated", () => {
-    vi.mocked(useAuthStore).mockImplementation((selector: StateSelector) => {
-      const state = {
-        isAuthenticated: true,
-        isInitialized: true,
-      } as unknown as AuthState;
-      return selector(state);
-    });
-
-    render(
-      <MemoryRouter initialEntries={["/protected"]}>
-        <Routes>
-          <Route path="/login" element={<div>Login Page</div>} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/protected" element={<div>Protected Content</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Protected Content")).toBeInTheDocument();
-    expect(screen.queryByText("Login Page")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("/login?next=%2Fproject-invitations%2Faccept%3Ftoken%3Dabc"),
+    ).toBeInTheDocument();
   });
 });

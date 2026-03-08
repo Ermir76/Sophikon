@@ -4,7 +4,11 @@ import { authService } from "@/features/auth/api/auth.service";
 import type { LoginRequest, RegisterRequest } from "@/features/auth/api/auth.service";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 
-export function useLogin() {
+function resolveRedirectDestination(redirectTo?: string | null): string {
+  return redirectTo && redirectTo.startsWith("/") ? redirectTo : "/";
+}
+
+export function useLogin(redirectTo?: string | null) {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -12,12 +16,12 @@ export function useLogin() {
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
       login(response.user);
-      navigate("/");
+      navigate(resolveRedirectDestination(redirectTo), { replace: true });
     },
   });
 }
 
-export function useRegister() {
+export function useRegister(redirectTo?: string | null) {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -25,7 +29,7 @@ export function useRegister() {
     mutationFn: (data: RegisterRequest) => authService.register(data),
     onSuccess: (response) => {
       login(response.user);
-      navigate("/");
+      navigate(resolveRedirectDestination(redirectTo), { replace: true });
     },
   });
 }
