@@ -16,9 +16,12 @@ from app.core.exceptions import (
     ResourceConflictError,
 )
 from app.models.assignment import Assignment
+from app.models.enums import AuditAction
 from app.models.resource import Resource
 from app.models.task import Task
 from app.schema.assignment import AssignmentCreate, AssignmentUpdate
+from app.service import activity_log_service
+from app.service.activity_log_service import ActivityContext
 
 
 async def list_assignments_by_task(
@@ -38,7 +41,7 @@ async def _validate_resource_in_project(
     db: AsyncSession,
     resource_id: UUID,
     project_id: UUID,
-) -> None:
+) -> Resource:
     """Validate resource exists and belongs to the project."""
     result = await db.execute(
         select(Resource).where(
@@ -46,18 +49,38 @@ async def _validate_resource_in_project(
             Resource.project_id == project_id,
         )
     )
-    if not result.scalar_one_or_none():
+    resource = result.scalar_one_or_none()
+    if not resource:
         raise InvalidOperationError("Resource not found in this project")
+    return resource
+
+
+async def _get_assignment_label(
+    db: AsyncSession,
+    assignment: Assignment,
+) -> str:
+    resource_result = await db.execute(
+        select(Resource.name).where(Resource.id == assignment.resource_id)
+    )
+    resource_name = resource_result.scalar_one_or_none() or str(assignment.resource_id)
+    task_result = await db.execute(
+        select(Task.name).where(Task.id == assignment.task_id)
+    )
+    task_name = task_result.scalar_one_or_none() or str(assignment.task_id)
+    return f"{resource_name} -> {task_name}"
 
 
 async def create_assignment(
     db: AsyncSession,
     task: Task,
     data: AssignmentCreate,
+    activity_context: ActivityContext | None = None,
 ) -> Assignment:
     """Create a new assignment for a task."""
     # Validate resource is in the same project
-    await _validate_resource_in_project(db, data.resource_id, task.project_id)
+    resource = await _validate_resource_in_project(
+        db, data.resource_id, task.project_id
+    )
 
     assignment = Assignment(
         task_id=task.id,
@@ -73,6 +96,16 @@ async def create_assignment(
 
     try:
         db.add(assignment)
+        await db.flush()
+        await activity_log_service.log_activity(
+            db,
+            project_id=task.project_id,
+            action=AuditAction.CREATED,
+            entity_type="assignment",
+            entity_id=assignment.id,
+            entity_name=f"{resource.name} -> {task.name}",
+            context=activity_context,
+        )
         await db.commit()
         await db.refresh(assignment)
         return assignment
@@ -108,7 +141,22 @@ async def update_assignment(
 async def delete_assignment(
     db: AsyncSession,
     assignment: Assignment,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """Hard delete an assignment."""
+    assignment_label = await _get_assignment_label(db, assignment)
+    task_result = await db.execute(
+        select(Task.project_id).where(Task.id == assignment.task_id)
+    )
+    project_id = task_result.scalar_one_or_none()
+    await activity_log_service.log_activity(
+        db,
+        project_id=project_id,
+        action=AuditAction.DELETED,
+        entity_type="assignment",
+        entity_id=assignment.id,
+        entity_name=assignment_label,
+        context=activity_context,
+    )
     await db.delete(assignment)
     await db.commit()

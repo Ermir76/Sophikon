@@ -13,10 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import InvalidOperationError
 from app.models.assignment import Assignment
 from app.models.dependency import Dependency
+from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskCreate, TaskUpdate
-from app.service import scheduling_service
+from app.service import activity_log_service, scheduling_service
+from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
     apply_summary_rollup,
     clear_summary_rollup,
@@ -126,6 +128,7 @@ async def create_task(
     db: AsyncSession,
     project: Project,
     data: TaskCreate,
+    activity_context: ActivityContext | None = None,
 ) -> Task:
     """Create a new task in the project."""
 
@@ -225,6 +228,15 @@ async def create_task(
     if project.settings.get("auto_calculate", True):
         await scheduling_service.calculate_schedule(db, project)
 
+    await activity_log_service.log_activity(
+        db,
+        project_id=project.id,
+        action=AuditAction.CREATED,
+        entity_type="task",
+        entity_id=task.id,
+        entity_name=task.name,
+        context=activity_context,
+    )
     await db.commit()
     await db.refresh(task)
     return task
@@ -251,9 +263,11 @@ async def update_task(
     task: Task,
     data: TaskUpdate,
     project: Project | None = None,
+    activity_context: ActivityContext | None = None,
 ) -> Task:
     """Update a task with partial data."""
     update_data = data.model_dump(exclude_unset=True)
+    before = {field: getattr(task, field) for field in update_data}
     validate_summary_rollup_edit(task, update_data)
 
     for field, value in update_data.items():
@@ -275,6 +289,22 @@ async def update_task(
         if project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
+    changes = activity_log_service.build_change_set(
+        before,
+        {field: getattr(task, field) for field in update_data},
+    )
+    if changes is not None:
+        await activity_log_service.log_activity(
+            db,
+            project_id=task.project_id,
+            action=AuditAction.UPDATED,
+            entity_type="task",
+            entity_id=task.id,
+            entity_name=task.name,
+            changes=changes,
+            context=activity_context,
+        )
+
     await db.commit()
     await db.refresh(task)
     return task
@@ -284,6 +314,7 @@ async def soft_delete_task(
     db: AsyncSession,
     task: Task,
     project: Project | None = None,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """
     Soft delete a task and cascade to children, assignments (hard), dependencies (hard).
@@ -299,7 +330,7 @@ async def soft_delete_task(
     children = children_result.scalars().all()
     for child in children:
         # Pass None for project in recursive calls to prevent redundant recalculations
-        await soft_delete_task(db, child, project=None)
+        await soft_delete_task(db, child, project=None, activity_context=None)
 
     # 2. Hard delete assignments (Assignments belong to task -> remove)
     # Using CORE delete for efficiency
@@ -325,6 +356,17 @@ async def soft_delete_task(
     # Auto-recalculate schedule after task deletion (top-level only)
     if project and project.settings.get("auto_calculate", True):
         await scheduling_service.calculate_schedule(db, project)
+
+    if activity_context is not None:
+        await activity_log_service.log_activity(
+            db,
+            project_id=task.project_id,
+            action=AuditAction.DELETED,
+            entity_type="task",
+            entity_id=task.id,
+            entity_name=task.name,
+            context=activity_context,
+        )
 
 
 async def recalculate_summary(

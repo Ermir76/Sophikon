@@ -19,6 +19,7 @@ from app.core.exceptions import (
     ResourceConflictError,
 )
 from app.core.security import hash_token
+from app.models.enums import AuditAction
 from app.models.organization_member import OrganizationMember
 from app.models.project import Project
 from app.models.project_invitation import ProjectInvitation
@@ -31,7 +32,8 @@ from app.schema.project_member import (
     ProjectMemberRole,
     ProjectMemberRoleUpdate,
 )
-from app.service import email_service
+from app.service import activity_log_service, email_service
+from app.service.activity_log_service import ActivityContext
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +229,7 @@ async def invite_member(
     inviter: User,
     inviter_role_name: str,
     data: ProjectMemberInvite,
+    activity_context: ActivityContext | None = None,
 ) -> tuple[dict, str]:
     """Create a pending invitation and return (invitation_payload, raw_token)."""
     target_role = data.role
@@ -279,6 +282,18 @@ async def invite_member(
         is_revoked=False,
     )
     db.add(invitation)
+    await db.flush()
+    await activity_log_service.log_activity(
+        db,
+        project_id=project.id,
+        action=AuditAction.CREATED,
+        entity_type="project_member",
+        entity_id=invitation.id,
+        entity_name=existing_user.full_name or existing_user.email
+        if existing_user is not None
+        else normalized_email,
+        context=activity_context,
+    )
     await db.commit()
     await db.refresh(invitation)
 
@@ -446,6 +461,7 @@ async def change_role(
     project: Project,
     member_id: UUID,
     data: ProjectMemberRoleUpdate,
+    activity_context: ActivityContext | None = None,
 ) -> dict:
     """Change an existing project member role."""
     result = await db.execute(
@@ -482,6 +498,21 @@ async def change_role(
             raise InvalidOperationError("Cannot demote the last owner")
 
     member.role_id = target_role.id
+    changes = activity_log_service.build_change_set(
+        {"role": current_role_name},
+        {"role": target_role.name},
+    )
+    if changes is not None:
+        await activity_log_service.log_activity(
+            db,
+            project_id=project.id,
+            action=AuditAction.UPDATED,
+            entity_type="project_member",
+            entity_id=member.id,
+            entity_name=full_name or email,
+            changes=changes,
+            context=activity_context,
+        )
     await db.commit()
     await db.refresh(member)
 
@@ -493,11 +524,13 @@ async def remove_member(
     project: Project,
     member_id: UUID,
     actor_role_name: str,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """Remove a project member."""
     result = await db.execute(
-        select(ProjectMember, Role.name)
+        select(ProjectMember, Role.name, User.email, User.full_name)
         .join(Role, Role.id == ProjectMember.role_id)
+        .join(User, User.id == ProjectMember.user_id)
         .where(
             ProjectMember.id == member_id,
             ProjectMember.project_id == project.id,
@@ -507,7 +540,7 @@ async def remove_member(
     if row is None:
         raise NotFoundError("Member not found")
 
-    member, role_name = row
+    member, role_name, email, full_name = row
 
     if member.user_id == project.owner_id:
         raise InvalidOperationError("Cannot remove the project owner")
@@ -528,6 +561,15 @@ async def remove_member(
         if owner_count <= 1:
             raise InvalidOperationError("Cannot remove the last owner")
 
+    await activity_log_service.log_activity(
+        db,
+        project_id=project.id,
+        action=AuditAction.DELETED,
+        entity_type="project_member",
+        entity_id=member.id,
+        entity_name=full_name or email,
+        context=activity_context,
+    )
     await db.delete(member)
     await db.commit()
 

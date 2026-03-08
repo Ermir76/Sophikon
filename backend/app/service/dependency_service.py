@@ -16,10 +16,17 @@ from app.core.exceptions import (
     ResourceConflictError,
 )
 from app.models.dependency import Dependency
+from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.dependency import DependencyCreate, DependencyUpdate
-from app.service import scheduling_service
+from app.service import activity_log_service, scheduling_service
+from app.service.activity_log_service import ActivityContext
+
+
+async def _get_task_name(db: AsyncSession, task_id: UUID) -> str:
+    result = await db.execute(select(Task.name).where(Task.id == task_id))
+    return result.scalar_one_or_none() or str(task_id)
 
 
 async def list_dependencies(
@@ -114,6 +121,7 @@ async def create_dependency(
     db: AsyncSession,
     project: Project,
     data: DependencyCreate,
+    activity_context: ActivityContext | None = None,
 ) -> Dependency:
     """Create a new dependency between tasks."""
     if data.predecessor_id == data.successor_id:
@@ -140,6 +148,18 @@ async def create_dependency(
     try:
         db.add(dependency)
         await db.flush()
+        await activity_log_service.log_activity(
+            db,
+            project_id=project.id,
+            action=AuditAction.CREATED,
+            entity_type="dependency",
+            entity_id=dependency.id,
+            entity_name=(
+                f"{await _get_task_name(db, dependency.predecessor_id)}"
+                f" -> {await _get_task_name(db, dependency.successor_id)}"
+            ),
+            context=activity_context,
+        )
 
         # Auto-recalculate schedule after dependency creation
         if project.settings.get("auto_calculate", True):
@@ -194,8 +214,22 @@ async def delete_dependency(
     db: AsyncSession,
     dependency: Dependency,
     project: Project | None = None,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """Hard delete a dependency."""
+    project_id = project.id if project is not None else dependency.project_id
+    await activity_log_service.log_activity(
+        db,
+        project_id=project_id,
+        action=AuditAction.DELETED,
+        entity_type="dependency",
+        entity_id=dependency.id,
+        entity_name=(
+            f"{await _get_task_name(db, dependency.predecessor_id)}"
+            f" -> {await _get_task_name(db, dependency.successor_id)}"
+        ),
+        context=activity_context,
+    )
     await db.delete(dependency)
     await db.flush()
 

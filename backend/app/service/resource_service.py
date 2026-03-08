@@ -10,9 +10,12 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.resource import Resource
 from app.schema.resource import ResourceCreate, ResourceUpdate
+from app.service import activity_log_service
+from app.service.activity_log_service import ActivityContext
 
 
 async def list_resources(
@@ -58,6 +61,7 @@ async def create_resource(
     db: AsyncSession,
     project: Project,
     data: ResourceCreate,
+    activity_context: ActivityContext | None = None,
 ) -> Resource:
     """Create a new resource in the project."""
     resource = Resource(
@@ -77,6 +81,16 @@ async def create_resource(
         accrue_at=data.accrue_at,
     )
     db.add(resource)
+    await db.flush()
+    await activity_log_service.log_activity(
+        db,
+        project_id=project.id,
+        action=AuditAction.CREATED,
+        entity_type="resource",
+        entity_id=resource.id,
+        entity_name=resource.name,
+        context=activity_context,
+    )
     await db.commit()
     await db.refresh(resource)
     return resource
@@ -101,11 +115,29 @@ async def update_resource(
     db: AsyncSession,
     resource: Resource,
     data: ResourceUpdate,
+    activity_context: ActivityContext | None = None,
 ) -> Resource:
     """Update a resource with partial data."""
     update_data = data.model_dump(exclude_unset=True)
+    before = {field: getattr(resource, field) for field in update_data}
     for field, value in update_data.items():
         setattr(resource, field, value)
+
+    changes = activity_log_service.build_change_set(
+        before,
+        {field: getattr(resource, field) for field in update_data},
+    )
+    if changes is not None:
+        await activity_log_service.log_activity(
+            db,
+            project_id=resource.project_id,
+            action=AuditAction.UPDATED,
+            entity_type="resource",
+            entity_id=resource.id,
+            entity_name=resource.name,
+            changes=changes,
+            context=activity_context,
+        )
 
     await db.commit()
     await db.refresh(resource)
@@ -115,7 +147,17 @@ async def update_resource(
 async def delete_resource(
     db: AsyncSession,
     resource: Resource,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """Hard delete a resource."""
+    await activity_log_service.log_activity(
+        db,
+        project_id=resource.project_id,
+        action=AuditAction.DELETED,
+        entity_type="resource",
+        entity_id=resource.id,
+        entity_name=resource.name,
+        context=activity_context,
+    )
     await db.delete(resource)
     await db.commit()

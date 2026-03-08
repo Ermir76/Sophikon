@@ -11,10 +11,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError
+from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskBulkUpdateItem, TaskCreate
-from app.service import scheduling_service
+from app.service import activity_log_service, scheduling_service
+from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
     sync_leaf_duration_progress,
     validate_summary_rollup_edit,
@@ -31,6 +33,7 @@ async def bulk_create_tasks(
     db: AsyncSession,
     project: Project,
     data: list[TaskCreate],
+    activity_context: ActivityContext | None = None,
 ) -> tuple[list[Task], list[dict]]:
     """
     Bulk create tasks in a single transaction.
@@ -120,6 +123,16 @@ async def bulk_create_tasks(
                 sync_leaf_duration_progress(task)
                 db.add(task)
                 await db.flush()  # We need the ID
+                if activity_context is not None:
+                    await activity_log_service.log_activity(
+                        db,
+                        project_id=project.id,
+                        action=AuditAction.CREATED,
+                        entity_type="task",
+                        entity_id=task.id,
+                        entity_name=task.name,
+                        context=activity_context,
+                    )
                 created_tasks.append(task)
         except Exception as e:
             errors.append({"index": idx, "message": str(e)})
@@ -146,6 +159,7 @@ async def bulk_update_tasks(
     db: AsyncSession,
     project: Project,
     updates: list[TaskBulkUpdateItem],
+    activity_context: ActivityContext | None = None,
 ) -> tuple[int, int, list[dict]]:
     """
     Bulk update tasks in a single transaction.
@@ -180,6 +194,7 @@ async def bulk_update_tasks(
                     parent_ids_to_recalc.add(task.parent_task_id)
 
                 update_data = update_item.data.model_dump(exclude_unset=True)
+                before = {field: getattr(task, field) for field in update_data}
 
                 # Check if parent changed
                 if (
@@ -217,6 +232,21 @@ async def bulk_update_tasks(
                     parent_ids_to_recalc.add(task.parent_task_id)
 
                 await db.flush()
+                changes = activity_log_service.build_change_set(
+                    before,
+                    {field: getattr(task, field) for field in update_data},
+                )
+                if changes is not None and activity_context is not None:
+                    await activity_log_service.log_activity(
+                        db,
+                        project_id=project.id,
+                        action=AuditAction.UPDATED,
+                        entity_type="task",
+                        entity_id=task.id,
+                        entity_name=task.name,
+                        changes=changes,
+                        context=activity_context,
+                    )
                 succeeded += 1
         except Exception as e:
             failed += 1
@@ -245,6 +275,7 @@ async def bulk_delete_tasks(
     db: AsyncSession,
     project: Project,
     task_ids: list[UUID],
+    activity_context: ActivityContext | None = None,
 ) -> tuple[int, int, list[dict]]:
     """
     Bulk soft-delete tasks.
@@ -277,7 +308,7 @@ async def bulk_delete_tasks(
 
                 # Use our existing recursive soft delete
                 # (which correctly uses db.flush() internally)
-                await soft_delete_task(db, task)
+                await soft_delete_task(db, task, activity_context=activity_context)
 
                 succeeded += 1
         except Exception as e:
