@@ -791,8 +791,8 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-CO-002 | Set member role          | Must     | PATCH /projects/:id/members/:memberId  | ✅  |
 | FR-CO-003 | Remove member            | Must     | DELETE /projects/:id/members/:memberId | ✅  |
 | FR-CO-004 | View members             | Must     | GET /projects/:id/members              | ✅  |
-| FR-CO-005 | Real-time updates        | Must     | WebSocket                              | ❌  |
-| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                              | ❌  |
+| FR-CO-005 | Real-time updates        | Must     | WebSocket                              | ✅  |
+| FR-CO-006 | Presence (who's editing) | Should   | WebSocket                              | ✅  |
 | FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity             | ✅  |
 | FR-CO-008 | Comments on tasks        | Should   | POST /tasks/:id/comments               | ❌  |
 | FR-CO-009 | @mentions                | Should   | POST /tasks/:id/comments               | ❌  |

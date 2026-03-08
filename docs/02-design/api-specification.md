@@ -224,7 +224,7 @@ flowchart TB
 | Activity      | 1     | /projects/:id/activity        |
 | AI            | 3     | /projects/:id/ai/\*           |
 | Export/Import | 4     | /projects/:id/export/\*       |
-| WebSocket     | 1     | /ws/projects/:id              |
+| WebSocket     | 1     | /api/v1/ws/projects/:id       |
 
 ---
 
@@ -2718,24 +2718,48 @@ Export Gantt as PNG.
 
 ---
 
-## 20. WebSocket API `[V1.1]`
+## 20. WebSocket API `[V1.0 mounted]`
 
 ### Connect
 
 ```
-wss://api.projectlibre.app/ws/projects/:id?token=<access_token>
+wss://api.sophikon.app/api/v1/ws/projects/:id
 ```
 
-### Message Types
+Authentication:
 
-**Client → Server:**
+- browser clients use the `access_token` cookie
+- non-browser/test clients may pass `?token=<access_token>`
+- `Authorization: Bearer <access_token>` is also accepted
+
+Close codes:
+
+- `4401` unauthenticated
+- `4403` no access to the project
+- `4404` project not found
+- `4400` malformed websocket protocol message
+
+Default subscriptions on connect:
 
 ```json
 {
   "type": "subscribe",
-  "channels": ["tasks", "resources", "members", "activity"]
+  "channels": ["tasks", "resources", "members", "activity", "project"]
 }
 ```
+
+### Client -> Server
+
+Subscribe to a channel set:
+
+```json
+{
+  "type": "subscribe",
+  "channels": ["tasks", "resources", "members", "activity", "project"]
+}
+```
+
+Update presence:
 
 ```json
 {
@@ -2746,33 +2770,95 @@ wss://api.projectlibre.app/ws/projects/:id?token=<access_token>
 }
 ```
 
-**Server → Client:**
+`entity_type` may be `project`, `task`, `resource`, `assignment`, `dependency`, or `project_member`.
+
+### Server -> Client
+
+Presence snapshot immediately after connect:
 
 ```json
-{"type": "task_updated", "data": {"task_id": "uuid", "changes": {...}, "updated_by": {...}}}
+{
+  "type": "presence_snapshot",
+  "project_id": "uuid",
+  "users": [
+    {
+      "id": "uuid",
+      "full_name": "Jane Doe",
+      "avatar_url": null,
+      "status": "viewing",
+      "entity_type": "project",
+      "entity_id": "uuid"
+    }
+  ]
+}
 ```
+
+Presence update after join/leave/state changes:
 
 ```json
-{"type": "task_created", "data": {...}}
+{
+  "type": "presence_update",
+  "project_id": "uuid",
+  "users": [
+    {
+      "id": "uuid",
+      "full_name": "Jane Doe",
+      "avatar_url": null,
+      "status": "editing",
+      "entity_type": "task",
+      "entity_id": "uuid"
+    }
+  ]
+}
 ```
+
+Realtime entity/activity events:
 
 ```json
-{ "type": "task_deleted", "data": { "task_id": "uuid" } }
+{
+  "type": "task_updated",
+  "project_id": "uuid",
+  "actor": {
+    "id": "uuid",
+    "full_name": "Jane Doe",
+    "avatar_url": null
+  },
+  "entity_type": "task",
+  "action": "updated",
+  "entity_id": "uuid",
+  "entity_name": "Design homepage",
+  "occurred_at": "2026-03-08T12:00:00Z",
+  "metadata": {
+    "fields": [{ "field": "percent_complete", "old": 25, "new": 50 }]
+  }
+}
 ```
 
-```json
-{"type": "resource_updated", "data": {...}}
-```
+Supported server event types:
 
-```json
-{"type": "assignment_updated", "data": {...}}
-```
+- `project_created`, `project_updated`, `project_deleted`
+- `task_created`, `task_updated`, `task_deleted`
+- `resource_created`, `resource_updated`, `resource_deleted`
+- `assignment_created`, `assignment_deleted`
+- `dependency_created`, `dependency_deleted`
+- `project_member_created`, `project_member_updated`, `project_member_deleted`
+- `activity_logged`
+- `error`
 
-```json
-{"type": "presence_update", "data": {"users": [...]}}
-```
+Channel routing:
 
----
+- `project` channel: project lifecycle events
+- `tasks` channel: task, dependency, and assignment events
+- `resources` channel: resource and assignment events
+- `members` channel: project member and invitation events
+- `activity` channel: `activity_logged`
+
+Metadata notes:
+
+- assignment events include `task_id` and `resource_id`
+- dependency events include `predecessor_id` and `successor_id`
+- project member events include `subject_type` plus `user_id`, `email`, `role`, or `invitation_id` when relevant
+- activity events include `activity_id` and `changes`
 
 ## 21. Health & Meta `[V1.0]`
 
@@ -2818,7 +2904,7 @@ OpenAPI 3.0 specification.
 | Dependency Injection | Auth, DB session, permissions    |
 | Pydantic validation  | All request/response models      |
 | OAuth2 + JWT         | /auth/\*                         |
-| WebSocket            | /ws/projects/:id                 |
+| WebSocket            | /api/v1/ws/projects/:id          |
 | Streaming Response   | /ai/chat                         |
 | Background Tasks     | /schedule/calculate, /export/\*  |
 | File Upload          | /import, /attachments            |

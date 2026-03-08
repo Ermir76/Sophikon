@@ -17,7 +17,7 @@
 - [x] Phase 1 backend endpoints, services, schemas, and migration for project member management
 - [x] Phase 1 frontend components, hooks, pages, and API client for project member management
 - [x] Phase 1 tests for mounted backend API and frontend invite/member flows
-- [ ] WebSocket infrastructure
+- [x] WebSocket infrastructure
 
 ---
 
@@ -92,24 +92,25 @@ Depends on: Phase 1
 
 ### Backend
 
-- [ ] WebSocket endpoint `api/v1/endpoints/ws.py` — `/ws/projects/{project_id}` with JWT auth
-- [ ] Connection manager `core/websocket_manager.py` — track connections per project, broadcast events
-- [ ] Presence tracking — connected user IDs per project, join/leave events
-- [ ] Redis pub/sub for multi-instance broadcasting
-- [ ] Wire broadcast calls into task/project/resource services after DB commits
+- [x] WebSocket endpoint `api/v1/endpoints/ws.py` — `/api/v1/ws/projects/{project_id}` with cookie/query/header token auth and explicit close codes
+- [x] Connection manager `core/websocket_manager.py` — track per-project connections, subscriptions, presence, and Redis-backed fan-out
+- [x] Presence tracking — connected users per project with `viewing` / `editing` state and deduped snapshots
+- [x] Redis pub/sub for multi-instance broadcasting
+- [x] Wire broadcast calls into project/task/resource/assignment/dependency/project-member mutations and activity logging after successful commits
 
 ### Frontend
 
-- [ ] Hook: `useProjectWebSocket.ts` — connect on project mount, auto-reconnect with backoff
-- [ ] React Query cache invalidation on received events
-- [ ] Store: `features/projects/store/websocket-store.ts` — connection state, presence list
-- [ ] Presence UI: connected user avatars in project header
+- [x] Hook: `useProjectWebSocket.ts` — connect on project mount, send default subscriptions, and auto-reconnect with capped backoff
+- [x] React Query cache invalidation on received events
+- [x] Store: `features/projects/store/websocket-store.ts` — connection state, subscriptions, reconnect attempts, and presence list
+- [x] Presence UI: connected user avatars and connection state in the project header
+- [x] Richer protocol support is in place now, while Phase 3 intentionally renders only connected-user presence in the UI
 
 ### Tests
 
-- [ ] WebSocket connection and auth test
-- [ ] Broadcast delivery test
-- [ ] Reconnection behavior test
+- [x] WebSocket connection/auth/protocol tests added in `backend/tests/api/v1/test_ws.py`
+- [x] Realtime service queue/channel coverage added in `backend/tests/test_realtime_service.py`
+- [x] Frontend websocket/header tests added for hook behavior, layout wiring, and header presence rendering
 
 ---
 
