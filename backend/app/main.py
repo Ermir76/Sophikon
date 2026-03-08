@@ -26,10 +26,12 @@ from app.api.v1.endpoints.resources import router as resources_router
 from app.api.v1.endpoints.schedule import router as schedule_router
 from app.api.v1.endpoints.tasks import router as tasks_router
 from app.api.v1.endpoints.utilization import router as utilization_router
+from app.api.v1.endpoints.ws import router as ws_router
 from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import AppException
 from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from app.core.websocket_manager import websocket_manager
 
 
 @asynccontextmanager
@@ -41,8 +43,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     Shutdown: Close database connections gracefully
     """
     # Startup - engine pool is already created on import
+    await websocket_manager.start()
     yield
     # Shutdown - dispose of connection pool
+    await websocket_manager.stop()
     await engine.dispose()
 
 
@@ -119,6 +123,7 @@ app.include_router(calendars_router, prefix="/api/v1")
 app.include_router(task_assignments_router, prefix="/api/v1")
 app.include_router(assignments_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(ws_router, prefix="/api/v1")
 
 
 # Health check endpoint

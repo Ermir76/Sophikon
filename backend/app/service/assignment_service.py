@@ -20,7 +20,7 @@ from app.models.enums import AuditAction
 from app.models.resource import Resource
 from app.models.task import Task
 from app.schema.assignment import AssignmentCreate, AssignmentUpdate
-from app.service import activity_log_service
+from app.service import activity_log_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 
@@ -106,11 +106,24 @@ async def create_assignment(
             entity_name=f"{resource.name} -> {task.name}",
             context=activity_context,
         )
-        await db.commit()
+        realtime_service.queue_entity_event(
+            db,
+            project_id=task.project_id,
+            entity_type="assignment",
+            action=AuditAction.CREATED,
+            entity_id=assignment.id,
+            entity_name=f"{resource.name} -> {task.name}",
+            context=activity_context,
+            metadata={
+                "task_id": assignment.task_id,
+                "resource_id": assignment.resource_id,
+            },
+        )
+        await realtime_service.commit_and_publish(db)
         await db.refresh(assignment)
         return assignment
     except IntegrityError:
-        await db.rollback()
+        await realtime_service.rollback_and_clear(db)
         raise ResourceConflictError("This resource is already assigned to this task")
 
 
@@ -158,5 +171,18 @@ async def delete_assignment(
         entity_name=assignment_label,
         context=activity_context,
     )
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project_id,
+        entity_type="assignment",
+        action=AuditAction.DELETED,
+        entity_id=assignment.id,
+        entity_name=assignment_label,
+        context=activity_context,
+        metadata={
+            "task_id": assignment.task_id,
+            "resource_id": assignment.resource_id,
+        },
+    )
     await db.delete(assignment)
-    await db.commit()
+    await realtime_service.commit_and_publish(db)

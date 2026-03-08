@@ -64,6 +64,25 @@ def _mock_mail_globally(monkeypatch):
     )
 
 
+@pytest.fixture(autouse=True)
+def _mock_websocket_manager_globally(monkeypatch):
+    """Keep tests local-only by neutralizing websocket manager startup/publish."""
+
+    async def _noop():
+        return None
+
+    async def _noop_publish(*args, **kwargs):
+        _ = args, kwargs
+        return None
+
+    monkeypatch.setattr("app.main.websocket_manager.start", _noop)
+    monkeypatch.setattr("app.main.websocket_manager.stop", _noop)
+    monkeypatch.setattr(
+        "app.service.realtime_service.websocket_manager.publish_message",
+        _noop_publish,
+    )
+
+
 @pytest.fixture()
 async def client(
     connection: AsyncConnection,

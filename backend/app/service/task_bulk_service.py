@@ -15,7 +15,7 @@ from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskBulkUpdateItem, TaskCreate
-from app.service import activity_log_service, scheduling_service
+from app.service import activity_log_service, realtime_service, scheduling_service
 from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
     sync_leaf_duration_progress,
@@ -71,6 +71,9 @@ async def bulk_create_tasks(
     parent_ids_to_recalc = set()
 
     for idx, task_data in enumerate(data):
+        pending_before = len(
+            db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY, [])
+        )
         try:
             async with db.begin_nested():
                 if task_data.parent_task_id:
@@ -133,8 +136,20 @@ async def bulk_create_tasks(
                         entity_name=task.name,
                         context=activity_context,
                     )
+                    realtime_service.queue_entity_event(
+                        db,
+                        project_id=project.id,
+                        entity_type="task",
+                        action=AuditAction.CREATED,
+                        entity_id=task.id,
+                        entity_name=task.name,
+                        context=activity_context,
+                    )
                 created_tasks.append(task)
         except Exception as e:
+            pending = db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY)
+            if pending is not None:
+                del pending[pending_before:]
             errors.append({"index": idx, "message": str(e)})
             continue
 
@@ -148,7 +163,7 @@ async def bulk_create_tasks(
         if project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
-        await db.commit()
+        await realtime_service.commit_and_publish(db)
         for t in created_tasks:
             await db.refresh(t)
 
@@ -176,6 +191,9 @@ async def bulk_update_tasks(
     needs_schedule_recalc = False
 
     for idx, update_item in enumerate(updates):
+        pending_before = len(
+            db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY, [])
+        )
         try:
             async with db.begin_nested():
                 task_result = await db.execute(
@@ -247,8 +265,21 @@ async def bulk_update_tasks(
                         changes=changes,
                         context=activity_context,
                     )
+                    realtime_service.queue_entity_event(
+                        db,
+                        project_id=project.id,
+                        entity_type="task",
+                        action=AuditAction.UPDATED,
+                        entity_id=task.id,
+                        entity_name=task.name,
+                        context=activity_context,
+                        metadata=changes,
+                    )
                 succeeded += 1
         except Exception as e:
+            pending = db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY)
+            if pending is not None:
+                del pending[pending_before:]
             failed += 1
             errors.append({"index": idx, "task_id": update_item.id, "message": str(e)})
             continue
@@ -263,10 +294,10 @@ async def bulk_update_tasks(
         if needs_schedule_recalc and project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
-        await db.commit()
+        await realtime_service.commit_and_publish(db)
     else:
         # If everything failed, rollback just in case
-        await db.rollback()
+        await realtime_service.rollback_and_clear(db)
 
     return succeeded, failed, errors
 
@@ -290,6 +321,9 @@ async def bulk_delete_tasks(
     parent_ids_to_recalc = set()
 
     for idx, task_id in enumerate(task_ids):
+        pending_before = len(
+            db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY, [])
+        )
         try:
             async with db.begin_nested():
                 task_result = await db.execute(
@@ -312,6 +346,9 @@ async def bulk_delete_tasks(
 
                 succeeded += 1
         except Exception as e:
+            pending = db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY)
+            if pending is not None:
+                del pending[pending_before:]
             failed += 1
             errors.append({"index": idx, "task_id": task_id, "message": str(e)})
             continue
@@ -326,8 +363,8 @@ async def bulk_delete_tasks(
         if project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
-        await db.commit()
+        await realtime_service.commit_and_publish(db)
     else:
-        await db.rollback()
+        await realtime_service.rollback_and_clear(db)
 
     return succeeded, failed, errors

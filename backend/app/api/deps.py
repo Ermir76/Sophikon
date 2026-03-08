@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.exceptions import (
     AuthenticationError,
@@ -31,15 +32,19 @@ from app.service.auth_service import get_user_by_id
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-async def get_current_user(
-    request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
-) -> User:
-    # If header token is missing, check cookie
-    if not token:
-        token = request.cookies.get("access_token")
+def normalize_access_token(token: str | None) -> str | None:
+    if token is None:
+        return None
+    if token.lower().startswith("bearer "):
+        return token.split(" ", 1)[1]
+    return token
 
+
+async def authenticate_access_token(
+    db: AsyncSession,
+    token: str | None,
+) -> User:
+    token = normalize_access_token(token)
     if not token:
         raise AuthenticationError("Could not validate credentials")
 
@@ -55,6 +60,17 @@ async def get_current_user(
     if user is None:
         raise AuthenticationError("Could not validate credentials")
     return user
+
+
+async def get_current_user(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
+) -> User:
+    # If header token is missing, check cookie
+    if not token:
+        token = request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
+    return await authenticate_access_token(db, token)
 
 
 async def get_current_active_user(
@@ -174,19 +190,24 @@ async def get_project_or_404(
     Raises 404 if project not found or deleted.
     Raises 403 if user has no access.
     """
+    return await get_project_membership_for_user(db, project_id, user)
+
+
+async def get_project_membership_for_user(
+    db: AsyncSession,
+    project_id: UUID,
+    user: User,
+) -> ProjectAccess:
     result = await db.execute(
         select(Project).where(Project.id == project_id, Project.is_deleted.is_(False))
     )
     project = result.scalar_one_or_none()
-
     if not project:
         raise NotFoundError("Project not found")
 
-    # Check if user is owner
     if project.owner_id == user.id:
         return ProjectAccess(project=project, role_name="owner")
 
-    # Check if user is a member
     member_result = await db.execute(
         select(ProjectMember)
         .options(selectinload(ProjectMember.role))
@@ -196,10 +217,8 @@ async def get_project_or_404(
         )
     )
     member = member_result.scalar_one_or_none()
-
     if not member:
         raise PermissionDeniedError("You do not have access to this project")
-
     return ProjectAccess(project=project, role_name=member.role.name)
 
 

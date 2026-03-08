@@ -14,7 +14,7 @@ from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.resource import Resource
 from app.schema.resource import ResourceCreate, ResourceUpdate
-from app.service import activity_log_service
+from app.service import activity_log_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 
@@ -91,7 +91,16 @@ async def create_resource(
         entity_name=resource.name,
         context=activity_context,
     )
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="resource",
+        action=AuditAction.CREATED,
+        entity_id=resource.id,
+        entity_name=resource.name,
+        context=activity_context,
+    )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(resource)
     return resource
 
@@ -138,8 +147,18 @@ async def update_resource(
             changes=changes,
             context=activity_context,
         )
+        realtime_service.queue_entity_event(
+            db,
+            project_id=resource.project_id,
+            entity_type="resource",
+            action=AuditAction.UPDATED,
+            entity_id=resource.id,
+            entity_name=resource.name,
+            context=activity_context,
+            metadata=changes,
+        )
 
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
     await db.refresh(resource)
     return resource
 
@@ -159,5 +178,14 @@ async def delete_resource(
         entity_name=resource.name,
         context=activity_context,
     )
+    realtime_service.queue_entity_event(
+        db,
+        project_id=resource.project_id,
+        entity_type="resource",
+        action=AuditAction.DELETED,
+        entity_id=resource.id,
+        entity_name=resource.name,
+        context=activity_context,
+    )
     await db.delete(resource)
-    await db.commit()
+    await realtime_service.commit_and_publish(db)

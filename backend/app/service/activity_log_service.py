@@ -3,7 +3,7 @@ Activity log business logic.
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any
@@ -25,8 +25,11 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class ActivityContext:
     user_id: UUID | None
+    full_name: str | None = None
+    avatar_url: str | None = None
     ip_address: str | None = None
     user_agent: str | None = None
+    occurred_at: datetime | None = None
 
 
 def activity_context_from_request(
@@ -41,8 +44,11 @@ def activity_context_from_request(
         user_agent = request.headers.get("user-agent")
     return ActivityContext(
         user_id=user.id if user is not None else None,
+        full_name=user.full_name if user is not None else None,
+        avatar_url=user.avatar_url if user is not None else None,
         ip_address=ip_address,
         user_agent=user_agent[:500] if user_agent else None,
+        occurred_at=datetime.now(UTC),
     )
 
 
@@ -106,6 +112,20 @@ async def log_activity(
     )
     db.add(entry)
     await db.flush()
+    if project_id is not None:
+        from app.service import realtime_service
+
+        realtime_service.queue_activity_event(
+            db,
+            project_id=project_id,
+            activity_id=entry.id,
+            entity_type=entity_type,
+            action=action,
+            entity_id=entity_id,
+            entity_name=entity_name,
+            changes=changes,
+            context=context,
+        )
     return entry
 
 

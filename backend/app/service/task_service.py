@@ -17,7 +17,7 @@ from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.task import TaskCreate, TaskUpdate
-from app.service import activity_log_service, scheduling_service
+from app.service import activity_log_service, realtime_service, scheduling_service
 from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
     apply_summary_rollup,
@@ -237,7 +237,16 @@ async def create_task(
         entity_name=task.name,
         context=activity_context,
     )
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="task",
+        action=AuditAction.CREATED,
+        entity_id=task.id,
+        entity_name=task.name,
+        context=activity_context,
+    )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(task)
     return task
 
@@ -304,8 +313,18 @@ async def update_task(
             changes=changes,
             context=activity_context,
         )
+        realtime_service.queue_entity_event(
+            db,
+            project_id=task.project_id,
+            entity_type="task",
+            action=AuditAction.UPDATED,
+            entity_id=task.id,
+            entity_name=task.name,
+            context=activity_context,
+            metadata=changes,
+        )
 
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
     await db.refresh(task)
     return task
 
@@ -363,6 +382,18 @@ async def soft_delete_task(
             project_id=task.project_id,
             action=AuditAction.DELETED,
             entity_type="task",
+            entity_id=task.id,
+            entity_name=task.name,
+            context=activity_context,
+        )
+        # TODO(2026-03-08): This function queues realtime events but does not commit.
+        # Keep call sites on realtime_service.commit_and_publish(db), or move to a
+        # single wrapper API that enforces commit+publish for task deletions.
+        realtime_service.queue_entity_event(
+            db,
+            project_id=task.project_id,
+            entity_type="task",
+            action=AuditAction.DELETED,
             entity_id=task.id,
             entity_name=task.name,
             context=activity_context,

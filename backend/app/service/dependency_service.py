@@ -20,7 +20,7 @@ from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
 from app.schema.dependency import DependencyCreate, DependencyUpdate
-from app.service import activity_log_service, scheduling_service
+from app.service import activity_log_service, realtime_service, scheduling_service
 from app.service.activity_log_service import ActivityContext
 
 
@@ -160,16 +160,32 @@ async def create_dependency(
             ),
             context=activity_context,
         )
+        realtime_service.queue_entity_event(
+            db,
+            project_id=project.id,
+            entity_type="dependency",
+            action=AuditAction.CREATED,
+            entity_id=dependency.id,
+            entity_name=(
+                f"{await _get_task_name(db, dependency.predecessor_id)}"
+                f" -> {await _get_task_name(db, dependency.successor_id)}"
+            ),
+            context=activity_context,
+            metadata={
+                "predecessor_id": dependency.predecessor_id,
+                "successor_id": dependency.successor_id,
+            },
+        )
 
         # Auto-recalculate schedule after dependency creation
         if project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
-        await db.commit()
+        await realtime_service.commit_and_publish(db)
         await db.refresh(dependency)
         return dependency
     except IntegrityError:
-        await db.rollback()
+        await realtime_service.rollback_and_clear(db)
         raise ResourceConflictError("This dependency already exists")
 
 
@@ -230,6 +246,22 @@ async def delete_dependency(
         ),
         context=activity_context,
     )
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project_id,
+        entity_type="dependency",
+        action=AuditAction.DELETED,
+        entity_id=dependency.id,
+        entity_name=(
+            f"{await _get_task_name(db, dependency.predecessor_id)}"
+            f" -> {await _get_task_name(db, dependency.successor_id)}"
+        ),
+        context=activity_context,
+        metadata={
+            "predecessor_id": dependency.predecessor_id,
+            "successor_id": dependency.successor_id,
+        },
+    )
     await db.delete(dependency)
     await db.flush()
 
@@ -237,4 +269,4 @@ async def delete_dependency(
     if project and project.settings.get("auto_calculate", True):
         await scheduling_service.calculate_schedule(db, project)
 
-    await db.commit()
+    await realtime_service.commit_and_publish(db)

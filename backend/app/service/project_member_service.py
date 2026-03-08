@@ -32,7 +32,7 @@ from app.schema.project_member import (
     ProjectMemberRole,
     ProjectMemberRoleUpdate,
 )
-from app.service import activity_log_service, email_service
+from app.service import activity_log_service, email_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 logger = logging.getLogger(__name__)
@@ -283,18 +283,36 @@ async def invite_member(
     )
     db.add(invitation)
     await db.flush()
+    entity_name = (
+        existing_user.full_name or existing_user.email
+        if existing_user is not None
+        else normalized_email
+    )
     await activity_log_service.log_activity(
         db,
         project_id=project.id,
         action=AuditAction.CREATED,
         entity_type="project_member",
         entity_id=invitation.id,
-        entity_name=existing_user.full_name or existing_user.email
-        if existing_user is not None
-        else normalized_email,
+        entity_name=entity_name,
         context=activity_context,
     )
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project_member",
+        action=AuditAction.CREATED,
+        entity_id=invitation.id,
+        entity_name=entity_name,
+        context=activity_context,
+        metadata={
+            "subject_type": "invitation",
+            "email": normalized_email,
+            "role": role.name,
+            "user_id": existing_user.id if existing_user is not None else None,
+        },
+    )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(invitation)
 
     return (
@@ -313,6 +331,7 @@ async def resend_invitation(
     project: Project,
     invitation_id: UUID,
     actor_role_name: str,
+    activity_context: ActivityContext | None = None,
 ) -> tuple[dict, str]:
     """Rotate invitation token and return refreshed invitation + new raw token."""
     result = await db.execute(
@@ -341,7 +360,21 @@ async def resend_invitation(
     raw_token = secrets.token_urlsafe(32)
     invitation.token_hash = hash_token(raw_token)
     invitation.expires_at = datetime.now(UTC) + timedelta(days=7)
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project_member",
+        action=AuditAction.UPDATED,
+        entity_id=invitation.id,
+        entity_name=invitation.email,
+        context=activity_context,
+        metadata={
+            "subject_type": "invitation",
+            "email": invitation.email,
+            "role": role_name,
+        },
+    )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(invitation)
 
     return (
@@ -360,6 +393,7 @@ async def revoke_invitation(
     project: Project,
     invitation_id: UUID,
     actor_role_name: str,
+    activity_context: ActivityContext | None = None,
 ) -> None:
     """Revoke a pending invitation."""
     result = await db.execute(
@@ -386,13 +420,28 @@ async def revoke_invitation(
         )
 
     invitation.is_revoked = True
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project_member",
+        action=AuditAction.DELETED,
+        entity_id=invitation.id,
+        entity_name=invitation.email,
+        context=activity_context,
+        metadata={
+            "subject_type": "invitation",
+            "email": invitation.email,
+            "role": role_name,
+        },
+    )
+    await realtime_service.commit_and_publish(db)
 
 
 async def accept_invitation(
     db: AsyncSession,
     user: User,
     data: ProjectInvitationAccept,
+    activity_context: ActivityContext | None = None,
 ) -> tuple[UUID, UUID]:
     """Accept a project invitation token."""
     result = await db.execute(
@@ -451,7 +500,23 @@ async def accept_invitation(
     )
     db.add(member)
     invitation.accepted_at = now
-    await db.commit()
+    await db.flush()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project_member",
+        action=AuditAction.CREATED,
+        entity_id=member.id,
+        entity_name=user.full_name or user.email,
+        context=activity_context,
+        metadata={
+            "subject_type": "member",
+            "user_id": user.id,
+            "role": role.name,
+            "invitation_id": invitation.id,
+        },
+    )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(member)
     return project.id, member.id
 
@@ -513,7 +578,21 @@ async def change_role(
             changes=changes,
             context=activity_context,
         )
-    await db.commit()
+        realtime_service.queue_entity_event(
+            db,
+            project_id=project.id,
+            entity_type="project_member",
+            action=AuditAction.UPDATED,
+            entity_id=member.id,
+            entity_name=full_name or email,
+            context=activity_context,
+            metadata={
+                "subject_type": "member",
+                "user_id": member.user_id,
+                "role": target_role.name,
+            },
+        )
+    await realtime_service.commit_and_publish(db)
     await db.refresh(member)
 
     return _serialize_member_row(member, target_role.name, email, full_name)
@@ -570,8 +649,22 @@ async def remove_member(
         entity_name=full_name or email,
         context=activity_context,
     )
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project_member",
+        action=AuditAction.DELETED,
+        entity_id=member.id,
+        entity_name=full_name or email,
+        context=activity_context,
+        metadata={
+            "subject_type": "member",
+            "user_id": member.user_id,
+            "role": role_name,
+        },
+    )
     await db.delete(member)
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
 
 
 async def send_project_invitation_email_with_retry(

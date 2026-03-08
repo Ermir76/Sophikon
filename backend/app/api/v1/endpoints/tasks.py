@@ -43,6 +43,7 @@ from app.schema.task import (
 )
 from app.service import (
     activity_log_service,
+    realtime_service,
     task_bulk_service,
     task_hierarchy_service,
     task_service,
@@ -246,7 +247,7 @@ async def delete_task(
     # Unlike soft_delete_project/organization which commit internally,
     # soft_delete_task is recursive (deleting child tasks). We flush
     # internally and commit once here to avoid partial commits.
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
 
 
 @router.post("/{task_id}/indent", response_model=TaskResponse)

@@ -16,7 +16,7 @@ from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
 from app.schema.project import ProjectCreate, ProjectUpdate
-from app.service import activity_log_service
+from app.service import activity_log_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 
@@ -149,8 +149,17 @@ async def create_project(
         entity_name=project.name,
         context=activity_context,
     )
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project",
+        action=AuditAction.CREATED,
+        entity_id=project.id,
+        entity_name=project.name,
+        context=activity_context,
+    )
 
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
     await db.refresh(project)
     return project
 
@@ -193,8 +202,18 @@ async def update_project(
             changes=changes,
             context=activity_context,
         )
+        realtime_service.queue_entity_event(
+            db,
+            project_id=project.id,
+            entity_type="project",
+            action=AuditAction.UPDATED,
+            entity_id=project.id,
+            entity_name=project.name,
+            context=activity_context,
+            metadata=changes,
+        )
 
-    await db.commit()
+    await realtime_service.commit_and_publish(db)
     await db.refresh(project)
     return project
 
@@ -217,4 +236,13 @@ async def soft_delete_project(
         entity_name=project_name,
         context=activity_context,
     )
-    await db.commit()
+    realtime_service.queue_entity_event(
+        db,
+        project_id=project.id,
+        entity_type="project",
+        action=AuditAction.DELETED,
+        entity_id=project.id,
+        entity_name=project_name,
+        context=activity_context,
+    )
+    await realtime_service.commit_and_publish(db)

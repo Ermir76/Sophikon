@@ -150,6 +150,7 @@ async def resend_project_invitation(
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Resend a pending invitation.
@@ -163,6 +164,10 @@ async def resend_project_invitation(
         access.project,
         invitation_id,
         access.role_name,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     invitation = ProjectInvitationListItem(**invitation_payload)
 
@@ -186,6 +191,8 @@ async def revoke_project_invitation(
     invitation_id: UUID,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Revoke a pending invitation.
@@ -198,6 +205,10 @@ async def revoke_project_invitation(
         access.project,
         invitation_id,
         access.role_name,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
 
 
@@ -209,12 +220,17 @@ async def accept_project_invitation(
     body: ProjectInvitationAccept,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Accept an invitation token for the authenticated user."""
     project_id, member_id = await project_member_service.accept_invitation(
         db,
         user,
         body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     return ProjectInvitationAcceptResponse(project_id=project_id, member_id=member_id)
 
