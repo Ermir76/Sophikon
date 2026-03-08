@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 
 import { useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { ProjectActivityFeedCard } from "@/features/projects/components/ProjectActivityFeedCard";
+import { useProjectActivity } from "@/features/projects/hooks/useProjectActivity";
 import { useProjectDashboard } from "@/features/projects/hooks/useProjectDashboard";
 import { useProject } from "@/features/projects/hooks/useProjects";
 import { QueryError } from "@/shared/components/QueryError";
@@ -23,7 +25,6 @@ import { useTimeWindowFilter } from "@/shared/hooks/useTimeWindowFilter";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { InsightsActivityCard } from "@/shared/ui/insights-activity-card";
 import { InsightsMetricCard } from "@/shared/ui/insights-metric-card";
 import { TimeWindowFilter } from "@/shared/ui/time-window-filter";
 
@@ -70,6 +71,12 @@ export default function ProjectOverviewPage() {
     isError: isSuggestionsError,
     refetch: refetchSuggestions,
   } = useAiSuggestions(projectId, 5, false);
+  const {
+    data: activityResponse,
+    isLoading: isActivityLoading,
+    isError: isActivityError,
+    error: activityError,
+  } = useProjectActivity(projectId, { page: 1, per_page: 20 });
 
   useEffect(() => {
     setHasRequestedSuggestions(false);
@@ -140,7 +147,6 @@ export default function ProjectOverviewPage() {
   };
   const upcomingMilestones = data?.upcoming_milestones ?? [];
   const overdueTasks = data?.overdue_tasks ?? [];
-  const recentActivity = data?.recent_activity ?? [];
   const aiSuggestions = suggestionsResponse?.suggestions ?? [];
   const hasGeneratedSuggestions =
     hasRequestedSuggestions || Boolean(suggestionsResponse) || isSuggestionsError;
@@ -513,10 +519,11 @@ export default function ProjectOverviewPage() {
           </Card>
         </div>
 
-        <InsightsActivityCard
-          title="Recent Project Activity"
-          items={recentActivity}
-          emptyMessage="No recent activity for this project."
+        <ProjectActivityFeedCard
+          items={activityResponse?.items ?? []}
+          isLoading={isActivityLoading}
+          isError={isActivityError}
+          error={activityError}
           className="xl:sticky xl:top-6 xl:h-[calc(100dvh-11rem)]"
           contentClassName="flex h-full min-h-0 flex-col"
           listClassName="flex-1 overflow-y-auto pr-1"

@@ -1,5 +1,3 @@
-import type { RecentActivityItem } from "@/shared/types/insights";
-
 export interface ProjectSettings {
   auto_calculate: boolean;
   hours_per_day: number;
@@ -102,7 +100,43 @@ export interface ProjectDashboard {
   critical_path: ProjectDashboardCriticalPath;
   upcoming_milestones: UpcomingMilestone[];
   overdue_tasks: OverdueTask[];
-  recent_activity: RecentActivityItem[];
+}
+
+export type ProjectActivityEntityType =
+  | "project"
+  | "task"
+  | "resource"
+  | "assignment"
+  | "dependency"
+  | "project_member";
+
+export type ProjectActivityAction = "created" | "updated" | "deleted" | "restored";
+
+export interface ProjectActivityActor {
+  id: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface ProjectActivityChangeField {
+  field: string;
+  old?: unknown;
+  new?: unknown;
+}
+
+export interface ProjectActivityChanges {
+  fields: ProjectActivityChangeField[];
+}
+
+export interface ProjectActivityItem {
+  id: string;
+  user?: ProjectActivityActor | null;
+  action: ProjectActivityAction;
+  entity_type: ProjectActivityEntityType;
+  entity_id?: string | null;
+  entity_name?: string | null;
+  changes?: ProjectActivityChanges | null;
+  created_at: string;
 }
 
 export type ProjectMemberRole = "owner" | "manager" | "member" | "viewer";

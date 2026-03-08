@@ -12,11 +12,16 @@ vi.mock("@/features/projects/hooks/useProjectDashboard", () => ({
   useProjectDashboard: vi.fn(),
 }));
 
+vi.mock("@/features/projects/hooks/useProjectActivity", () => ({
+  useProjectActivity: vi.fn(),
+}));
+
 vi.mock("@/features/ai/hooks/useAi", () => ({
   useAiSuggestions: vi.fn(),
 }));
 
 import { useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { useProjectActivity } from "@/features/projects/hooks/useProjectActivity";
 import { useProjectDashboard } from "@/features/projects/hooks/useProjectDashboard";
 import { useProject } from "@/features/projects/hooks/useProjects";
 
@@ -80,22 +85,36 @@ describe("ProjectOverviewPage", () => {
             days_overdue: 2,
           },
         ],
-        recent_activity: [
-          {
-            entity_type: "task",
-            entity_id: "task-2",
-            entity_name: "Overdue critical task",
-            action: "updated",
-            timestamp: "2026-03-07T12:00:00Z",
-            project_id: "project-1",
-            project_name: "Launch Program",
-          },
-        ],
       },
       isLoading: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
+    } as never);
+
+    vi.mocked(useProjectActivity).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "activity-1",
+            entity_type: "task",
+            entity_name: "Overdue critical task",
+            action: "updated",
+            created_at: "2026-03-07T12:00:00Z",
+            user: { id: "user-1", full_name: "John Doe", avatar_url: null },
+            changes: {
+              fields: [{ field: "percent_complete", old: 10, new: 25 }],
+            },
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
     } as never);
   });
 
@@ -123,6 +142,10 @@ describe("ProjectOverviewPage", () => {
       startDate: undefined,
       endDate: undefined,
     });
+    expect(useProjectActivity).toHaveBeenCalledWith("project-1", {
+      page: 1,
+      per_page: 20,
+    });
 
     expect(screen.getByText("Tasks by Status")).toBeInTheDocument();
     expect(screen.getByText("Upcoming Milestones")).toBeInTheDocument();
@@ -144,6 +167,8 @@ describe("ProjectOverviewPage", () => {
       "href",
       "/projects/project-1/resources",
     );
+    expect(screen.getByText("Recent Project Activity")).toBeInTheDocument();
+    expect(screen.getByText("John Doe updated this task.")).toBeInTheDocument();
   });
 
   it("keeps the dashboard visible when AI suggestions fail", () => {
@@ -178,5 +203,24 @@ describe("ProjectOverviewPage", () => {
     expect(
       screen.getByText("For a custom window, please select both start and end date."),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the rest of the overview visible when activity loading fails", () => {
+    vi.mocked(useAiSuggestions).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(useProjectActivity).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("Activity unavailable"),
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByText("Tasks by Status")).toBeInTheDocument();
+    expect(screen.getByText("Activity unavailable")).toBeInTheDocument();
   });
 });
