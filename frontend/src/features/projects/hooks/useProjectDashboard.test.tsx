@@ -52,7 +52,6 @@ describe("useProjectDashboard", () => {
       critical_path: { task_count: 1, total_duration_days: 2, path_length_days: 2 },
       upcoming_milestones: [],
       overdue_tasks: [],
-      recent_activity: [],
     });
 
     const { result } = renderHook(() => useProjectDashboard("project-1"), {

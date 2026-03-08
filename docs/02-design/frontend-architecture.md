@@ -160,6 +160,18 @@ src/
 
 ---
 
+## Current Project Feature Additions
+
+The `projects` feature now also includes:
+
+- `components/ProjectActivityFeedCard.tsx`
+- `hooks/useProjectActivity.ts`
+- `api/project-activity.service.ts`
+
+These files support the dedicated project activity feed used by the project overview page.
+
+---
+
 ## Rules
 
 ### 1. Organize by feature, not by file type

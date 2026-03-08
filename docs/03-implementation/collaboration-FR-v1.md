@@ -59,25 +59,28 @@ Depends on: Phase 1
 
 ### Backend
 
-- [ ] Schema `schema/activity_log.py` — ActivityLogItem, ActivityLogResponse (paginated)
-- [ ] Service `service/activity_log_service.py` — `log_activity`, `list_activity` (paginated, filterable)
-- [ ] Endpoint `api/v1/endpoints/activity.py` — `GET /projects/{project_id}/activity`
-- [ ] Wire `log_activity` into `task_service.py` (create, update, delete)
-- [ ] Wire `log_activity` into `project_service.py` (create, update, delete)
-- [ ] Wire `log_activity` into `resource_service.py` (create, update, delete)
-- [ ] Wire `log_activity` into `assignment_service.py` (create, delete)
-- [ ] Wire `log_activity` into `dependency_service.py` (create, delete)
-- [ ] Wire `log_activity` into `project_member_service.py` (invite, role change, remove)
+- [x] Schema `schema/activity_log.py` — ActivityLogItem, actor, and change-set payloads for the project activity feed
+- [x] Service `service/activity_log_service.py` — `log_activity`, `list_activity`, request context, and diff serialization helpers
+- [x] Endpoint `api/v1/endpoints/activity.py` — `GET /projects/{project_id}/activity`
+- [x] Wire `log_activity` into `task_service.py` (create, update, delete)
+- [x] Wire `log_activity` into `project_service.py` (create, update, delete)
+- [x] Wire `log_activity` into `resource_service.py` (create, update, delete)
+- [x] Wire `log_activity` into `assignment_service.py` (create, delete)
+- [x] Wire `log_activity` into `dependency_service.py` (create, delete)
+- [x] Wire `log_activity` into `project_member_service.py` (invite, role change, remove)
 
 ### Frontend
 
-- [ ] Hook: `useProjectActivity.ts`
-- [ ] Activity feed component (reuse InsightsActivityCard pattern with real API data)
+- [x] Hook: `useProjectActivity.ts`
+- [x] Activity feed component with real API data in the project overview page
+- [x] Keep dashboard `recent_activity` in the dashboard response temporarily because the main dashboard page still uses it
 
 ### Tests
 
-- [ ] `backend/tests/api/v1/test_activity.py`
-- [ ] Integration test: task create/update/delete creates activity records
+- [x] `backend/tests/api/v1/test_activity.py`
+- [x] Direct service coverage in `backend/tests/test_activity_log_service.py`
+- [x] Integration coverage for task/project/resource/assignment/dependency/member activity records
+- [x] Frontend coverage for `useProjectActivity`, `ProjectActivityFeedCard`, and project overview activity rendering
 
 ---
 
