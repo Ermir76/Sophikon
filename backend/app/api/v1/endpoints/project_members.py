@@ -14,7 +14,7 @@ DELETE /projects/{project_id}/members/{member_id}                    - Remove me
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -35,7 +35,7 @@ from app.schema.project_member import (
     ProjectMemberListItem,
     ProjectMemberRoleUpdate,
 )
-from app.service import project_member_service
+from app.service import activity_log_service, project_member_service
 
 router = APIRouter(
     prefix="/projects",
@@ -79,6 +79,7 @@ async def invite_project_member(
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Invite a user by email.
@@ -93,6 +94,10 @@ async def invite_project_member(
         user,
         access.role_name,
         body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     invitation = ProjectInvitationListItem(**invitation_payload)
 
@@ -223,6 +228,8 @@ async def update_project_member_role(
     body: ProjectMemberRoleUpdate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Change a member role. Owner only."""
     check_role(access, "owner")
@@ -231,6 +238,10 @@ async def update_project_member_role(
         access.project,
         member_id,
         body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     return ProjectMemberListItem(**member)
 
@@ -243,6 +254,8 @@ async def delete_project_member(
     member_id: UUID,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Remove a member from the project.
@@ -255,4 +268,8 @@ async def delete_project_member(
         access.project,
         member_id,
         access.role_name,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )

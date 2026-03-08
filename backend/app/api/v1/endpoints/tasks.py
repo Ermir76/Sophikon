@@ -17,12 +17,18 @@ DELETE /projects/{project_id}/tasks/bulk              - Bulk delete tasks
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, check_role, get_project_or_404
+from app.api.deps import (
+    ProjectAccess,
+    check_role,
+    get_current_active_user,
+    get_project_or_404,
+)
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
+from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.task import (
     BulkOperationResponse,
@@ -35,7 +41,12 @@ from app.schema.task import (
     TaskResponse,
     TaskUpdate,
 )
-from app.service import task_bulk_service, task_hierarchy_service, task_service
+from app.service import (
+    activity_log_service,
+    task_bulk_service,
+    task_hierarchy_service,
+    task_service,
+)
 
 router = APIRouter(prefix="/projects/{project_id}/tasks", tags=["tasks"])
 
@@ -76,10 +87,20 @@ async def create_task(
     body: TaskCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Create a new task in the project."""
     check_role(access, "owner", "manager", "member")
-    task = await task_service.create_task(db, access.project, body)
+    task = await task_service.create_task(
+        db,
+        access.project,
+        body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return TaskResponse.model_validate(task)
 
 
@@ -88,13 +109,21 @@ async def bulk_create_tasks(
     body: TaskBulkCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Bulk create tasks.
     """
     check_role(access, "owner", "manager", "member")
     tasks, errors = await task_bulk_service.bulk_create_tasks(
-        db, access.project, body.tasks
+        db,
+        access.project,
+        body.tasks,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     return {
         "tasks": [TaskResponse.model_validate(t) for t in tasks],
@@ -107,13 +136,21 @@ async def bulk_update_tasks(
     body: TaskBulkUpdate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Bulk update tasks.
     """
     check_role(access, "owner", "manager", "member")
     succeeded, failed, errors = await task_bulk_service.bulk_update_tasks(
-        db, access.project, body.tasks
+        db,
+        access.project,
+        body.tasks,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     return {"succeeded": succeeded, "failed": failed, "errors": errors}
 
@@ -123,13 +160,21 @@ async def bulk_delete_tasks(
     body: TaskBulkDelete,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Bulk soft-delete tasks.
     """
     check_role(access, "owner", "manager")
     succeeded, failed, errors = await task_bulk_service.bulk_delete_tasks(
-        db, access.project, body.task_ids
+        db,
+        access.project,
+        body.task_ids,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
     )
     return {"succeeded": succeeded, "failed": failed, "errors": errors}
 
@@ -153,6 +198,8 @@ async def update_task(
     body: TaskUpdate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Update a task."""
     check_role(access, "owner", "manager", "member")
@@ -160,7 +207,16 @@ async def update_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    task = await task_service.update_task(db, task, body, access.project)
+    task = await task_service.update_task(
+        db,
+        task,
+        body,
+        access.project,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return TaskResponse.model_validate(task)
 
 
@@ -169,6 +225,8 @@ async def delete_task(
     task_id: UUID,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Soft delete a task."""
     check_role(access, "owner", "manager")
@@ -176,7 +234,15 @@ async def delete_task(
     if not task:
         raise NotFoundError("Task not found")
 
-    await task_service.soft_delete_task(db, task, access.project)
+    await task_service.soft_delete_task(
+        db,
+        task,
+        access.project,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     # Unlike soft_delete_project/organization which commit internally,
     # soft_delete_task is recursive (deleting child tasks). We flush
     # internally and commit once here to avoid partial commits.

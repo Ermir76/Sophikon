@@ -10,15 +10,21 @@ DELETE /projects/{project_id}/dependencies/{dependency_id}    - Delete dependenc
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, check_role, get_project_or_404
+from app.api.deps import (
+    ProjectAccess,
+    check_role,
+    get_current_active_user,
+    get_project_or_404,
+)
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
+from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.dependency import DependencyCreate, DependencyResponse, DependencyUpdate
-from app.service import dependency_service
+from app.service import activity_log_service, dependency_service
 
 router = APIRouter(prefix="/projects/{project_id}/dependencies", tags=["dependencies"])
 
@@ -51,10 +57,20 @@ async def create_dependency(
     body: DependencyCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Create a new dependency between tasks."""
     check_role(access, "owner", "manager", "member")
-    dependency = await dependency_service.create_dependency(db, access.project, body)
+    dependency = await dependency_service.create_dependency(
+        db,
+        access.project,
+        body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return DependencyResponse.model_validate(dependency)
 
 
@@ -84,6 +100,8 @@ async def delete_dependency(
     dependency_id: UUID,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Delete a dependency."""
     check_role(access, "owner", "manager")
@@ -93,4 +111,12 @@ async def delete_dependency(
     if not dependency:
         raise NotFoundError("Dependency not found")
 
-    await dependency_service.delete_dependency(db, dependency, access.project)
+    await dependency_service.delete_dependency(
+        db,
+        dependency,
+        access.project,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )

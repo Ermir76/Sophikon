@@ -13,7 +13,7 @@ DELETE /assignments/{assignment_id}                           - Delete assignmen
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,13 +23,15 @@ from app.api.deps import (
     check_role,
     check_role_name,
     get_assignment_with_access,
+    get_current_active_user,
     get_project_or_404,
 )
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.models.task import Task
+from app.models.user import User
 from app.schema.assignment import AssignmentCreate, AssignmentResponse, AssignmentUpdate
-from app.service import assignment_service
+from app.service import activity_log_service, assignment_service
 
 # Router for nested task assignments (list/create)
 task_assignments_router = APIRouter(
@@ -82,11 +84,21 @@ async def create_assignment(
     body: AssignmentCreate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Create a new assignment for a task."""
     check_role(access, "owner", "manager", "member")
     task = await _get_task_in_project(task_id, access, db)
-    assignment = await assignment_service.create_assignment(db, task, body)
+    assignment = await assignment_service.create_assignment(
+        db,
+        task,
+        body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return AssignmentResponse.model_validate(assignment)
 
 
@@ -111,7 +123,16 @@ async def delete_assignment(
     assignment_id: UUID,
     access: Annotated[AssignmentAccess, Depends(get_assignment_with_access)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Delete an assignment."""
     check_role_name(access.role_name, "owner", "manager")
-    await assignment_service.delete_assignment(db, access.assignment)
+    await assignment_service.delete_assignment(
+        db,
+        access.assignment,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )

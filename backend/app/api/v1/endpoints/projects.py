@@ -12,7 +12,7 @@ DELETE /projects/{project_id}           - Soft delete project (owner only)
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -33,7 +33,7 @@ from app.schema.project import (
     ProjectListItem,
     ProjectUpdate,
 )
-from app.service import insights_service, project_service
+from app.service import activity_log_service, insights_service, project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -79,10 +79,19 @@ async def create_project(
     body: ProjectCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Create a new project."""
     await get_org_membership_or_404(db, body.organization_id, user)
-    project = await project_service.create_project(db, user, body)
+    project = await project_service.create_project(
+        db,
+        user,
+        body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return ProjectDetail.model_validate(project)
 
 
@@ -121,6 +130,8 @@ async def update_project(
     body: ProjectUpdate,
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Update a project.
@@ -129,7 +140,15 @@ async def update_project(
     """
     check_role(access, "owner", "manager")
 
-    project = await project_service.update_project(db, access.project, body)
+    project = await project_service.update_project(
+        db,
+        access.project,
+        body,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return ProjectDetail.model_validate(project)
 
 
@@ -137,6 +156,8 @@ async def update_project(
 async def delete_project(
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """
     Soft delete a project.
@@ -145,4 +166,11 @@ async def delete_project(
     """
     check_role(access, "owner")
 
-    await project_service.soft_delete_project(db, access.project)
+    await project_service.soft_delete_project(
+        db,
+        access.project,
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
