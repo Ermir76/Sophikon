@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, BeforeValidator, Field
 
 from app.models.enums import AuditAction
+from app.schema.notification import NotificationItem
 
 RealtimeChannel = Literal[
     "tasks",
@@ -106,3 +107,27 @@ class PresenceMessage(BaseModel):
     status: PresenceStatus
     entity_type: PresenceEntityType
     entity_id: SchemaUUID | None = None
+
+
+class NotificationSnapshotMessage(BaseModel):
+    type: Literal["notification_snapshot"] = "notification_snapshot"
+    unread_count: int
+
+
+class NotificationCreatedMessage(BaseModel):
+    type: Literal["notification_created"] = "notification_created"
+    notification: NotificationItem
+    unread_count: int
+
+
+class NotificationUpdatedMessage(BaseModel):
+    type: Literal["notification_updated"] = "notification_updated"
+    notification_id: SchemaUUID
+    is_read: bool
+    read_at: datetime | None = None
+    unread_count: int
+
+
+class NotificationsReadAllMessage(BaseModel):
+    type: Literal["notifications_read_all"] = "notifications_read_all"
+    unread_count: int

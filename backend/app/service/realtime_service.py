@@ -8,6 +8,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.user_notification_websocket_manager import (
+    user_notification_websocket_manager,
+)
 from app.core.websocket_manager import websocket_manager
 from app.models.enums import AuditAction
 from app.schema.realtime import RealtimeActor, RealtimeChannel, RealtimeEventMessage
@@ -16,6 +19,7 @@ from app.service.activity_log_service import ActivityContext, serialize_activity
 logger = logging.getLogger(__name__)
 
 PENDING_REALTIME_EVENTS_KEY = "pending_realtime_events"
+PENDING_USER_NOTIFICATION_EVENTS_KEY = "pending_user_notification_events"
 
 ENTITY_CHANNELS: dict[str, list[RealtimeChannel]] = {
     "project": ["project"],
@@ -30,6 +34,7 @@ ENTITY_CHANNELS: dict[str, list[RealtimeChannel]] = {
 
 def clear_pending_events(db: AsyncSession) -> None:
     db.info.pop(PENDING_REALTIME_EVENTS_KEY, None)
+    db.info.pop(PENDING_USER_NOTIFICATION_EVENTS_KEY, None)
 
 
 def queue_message(
@@ -43,6 +48,20 @@ def queue_message(
         {
             "project_id": str(project_id),
             "channels": channels,
+            "payload": payload,
+        }
+    )
+
+
+def queue_user_notification_event(
+    db: AsyncSession,
+    *,
+    user_id: UUID | str,
+    payload: dict[str, Any],
+) -> None:
+    db.info.setdefault(PENDING_USER_NOTIFICATION_EVENTS_KEY, []).append(
+        {
+            "user_id": str(user_id),
             "payload": payload,
         }
     )
@@ -117,10 +136,14 @@ async def commit_and_publish(db: AsyncSession) -> None:
         clear_pending_events(db)
         raise
 
-    pending = db.info.pop(PENDING_REALTIME_EVENTS_KEY, [])
+    pending_project_events = db.info.pop(PENDING_REALTIME_EVENTS_KEY, [])
+    pending_user_notification_events = db.info.pop(
+        PENDING_USER_NOTIFICATION_EVENTS_KEY, []
+    )
+
     published_count = 0
     failed_count = 0
-    for event in pending:
+    for event in pending_project_events:
         try:
             await websocket_manager.publish_message(
                 project_id=event["project_id"],
@@ -139,13 +162,35 @@ async def commit_and_publish(db: AsyncSession) -> None:
                 },
             )
 
-    if pending:
+    user_published_count = 0
+    user_failed_count = 0
+    for event in pending_user_notification_events:
+        try:
+            await user_notification_websocket_manager.publish_message(
+                user_id=event["user_id"],
+                payload=event["payload"],
+            )
+            user_published_count += 1
+        except Exception:
+            user_failed_count += 1
+            logger.exception(
+                "user_notification_publish_failed",
+                extra={
+                    "user_id": event["user_id"],
+                    "event_type": event["payload"].get("type"),
+                },
+            )
+
+    if pending_project_events or pending_user_notification_events:
         logger.info(
             "realtime_publish_batch_completed",
             extra={
-                "events_total": len(pending),
+                "events_total": len(pending_project_events),
                 "events_published": published_count,
                 "events_failed": failed_count,
+                "user_events_total": len(pending_user_notification_events),
+                "user_events_published": user_published_count,
+                "user_events_failed": user_failed_count,
             },
         )
 

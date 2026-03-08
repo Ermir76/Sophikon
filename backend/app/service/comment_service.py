@@ -17,14 +17,13 @@ from app.models.assignment import Assignment
 from app.models.comment import Comment
 from app.models.dependency import Dependency
 from app.models.enums import AuditAction, NotificationType
-from app.models.notification import Notification
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.resource import Resource
 from app.models.task import Task
 from app.models.user import User
 from app.schema.comment import CommentAuthor, CommentEntityType, CommentItem
-from app.service import activity_log_service, realtime_service
+from app.service import activity_log_service, notification_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 MENTION_TOKEN_PATTERN = re.compile(
@@ -496,18 +495,16 @@ async def _create_mention_notifications(
     for user_id in mentioned_user_ids:
         if user_id == actor_id:
             continue
-        db.add(
-            Notification(
-                user_id=user_id,
-                type=NotificationType.MENTIONED,
-                title="You were mentioned in a comment",
-                message=f"You were mentioned in {project_name}.",
-                entity_type="comment",
-                entity_id=comment.id,
-                actor_id=actor_id,
-            )
+        await notification_service.create_notification(
+            db,
+            user_id=user_id,
+            type=NotificationType.MENTIONED,
+            title="You were mentioned in a comment",
+            message=f"You were mentioned in {project_name}.",
+            entity_type="comment",
+            entity_id=comment.id,
+            actor_id=actor_id,
         )
-    await db.flush()
 
 
 def _comment_event_metadata(comment: Comment) -> dict[str, object]:

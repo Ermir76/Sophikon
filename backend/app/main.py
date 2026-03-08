@@ -19,6 +19,7 @@ from app.api.v1.endpoints.calendars import router as calendars_router
 from app.api.v1.endpoints.comments import router as comments_router
 from app.api.v1.endpoints.dependencies import router as dependencies_router
 from app.api.v1.endpoints.insights import router as insights_router
+from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.organization_members import router as org_members_router
 from app.api.v1.endpoints.organizations import router as orgs_router
 from app.api.v1.endpoints.project_members import router as project_members_router
@@ -32,6 +33,9 @@ from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import AppException
 from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from app.core.user_notification_websocket_manager import (
+    user_notification_websocket_manager,
+)
 from app.core.websocket_manager import websocket_manager
 
 
@@ -45,8 +49,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """
     # Startup - engine pool is already created on import
     await websocket_manager.start()
+    await user_notification_websocket_manager.start()
     yield
     # Shutdown - dispose of connection pool
+    await user_notification_websocket_manager.stop()
     await websocket_manager.stop()
     await engine.dispose()
 
@@ -122,6 +128,7 @@ app.include_router(schedule_router, prefix="/api/v1")
 app.include_router(utilization_router, prefix="/api/v1")
 app.include_router(calendars_router, prefix="/api/v1")
 app.include_router(comments_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(task_assignments_router, prefix="/api/v1")
 app.include_router(assignments_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")

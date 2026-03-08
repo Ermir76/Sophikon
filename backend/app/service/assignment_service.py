@@ -16,11 +16,11 @@ from app.core.exceptions import (
     ResourceConflictError,
 )
 from app.models.assignment import Assignment
-from app.models.enums import AuditAction
+from app.models.enums import AuditAction, NotificationType
 from app.models.resource import Resource
 from app.models.task import Task
 from app.schema.assignment import AssignmentCreate, AssignmentUpdate
-from app.service import activity_log_service, realtime_service
+from app.service import activity_log_service, notification_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 
@@ -119,6 +119,21 @@ async def create_assignment(
                 "resource_id": assignment.resource_id,
             },
         )
+        actor_id = activity_context.user_id if activity_context else None
+        if resource.user_id is not None and resource.user_id != actor_id:
+            actor_name = activity_context.full_name if activity_context else None
+            await notification_service.create_notification(
+                db,
+                user_id=resource.user_id,
+                type=NotificationType.TASK_ASSIGNED,
+                title="You were assigned to a task",
+                message=(
+                    f"{actor_name or 'A teammate'} assigned you to '{task.name}'."
+                ),
+                entity_type="task",
+                entity_id=task.id,
+                actor_id=actor_id,
+            )
         await realtime_service.commit_and_publish(db)
         await db.refresh(assignment)
         return assignment

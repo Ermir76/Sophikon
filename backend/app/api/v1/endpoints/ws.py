@@ -16,12 +16,16 @@ from app.api.deps import (
 )
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
+from app.core.user_notification_websocket_manager import (
+    user_notification_websocket_manager,
+)
 from app.core.websocket_manager import websocket_manager
 from app.schema.realtime import (
     PresenceMessage,
     RealtimeErrorMessage,
     SubscribeMessage,
 )
+from app.service import notification_service
 
 router = APIRouter(tags=["ws"])
 
@@ -44,6 +48,18 @@ async def _resolve_socket_context(websocket: WebSocket, project_id: UUID):
         user = await authenticate_access_token(db, token)
         access = await get_project_membership_for_user(db, project_id, user)
         return user, access
+
+    return await _with_session(_handler)
+
+
+async def _resolve_socket_user(websocket: WebSocket):
+    async def _handler(db: AsyncSession):
+        token = normalize_access_token(
+            websocket.query_params.get("token")
+            or websocket.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
+            or websocket.headers.get("authorization")
+        )
+        return await authenticate_access_token(db, token)
 
     return await _with_session(_handler)
 
@@ -87,6 +103,15 @@ async def project_websocket(websocket: WebSocket, project_id: UUID):
     try:
         while True:
             payload = await websocket.receive_json()
+            if not isinstance(payload, dict):
+                await websocket.send_json(
+                    RealtimeErrorMessage(
+                        code="INVALID_MESSAGE",
+                        message="Malformed websocket payload",
+                    ).model_dump(mode="json")
+                )
+                await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
+                return
             message_type = payload.get("type")
 
             if message_type == "subscribe":
@@ -119,7 +144,7 @@ async def project_websocket(websocket: WebSocket, project_id: UUID):
                 ).model_dump(mode="json")
             )
             continue
-    except ValidationError:
+    except (ValidationError, ValueError):
         await websocket.send_json(
             RealtimeErrorMessage(
                 code="INVALID_MESSAGE",
@@ -131,3 +156,58 @@ async def project_websocket(websocket: WebSocket, project_id: UUID):
         pass
     finally:
         await websocket_manager.disconnect(connection_id, access.project.id)
+
+
+@router.websocket("/ws/notifications")
+async def notification_websocket(websocket: WebSocket):
+    try:
+        user = await _resolve_socket_user(websocket)
+    except Exception as exc:
+        from app.core.exceptions import AuthenticationError
+
+        if isinstance(exc, AuthenticationError):
+            await websocket.accept()
+            await websocket.close(code=4401)
+            return
+        raise
+
+    await websocket.accept()
+    connection_id = await user_notification_websocket_manager.connect(
+        websocket,
+        user_id=user.id,
+    )
+    snapshot = await _with_session(
+        lambda db: notification_service.build_snapshot_payload(db, user_id=user.id)
+    )
+    await websocket.send_json(snapshot)
+
+    try:
+        while True:
+            payload = await websocket.receive_json()
+            if not isinstance(payload, dict):
+                await websocket.send_json(
+                    RealtimeErrorMessage(
+                        code="INVALID_MESSAGE",
+                        message="Malformed websocket payload",
+                    ).model_dump(mode="json")
+                )
+                await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
+                return
+            await websocket.send_json(
+                RealtimeErrorMessage(
+                    code="INVALID_MESSAGE_TYPE",
+                    message="Unsupported websocket message type",
+                ).model_dump(mode="json")
+            )
+    except WebSocketDisconnect:
+        pass
+    except ValueError:
+        await websocket.send_json(
+            RealtimeErrorMessage(
+                code="INVALID_MESSAGE",
+                message="Malformed websocket payload",
+            ).model_dump(mode="json")
+        )
+        await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
+    finally:
+        await user_notification_websocket_manager.disconnect(connection_id, user.id)
