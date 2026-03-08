@@ -22,9 +22,12 @@ import {
     AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
+import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { TaskDependencyList } from "@/features/tasks/components/task-detail/TaskDependencyList";
 import { TaskAssignmentList } from "@/features/tasks/components/task-detail/TaskAssignmentList";
 import { TaskDetailCoreFields } from "@/features/tasks/components/task-detail/TaskDetailCoreFields";
+import { CommentThread } from "@/features/tasks/components/task-detail/CommentThread";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 import { toast } from "sonner";
 import type { TaskUpdate } from "@/features/tasks/types";
 
@@ -40,6 +43,8 @@ interface TaskDetailPanelProps {
 export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, isDeletePending }: TaskDetailPanelProps) {
     const { data: task, isLoading } = useTask(projectId, taskId ?? undefined);
     const updateTask = useUpdateTask(projectId);
+    const membersQuery = useProjectMembers(projectId);
+    const currentUserId = useAuthStore((state) => state.user?.id ?? null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Local form state to track keystrokes without spamming the API
@@ -81,6 +86,8 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
             }
         }
     };
+    const currentMember = membersQuery.data?.items.find((member) => member.user_id === currentUserId);
+    const canModerateComments = currentMember?.role === "owner" || currentMember?.role === "manager";
 
     return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -158,6 +165,14 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                     <TaskAssignmentList projectId={projectId} taskId={task.id} />
                                 </div>
                             </div>
+
+                            <div className="h-px w-full rounded-full bg-border/80" />
+
+                            <CommentThread
+                                projectId={projectId}
+                                taskId={task.id}
+                                canModerate={canModerateComments}
+                            />
                         </div>
                     </div>
                 )}

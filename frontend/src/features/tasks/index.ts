@@ -4,6 +4,7 @@ export { default as TasksPage } from './pages/TasksPage';
 export { useTasks } from './hooks/useTasks';
 export { useDependencies } from './hooks/useDependencies';
 export { useAssignments } from './hooks/useAssignments';
+export { useComments } from './hooks/useComments';
 export { useCollapsedTasks } from './hooks/useCollapsedTasks';
 
 export { TaskDependencyList } from './components/task-detail/TaskDependencyList';

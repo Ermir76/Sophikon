@@ -33,6 +33,7 @@ export interface Task {
     total_slack: number;
     free_slack: number;
     color?: string | null;
+    comments_count?: number;
     created_at: string;
     updated_at: string;
 }
@@ -198,4 +199,47 @@ export interface AssignmentUpdate {
     rate_table?: RateTable;
     percent_work_complete?: number;
     is_confirmed?: boolean;
+}
+
+export type CommentEntityType =
+    | "project"
+    | "task"
+    | "resource"
+    | "assignment"
+    | "dependency"
+    | "project_member";
+
+export interface TaskCommentAuthor {
+    id: string;
+    full_name?: string | null;
+    avatar_url?: string | null;
+}
+
+export interface TaskComment {
+    id: string;
+    entity_type: CommentEntityType;
+    entity_id: string;
+    author: TaskCommentAuthor;
+    content: string;
+    mentions: string[];
+    parent_comment_id?: string | null;
+    is_edited: boolean;
+    edited_at?: string | null;
+    created_at: string;
+    replies: TaskComment[];
+}
+
+export interface TaskCommentListResponse {
+    data: TaskComment[];
+}
+
+export interface TaskCommentCreate {
+    entity_type: CommentEntityType;
+    entity_id: string;
+    content: string;
+    parent_comment_id?: string | null;
+}
+
+export interface TaskCommentUpdate {
+    content: string;
 }

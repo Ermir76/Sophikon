@@ -5,7 +5,7 @@ import { Badge } from "@/shared/ui/badge";
 import type { Task } from "@/features/tasks/types";
 import { TaskInlineEdit } from "@/features/tasks/components/task-table/TaskInlineEdit";
 import { TaskRowActions } from "@/features/tasks/components/task-table/TaskRowActions";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronRight, GripVertical, MessageSquare } from "lucide-react";
 
 declare module "@tanstack/react-table" {
     interface TableMeta<TData extends RowData> {
@@ -122,6 +122,16 @@ export const taskColumns = [
                 </div>
             );
         },
+    }),
+    columnHelper.display({
+        id: "comments",
+        header: "Comments",
+        cell: (info) => (
+            <div className="flex items-center gap-1 text-muted-foreground">
+                <MessageSquare className="size-4" />
+                <span>{info.row.original.comments_count ?? 0}</span>
+            </div>
+        ),
     }),
     columnHelper.display({
         id: "status",

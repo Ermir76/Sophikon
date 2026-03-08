@@ -23,6 +23,7 @@ const ENTITY_LABELS: Record<ProjectActivityItem["entity_type"], string> = {
   assignment: "Assignment",
   dependency: "Dependency",
   project_member: "Member",
+  comment: "Comment",
 };
 
 const ACTION_LABELS: Record<ProjectActivityItem["action"], string> = {
