@@ -22,10 +22,24 @@ src/
     components/       Shared UI components (ErrorBoundary, PageLoader, etc.)
     hooks/            Custom hooks
     layout/           AppLayout, AppHeader, AppSidebar
-    ui/               shadcn/ui components
+    ui/               Base widget foundation layer (controlled)
     lib/              Utility functions
   config/           React Query client config
 ```
+
+## Visual Governance
+
+Visual ownership is enforced in this order:
+
+1. `src/index.css` for tokens and global visual defaults
+2. `src/shared/ui/*` for base widget visuals (controlled foundation layer)
+3. `src/shared/*` adapters/primitives for app-semantic wrappers
+4. `src/features/**` for composition only (no private design systems)
+
+Authoritative docs:
+- `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
+- `docs/02-design/frontend-architecture.md`
+- `docs/03-implementation/ui-ux-recovery-tracker.md`
 
 ## Setup
 

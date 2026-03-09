@@ -25,6 +25,10 @@ Use these defaults:
 - Backend endpoints follow the existing FastAPI domain-file pattern.
 - Backend business logic lives in plain service functions, not service classes.
 - Frontend code is organized by feature, not by file type.
+- Frontend visual/styling ownership follows:
+  - `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
+  - `docs/02-design/frontend-architecture.md`
+  - `docs/03-implementation/ui-ux-recovery-tracker.md`
 - Shared frontend API calls use `shared/api/api.ts` unless the transport
   requires something else, such as streaming.
 - React Query is used for shared server state. Local component state is used

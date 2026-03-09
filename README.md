@@ -76,3 +76,7 @@ cd frontend && npm run test:e2e       # frontend E2E tests (Playwright)
 
 - Repo-level review and consistency rules live in [CONVENTIONS.md](./CONVENTIONS.md)
 - Deferred cleanup and technical debt are tracked in [issues/](./issues)
+- Frontend visual governance source of truth:
+  - [docs/02-design/FRONTEND_STYLING_CONSTITUTION.md](./docs/02-design/FRONTEND_STYLING_CONSTITUTION.md)
+  - [docs/02-design/frontend-architecture.md](./docs/02-design/frontend-architecture.md)
+  - [docs/03-implementation/ui-ux-recovery-tracker.md](./docs/03-implementation/ui-ux-recovery-tracker.md)
