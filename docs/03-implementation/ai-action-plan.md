@@ -33,8 +33,8 @@ backend/
   app/api/v1/endpoints/ai.py
   app/service/ai_service.py
   app/schema/ai.py
-  tests/api/v1/test_ai.py
-  tests/test_ai_service.py
+  tests/unit/api/v1/test_ai.py
+  tests/unit/service/test_ai_service.py
 
 ai-service/
   app/main.py

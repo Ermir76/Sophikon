@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import Task
-from tests.api.v1.conftest import add_project_member
+from tests.fixtures.project_members import add_project_member
 
 
 async def _seed_project_dashboard_data(

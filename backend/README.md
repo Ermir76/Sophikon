@@ -17,16 +17,16 @@ tests/                Pytest test suite (integration + unit)
 
 ## API Endpoints
 
-| Prefix | Description |
-|---|---|
-| `/api/v1/auth` | Register, login, logout, refresh, email verification |
-| `/api/v1/organizations` | Organization CRUD |
-| `/api/v1/organizations/.../members` | Organization membership + roles |
-| `/api/v1/projects` | Project CRUD (scoped to organizations) |
-| `/api/v1/projects/.../tasks` | Task CRUD with hierarchy |
-| `/api/v1/projects/.../resources` | Resource management |
-| `/api/v1/projects/.../dependencies` | Task dependencies |
-| `/api/v1/projects/.../assignments` | Task assignments |
+| Prefix                              | Description                                          |
+| ----------------------------------- | ---------------------------------------------------- |
+| `/api/v1/auth`                      | Register, login, logout, refresh, email verification |
+| `/api/v1/organizations`             | Organization CRUD                                    |
+| `/api/v1/organizations/.../members` | Organization membership + roles                      |
+| `/api/v1/projects`                  | Project CRUD (scoped to organizations)               |
+| `/api/v1/projects/.../tasks`        | Task CRUD with hierarchy                             |
+| `/api/v1/projects/.../resources`    | Resource management                                  |
+| `/api/v1/projects/.../dependencies` | Task dependencies                                    |
+| `/api/v1/projects/.../assignments`  | Task assignments                                     |
 
 Swagger docs available at `/docs` in development mode (`ENV=development`).
 
@@ -43,8 +43,9 @@ uvicorn app.main:app --reload
 
 ```bash
 uv run pytest                    # all tests with coverage
-uv run pytest tests/api/         # API tests only
-uv run pytest tests/integration/ # integration flows
+uv run pytest tests/unit/        # unit + API contract tests
+uv run pytest tests/unit/api/v1/ # API tests only
+uv run pytest tests/integration/ # integration tests
 uv run pytest -k "test_auth"     # specific tests
 ```
 

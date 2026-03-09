@@ -44,7 +44,7 @@ Depends on: Nothing
 
 ### Tests
 
-- [x] `backend/tests/api/v1/test_project_members.py`
+- [x] `backend/tests/unit/api/v1/test_project_members.py`
 - [x] Integration coverage: invite, role change, remove, resend, revoke, accept flow
 - [x] `frontend/src/features/projects/hooks/useProjectMembers.test.tsx`
 - [x] Frontend coverage for members tab, invitation accept page, project settings integration, and auth redirect links
@@ -77,8 +77,8 @@ Depends on: Phase 1
 
 ### Tests
 
-- [x] `backend/tests/api/v1/test_activity.py`
-- [x] Direct service coverage in `backend/tests/test_activity_log_service.py`
+- [x] `backend/tests/unit/api/v1/test_activity.py`
+- [x] Direct service coverage in `backend/tests/unit/service/test_activity_log_service.py`
 - [x] Integration coverage for task/project/resource/assignment/dependency/member activity records
 - [x] Frontend coverage for `useProjectActivity`, `ProjectActivityFeedCard`, and project overview activity rendering
 
@@ -108,8 +108,8 @@ Depends on: Phase 1
 
 ### Tests
 
-- [x] WebSocket connection/auth/protocol tests added in `backend/tests/api/v1/test_ws.py`
-- [x] Realtime service queue/channel coverage added in `backend/tests/test_realtime_service.py`
+- [x] WebSocket connection/auth/protocol tests added in `backend/tests/unit/api/v1/test_ws.py`
+- [x] Realtime service queue/channel coverage added in `backend/tests/unit/service/test_realtime_service.py`
 - [x] Frontend websocket/header tests added for hook behavior, layout wiring, and header presence rendering
 
 ---

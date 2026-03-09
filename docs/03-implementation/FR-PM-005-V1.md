@@ -69,7 +69,7 @@
 
 ```bash
 cd backend
-uv run pytest tests/api/v1/test_projects.py tests/api/v1/test_insights.py tests/test_insights_service.py
+uv run pytest tests/unit/api/v1/test_projects.py tests/unit/api/v1/test_insights.py tests/unit/service/test_insights_service.py
 
 cd ../frontend
 npm run test -- src/features/projects/hooks/useProjectDashboard.test.tsx src/features/projects/pages/ProjectOverviewPage.test.tsx

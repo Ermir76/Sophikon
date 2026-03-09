@@ -6,8 +6,13 @@ import pytest
 
 
 def _load_migration_module() -> ModuleType:
+    root = next(
+        parent
+        for parent in Path(__file__).resolve().parents
+        if (parent / "alembic").is_dir() and (parent / "app").is_dir()
+    )
     path = (
-        Path(__file__).resolve().parents[1]
+        root
         / "alembic"
         / "versions"
         / "9b8c7d6e5f4a_add_comment_entity_type_check_constraint.py"

@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.api.v1.conftest import add_project_member
+from tests.fixtures.project_members import add_project_member
 
 
 @pytest.mark.asyncio

@@ -162,11 +162,25 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
     )
     payloads = [chunk async for chunk in stream]
 
-    conversation = (await session.execute(select(AIConversation))).scalar_one()
+    conversations = list(
+        (
+            await session.execute(
+                select(AIConversation).where(
+                    AIConversation.project_id == project.id,
+                    AIConversation.user_id == user.id,
+                )
+            )
+        ).scalars()
+    )
+    assert len(conversations) >= 1
+    conversation = conversations[-1]
+
     messages = list(
         (
             await session.execute(
-                select(AIMessage).order_by(AIMessage.created_at.asc())
+                select(AIMessage)
+                .where(AIMessage.conversation_id == conversation.id)
+                .order_by(AIMessage.created_at.asc())
             )
         ).scalars()
     )

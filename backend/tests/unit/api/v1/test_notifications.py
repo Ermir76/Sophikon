@@ -9,7 +9,7 @@ from app.models.enums import NotificationType
 from app.models.notification import Notification
 from app.models.resource import Resource
 from app.models.user import User
-from tests.api.v1.conftest import add_project_member
+from tests.fixtures.project_members import add_project_member
 
 
 async def _register(client: AsyncClient, email: str, full_name: str) -> None:

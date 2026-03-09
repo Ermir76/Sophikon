@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.organization_member import OrganizationMember
 from app.models.project_invitation import ProjectInvitation
 from app.models.user import User
-from tests.api.v1.conftest import add_project_member
+from tests.fixtures.project_members import add_project_member
 
 
 async def _register_user(client: AsyncClient, email: str, full_name: str) -> None:
