@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, check_role, get_project_or_404
+from app.api.deps.project import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.schema.schedule import (
     CriticalPathResponse,

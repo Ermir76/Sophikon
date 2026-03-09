@@ -12,10 +12,10 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
+from app.api.deps.auth import get_current_active_user
+from app.api.deps.project import (
     ProjectAccess,
     check_role,
-    get_current_active_user,
     get_project_or_404,
 )
 from app.core.database import get_db

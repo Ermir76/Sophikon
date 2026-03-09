@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
+from app.api.deps.organization import (
     OrgAccess,
     get_org_access_or_404,
 )

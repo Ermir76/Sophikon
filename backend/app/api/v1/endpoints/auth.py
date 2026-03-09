@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_active_user
+from app.api.deps.auth import get_current_active_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.exceptions import (

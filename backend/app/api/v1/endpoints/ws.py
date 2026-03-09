@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, WebSocket
 
-from app.api.ws_auth import resolve_project_socket_context, resolve_user_socket
+from app.api.deps.ws import resolve_project_socket_context, resolve_user_socket
 from app.core.exceptions import (
     AuthenticationError,
     NotFoundError,
@@ -53,7 +53,7 @@ async def project_websocket(websocket: WebSocket, project_id: UUID):
     await serve_project_socket(
         websocket,
         user=user,
-        access=access,
+        project_id=access.project.id,
         default_channels=set(DEFAULT_CHANNELS),
         terminal_close_code=TERMINAL_PROTOCOL_CLOSE_CODE,
     )

@@ -16,11 +16,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
+from app.api.deps.auth import get_current_active_user
+from app.api.deps.organization import get_org_membership_or_404
+from app.api.deps.project import (
     ProjectAccess,
     check_role,
-    get_current_active_user,
-    get_org_membership_or_404,
     get_project_or_404,
 )
 from app.api.v1.endpoints._insights_window import resolve_window_or_422

@@ -3,11 +3,11 @@ WebSocket session handlers for project realtime and user notifications.
 """
 
 from collections.abc import Awaitable, Callable
+from uuid import UUID
 
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess
 from app.core.database import AsyncSessionLocal
 from app.core.user_notification_websocket_manager import (
     user_notification_websocket_manager,
@@ -32,20 +32,20 @@ async def serve_project_socket(
     websocket: WebSocket,
     *,
     user: User,
-    access: ProjectAccess,
+    project_id: UUID,
     default_channels: set[RealtimeChannel],
     terminal_close_code: int,
 ) -> None:
     connection_id, snapshot = await websocket_manager.connect(
         websocket,
-        project_id=access.project.id,
+        project_id=project_id,
         user_id=user.id,
         full_name=user.full_name,
         avatar_url=user.avatar_url,
         channels=set(default_channels),
     )
     await websocket.send_json(snapshot)
-    await websocket_manager.publish_presence(access.project.id)
+    await websocket_manager.publish_presence(project_id)
 
     try:
         while True:
@@ -65,7 +65,7 @@ async def serve_project_socket(
             if parsed.kind == "subscribe":
                 await websocket_manager.update_subscriptions(
                     connection_id,
-                    access.project.id,
+                    project_id,
                     set(parsed.channels),
                 )
                 continue
@@ -73,7 +73,7 @@ async def serve_project_socket(
             if parsed.kind == "presence":
                 await websocket_manager.update_presence(
                     connection_id=connection_id,
-                    project_id=access.project.id,
+                    project_id=project_id,
                     user_id=user.id,
                     full_name=user.full_name,
                     avatar_url=user.avatar_url,
@@ -100,7 +100,7 @@ async def serve_project_socket(
     except WebSocketDisconnect:
         pass
     finally:
-        await websocket_manager.disconnect(connection_id, access.project.id)
+        await websocket_manager.disconnect(connection_id, project_id)
 
 
 async def serve_notification_socket(

@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, get_project_or_404
+from app.api.deps.project import ProjectAccess, get_project_or_404
 from app.core.database import get_db
 from app.models.enums import AuditAction
 from app.schema.activity_log import ActivityEntityType, ActivityLogItem

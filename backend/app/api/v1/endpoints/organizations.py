@@ -14,7 +14,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import check_org_role, get_current_active_user, get_org_access_or_404
+from app.api.deps.auth import get_current_active_user
+from app.api.deps.organization import check_org_role, get_org_access_or_404
 from app.core.database import get_db
 from app.models.user import User
 from app.schema.common import PaginatedResponse

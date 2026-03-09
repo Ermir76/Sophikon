@@ -18,7 +18,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ProjectAccess, check_role, get_project_or_404
+from app.api.deps.project import ProjectAccess, check_role, get_project_or_404
 from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.schema.calendar import (

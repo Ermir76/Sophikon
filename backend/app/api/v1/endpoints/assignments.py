@@ -17,13 +17,12 @@ from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
-    AssignmentAccess,
+from app.api.deps.assignment import AssignmentAccess, get_assignment_with_access
+from app.api.deps.auth import get_current_active_user
+from app.api.deps.project import (
     ProjectAccess,
     check_role,
     check_role_name,
-    get_assignment_with_access,
-    get_current_active_user,
     get_project_or_404,
 )
 from app.core.database import get_db

@@ -99,7 +99,6 @@ async def test_serve_project_socket_connects_and_dispatches_messages(
     project_id = uuid4()
     entity_id = uuid4()
     user = SimpleNamespace(id=uuid4(), full_name="WS User", avatar_url=None)
-    access = SimpleNamespace(project=SimpleNamespace(id=project_id))
     websocket = FakeWebSocket(
         messages=[
             {"type": "subscribe", "channels": ["activity", "project"]},
@@ -116,7 +115,7 @@ async def test_serve_project_socket_connects_and_dispatches_messages(
     await ws_session_service.serve_project_socket(
         websocket,
         user=user,
-        access=access,
+        project_id=project_id,
         default_channels={"tasks", "activity"},
         terminal_close_code=4400,
     )
@@ -144,13 +143,12 @@ async def test_serve_project_socket_closes_on_malformed_payload(
 
     project_id = uuid4()
     user = SimpleNamespace(id=uuid4(), full_name="WS User", avatar_url=None)
-    access = SimpleNamespace(project=SimpleNamespace(id=project_id))
     websocket = FakeWebSocket(messages=[{"type": "presence", "status": "editing"}])
 
     await ws_session_service.serve_project_socket(
         websocket,
         user=user,
-        access=access,
+        project_id=project_id,
         default_channels={"tasks"},
         terminal_close_code=4400,
     )
@@ -173,7 +171,6 @@ async def test_serve_project_socket_keeps_open_on_unknown_message_type(
 
     project_id = uuid4()
     user = SimpleNamespace(id=uuid4(), full_name="WS User", avatar_url=None)
-    access = SimpleNamespace(project=SimpleNamespace(id=project_id))
     websocket = FakeWebSocket(
         messages=[
             {"type": "ping"},
@@ -184,7 +181,7 @@ async def test_serve_project_socket_keeps_open_on_unknown_message_type(
     await ws_session_service.serve_project_socket(
         websocket,
         user=user,
-        access=access,
+        project_id=project_id,
         default_channels={"tasks"},
         terminal_close_code=4400,
     )

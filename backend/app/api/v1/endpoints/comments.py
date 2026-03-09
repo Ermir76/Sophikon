@@ -13,9 +13,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
+from app.api.deps.auth import get_current_active_user
+from app.api.deps.project import (
     check_role_name,
-    get_current_active_user,
     get_project_membership_for_user,
 )
 from app.core.database import get_db

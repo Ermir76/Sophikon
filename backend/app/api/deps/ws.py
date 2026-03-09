@@ -8,13 +8,11 @@ from uuid import UUID
 from fastapi import WebSocket
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import (
-    authenticate_access_token,
-    get_project_membership_for_user,
-    normalize_access_token,
-)
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
+
+from .auth import authenticate_access_token, normalize_access_token
+from .project import get_project_membership_for_user
 
 
 async def _with_session[T](handler: Callable[[AsyncSession], Awaitable[T]]) -> T:
