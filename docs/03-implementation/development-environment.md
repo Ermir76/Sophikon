@@ -220,6 +220,11 @@ The app dev server runs at **http://localhost:5173**.
 | Tailwind CSS | 4.x     | Styling (via @tailwindcss/vite plugin) |
 | React Router | 7.x     | Client-side routing                    |
 
+Visual governance for frontend styling lives in:
+- `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
+- `docs/02-design/frontend-architecture.md`
+- `docs/03-implementation/ui-ux-recovery-tracker.md`
+
 #### Static Landing Page
 
 The landing page (`docs/02-design/landing-page-mockup.html`) is a standalone static HTML file — **not part of the React app**. This is intentional:

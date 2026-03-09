@@ -33,23 +33,22 @@ function createStreamResponse(
   overrides: Partial<Response> = {},
 ): Response {
   let index = 0;
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (index >= chunks.length) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(encoder.encode(chunks[index]));
+      index += 1;
+    },
+  });
 
   return {
     ok: true,
     status: 200,
-    body: {
-      getReader: () => ({
-        read: vi.fn(async () => {
-          if (index >= chunks.length) {
-            return { done: true, value: undefined };
-          }
-
-          const value = new TextEncoder().encode(chunks[index]);
-          index += 1;
-          return { done: false, value };
-        }),
-      }),
-    } as ReadableStream<Uint8Array>,
+    body,
     ...overrides,
   } as Response;
 }

@@ -241,6 +241,31 @@ import { Button } from "../../../shared/ui/button";
 
 ---
 
+## Visual Architecture Rules
+
+The frontend visual system follows a strict hierarchy:
+
+1. `src/index.css`:
+- tokens and app-level visual defaults
+
+2. `src/shared/ui/*`:
+- base widget layer (current modified shadcn foundation)
+- controlled changes only, not routine feature edits
+
+3. `src/shared/*` adapters/primitives:
+- app-semantic wrappers for stable usage in feature code
+- normalize drift from the base widget layer
+
+4. `src/features/**`:
+- composition and state rendering only
+- no local private design systems
+
+Reference documents:
+- `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
+- `docs/03-implementation/ui-ux-recovery-tracker.md`
+
+---
+
 ## Migration Map
 
 Current file location → target location.

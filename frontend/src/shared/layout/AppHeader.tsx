@@ -48,7 +48,9 @@ const segmentLabels: Record<string, string> = {
 
 export function AppHeader() {
   const location = useLocation();
-  const projectMatch = useMatch("/projects/:projectId/*") ?? useMatch("/projects/:projectId");
+  const projectWildcardMatch = useMatch("/projects/:projectId/*");
+  const projectRootMatch = useMatch("/projects/:projectId");
+  const projectMatch = projectWildcardMatch ?? projectRootMatch;
   const segments = location.pathname.split("/").filter(Boolean);
   const projectId = projectMatch?.params.projectId ?? null;
   const projectSocketState = useProjectWebSocketStore((state) =>

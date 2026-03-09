@@ -1,138 +1,123 @@
 # Frontend Styling Constitution
 
+Last updated: 2026-03-09
+Owner: Frontend architecture
+
 ## 0) Mission
 
-Keep styling simple, predictable, and safe to change.
-If one style change breaks unrelated pages, the system is wrong.
+Keep visual behavior predictable and safe to change.
+One style change must not break unrelated pages.
 
----
+This document is the source of truth for frontend visual governance.
 
-## 1) Ownership Rules (Non-Negotiable)
+## 1) Current Problem Statement
+
+The UI layer has drift:
+- too many one-off class combinations
+- modified `shared/ui/*` surfaces with inconsistent behavior
+- feature-level overrides recreating local design systems
+
+Because of this, visual changes are expensive and brittle.
+
+## 2) Recovery Strategy (Non-Negotiable)
+
+Use a two-track model:
+
+1. Stabilization track:
+- freeze style drift
+- centralize style decisions
+- normalize core shells and primitives
+
+2. Recovery track:
+- migrate screen by screen
+- no mixed old/new styling pattern inside one component
+
+## 3) Ownership Rules
 
 1. `frontend/src/index.css` owns:
-
-- design tokens (light + dark)
-- base reset
-- accessibility base
+- design tokens
+- base reset and typography baseline
+- app-level accessibility defaults
 
 2. `frontend/src/shared/ui/*` owns:
+- base widget behavior and visuals (legacy modified shadcn layer)
+- no per-feature edits in normal feature work
 
-- component visuals (Button, Input, Card, Dialog, Tooltip, etc.)
-- focus behavior and states for those components
+3. `frontend/src/shared/*` primitives/adapters own:
+- semantic wrappers used by features (for example: app-level card/button/input shells, layout shells)
+- normalization between drifted base widgets and feature usage
 
-3. Feature files (`frontend/src/features/**`) own:
+4. `frontend/src/features/**` owns:
+- composition and layout
+- business-state rendering
+- no private visual systems
 
-- layout and composition only
-- business-state rendering (loading/empty/error)
-- no private visual system
+5. `frontend/src/components.css`:
+- no ownership for visual system decisions
 
-4. `frontend/src/components.css`:
+## 4) Styling Hierarchy
 
-- must stay empty (or not used)
-- no visual ownership here
-
----
-
-## 2) Styling Hierarchy (Mini-Lego)
-
-Always build in this order:
-
-1. Token (global variable)
-2. Shared UI primitive (`shared/ui`)
-3. Feature composition (page/component layout)
+Always in this order:
+1. Token
+2. Base widget (`shared/ui`)
+3. Adapter/primitives (`shared/*`)
+4. Feature composition (`features/**`)
 
 Never invert this order.
 
----
+## 5) Allowed vs Forbidden
 
-## 3) Allowed vs Forbidden
+Allowed:
+- token-driven utilities (`bg-background`, `text-foreground`, `border-border`)
+- shared variant APIs (`variant`, `size`, semantic utility classes)
+- inline style only for technical layout math (canvas/chart positioning)
 
-### Allowed
+Forbidden:
+- route-scoped global hooks for visuals (`data-route`, ad-hoc global selectors)
+- arbitrary one-off visual systems in feature files
+- hidden style forks of base widgets in feature folders
+- hardcoded color values when a semantic token exists
 
-- Tailwind utility classes for layout/spacing/structure
-- shadcn variants (`variant="outline"`, `size="sm"`, etc.)
-- token-driven colors (`bg-background`, `text-foreground`, `border-border`)
-- inline `style={{...}}` only when technically required (charts/canvas position math)
+## 6) Foundation Freeze Rule
 
-### Forbidden
+`shared/ui/*` is treated as a controlled foundation:
+- normal feature PRs do not modify it
+- foundation edits happen only in explicit UI-foundation PRs
+- every foundation edit must include a note in `docs/03-implementation/ui-ux-recovery-tracker.md`
 
-- ad-hoc global hooks (`data-route`, `data-app-header`, etc.) for page visuals
-- one-off “magic” classes that recreate component systems
-- glassmorphism/glow effects unless explicitly approved for a specific surface
-- duplicated color logic in many feature files
+## 7) Adapter/Primitive Rule
 
----
+Feature code should consume app adapters/primitives rather than raw drifted widgets where possible.
 
-## 4) Theme Rules
+Migration default:
+- existing code can remain until touched
+- touched surfaces should move toward adapters/primitives
+- do not create new direct drift patterns
 
-1. Every semantic token changed in light mode must have a dark mode pair.
-2. Prefer semantic tokens (`--primary`, `--border`, `--muted-foreground`) over raw colors.
-3. If a raw color is unavoidable, document why in a nearby comment.
+## 8) Theme and Token Rules
 
----
+1. Semantic token first, raw color last resort.
+2. Light and dark token pairs must stay complete.
+3. Any unavoidable raw color requires a short nearby comment.
+4. Spacing and radius must use shared scale, not random arbitrary values.
 
-## 5) How To Change Styles Safely
+## 9) Pull Request Checklist (Styling)
 
-### Change global app color mood
+Before merge:
+1. Source of style decision is clear (token/widget/adapter/feature).
+2. No new ad-hoc global style hooks.
+3. No new private visual systems in features.
+4. Light/dark checked for changed surfaces.
+5. Recovery tracker updated for meaningful visual decisions.
 
-Edit tokens in:
+## 10) AI Assistant Contract
 
-- `frontend/src/index.css` (`:root` and `.dark`)
-
-### Change all Buttons/Inputs/Cards
-
-Edit the corresponding file in:
-
-- `frontend/src/shared/ui/button.tsx`
-- `frontend/src/shared/ui/input.tsx`
-- `frontend/src/shared/ui/card.tsx`
-- etc.
-
-### Change one feature page
-
-Use existing shared components and layout classes.
-Do not create a second visual system in that page.
-
----
-
-## 6) Deviation Rule
-
-If you intentionally break a rule for technical reasons:
-
-1. Keep the deviation minimal.
-2. Add a short comment in code near that line: `DEVIATION: reason`.
-3. Log it in your active cleanup/audit markdown.
-
-No hidden deviations.
-
----
-
-## 7) Pull Request Checklist (Styling)
-
-Before merge, confirm:
-
-1. Only one owner changed each visual area.
-2. Light + dark both checked.
-3. No new global style hacks.
-4. No new duplicate color systems in feature files.
-5. No unexplained hardcoded colors.
-6. Plan/audit document updated if decisions changed.
-
----
-
-## 8) AI Assistant Contract
-
-Any assistant working on styling must:
-
+When an assistant modifies styling:
 1. Follow this constitution first.
-2. Edit one file at a time when requested.
-3. Preserve layout unless explicitly told otherwise.
-4. Update the plan document after each meaningful styling change.
+2. No silent test/doc drift around visual behavior.
+3. No direct `shared/ui/*` edits unless task is explicitly foundation work.
+4. Explain the ownership level touched (token, base widget, adapter, feature).
 
-If an assistant cannot follow this, stop and ask.
+## 11) Golden Rule
 
----
-
-## 9) Golden Principle
-
-If future-you cannot explain “where this style comes from” in 10 seconds, delete or refactor it.
+If you cannot answer "where this style comes from" in 10 seconds, refactor it.

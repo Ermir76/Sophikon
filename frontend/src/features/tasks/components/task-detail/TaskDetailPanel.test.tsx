@@ -7,7 +7,9 @@ import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 
-const mockCommentThread = vi.fn(() => <div data-testid="comment-thread" />);
+const mockCommentThread = vi.fn((props: unknown) => (
+    <div data-testid="comment-thread" data-props={JSON.stringify(props)} />
+));
 
 vi.mock("@/features/tasks/hooks/useTasks", () => ({
     useTask: vi.fn(),
@@ -131,6 +133,7 @@ describe("TaskDetailPanel", () => {
         );
 
         const [props] = mockCommentThread.mock.calls.at(-1) ?? [];
+        expect(props).toBeDefined();
         expect(props).toMatchObject({
             projectId: "project-1",
             taskId: "task-1",
@@ -157,6 +160,7 @@ describe("TaskDetailPanel", () => {
         );
 
         const [props] = mockCommentThread.mock.calls.at(-1) ?? [];
+        expect(props).toBeDefined();
         expect(props).toMatchObject({
             canModerate: false,
         });

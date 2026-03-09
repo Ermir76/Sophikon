@@ -106,8 +106,8 @@ describe("AiDockedPanel", () => {
   it("renders streamed chat messages and stores the conversation id", async () => {
     const user = userEvent.setup();
     vi.spyOn(crypto, "randomUUID")
-      .mockReturnValueOnce("user-message-1")
-      .mockReturnValueOnce("assistant-message-1");
+      .mockReturnValueOnce("11111111-1111-1111-1111-111111111111")
+      .mockReturnValueOnce("22222222-2222-2222-2222-222222222222");
 
     mockStreamChat.mockImplementation(
       async (
@@ -148,8 +148,8 @@ describe("AiDockedPanel", () => {
   it("shows a fallback assistant message when the stream returns no chunks", async () => {
     const user = userEvent.setup();
     vi.spyOn(crypto, "randomUUID")
-      .mockReturnValueOnce("user-message-2")
-      .mockReturnValueOnce("assistant-message-2");
+      .mockReturnValueOnce("33333333-3333-3333-3333-333333333333")
+      .mockReturnValueOnce("44444444-4444-4444-4444-444444444444");
 
     mockStreamChat.mockResolvedValue(undefined);
 
