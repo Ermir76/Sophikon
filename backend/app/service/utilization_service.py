@@ -94,7 +94,7 @@ def _build_daily_allocations(
     current = start_date
     while current <= end_date:
         day_asgns = day_assignments.get(current, [])
-        allocated = sum(Decimal(str(a.units)) for a in day_asgns)
+        allocated = sum((Decimal(str(a.units)) for a in day_asgns), Decimal("0"))
 
         allocations.append(
             DailyAllocation(
@@ -138,7 +138,8 @@ async def get_resource_utilization(
     allocated_days = [d for d in daily if d.allocated_units > 0]
     peak = max((d.allocated_units for d in daily), default=Decimal("0"))
     avg = (
-        sum(d.allocated_units for d in allocated_days) / len(allocated_days)
+        sum((d.allocated_units for d in allocated_days), Decimal("0"))
+        / Decimal(len(allocated_days))
         if allocated_days
         else Decimal("0")
     )
@@ -182,7 +183,8 @@ async def get_project_utilization_summary(
         allocated_days = [d for d in daily if d.allocated_units > 0]
         peak = max((d.allocated_units for d in daily), default=Decimal("0"))
         avg = (
-            sum(d.allocated_units for d in allocated_days) / len(allocated_days)
+            sum((d.allocated_units for d in allocated_days), Decimal("0"))
+            / Decimal(len(allocated_days))
             if allocated_days
             else Decimal("0")
         )

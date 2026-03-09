@@ -13,7 +13,12 @@ from app.core.user_notification_websocket_manager import (
 )
 from app.core.websocket_manager import websocket_manager
 from app.models.enums import AuditAction
-from app.schema.realtime import RealtimeActor, RealtimeChannel, RealtimeEventMessage
+from app.schema.realtime import (
+    RealtimeActor,
+    RealtimeChannel,
+    RealtimeEntityType,
+    RealtimeEventMessage,
+)
 from app.service.activity_log_service import ActivityContext, serialize_activity_value
 
 logger = logging.getLogger(__name__)
@@ -21,7 +26,7 @@ logger = logging.getLogger(__name__)
 PENDING_REALTIME_EVENTS_KEY = "pending_realtime_events"
 PENDING_USER_NOTIFICATION_EVENTS_KEY = "pending_user_notification_events"
 
-ENTITY_CHANNELS: dict[str, list[RealtimeChannel]] = {
+ENTITY_CHANNELS: dict[RealtimeEntityType, list[RealtimeChannel]] = {
     "project": ["project"],
     "task": ["tasks"],
     "resource": ["resources"],
@@ -71,7 +76,7 @@ def queue_entity_event(
     db: AsyncSession,
     *,
     project_id: UUID,
-    entity_type: str,
+    entity_type: RealtimeEntityType,
     action: AuditAction,
     entity_id: UUID | None,
     entity_name: str | None,
@@ -101,7 +106,7 @@ def queue_activity_event(
     *,
     project_id: UUID,
     activity_id: UUID,
-    entity_type: str,
+    entity_type: RealtimeEntityType,
     action: AuditAction,
     entity_id: UUID | None,
     entity_name: str | None,
@@ -204,7 +209,7 @@ def _build_event_payload(
     *,
     event_type: str,
     project_id: UUID,
-    entity_type: str,
+    entity_type: RealtimeEntityType,
     action: AuditAction,
     entity_id: UUID | None,
     entity_name: str | None,

@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 
 from fastapi import WebSocket
 from redis import asyncio as redis
+from redis.asyncio.client import PubSub, Redis
 
 from app.core.config import settings
 from app.schema.realtime import (
@@ -31,6 +32,12 @@ PRESENCE_KEY_PREFIX = "sophikon:presence:"
 STATUS_PRIORITY: dict[PresenceStatus, int] = {"viewing": 0, "editing": 1}
 PRESENCE_TTL_SECONDS = 30
 PRESENCE_REFRESH_INTERVAL_SECONDS = 10
+
+
+def _coerce_uuid(value: UUID | str) -> UUID:
+    if isinstance(value, UUID):
+        return value
+    return UUID(value)
 
 
 @dataclass(slots=True)
@@ -54,8 +61,8 @@ class WebSocketManager:
         # TODO(2026-03-08): Consider per-project asyncio locks for connection-map
         # mutations/snapshots under high churn. Keep locks out of send I/O paths.
         self._connections: dict[str, dict[str, ConnectionState]] = defaultdict(dict)
-        self._redis: redis.Redis | None = None
-        self._pubsub: Any = None
+        self._redis: Redis | None = None
+        self._pubsub: PubSub | None = None
         self._listener_task: asyncio.Task | None = None
         self._presence_refresh_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
@@ -71,7 +78,7 @@ class WebSocketManager:
                 encoding="utf-8",
                 decode_responses=True,
             )
-            await self._redis.ping()
+            await self._redis.ping()  # type: ignore [union-attr]
 
             self._pubsub = self._redis.pubsub()
             await self._pubsub.subscribe(PUBSUB_CHANNEL)
@@ -209,7 +216,7 @@ class WebSocketManager:
     async def build_presence_snapshot(self, project_id: UUID | str) -> dict[str, Any]:
         users = await self._load_presence_users(project_id)
         return PresenceSnapshotMessage(
-            project_id=str(project_id),
+            project_id=_coerce_uuid(project_id),
             users=users,
         ).model_dump(mode="json")
 
@@ -219,7 +226,7 @@ class WebSocketManager:
             project_id=project_id,
             channels=[],
             payload=PresenceUpdateMessage(
-                project_id=str(project_id),
+                project_id=_coerce_uuid(project_id),
                 users=users,
             ).model_dump(mode="json"),
         )
@@ -357,7 +364,7 @@ class WebSocketManager:
                     "updated_at": datetime.now(UTC).isoformat(),
                 }
             ),
-        )
+        )  # type: ignore [union-attr]
         await self._redis.expire(
             self._presence_key(project_id),
             PRESENCE_TTL_SECONDS * 3,
@@ -370,7 +377,7 @@ class WebSocketManager:
     ) -> None:
         if self._redis is None:
             raise RuntimeError("WebSocketManager has not been started")
-        await self._redis.hdel(self._presence_key(project_id), connection_id)
+        await self._redis.hdel(self._presence_key(project_id), connection_id)  # type: ignore [union-attr]
 
     async def _load_presence_users(
         self,
@@ -379,7 +386,7 @@ class WebSocketManager:
         if self._redis is None:
             raise RuntimeError("WebSocketManager has not been started")
 
-        raw_records = await self._redis.hgetall(self._presence_key(project_id))
+        raw_records = await self._redis.hgetall(self._presence_key(project_id))  # type: ignore [union-attr]
         deduped: dict[str, dict[str, Any]] = {}
         stale_connection_ids: list[str] = []
         now = datetime.now(UTC)
@@ -445,7 +452,7 @@ class WebSocketManager:
         if stale_connection_ids:
             await self._redis.hdel(
                 self._presence_key(project_id), *stale_connection_ids
-            )
+            )  # type: ignore [union-attr]
         users.sort(
             key=lambda user: (
                 (0 if user.status == "editing" else 1),

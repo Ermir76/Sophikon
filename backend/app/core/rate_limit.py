@@ -15,16 +15,17 @@ limiter = Limiter(
 )
 
 
-def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+def rate_limit_exceeded_handler(request: Request, exc: Exception):
     """
     Override default handler to return JSON response with 429 status code.
     """
+    detail = exc.detail if isinstance(exc, RateLimitExceeded) else "Too many requests"
     return JSONResponse(
         status_code=429,
         content={
             "error": {
                 "code": "RATE_LIMIT_EXCEEDED",
-                "message": f"Rate limit exceeded: {exc.detail}",
+                "message": f"Rate limit exceeded: {detail}",
             }
         },
     )

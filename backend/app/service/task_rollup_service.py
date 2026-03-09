@@ -102,35 +102,47 @@ def apply_summary_rollup(
         weighted_percent = sum(
             _to_decimal(child.percent_complete) * child.duration for child in children
         ) / Decimal(total_duration)
-        summary.percent_complete = weighted_percent
+        summary.percent_complete = float(weighted_percent)
     else:
-        summary.percent_complete = Decimal("0")
+        summary.percent_complete = 0.0
 
     if summary.work > 0:
-        summary.percent_work_complete = (
+        percent_work_complete = (
             Decimal(summary.actual_work) / Decimal(summary.work)
         ) * Decimal("100")
+        summary.percent_work_complete = float(percent_work_complete)
     else:
-        summary.percent_work_complete = Decimal("0")
+        summary.percent_work_complete = 0.0
 
-    actual_starts = [child.actual_start for child in children if child.actual_start]
+    actual_starts = [
+        child.actual_start for child in children if child.actual_start is not None
+    ]
     summary.actual_start = min(actual_starts) if actual_starts else None
-    if all(child.actual_finish is not None for child in children):
-        summary.actual_finish = max(child.actual_finish for child in children)
+    actual_finishes = [
+        child.actual_finish for child in children if child.actual_finish is not None
+    ]
+    if len(actual_finishes) == len(children):
+        summary.actual_finish = max(actual_finishes)
     else:
         summary.actual_finish = None
 
-    summary.actual_cost = sum(
-        (_to_decimal(child.actual_cost) for child in children),
-        Decimal("0"),
+    summary.actual_cost = float(
+        sum(
+            (_to_decimal(child.actual_cost) for child in children),
+            Decimal("0"),
+        )
     )
-    summary.total_cost = sum(
-        (_to_decimal(child.total_cost) for child in children),
-        Decimal("0"),
+    summary.total_cost = float(
+        sum(
+            (_to_decimal(child.total_cost) for child in children),
+            Decimal("0"),
+        )
     )
-    summary.remaining_cost = sum(
-        (_to_decimal(child.remaining_cost) for child in children),
-        Decimal("0"),
+    summary.remaining_cost = float(
+        sum(
+            (_to_decimal(child.remaining_cost) for child in children),
+            Decimal("0"),
+        )
     )
 
     summary.is_critical = any(bool(child.is_critical) for child in children)
@@ -160,13 +172,13 @@ def clear_summary_rollup(
     summary.work = 0
     summary.actual_work = 0
     summary.remaining_work = 0
-    summary.percent_complete = Decimal("0")
-    summary.percent_work_complete = Decimal("0")
+    summary.percent_complete = 0.0
+    summary.percent_work_complete = 0.0
     summary.actual_start = None
     summary.actual_finish = None
-    summary.actual_cost = Decimal("0")
-    summary.total_cost = Decimal("0")
-    summary.remaining_cost = Decimal("0")
+    summary.actual_cost = 0.0
+    summary.total_cost = 0.0
+    summary.remaining_cost = 0.0
     summary.is_critical = False
     summary.total_slack = 0
     summary.free_slack = 0

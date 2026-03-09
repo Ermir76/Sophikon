@@ -4,6 +4,7 @@ Insights service for org dashboard and project dashboard endpoints.
 
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -70,10 +71,14 @@ def resolve_window(
 
 
 def _to_float(value: object) -> float:
-    try:
-        return float(value)  # noqa: TRY301
-    except Exception:
-        return 0.0
+    if isinstance(value, (int, float, Decimal)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
 
 
 def _round2(value: float) -> float:

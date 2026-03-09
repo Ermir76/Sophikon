@@ -177,6 +177,10 @@ async def delete_assignment(
         select(Task.project_id).where(Task.id == assignment.task_id)
     )
     project_id = task_result.scalar_one_or_none()
+    if project_id is None:
+        raise InvalidOperationError(
+            "Cannot delete assignment because parent task project was not found"
+        )
     await activity_log_service.log_activity(
         db,
         project_id=project_id,

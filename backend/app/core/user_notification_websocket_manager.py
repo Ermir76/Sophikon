@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 from fastapi import WebSocket
 from redis import asyncio as redis
+from redis.asyncio.client import PubSub, Redis
 
 from app.core.config import settings
 
@@ -34,8 +35,8 @@ class UserNotificationWebSocketManager:
         self._connections: dict[str, dict[str, NotificationConnectionState]] = (
             defaultdict(dict)
         )
-        self._redis: redis.Redis | None = None
-        self._pubsub: Any = None
+        self._redis: Redis | None = None
+        self._pubsub: PubSub | None = None
         self._listener_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
         self._started = False
@@ -50,7 +51,7 @@ class UserNotificationWebSocketManager:
                 encoding="utf-8",
                 decode_responses=True,
             )
-            await self._redis.ping()
+            await self._redis.ping()  # type: ignore [union-attr]
 
             self._pubsub = self._redis.pubsub()
             await self._pubsub.subscribe(PUBSUB_CHANNEL)

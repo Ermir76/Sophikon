@@ -44,6 +44,10 @@ class Task(Base):
     and earned value management (EVM) metrics.
     """
 
+    if TYPE_CHECKING:
+        # Transient API-only field set by task_service comment-count loaders.
+        comments_count: int
+
     __tablename__ = "task"
 
     # Primary Key
