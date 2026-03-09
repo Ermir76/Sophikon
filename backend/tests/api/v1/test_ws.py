@@ -6,11 +6,13 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api import ws_auth
 from app.api.v1.endpoints import ws as ws_endpoint
 from app.core.config import settings
 from app.models.enums import NotificationType
 from app.models.notification import Notification
 from app.models.user import User
+from app.service import ws_session_service
 
 
 async def _register_user(client: AsyncClient, email: str, full_name: str) -> None:
@@ -167,8 +169,9 @@ def _patch_ws_dependencies(
     async def _with_session(handler):
         return await handler(session)
 
-    monkeypatch.setattr(ws_endpoint, "_with_session", _with_session)
-    monkeypatch.setattr(ws_endpoint, "websocket_manager", manager)
+    monkeypatch.setattr(ws_auth, "_with_session", _with_session)
+    monkeypatch.setattr(ws_session_service, "_with_session", _with_session)
+    monkeypatch.setattr(ws_session_service, "websocket_manager", manager)
 
 
 def _patch_notification_ws_dependencies(
@@ -179,9 +182,10 @@ def _patch_notification_ws_dependencies(
     async def _with_session(handler):
         return await handler(session)
 
-    monkeypatch.setattr(ws_endpoint, "_with_session", _with_session)
+    monkeypatch.setattr(ws_auth, "_with_session", _with_session)
+    monkeypatch.setattr(ws_session_service, "_with_session", _with_session)
     monkeypatch.setattr(
-        ws_endpoint,
+        ws_session_service,
         "user_notification_websocket_manager",
         manager,
     )

@@ -2,31 +2,21 @@
 Project-scoped websocket endpoint for realtime updates and presence.
 """
 
-from collections.abc import Awaitable, Callable
 from uuid import UUID
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, WebSocket
 
-from app.api.deps import (
-    authenticate_access_token,
-    get_project_membership_for_user,
-    normalize_access_token,
+from app.api.ws_auth import resolve_project_socket_context, resolve_user_socket
+from app.core.exceptions import (
+    AuthenticationError,
+    NotFoundError,
+    PermissionDeniedError,
 )
-from app.core.config import settings
-from app.core.database import AsyncSessionLocal
-from app.core.user_notification_websocket_manager import (
-    user_notification_websocket_manager,
+from app.schema.realtime import RealtimeChannel
+from app.service.ws_session_service import (
+    serve_notification_socket,
+    serve_project_socket,
 )
-from app.core.websocket_manager import websocket_manager
-from app.schema.realtime import (
-    PresenceMessage,
-    RealtimeChannel,
-    RealtimeErrorMessage,
-    SubscribeMessage,
-)
-from app.service import notification_service
 
 router = APIRouter(tags=["ws"])
 
@@ -41,48 +31,11 @@ DEFAULT_CHANNELS: set[RealtimeChannel] = {
 TERMINAL_PROTOCOL_CLOSE_CODE = 4400
 
 
-async def _with_session[T](handler: Callable[[AsyncSession], Awaitable[T]]) -> T:
-    async with AsyncSessionLocal() as db:
-        return await handler(db)
-
-
-async def _resolve_socket_context(websocket: WebSocket, project_id: UUID):
-    async def _handler(db: AsyncSession):
-        token = normalize_access_token(
-            websocket.query_params.get("token")
-            or websocket.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
-            or websocket.headers.get("authorization")
-        )
-        user = await authenticate_access_token(db, token)
-        access = await get_project_membership_for_user(db, project_id, user)
-        return user, access
-
-    return await _with_session(_handler)
-
-
-async def _resolve_socket_user(websocket: WebSocket):
-    async def _handler(db: AsyncSession):
-        token = normalize_access_token(
-            websocket.query_params.get("token")
-            or websocket.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
-            or websocket.headers.get("authorization")
-        )
-        return await authenticate_access_token(db, token)
-
-    return await _with_session(_handler)
-
-
 @router.websocket("/ws/projects/{project_id}")
 async def project_websocket(websocket: WebSocket, project_id: UUID):
     try:
-        user, access = await _resolve_socket_context(websocket, project_id)
+        user, access = await resolve_project_socket_context(websocket, project_id)
     except Exception as exc:
-        from app.core.exceptions import (
-            AuthenticationError,
-            NotFoundError,
-            PermissionDeniedError,
-        )
-
         close_code = None
         if isinstance(exc, AuthenticationError):
             close_code = 4401
@@ -97,82 +50,20 @@ async def project_websocket(websocket: WebSocket, project_id: UUID):
         raise
 
     await websocket.accept()
-    connection_id, snapshot = await websocket_manager.connect(
+    await serve_project_socket(
         websocket,
-        project_id=access.project.id,
-        user_id=user.id,
-        full_name=user.full_name,
-        avatar_url=user.avatar_url,
-        channels=set(DEFAULT_CHANNELS),
+        user=user,
+        access=access,
+        default_channels=set(DEFAULT_CHANNELS),
+        terminal_close_code=TERMINAL_PROTOCOL_CLOSE_CODE,
     )
-    await websocket.send_json(snapshot)
-    await websocket_manager.publish_presence(access.project.id)
-
-    try:
-        while True:
-            payload = await websocket.receive_json()
-            if not isinstance(payload, dict):
-                await websocket.send_json(
-                    RealtimeErrorMessage(
-                        code="INVALID_MESSAGE",
-                        message="Malformed websocket payload",
-                    ).model_dump(mode="json")
-                )
-                await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
-                return
-            message_type = payload.get("type")
-
-            if message_type == "subscribe":
-                message = SubscribeMessage.model_validate(payload)
-                await websocket_manager.update_subscriptions(
-                    connection_id,
-                    access.project.id,
-                    set(message.channels),
-                )
-                continue
-
-            if message_type == "presence":
-                message = PresenceMessage.model_validate(payload)
-                await websocket_manager.update_presence(
-                    connection_id=connection_id,
-                    project_id=access.project.id,
-                    user_id=user.id,
-                    full_name=user.full_name,
-                    avatar_url=user.avatar_url,
-                    status=message.status,
-                    entity_type=message.entity_type,
-                    entity_id=message.entity_id,
-                )
-                continue
-
-            await websocket.send_json(
-                RealtimeErrorMessage(
-                    code="INVALID_MESSAGE_TYPE",
-                    message="Unsupported websocket message type",
-                ).model_dump(mode="json")
-            )
-            continue
-    except (ValidationError, ValueError):
-        await websocket.send_json(
-            RealtimeErrorMessage(
-                code="INVALID_MESSAGE",
-                message="Malformed websocket payload",
-            ).model_dump(mode="json")
-        )
-        await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
-    except WebSocketDisconnect:
-        pass
-    finally:
-        await websocket_manager.disconnect(connection_id, access.project.id)
 
 
 @router.websocket("/ws/notifications")
 async def notification_websocket(websocket: WebSocket):
     try:
-        user = await _resolve_socket_user(websocket)
+        user = await resolve_user_socket(websocket)
     except Exception as exc:
-        from app.core.exceptions import AuthenticationError
-
         if isinstance(exc, AuthenticationError):
             await websocket.accept()
             await websocket.close(code=4401)
@@ -180,42 +71,8 @@ async def notification_websocket(websocket: WebSocket):
         raise
 
     await websocket.accept()
-    connection_id = await user_notification_websocket_manager.connect(
+    await serve_notification_socket(
         websocket,
-        user_id=user.id,
+        user=user,
+        terminal_close_code=TERMINAL_PROTOCOL_CLOSE_CODE,
     )
-    snapshot = await _with_session(
-        lambda db: notification_service.build_snapshot_payload(db, user_id=user.id)
-    )
-    await websocket.send_json(snapshot)
-
-    try:
-        while True:
-            payload = await websocket.receive_json()
-            if not isinstance(payload, dict):
-                await websocket.send_json(
-                    RealtimeErrorMessage(
-                        code="INVALID_MESSAGE",
-                        message="Malformed websocket payload",
-                    ).model_dump(mode="json")
-                )
-                await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
-                return
-            await websocket.send_json(
-                RealtimeErrorMessage(
-                    code="INVALID_MESSAGE_TYPE",
-                    message="Unsupported websocket message type",
-                ).model_dump(mode="json")
-            )
-    except WebSocketDisconnect:
-        pass
-    except ValueError:
-        await websocket.send_json(
-            RealtimeErrorMessage(
-                code="INVALID_MESSAGE",
-                message="Malformed websocket payload",
-            ).model_dump(mode="json")
-        )
-        await websocket.close(code=TERMINAL_PROTOCOL_CLOSE_CODE)
-    finally:
-        await user_notification_websocket_manager.disconnect(connection_id, user.id)
