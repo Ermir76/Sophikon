@@ -13,7 +13,6 @@ from app.models.project_invitation import ProjectInvitation
 from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
-from app.schema.project_member import ProjectInvitationAccept, ProjectMemberInvite
 from app.service import project_member_service, project_service
 
 
@@ -145,11 +144,11 @@ async def test_invite_member_normalizes_email_and_persists_token(
         project,
         inviter,
         "owner",
-        ProjectMemberInvite(
-            email="Invitee@Example.com",
-            role="viewer",
-            message="Please join",
-        ),
+        {
+            "email": "Invitee@Example.com",
+            "role": "viewer",
+            "message": "Please join",
+        },
     )
 
     stored_invitation = (
@@ -206,7 +205,7 @@ async def test_accept_invitation_creates_memberships_and_marks_invitation_used(
     project_id, member_id = await project_member_service.accept_invitation(
         session,
         invitee,
-        ProjectInvitationAccept(token=accept_token),
+        {"token": accept_token},
     )
 
     org_member = (

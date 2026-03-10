@@ -6,12 +6,11 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.enums import NotificationType
+from app.models.enums import NotificationType, RateTable, WorkContour
 from app.models.notification import Notification
 from app.models.resource import Resource
 from app.models.task import Task
 from app.models.user import User
-from app.schema.assignment import AssignmentCreate
 from app.service import assignment_service
 from app.service.activity_log_service import ActivityContext
 
@@ -118,12 +117,15 @@ async def test_create_assignment_notifies_mapped_resource_user(
     assignment = await assignment_service.create_assignment(
         session,
         task,
-        AssignmentCreate(
-            resource_id=uuid.UUID(resource_id),
-            units=1.0,
-            start_date=date(2026, 3, 8),
-            finish_date=date(2026, 3, 8),
-        ),
+        {
+            "resource_id": uuid.UUID(resource_id),
+            "units": 1.0,
+            "start_date": date(2026, 3, 8),
+            "finish_date": date(2026, 3, 8),
+            "work": 0,
+            "work_contour": WorkContour.FLAT,
+            "rate_table": RateTable.A,
+        },
         activity_context=ActivityContext(
             user_id=owner.id,
             full_name=owner.full_name,
@@ -167,12 +169,15 @@ async def test_create_assignment_skips_notification_when_actor_is_assignee(
     assignment = await assignment_service.create_assignment(
         session,
         task,
-        AssignmentCreate(
-            resource_id=uuid.UUID(resource_id),
-            units=1.0,
-            start_date=date(2026, 3, 8),
-            finish_date=date(2026, 3, 8),
-        ),
+        {
+            "resource_id": uuid.UUID(resource_id),
+            "units": 1.0,
+            "start_date": date(2026, 3, 8),
+            "finish_date": date(2026, 3, 8),
+            "work": 0,
+            "work_contour": WorkContour.FLAT,
+            "rate_table": RateTable.A,
+        },
         activity_context=ActivityContext(
             user_id=owner.id,
             full_name=owner.full_name,

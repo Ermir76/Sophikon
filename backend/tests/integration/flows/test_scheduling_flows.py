@@ -7,6 +7,11 @@ auto-recalculation, and constraint interactions.
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.role import Role
+from tests.fixtures.project_members import add_project_member
 
 # ── Helpers ──
 
@@ -75,6 +80,15 @@ async def _get_task(client: AsyncClient, proj_id: str, task_id: str) -> dict:
     return resp.json()
 
 
+async def _ensure_project_roles(session: AsyncSession) -> None:
+    """Seed default project roles if absent."""
+    for role_name in ["owner", "manager", "member", "viewer"]:
+        existing = await session.execute(select(Role).where(Role.name == role_name))
+        if existing.scalar_one_or_none() is None:
+            session.add(Role(name=role_name, scope="project"))
+    await session.commit()
+
+
 # ── Flow Tests ──
 
 
@@ -119,6 +133,43 @@ async def test_full_scheduling_flow(client: AsyncClient):
     assert cp_resp.status_code == 200
     cp_data = cp_resp.json()
     assert len(cp_data["critical_path"]) >= 2
+
+
+@pytest.mark.asyncio
+async def test_dependency_create_forbidden_member(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    """
+    Permission flow: project member cannot create dependencies.
+    """
+    proj_id = await _setup(client, "member_dep_forbidden")
+    a = await _task(client, proj_id, "A")
+    b = await _task(client, proj_id, "B")
+
+    await _ensure_project_roles(session)
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "sched_member_dep@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Sched Member Dep",
+        },
+    )
+    await add_project_member(session, proj_id, "sched_member_dep@example.com", "member")
+    await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "sched_member_dep@example.com",
+            "password": "StrongPassword123!",
+        },
+    )
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": a["id"], "successor_id": b["id"], "type": "FS"},
+    )
+    assert resp.status_code == 403
 
 
 @pytest.mark.asyncio

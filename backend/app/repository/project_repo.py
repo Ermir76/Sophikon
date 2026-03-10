@@ -2,6 +2,7 @@
 Project repository helpers.
 """
 
+from collections.abc import Mapping
 from typing import Any
 from uuid import UUID
 
@@ -89,7 +90,7 @@ async def create_project(
     db: AsyncSession,
     *,
     owner_id: UUID,
-    payload: dict[str, Any],
+    payload: Mapping[str, Any],
 ) -> Project:
     project = Project(
         owner_id=owner_id,

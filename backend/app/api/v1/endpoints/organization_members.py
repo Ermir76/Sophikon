@@ -80,7 +80,9 @@ async def invite_member(
     check_org_role(access, "owner", "admin")
 
     member = await organization_member_service.invite_member(
-        db, access.organization, body
+        db,
+        access.organization,
+        body.model_dump(mode="python"),
     )
     return OrgMemberListItem(**member)
 
@@ -102,7 +104,10 @@ async def change_member_role(
     check_org_role(access, "owner")
 
     member = await organization_member_service.change_member_role(
-        db, access.organization, member_id, body
+        db,
+        access.organization,
+        member_id,
+        body.model_dump(mode="python"),
     )
     return OrgMemberListItem(**member)
 

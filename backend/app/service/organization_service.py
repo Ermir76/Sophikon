@@ -7,14 +7,17 @@ Handles listing, creating, updating, and soft-deleting organizations.
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError, ResourceConflictError
 from app.models.organization import Organization
-from app.models.organization_member import OrganizationMember
 from app.models.user import User
-from app.schema.organization import OrganizationCreate, OrganizationUpdate
+from app.repository import organization_repo
+from app.service.contracts.organization import (
+    OrganizationCreateInput,
+    OrganizationPatchInput,
+)
 
 
 async def list_organizations(
@@ -29,51 +32,34 @@ async def list_organizations(
 
     Returns (organizations, total_count).
     """
-    base_query = (
-        select(Organization)
-        .join(OrganizationMember, OrganizationMember.organization_id == Organization.id)
-        .where(
-            Organization.is_deleted.is_(False),
-            OrganizationMember.user_id == user.id,
-        )
+    return await organization_repo.list_for_user(
+        db,
+        user_id=user.id,
+        page=page,
+        per_page=per_page,
     )
-
-    # Get total count
-    count_query = select(func.count()).select_from(base_query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    # Apply pagination and ordering
-    offset = (page - 1) * per_page
-    paginated_query = (
-        base_query.order_by(Organization.created_at.desc())
-        .offset(offset)
-        .limit(per_page)
-    )
-
-    result = await db.execute(paginated_query)
-    organizations = list(result.scalars().all())
-
-    return organizations, total
 
 
 async def create_organization(
     db: AsyncSession,
     user: User,
-    data: OrganizationCreate,
+    payload: OrganizationCreateInput,
 ) -> Organization:
     """Create a new organization and make the user the owner."""
-    # Check slug uniqueness
-    existing = await db.execute(
-        select(Organization).where(
-            Organization.slug == data.slug,
-            Organization.is_deleted.is_(False),
-        )
-    )
-    if existing.scalar_one_or_none():
+    if await organization_repo.slug_exists(db, slug=payload["slug"]):
         raise ResourceConflictError("Organization with this slug already exists")
 
-    return await _create_org_internal(db, user, data.name, data.slug, is_personal=False)
+    try:
+        return await _create_org_internal(
+            db,
+            user,
+            payload["name"],
+            payload["slug"],
+            is_personal=False,
+        )
+    except IntegrityError:
+        await db.rollback()
+        raise ResourceConflictError("Organization with this slug already exists")
 
 
 async def create_personal_organization(
@@ -101,10 +87,8 @@ async def create_personal_organization(
     slug = base_slug
     counter = 1
     while True:
-        existing = await db.execute(
-            select(Organization).where(Organization.slug == slug)
-        )
-        if not existing.scalar_one_or_none():
+        existing = await organization_repo.get_by_slug(db, slug=slug)
+        if existing is None:
             break
         slug = f"{base_slug}-{counter}"
         counter += 1
@@ -125,21 +109,19 @@ async def _create_org_internal(
     commit: bool = True,
 ) -> Organization:
     """Internal helper to create org + owner member."""
-    org = Organization(
+    org = await organization_repo.create(
+        db,
         name=name,
         slug=slug,
         is_personal=is_personal,
     )
-    db.add(org)
-    await db.flush()  # Get org.id
 
-    # Make the creator the owner
-    member = OrganizationMember(
+    await organization_repo.create_member(
+        db,
         organization_id=org.id,
         user_id=user.id,
         role="owner",
     )
-    db.add(member)
 
     if commit:
         await db.commit()
@@ -155,39 +137,31 @@ async def get_organization_by_id(
     org_id: UUID,
 ) -> Organization | None:
     """Get an organization by ID (excludes deleted)."""
-    result = await db.execute(
-        select(Organization).where(
-            Organization.id == org_id,
-            Organization.is_deleted.is_(False),
-        )
-    )
-    return result.scalar_one_or_none()
+    return await organization_repo.get_by_id(db, organization_id=org_id)
 
 
 async def update_organization(
     db: AsyncSession,
     org: Organization,
-    data: OrganizationUpdate,
+    patch: OrganizationPatchInput,
 ) -> Organization:
     """Update an organization with partial data."""
-    update_data = data.model_dump(exclude_unset=True)
-
     # If slug is being changed, check uniqueness
-    if "slug" in update_data:
-        existing = await db.execute(
-            select(Organization).where(
-                Organization.slug == update_data["slug"],
-                Organization.id != org.id,
-                Organization.is_deleted.is_(False),
-            )
-        )
-        if existing.scalar_one_or_none():
-            raise ResourceConflictError("Organization with this slug already exists")
+    if "slug" in patch and await organization_repo.slug_exists(
+        db,
+        slug=patch["slug"],
+        exclude_organization_id=org.id,
+    ):
+        raise ResourceConflictError("Organization with this slug already exists")
 
-    for field, value in update_data.items():
+    for field, value in patch.items():
         setattr(org, field, value)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise ResourceConflictError("Organization with this slug already exists")
     await db.refresh(org)
     return org
 

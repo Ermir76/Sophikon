@@ -60,7 +60,11 @@ async def create_organization(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Create a new organization."""
-    org = await organization_service.create_organization(db, user, body)
+    org = await organization_service.create_organization(
+        db,
+        user,
+        body.model_dump(mode="python"),
+    )
     return OrganizationDetail.model_validate(org)
 
 
@@ -90,7 +94,11 @@ async def update_organization(
     access = await get_org_access_or_404(org_id, db, user)
     check_org_role(access, "owner")
 
-    org = await organization_service.update_organization(db, access.organization, body)
+    org = await organization_service.update_organization(
+        db,
+        access.organization,
+        body.model_dump(mode="python", exclude_unset=True),
+    )
     return OrganizationDetail.model_validate(org)
 
 

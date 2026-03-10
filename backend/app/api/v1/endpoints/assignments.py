@@ -92,7 +92,7 @@ async def create_assignment(
     assignment = await assignment_service.create_assignment(
         db,
         task,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -110,10 +110,20 @@ async def update_assignment(
     body: AssignmentUpdate,
     access: Annotated[AssignmentAccess, Depends(get_assignment_with_access)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
 ):
     """Update an assignment."""
     check_role_name(access.role_name, "owner", "manager", "member")
-    assignment = await assignment_service.update_assignment(db, access.assignment, body)
+    assignment = await assignment_service.update_assignment(
+        db,
+        access.assignment,
+        body.model_dump(mode="python", exclude_unset=True),
+        activity_context=activity_log_service.activity_context_from_request(
+            user,
+            request,
+        ),
+    )
     return AssignmentResponse.model_validate(assignment)
 
 

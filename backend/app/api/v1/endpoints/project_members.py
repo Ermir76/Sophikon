@@ -93,7 +93,7 @@ async def invite_project_member(
         access.project,
         user,
         access.role_name,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -226,7 +226,7 @@ async def accept_project_invitation(
     project_id, member_id = await project_member_service.accept_invitation(
         db,
         user,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -253,7 +253,7 @@ async def update_project_member_role(
         db,
         access.project,
         member_id,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,

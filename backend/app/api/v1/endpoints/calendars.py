@@ -59,7 +59,11 @@ async def create_calendar(
 ):
     """Create a new calendar in the project."""
     check_role(access, "owner", "manager")
-    calendar = await calendar_service.create_calendar(db, access.project, body)
+    calendar = await calendar_service.create_calendar(
+        db,
+        access.project,
+        body.model_dump(mode="python"),
+    )
     return CalendarResponse.model_validate(calendar)
 
 
@@ -93,7 +97,11 @@ async def update_calendar(
     if not calendar:
         raise NotFoundError("Calendar not found")
 
-    calendar = await calendar_service.update_calendar(db, calendar, body)
+    calendar = await calendar_service.update_calendar(
+        db,
+        calendar,
+        body.model_dump(mode="python", exclude_unset=True),
+    )
     return CalendarResponse.model_validate(calendar)
 
 
@@ -156,7 +164,11 @@ async def create_exception(
     if not calendar:
         raise NotFoundError("Calendar not found")
 
-    exception = await calendar_service.create_exception(db, calendar_id, body)
+    exception = await calendar_service.create_exception(
+        db,
+        calendar_id,
+        body.model_dump(mode="python"),
+    )
     return CalendarExceptionResponse.model_validate(exception)
 
 
@@ -179,7 +191,11 @@ async def update_exception(
     if not exception:
         raise NotFoundError("Calendar exception not found")
 
-    exception = await calendar_service.update_exception(db, exception, body)
+    exception = await calendar_service.update_exception(
+        db,
+        exception,
+        body.model_dump(mode="python", exclude_unset=True),
+    )
     return CalendarExceptionResponse.model_validate(exception)
 
 

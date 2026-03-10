@@ -6,9 +6,9 @@ import asyncio
 import logging
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import cast
 from uuid import UUID
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -20,24 +20,24 @@ from app.core.exceptions import (
 )
 from app.core.security import hash_token
 from app.models.enums import AuditAction
-from app.models.organization_member import OrganizationMember
 from app.models.project import Project
 from app.models.project_invitation import ProjectInvitation
 from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
-from app.schema.project_member import (
-    ProjectInvitationAccept,
-    ProjectMemberInvite,
-    ProjectMemberRole,
-    ProjectMemberRoleUpdate,
-)
+from app.repository import project_member_repo
 from app.service import activity_log_service, email_service, realtime_service
 from app.service.activity_log_service import ActivityContext
+from app.service.contracts.project_member import (
+    ProjectInvitationAcceptInput,
+    ProjectMemberInviteInput,
+    ProjectMemberRolePatchInput,
+    ProjectRoleName,
+)
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROLE_NAMES: tuple[ProjectMemberRole, ...] = (
+PROJECT_ROLE_NAMES: tuple[ProjectRoleName, ...] = (
     "owner",
     "manager",
     "member",
@@ -52,24 +52,32 @@ PROJECT_ROLE_DESCRIPTIONS = {
 }
 
 
-async def _get_project_role(db: AsyncSession, role_name: ProjectMemberRole) -> Role:
-    result = await db.execute(
-        select(Role).where(Role.scope == "project", Role.name == role_name)
-    )
-    role = result.scalar_one_or_none()
-    if role is None:
-        role = Role(
-            name=role_name,
-            scope="project",
-            description=PROJECT_ROLE_DESCRIPTIONS.get(role_name),
-        )
-        db.add(role)
-        await db.flush()
-    return role
-
-
 def _normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def _role_name(value: object) -> str:
+    if hasattr(value, "value"):
+        return str(getattr(value, "value"))
+    return str(value)
+
+
+def _coerce_project_role(value: object) -> ProjectRoleName:
+    role_name = _role_name(value)
+    if role_name not in PROJECT_ROLE_NAMES:
+        raise InvalidOperationError("Unsupported project role")
+    return cast(ProjectRoleName, role_name)
+
+
+async def _get_project_role(db: AsyncSession, role_name: ProjectRoleName) -> Role:
+    role = await project_member_repo.get_project_role(db, role_name=role_name)
+    if role is None:
+        role = await project_member_repo.create_project_role(
+            db,
+            role_name=role_name,
+            description=PROJECT_ROLE_DESCRIPTIONS.get(role_name),
+        )
+    return role
 
 
 def _serialize_member_row(
@@ -117,24 +125,20 @@ async def ensure_owner_membership(
     project: Project,
 ) -> None:
     """Ensure the project owner has an owner membership row."""
-    existing = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project.id,
-            ProjectMember.user_id == project.owner_id,
-        )
+    member = await project_member_repo.get_member_by_project_user(
+        db,
+        project_id=project.id,
+        user_id=project.owner_id,
     )
-    member = existing.scalar_one_or_none()
     owner_role = await _get_project_role(db, "owner")
 
     if member is None:
-        db.add(
-            ProjectMember(
-                project_id=project.id,
-                user_id=project.owner_id,
-                role_id=owner_role.id,
-            )
+        await project_member_repo.create_project_member(
+            db,
+            project_id=project.id,
+            user_id=project.owner_id,
+            role_id=owner_role.id,
         )
-        await db.flush()
         return
 
     if member.role_id != owner_role.id:
@@ -151,32 +155,15 @@ async def list_members(
 ) -> tuple[list[dict], int]:
     """List project members with user and role metadata."""
     await ensure_owner_membership(db, project)
-
-    base_query = (
-        select(ProjectMember, Role.name, User.email, User.full_name)
-        .join(Role, Role.id == ProjectMember.role_id)
-        .join(User, User.id == ProjectMember.user_id)
-        .where(ProjectMember.project_id == project.id)
+    rows, total = await project_member_repo.list_members_with_user_and_role(
+        db,
+        project_id=project.id,
+        page=page,
+        per_page=per_page,
     )
-
-    count_query = select(func.count()).select_from(
-        select(ProjectMember.id)
-        .where(ProjectMember.project_id == project.id)
-        .subquery()
-    )
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        base_query.order_by(ProjectMember.joined_at.asc())
-        .offset(offset)
-        .limit(per_page)
-    )
-
     members = [
         _serialize_member_row(member, role_name, email, full_name)
-        for member, role_name, email, full_name in result.all()
+        for member, role_name, email, full_name in rows
     ]
     return members, total
 
@@ -189,36 +176,19 @@ async def list_pending_invitations(
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """List pending invitations for a project."""
-    now = datetime.now(UTC)
-    pending_filter = (
-        ProjectInvitation.project_id == project.id,
-        ProjectInvitation.is_revoked.is_(False),
-        ProjectInvitation.accepted_at.is_(None),
-        ProjectInvitation.expires_at >= now,
+    (
+        rows,
+        total,
+    ) = await project_member_repo.list_pending_invitations_with_inviter_and_role(
+        db,
+        project_id=project.id,
+        now=datetime.now(UTC),
+        page=page,
+        per_page=per_page,
     )
-
-    base_query = (
-        select(ProjectInvitation, Role.name, User.email, User.full_name)
-        .join(Role, Role.id == ProjectInvitation.role_id)
-        .join(User, User.id == ProjectInvitation.invited_by_id)
-        .where(*pending_filter)
-    )
-    count_query = select(func.count()).select_from(
-        select(ProjectInvitation.id).where(*pending_filter).subquery()
-    )
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        base_query.order_by(ProjectInvitation.created_at.desc())
-        .offset(offset)
-        .limit(per_page)
-    )
-
     items = [
         _serialize_invitation_row(inv, role_name, inviter_email, inviter_full_name)
-        for inv, role_name, inviter_email, inviter_full_name in result.all()
+        for inv, role_name, inviter_email, inviter_full_name in rows
     ]
     return items, total
 
@@ -228,61 +198,54 @@ async def invite_member(
     project: Project,
     inviter: User,
     inviter_role_name: str,
-    data: ProjectMemberInvite,
+    payload: ProjectMemberInviteInput,
     activity_context: ActivityContext | None = None,
 ) -> tuple[dict, str]:
     """Create a pending invitation and return (invitation_payload, raw_token)."""
-    target_role = data.role
+    target_role = _coerce_project_role(payload["role"])
     if inviter_role_name == "manager" and target_role not in MANAGER_MUTABLE_ROLES:
         raise PermissionDeniedError("Managers can only invite member or viewer roles")
 
     role = await _get_project_role(db, target_role)
-    normalized_email = _normalize_email(data.email)
+    normalized_email = _normalize_email(payload["email"])
     now = datetime.now(UTC)
 
-    # Existing direct membership check
-    existing_user_result = await db.execute(
-        select(User).where(func.lower(User.email) == normalized_email)
+    existing_user = await project_member_repo.get_user_by_email_case_insensitive(
+        db,
+        email=normalized_email,
     )
-    existing_user = existing_user_result.scalar_one_or_none()
     if existing_user is not None:
-        existing_member_result = await db.execute(
-            select(ProjectMember).where(
-                ProjectMember.project_id == project.id,
-                ProjectMember.user_id == existing_user.id,
-            )
+        existing_member = await project_member_repo.get_member_by_project_user(
+            db,
+            project_id=project.id,
+            user_id=existing_user.id,
         )
-        if existing_member_result.scalar_one_or_none() is not None:
+        if existing_member is not None:
             raise ResourceConflictError("User is already a member of this project")
 
-    # Existing active invitation check
-    pending_invitation_result = await db.execute(
-        select(ProjectInvitation).where(
-            ProjectInvitation.project_id == project.id,
-            func.lower(ProjectInvitation.email) == normalized_email,
-            ProjectInvitation.is_revoked.is_(False),
-            ProjectInvitation.accepted_at.is_(None),
-            ProjectInvitation.expires_at >= now,
-        )
+    pending_invitation = await project_member_repo.get_pending_invitation_for_email(
+        db,
+        project_id=project.id,
+        normalized_email=normalized_email,
+        now=now,
     )
-    if pending_invitation_result.scalar_one_or_none() is not None:
+    if pending_invitation is not None:
         raise ResourceConflictError(
             "An active invitation already exists for this email"
         )
 
     raw_token = secrets.token_urlsafe(32)
-    invitation = ProjectInvitation(
+    invitation = await project_member_repo.create_invitation(
+        db,
         project_id=project.id,
         invited_by_id=inviter.id,
         role_id=role.id,
         email=normalized_email,
         token_hash=hash_token(raw_token),
-        message=data.message,
+        message=payload.get("message"),
         expires_at=now + timedelta(days=7),
-        is_revoked=False,
     )
-    db.add(invitation)
-    await db.flush()
+
     entity_name = (
         existing_user.full_name or existing_user.email
         if existing_user is not None
@@ -334,16 +297,11 @@ async def resend_invitation(
     activity_context: ActivityContext | None = None,
 ) -> tuple[dict, str]:
     """Rotate invitation token and return refreshed invitation + new raw token."""
-    result = await db.execute(
-        select(ProjectInvitation, Role.name, User.email, User.full_name)
-        .join(Role, Role.id == ProjectInvitation.role_id)
-        .join(User, User.id == ProjectInvitation.invited_by_id)
-        .where(
-            ProjectInvitation.id == invitation_id,
-            ProjectInvitation.project_id == project.id,
-        )
+    row = await project_member_repo.get_invitation_with_role_and_inviter(
+        db,
+        project_id=project.id,
+        invitation_id=invitation_id,
     )
-    row = result.one_or_none()
     if row is None:
         raise NotFoundError("Invitation not found")
 
@@ -396,24 +354,19 @@ async def revoke_invitation(
     activity_context: ActivityContext | None = None,
 ) -> None:
     """Revoke a pending invitation."""
-    result = await db.execute(
-        select(ProjectInvitation, Role.name)
-        .join(Role, Role.id == ProjectInvitation.role_id)
-        .where(
-            ProjectInvitation.id == invitation_id,
-            ProjectInvitation.project_id == project.id,
-        )
+    row = await project_member_repo.get_invitation_with_role_and_inviter(
+        db,
+        project_id=project.id,
+        invitation_id=invitation_id,
     )
-    row = result.one_or_none()
     if row is None:
         raise NotFoundError("Invitation not found")
 
-    invitation, role_name = row
+    invitation, role_name, _, _ = row
     if invitation.accepted_at is not None:
         raise InvalidOperationError("Cannot revoke an accepted invitation")
     if invitation.is_revoked:
         return
-
     if actor_role_name == "manager" and role_name not in MANAGER_MUTABLE_ROLES:
         raise PermissionDeniedError(
             "Managers can only manage member/viewer invitations"
@@ -440,21 +393,20 @@ async def revoke_invitation(
 async def accept_invitation(
     db: AsyncSession,
     user: User,
-    data: ProjectInvitationAccept,
+    payload: ProjectInvitationAcceptInput,
     activity_context: ActivityContext | None = None,
 ) -> tuple[UUID, UUID]:
     """Accept a project invitation token."""
-    result = await db.execute(
-        select(ProjectInvitation, Project, Role)
-        .join(Project, Project.id == ProjectInvitation.project_id)
-        .join(Role, Role.id == ProjectInvitation.role_id)
-        .where(ProjectInvitation.token_hash == hash_token(data.token))
+    row = await project_member_repo.get_invitation_with_project_and_role_by_token_hash(
+        db,
+        token_hash=hash_token(payload["token"]),
     )
-    row = result.one_or_none()
     if row is None:
         raise InvalidOperationError("Invalid or expired invitation token")
 
-    invitation, project, role = row
+    invitation, project_id, organization_id, project_is_deleted, role_id, role_name = (
+        row
+    )
     now = datetime.now(UTC)
 
     if invitation.is_revoked:
@@ -463,47 +415,43 @@ async def accept_invitation(
         raise InvalidOperationError("Invitation already accepted")
     if invitation.expires_at < now:
         raise InvalidOperationError("Invitation expired")
-    if project.is_deleted:
+    if project_is_deleted:
         raise NotFoundError("Project not found")
     if _normalize_email(user.email) != _normalize_email(invitation.email):
         raise PermissionDeniedError("Invitation does not match the current user email")
 
-    existing_member_result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project.id,
-            ProjectMember.user_id == user.id,
-        )
+    existing_member = await project_member_repo.get_member_by_project_user(
+        db,
+        project_id=project_id,
+        user_id=user.id,
     )
-    if existing_member_result.scalar_one_or_none() is not None:
+    if existing_member is not None:
         raise ResourceConflictError("User is already a member of this project")
 
-    # Ensure organization membership exists.
-    org_member_result = await db.execute(
-        select(OrganizationMember).where(
-            OrganizationMember.organization_id == project.organization_id,
-            OrganizationMember.user_id == user.id,
-        )
+    org_member = await project_member_repo.get_organization_member(
+        db,
+        organization_id=organization_id,
+        user_id=user.id,
     )
-    if org_member_result.scalar_one_or_none() is None:
-        db.add(
-            OrganizationMember(
-                organization_id=project.organization_id,
-                user_id=user.id,
-                role="member",
-            )
+    if org_member is None:
+        await project_member_repo.create_organization_member(
+            db,
+            organization_id=organization_id,
+            user_id=user.id,
+            role="member",
         )
 
-    member = ProjectMember(
-        project_id=project.id,
+    member = await project_member_repo.create_project_member(
+        db,
+        project_id=project_id,
         user_id=user.id,
-        role_id=role.id,
+        role_id=role_id,
     )
-    db.add(member)
     invitation.accepted_at = now
     await db.flush()
     realtime_service.queue_entity_event(
         db,
-        project_id=project.id,
+        project_id=project_id,
         entity_type="project_member",
         action=AuditAction.CREATED,
         entity_id=member.id,
@@ -512,53 +460,44 @@ async def accept_invitation(
         metadata={
             "subject_type": "member",
             "user_id": user.id,
-            "role": role.name,
+            "role": role_name,
             "invitation_id": invitation.id,
         },
     )
     await realtime_service.commit_and_publish(db)
     await db.refresh(member)
-    return project.id, member.id
+    return project_id, member.id
 
 
 async def change_role(
     db: AsyncSession,
     project: Project,
     member_id: UUID,
-    data: ProjectMemberRoleUpdate,
+    patch: ProjectMemberRolePatchInput,
     activity_context: ActivityContext | None = None,
 ) -> dict:
     """Change an existing project member role."""
-    result = await db.execute(
-        select(ProjectMember, Role.name, User.email, User.full_name)
-        .join(Role, Role.id == ProjectMember.role_id)
-        .join(User, User.id == ProjectMember.user_id)
-        .where(
-            ProjectMember.id == member_id,
-            ProjectMember.project_id == project.id,
-        )
+    row = await project_member_repo.get_member_with_role_and_user(
+        db,
+        project_id=project.id,
+        member_id=member_id,
     )
-    row = result.one_or_none()
     if row is None:
         raise NotFoundError("Member not found")
 
     member, current_role_name, email, full_name = row
-    target_role = await _get_project_role(db, data.role)
+    target_role_name = _coerce_project_role(patch["role"])
+    target_role = await _get_project_role(db, target_role_name)
 
     if member.user_id == project.owner_id and target_role.name != "owner":
         raise InvalidOperationError("Cannot change the role of the project owner")
 
     if current_role_name == "owner" and target_role.name != "owner":
-        owner_count_result = await db.execute(
-            select(func.count())
-            .select_from(ProjectMember)
-            .join(Role, Role.id == ProjectMember.role_id)
-            .where(
-                ProjectMember.project_id == project.id,
-                Role.name == "owner",
-            )
+        owner_count = await project_member_repo.count_project_members_by_role(
+            db,
+            project_id=project.id,
+            role_name="owner",
         )
-        owner_count = owner_count_result.scalar() or 0
         if owner_count <= 1:
             raise InvalidOperationError("Cannot demote the last owner")
 
@@ -606,16 +545,11 @@ async def remove_member(
     activity_context: ActivityContext | None = None,
 ) -> None:
     """Remove a project member."""
-    result = await db.execute(
-        select(ProjectMember, Role.name, User.email, User.full_name)
-        .join(Role, Role.id == ProjectMember.role_id)
-        .join(User, User.id == ProjectMember.user_id)
-        .where(
-            ProjectMember.id == member_id,
-            ProjectMember.project_id == project.id,
-        )
+    row = await project_member_repo.get_member_with_role_and_user(
+        db,
+        project_id=project.id,
+        member_id=member_id,
     )
-    row = result.one_or_none()
     if row is None:
         raise NotFoundError("Member not found")
 
@@ -627,16 +561,11 @@ async def remove_member(
         raise PermissionDeniedError("Managers can only remove member/viewer roles")
 
     if role_name == "owner":
-        owner_count_result = await db.execute(
-            select(func.count())
-            .select_from(ProjectMember)
-            .join(Role, Role.id == ProjectMember.role_id)
-            .where(
-                ProjectMember.project_id == project.id,
-                Role.name == "owner",
-            )
+        owner_count = await project_member_repo.count_project_members_by_role(
+            db,
+            project_id=project.id,
+            role_name="owner",
         )
-        owner_count = owner_count_result.scalar() or 0
         if owner_count <= 1:
             raise InvalidOperationError("Cannot remove the last owner")
 

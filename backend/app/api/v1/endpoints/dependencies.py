@@ -61,11 +61,13 @@ async def create_dependency(
     request: Request,
 ):
     """Create a new dependency between tasks."""
-    check_role(access, "owner", "manager", "member")
+    # TODO(policy): allow delegated dependency-write for trusted members
+    # when project-level fine-grained permissions are introduced.
+    check_role(access, "owner", "manager")
     dependency = await dependency_service.create_dependency(
         db,
         access.project,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -82,7 +84,9 @@ async def update_dependency(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Update a dependency."""
-    check_role(access, "owner", "manager", "member")
+    # TODO(policy): allow delegated dependency-write for trusted members
+    # when project-level fine-grained permissions are introduced.
+    check_role(access, "owner", "manager")
     dependency = await dependency_service.get_dependency_by_id(
         db, dependency_id, access.project.id
     )
@@ -90,7 +94,10 @@ async def update_dependency(
         raise NotFoundError("Dependency not found")
 
     dependency = await dependency_service.update_dependency(
-        db, dependency, body, access.project
+        db,
+        dependency,
+        body.model_dump(mode="python", exclude_unset=True),
+        access.project,
     )
     return DependencyResponse.model_validate(dependency)
 

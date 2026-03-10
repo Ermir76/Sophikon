@@ -69,7 +69,7 @@ async def create_resource(
     resource = await resource_service.create_resource(
         db,
         access.project,
-        body,
+        body.model_dump(mode="python"),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -113,7 +113,7 @@ async def update_resource(
     resource = await resource_service.update_resource(
         db,
         resource,
-        body,
+        body.model_dump(mode="python", exclude_unset=True),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
