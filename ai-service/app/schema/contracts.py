@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class UiContext(BaseModel):
     current_view: str = Field(default="overview", max_length=64)
     selected_task_id: UUID | None = None
-    selected_task_ids: list[UUID] = Field(default_factory=list)
+    selected_task_ids: list[UUID] = Field(default_factory=list, max_length=200)
 
 
 class ProjectContextTask(BaseModel):
@@ -96,6 +96,9 @@ class EstimateResponse(BaseModel):
 
 class SuggestionAction(BaseModel):
     type: Literal["NONE", "UPDATE_TASK", "ADD_DEPENDENCY", "SET_PRIORITY"]
+    # NOTE: Temporary generic payload contract.
+    # TODO: Replace with typed payload models per action type (discriminated union)
+    # before expanding suggestion generation/automation beyond current deterministic logic.
     payload: dict = Field(default_factory=dict)
 
 
