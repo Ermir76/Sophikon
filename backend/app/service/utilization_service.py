@@ -8,55 +8,14 @@ and comparing allocated units against resource max_units per day.
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
-from uuid import UUID
+from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.assignment import Assignment
 from app.models.project import Project
 from app.models.resource import Resource
-from app.models.task import Task
-from app.schema.utilization import (
-    AssignmentAllocation,
-    DailyAllocation,
-    OverAllocationItem,
-    OverAllocationResponse,
-    ProjectUtilizationSummary,
-    ResourceUtilizationResponse,
-)
-
-
-async def _get_assignments_in_range(
-    db: AsyncSession,
-    project: Project,
-    start_date: date,
-    end_date: date,
-    resource_id: UUID | None = None,
-) -> list[Assignment]:
-    """
-    Get all assignments overlapping a date range within a project.
-
-    An assignment overlaps if its date range intersects [start_date, end_date].
-    """
-    query = (
-        select(Assignment)
-        .join(Task, Assignment.task_id == Task.id)
-        .where(
-            Task.project_id == project.id,
-            Task.is_deleted == False,  # noqa: E712
-            Assignment.start_date <= end_date,
-            Assignment.finish_date >= start_date,
-        )
-        .options(selectinload(Assignment.task))
-    )
-
-    if resource_id:
-        query = query.where(Assignment.resource_id == resource_id)
-
-    result = await db.execute(query)
-    return list(result.scalars().all())
+from app.repository import utilization_repo
 
 
 def _build_daily_allocations(
@@ -64,7 +23,7 @@ def _build_daily_allocations(
     resource: Resource,
     start_date: date,
     end_date: date,
-) -> list[DailyAllocation]:
+) -> list[dict[str, Any]]:
     """
     Build per-day allocation breakdown for a resource.
 
@@ -89,7 +48,7 @@ def _build_daily_allocations(
 
     # Build daily allocations
     max_units = Decimal(str(resource.max_units))
-    allocations: list[DailyAllocation] = []
+    allocations: list[dict[str, Any]] = []
 
     current = start_date
     while current <= end_date:
@@ -97,21 +56,21 @@ def _build_daily_allocations(
         allocated = sum((Decimal(str(a.units)) for a in day_asgns), Decimal("0"))
 
         allocations.append(
-            DailyAllocation(
-                date=current,
-                allocated_units=allocated,
-                max_units=max_units,
-                is_over_allocated=allocated > max_units,
-                assignments=[
-                    AssignmentAllocation(
-                        assignment_id=a.id,
-                        task_id=a.task_id,
-                        task_name=a.task.name,
-                        units=Decimal(str(a.units)),
-                    )
+            {
+                "date": current,
+                "allocated_units": allocated,
+                "max_units": max_units,
+                "is_over_allocated": allocated > max_units,
+                "assignments": [
+                    {
+                        "assignment_id": a.id,
+                        "task_id": a.task_id,
+                        "task_name": a.task.name,
+                        "units": Decimal(str(a.units)),
+                    }
                     for a in day_asgns
                 ],
-            )
+            }
         )
         current += timedelta(days=1)
 
@@ -124,34 +83,38 @@ async def get_resource_utilization(
     resource: Resource,
     start_date: date,
     end_date: date,
-) -> ResourceUtilizationResponse:
+) -> dict[str, Any]:
     """
     Compute time-phased utilization for a single resource.
 
     Returns per-day allocation breakdown with over-allocation flags.
     """
-    assignments = await _get_assignments_in_range(
-        db, project, start_date, end_date, resource_id=resource.id
+    assignments = await utilization_repo.get_assignments_in_range(
+        db,
+        project_id=project.id,
+        start_date=start_date,
+        end_date=end_date,
+        resource_id=resource.id,
     )
     daily = _build_daily_allocations(assignments, resource, start_date, end_date)
 
-    allocated_days = [d for d in daily if d.allocated_units > 0]
-    peak = max((d.allocated_units for d in daily), default=Decimal("0"))
+    allocated_days = [d for d in daily if d["allocated_units"] > 0]
+    peak = max((d["allocated_units"] for d in daily), default=Decimal("0"))
     avg = (
-        sum((d.allocated_units for d in allocated_days), Decimal("0"))
+        sum((d["allocated_units"] for d in allocated_days), Decimal("0"))
         / Decimal(len(allocated_days))
         if allocated_days
         else Decimal("0")
     )
 
-    return ResourceUtilizationResponse(
-        resource_id=resource.id,
-        resource_name=resource.name,
-        max_units=Decimal(str(resource.max_units)),
-        daily_allocations=daily,
-        peak_units=peak,
-        average_utilization=avg,
-    )
+    return {
+        "resource_id": resource.id,
+        "resource_name": resource.name,
+        "max_units": Decimal(str(resource.max_units)),
+        "daily_allocations": daily,
+        "peak_units": peak,
+        "average_utilization": avg,
+    }
 
 
 async def get_project_utilization_summary(
@@ -159,48 +122,47 @@ async def get_project_utilization_summary(
     project: Project,
     start_date: date,
     end_date: date,
-) -> ProjectUtilizationSummary:
+) -> dict[str, Any]:
     """
     Compute utilization summary for all active resources in a project.
     """
-    # Get all active resources
-    result = await db.execute(
-        select(Resource)
-        .where(
-            Resource.project_id == project.id,
-            Resource.is_active == True,  # noqa: E712
-        )
-        .order_by(Resource.name.asc())
+    resources = await utilization_repo.get_active_resources_for_project(
+        db,
+        project_id=project.id,
     )
-    resources = list(result.scalars().all())
 
     # Get all assignments in range
-    assignments = await _get_assignments_in_range(db, project, start_date, end_date)
+    assignments = await utilization_repo.get_assignments_in_range(
+        db,
+        project_id=project.id,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
-    summaries: list[ResourceUtilizationResponse] = []
+    summaries: list[dict[str, Any]] = []
     for resource in resources:
         daily = _build_daily_allocations(assignments, resource, start_date, end_date)
-        allocated_days = [d for d in daily if d.allocated_units > 0]
-        peak = max((d.allocated_units for d in daily), default=Decimal("0"))
+        allocated_days = [d for d in daily if d["allocated_units"] > 0]
+        peak = max((d["allocated_units"] for d in daily), default=Decimal("0"))
         avg = (
-            sum((d.allocated_units for d in allocated_days), Decimal("0"))
+            sum((d["allocated_units"] for d in allocated_days), Decimal("0"))
             / Decimal(len(allocated_days))
             if allocated_days
             else Decimal("0")
         )
 
         summaries.append(
-            ResourceUtilizationResponse(
-                resource_id=resource.id,
-                resource_name=resource.name,
-                max_units=Decimal(str(resource.max_units)),
-                daily_allocations=daily,
-                peak_units=peak,
-                average_utilization=avg,
-            )
+            {
+                "resource_id": resource.id,
+                "resource_name": resource.name,
+                "max_units": Decimal(str(resource.max_units)),
+                "daily_allocations": daily,
+                "peak_units": peak,
+                "average_utilization": avg,
+            }
         )
 
-    return ProjectUtilizationSummary(resources=summaries)
+    return {"resources": summaries}
 
 
 async def detect_over_allocations(
@@ -208,41 +170,40 @@ async def detect_over_allocations(
     project: Project,
     start_date: date,
     end_date: date,
-) -> OverAllocationResponse:
+) -> dict[str, Any]:
     """
     Detect all over-allocated resource+day pairs in a project date range.
 
     A resource is over-allocated on a day when its total assigned units
     exceed its max_units.
     """
-    # Get all active resources
-    result = await db.execute(
-        select(Resource)
-        .where(
-            Resource.project_id == project.id,
-            Resource.is_active == True,  # noqa: E712
-        )
-        .order_by(Resource.name.asc())
+    resources = await utilization_repo.get_active_resources_for_project(
+        db,
+        project_id=project.id,
     )
-    resources = list(result.scalars().all())
 
     # Get all assignments in range
-    assignments = await _get_assignments_in_range(db, project, start_date, end_date)
+    assignments = await utilization_repo.get_assignments_in_range(
+        db,
+        project_id=project.id,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
-    items: list[OverAllocationItem] = []
+    items: list[dict[str, Any]] = []
     for resource in resources:
         daily = _build_daily_allocations(assignments, resource, start_date, end_date)
         for day in daily:
-            if day.is_over_allocated:
+            if day["is_over_allocated"]:
                 items.append(
-                    OverAllocationItem(
-                        resource_id=resource.id,
-                        resource_name=resource.name,
-                        date=day.date,
-                        allocated_units=day.allocated_units,
-                        max_units=day.max_units,
-                        exceeds_by=day.allocated_units - day.max_units,
-                    )
+                    {
+                        "resource_id": resource.id,
+                        "resource_name": resource.name,
+                        "date": day["date"],
+                        "allocated_units": day["allocated_units"],
+                        "max_units": day["max_units"],
+                        "exceeds_by": day["allocated_units"] - day["max_units"],
+                    }
                 )
 
-    return OverAllocationResponse(items=items, total_count=len(items))
+    return {"items": items, "total_count": len(items)}

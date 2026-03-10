@@ -75,6 +75,8 @@ cd frontend && npm run test:e2e       # frontend E2E tests (Playwright)
 ## Review Conventions
 
 - Repo-level review and consistency rules live in [CONVENTIONS.md](./CONVENTIONS.md)
+- Backend architecture layering rules:
+  - [docs/02-design/backend-architecture.md](./docs/02-design/backend-architecture.md)
 - Deferred cleanup and technical debt are tracked in [issues/](./issues)
 - Frontend visual governance source of truth:
   - [docs/02-design/FRONTEND_STYLING_CONSTITUTION.md](./docs/02-design/FRONTEND_STYLING_CONSTITUTION.md)

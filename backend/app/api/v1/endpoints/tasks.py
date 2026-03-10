@@ -92,7 +92,7 @@ async def create_task(
     task = await task_service.create_task(
         db,
         access.project,
-        body,
+        body.model_dump(),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -207,7 +207,7 @@ async def update_task(
     task = await task_service.update_task(
         db,
         task,
-        body,
+        body.model_dump(exclude_unset=True),
         access.project,
         activity_context=activity_log_service.activity_context_from_request(
             user,

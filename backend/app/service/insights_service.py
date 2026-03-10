@@ -5,9 +5,9 @@ Insights service for org dashboard and project dashboard endpoints.
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import ProjectStatus
@@ -15,22 +15,7 @@ from app.models.organization import Organization
 from app.models.project import Project
 from app.models.resource import Resource
 from app.models.task import Task
-from app.schema.insights import (
-    DashboardInsightsResponse,
-    DashboardKpis,
-    OverdueTask,
-    ProjectDashboardCost,
-    ProjectDashboardCriticalPath,
-    ProjectDashboardResources,
-    ProjectDashboardResponse,
-    ProjectDashboardSchedule,
-    ProjectDashboardSummary,
-    ProjectHealthItem,
-    RecentActivityItem,
-    RiskLevel,
-    TrendPoint,
-    UpcomingMilestone,
-)
+from app.repository import insights_repo
 from app.service import scheduling_service, utilization_service
 
 TODAY_PRESET_DAYS = {
@@ -85,7 +70,7 @@ def _round2(value: float) -> float:
     return round(value, 2)
 
 
-def _risk_level(score: float) -> RiskLevel:
+def _risk_level(score: float) -> str:
     if score >= 67:
         return "high"
     if score >= 34:
@@ -96,11 +81,16 @@ def _risk_level(score: float) -> RiskLevel:
 def _build_day_buckets(
     start_date: date,
     end_date: date,
-) -> dict[date, TrendPoint]:
-    buckets: dict[date, TrendPoint] = {}
+) -> dict[date, dict[str, Any]]:
+    buckets: dict[date, dict[str, Any]] = {}
     current = start_date
     while current <= end_date:
-        buckets[current] = TrendPoint(date=current)
+        buckets[current] = {
+            "date": current,
+            "completed_tasks": 0,
+            "created_tasks": 0,
+            "overdue_tasks": 0,
+        }
         current += timedelta(days=1)
     return buckets
 
@@ -127,16 +117,16 @@ def _task_completion_metrics(tasks: list[Task], today: date) -> dict[str, float]
 
 def _build_trend(
     tasks: list[Task], start_date: date, end_date: date
-) -> list[TrendPoint]:
+) -> list[dict[str, Any]]:
     buckets = _build_day_buckets(start_date, end_date)
     for task in tasks:
         created_day = task.created_at.date()
         if created_day in buckets:
-            buckets[created_day].created_tasks += 1
+            buckets[created_day]["created_tasks"] += 1
 
         updated_day = task.updated_at.date()
         if _to_float(task.percent_complete) >= 100.0 and updated_day in buckets:
-            buckets[updated_day].completed_tasks += 1
+            buckets[updated_day]["completed_tasks"] += 1
 
         completion_day: date | None = None
         if _to_float(task.percent_complete) >= 100.0:
@@ -148,7 +138,7 @@ def _build_trend(
         was_overdue = completion_day is None or completion_day > task.finish_date
         if was_overdue and overdue_day in buckets:
             # Count an overdue "entry event" once on the day the task becomes overdue.
-            buckets[overdue_day].overdue_tasks += 1
+            buckets[overdue_day]["overdue_tasks"] += 1
 
     return [buckets[d] for d in sorted(buckets)]
 
@@ -165,49 +155,49 @@ def _build_recent_activity(
     tasks: list[Task],
     resources: list[Resource],
     project_name_by_id: dict[UUID, str],
-) -> list[RecentActivityItem]:
-    activities: list[RecentActivityItem] = []
+) -> list[dict[str, Any]]:
+    activities: list[dict[str, Any]] = []
 
     for p in projects:
         activities.append(
-            RecentActivityItem(
-                entity_type="project",
-                entity_id=p.id,
-                entity_name=p.name,
-                action=_activity_action(p.created_at, p.updated_at),  # type: ignore[arg-type]
-                timestamp=p.updated_at,  # type: ignore[arg-type]
-                project_id=p.id,
-                project_name=p.name,
-            )
+            {
+                "entity_type": "project",
+                "entity_id": p.id,
+                "entity_name": p.name,
+                "action": _activity_action(p.created_at, p.updated_at),  # type: ignore[arg-type]
+                "timestamp": p.updated_at,  # type: ignore[arg-type]
+                "project_id": p.id,
+                "project_name": p.name,
+            }
         )
 
     for t in tasks:
         activities.append(
-            RecentActivityItem(
-                entity_type="task",
-                entity_id=t.id,
-                entity_name=t.name,
-                action=_activity_action(t.created_at, t.updated_at),  # type: ignore[arg-type]
-                timestamp=t.updated_at,  # type: ignore[arg-type]
-                project_id=t.project_id,
-                project_name=project_name_by_id.get(t.project_id),
-            )
+            {
+                "entity_type": "task",
+                "entity_id": t.id,
+                "entity_name": t.name,
+                "action": _activity_action(t.created_at, t.updated_at),  # type: ignore[arg-type]
+                "timestamp": t.updated_at,  # type: ignore[arg-type]
+                "project_id": t.project_id,
+                "project_name": project_name_by_id.get(t.project_id),
+            }
         )
 
     for r in resources:
         activities.append(
-            RecentActivityItem(
-                entity_type="resource",
-                entity_id=r.id,
-                entity_name=r.name,
-                action=_activity_action(r.created_at, r.updated_at),  # type: ignore[arg-type]
-                timestamp=r.updated_at,  # type: ignore[arg-type]
-                project_id=r.project_id,
-                project_name=project_name_by_id.get(r.project_id),
-            )
+            {
+                "entity_type": "resource",
+                "entity_id": r.id,
+                "entity_name": r.name,
+                "action": _activity_action(r.created_at, r.updated_at),  # type: ignore[arg-type]
+                "timestamp": r.updated_at,  # type: ignore[arg-type]
+                "project_id": r.project_id,
+                "project_name": project_name_by_id.get(r.project_id),
+            }
         )
 
-    activities.sort(key=lambda x: x.timestamp, reverse=True)
+    activities.sort(key=lambda x: x["timestamp"], reverse=True)
     return activities[:RECENT_ACTIVITY_LIMIT]
 
 
@@ -220,15 +210,13 @@ async def _project_overallocation_stats(
     overalloc = await utilization_service.detect_over_allocations(
         db, project, start_date, end_date
     )
-    unique_overallocated = {item.resource_id for item in overalloc.items}
+    unique_overallocated = {item["resource_id"] for item in overalloc["items"]}
 
-    total_resources_result = await db.execute(
-        select(Resource).where(
-            Resource.project_id == project.id,
-            Resource.is_active == True,  # noqa: E712
-        )
+    active_resources = await insights_repo.get_active_resources_for_project(
+        db,
+        project_id=project.id,
     )
-    total_resources = len(total_resources_result.scalars().all())
+    total_resources = len(active_resources)
 
     count = len(unique_overallocated)
     ratio = (count / total_resources) if total_resources else 0.0
@@ -242,7 +230,7 @@ def _risk_score(
     return _round2(max(0.0, min(100.0, score)))
 
 
-def _task_status_counts(tasks: list[Task], today: date) -> ProjectDashboardSummary:
+def _task_status_counts(tasks: list[Task], today: date) -> dict[str, Any]:
     work_tasks = _leaf_tasks(tasks)
     total_tasks = len(work_tasks)
     completed_tasks = sum(
@@ -267,16 +255,16 @@ def _task_status_counts(tasks: list[Task], today: date) -> ProjectDashboardSumma
     )
     percent_complete = (completed_tasks / total_tasks * 100) if total_tasks else 0.0
 
-    return ProjectDashboardSummary(
-        total_tasks=total_tasks,
-        completed_tasks=completed_tasks,
-        in_progress_tasks=in_progress_tasks,
-        not_started_tasks=not_started_tasks,
-        overdue_tasks=overdue_tasks,
-        milestones=milestones,
-        milestones_completed=milestones_completed,
-        percent_complete=_round2(percent_complete),
-    )
+    return {
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "in_progress_tasks": in_progress_tasks,
+        "not_started_tasks": not_started_tasks,
+        "overdue_tasks": overdue_tasks,
+        "milestones": milestones,
+        "milestones_completed": milestones_completed,
+        "percent_complete": _round2(percent_complete),
+    }
 
 
 def _resolve_project_finish_date(project: Project, tasks: list[Task]) -> date | None:
@@ -304,7 +292,7 @@ def _build_project_schedule(
     project: Project,
     finish_date: date | None,
     today: date,
-) -> ProjectDashboardSchedule:
+) -> dict[str, Any]:
     duration_days = None
     days_remaining = None
     if finish_date is not None:
@@ -312,79 +300,77 @@ def _build_project_schedule(
         days_remaining = (finish_date - today).days
 
     days_elapsed = max(0, (today - project.start_date).days)
-    return ProjectDashboardSchedule(
-        start_date=project.start_date,
-        finish_date=finish_date,
-        duration_days=duration_days,
-        days_elapsed=days_elapsed,
-        days_remaining=days_remaining,
-    )
+    return {
+        "start_date": project.start_date,
+        "finish_date": finish_date,
+        "duration_days": duration_days,
+        "days_elapsed": days_elapsed,
+        "days_remaining": days_remaining,
+    }
 
 
-def _build_project_cost(project: Project, tasks: list[Task]) -> ProjectDashboardCost:
+def _build_project_cost(project: Project, tasks: list[Task]) -> dict[str, Any]:
     budget = None if project.budget is None else _round2(_to_float(project.budget))
     work_tasks = _leaf_tasks(tasks)
 
-    return ProjectDashboardCost(
-        budget=budget,
-        total_cost=_round2(sum(_to_float(task.total_cost) for task in work_tasks)),
-        actual_cost=_round2(sum(_to_float(task.actual_cost) for task in work_tasks)),
-        remaining_cost=_round2(
+    return {
+        "budget": budget,
+        "total_cost": _round2(sum(_to_float(task.total_cost) for task in work_tasks)),
+        "actual_cost": _round2(sum(_to_float(task.actual_cost) for task in work_tasks)),
+        "remaining_cost": _round2(
             sum(_to_float(task.remaining_cost) for task in work_tasks)
         ),
-    )
+    }
 
 
 def _build_critical_path_summary(
     project: Project,
     tasks: list[Task],
     path_length_days: int,
-) -> ProjectDashboardCriticalPath:
+) -> dict[str, Any]:
     critical_tasks = [task for task in _leaf_tasks(tasks) if bool(task.is_critical)]
     total_duration_days = sum(
         _duration_minutes_to_days(project, task.duration, bool(task.is_milestone))
         for task in critical_tasks
     )
 
-    return ProjectDashboardCriticalPath(
-        task_count=len(critical_tasks),
-        total_duration_days=total_duration_days,
-        path_length_days=path_length_days,
-    )
+    return {
+        "task_count": len(critical_tasks),
+        "total_duration_days": total_duration_days,
+        "path_length_days": path_length_days,
+    }
 
 
-def _build_upcoming_milestones(
-    tasks: list[Task], today: date
-) -> list[UpcomingMilestone]:
+def _build_upcoming_milestones(tasks: list[Task], today: date) -> list[dict[str, Any]]:
     milestones = [
-        UpcomingMilestone(
-            task_id=task.id,
-            name=task.name,
-            finish_date=task.finish_date,
-            percent_complete=_round2(_to_float(task.percent_complete)),
-        )
+        {
+            "task_id": task.id,
+            "name": task.name,
+            "finish_date": task.finish_date,
+            "percent_complete": _round2(_to_float(task.percent_complete)),
+        }
         for task in _leaf_tasks(tasks)
         if bool(task.is_milestone)
         and _to_float(task.percent_complete) < 100.0
         and today <= task.finish_date <= today + timedelta(days=MILESTONE_SOON_DAYS)
     ]
-    milestones.sort(key=lambda item: (item.finish_date, item.name.lower()))
+    milestones.sort(key=lambda item: (item["finish_date"], item["name"].lower()))
     return milestones
 
 
-def _build_overdue_tasks(tasks: list[Task], today: date) -> list[OverdueTask]:
+def _build_overdue_tasks(tasks: list[Task], today: date) -> list[dict[str, Any]]:
     overdue_tasks = [
-        OverdueTask(
-            task_id=task.id,
-            name=task.name,
-            finish_date=task.finish_date,
-            percent_complete=_round2(_to_float(task.percent_complete)),
-            days_overdue=(today - task.finish_date).days,
-        )
+        {
+            "task_id": task.id,
+            "name": task.name,
+            "finish_date": task.finish_date,
+            "percent_complete": _round2(_to_float(task.percent_complete)),
+            "days_overdue": (today - task.finish_date).days,
+        }
         for task in _leaf_tasks(tasks)
         if task.finish_date < today and _to_float(task.percent_complete) < 100.0
     ]
-    overdue_tasks.sort(key=lambda item: (item.finish_date, item.name.lower()))
+    overdue_tasks.sort(key=lambda item: (item["finish_date"], item["name"].lower()))
     return overdue_tasks
 
 
@@ -393,39 +379,40 @@ async def get_org_dashboard_insights(
     organization: Organization,
     start_date: date,
     end_date: date,
-) -> DashboardInsightsResponse:
+) -> dict[str, Any]:
     today = date.today()
 
-    projects_result = await db.execute(
-        select(Project).where(
-            Project.organization_id == organization.id,
-            Project.is_deleted == False,  # noqa: E712
-        )
+    projects = await insights_repo.get_projects_for_organization(
+        db,
+        organization_id=organization.id,
     )
-    projects = list(projects_result.scalars().all())
     project_name_by_id = {p.id: p.name for p in projects}
     project_ids = [p.id for p in projects]
 
     if not project_ids:
-        return DashboardInsightsResponse(
-            kpis=DashboardKpis(),
-            project_health=[],
-            trend=_build_trend([], start_date, end_date),
-            recent_activity=[],
-        )
+        return {
+            "kpis": {
+                "active_projects": 0,
+                "completed_projects": 0,
+                "task_completion_pct": 0,
+                "overdue_tasks": 0,
+                "critical_tasks": 0,
+                "overallocated_resources": 0,
+            },
+            "project_health": [],
+            "trend": _build_trend([], start_date, end_date),
+            "recent_activity": [],
+        }
 
-    tasks_result = await db.execute(
-        select(Task).where(
-            Task.project_id.in_(project_ids),
-            Task.is_deleted == False,  # noqa: E712
-        )
+    tasks = await insights_repo.get_tasks_for_projects(
+        db,
+        project_ids=project_ids,
     )
-    tasks = list(tasks_result.scalars().all())
 
-    resources_result = await db.execute(
-        select(Resource).where(Resource.project_id.in_(project_ids))
+    resources = await insights_repo.get_resources_for_projects(
+        db,
+        project_ids=project_ids,
     )
-    resources = list(resources_result.scalars().all())
 
     tasks_by_project: dict[UUID, list[Task]] = defaultdict(list)
     for task in tasks:
@@ -436,7 +423,7 @@ async def get_org_dashboard_insights(
 
     overall = _task_completion_metrics(tasks, today)
 
-    project_health: list[ProjectHealthItem] = []
+    project_health: list[dict[str, Any]] = []
     overallocated_resources_total = 0
 
     # NOTE: Known perf tradeoff. This loop currently performs per-project
@@ -459,16 +446,16 @@ async def get_org_dashboard_insights(
         score = _risk_score(overdue_ratio, critical_ratio, overalloc_ratio)
 
         project_health.append(
-            ProjectHealthItem(
-                project_id=project.id,
-                name=project.name,
-                status=project.status,
-                completion_pct=_round2(metrics["completion_pct"]),
-                overdue_tasks=int(metrics["overdue"]),
-                critical_tasks=int(metrics["critical"]),
-                risk_score=score,
-                risk_level=_risk_level(score),
-            )
+            {
+                "project_id": project.id,
+                "name": project.name,
+                "status": project.status,
+                "completion_pct": _round2(metrics["completion_pct"]),
+                "overdue_tasks": int(metrics["overdue"]),
+                "critical_tasks": int(metrics["critical"]),
+                "risk_score": score,
+                "risk_level": _risk_level(score),
+            }
         )
 
     trend = _build_trend(tasks, start_date, end_date)
@@ -479,19 +466,23 @@ async def get_org_dashboard_insights(
         project_name_by_id=project_name_by_id,
     )
 
-    return DashboardInsightsResponse(
-        kpis=DashboardKpis(
-            active_projects=active_projects,
-            completed_projects=completed_projects,
-            task_completion_pct=_round2(overall["completion_pct"]),
-            overdue_tasks=int(overall["overdue"]),
-            critical_tasks=int(overall["critical"]),
-            overallocated_resources=overallocated_resources_total,
+    return {
+        "kpis": {
+            "active_projects": active_projects,
+            "completed_projects": completed_projects,
+            "task_completion_pct": _round2(overall["completion_pct"]),
+            "overdue_tasks": int(overall["overdue"]),
+            "critical_tasks": int(overall["critical"]),
+            "overallocated_resources": overallocated_resources_total,
+        },
+        "project_health": sorted(
+            project_health,
+            key=lambda item: item["risk_score"],
+            reverse=True,
         ),
-        project_health=sorted(project_health, key=lambda x: x.risk_score, reverse=True),
-        trend=trend,
-        recent_activity=recent_activity,
-    )
+        "trend": trend,
+        "recent_activity": recent_activity,
+    }
 
 
 async def get_project_dashboard(
@@ -499,24 +490,18 @@ async def get_project_dashboard(
     project: Project,
     start_date: date,
     end_date: date,
-) -> ProjectDashboardResponse:
+) -> dict[str, Any]:
     today = date.today()
 
-    tasks_result = await db.execute(
-        select(Task).where(
-            Task.project_id == project.id,
-            Task.is_deleted == False,  # noqa: E712
-        )
+    tasks = await insights_repo.get_tasks_for_project(
+        db,
+        project_id=project.id,
     )
-    tasks = list(tasks_result.scalars().all())
 
-    resources_result = await db.execute(
-        select(Resource).where(
-            Resource.project_id == project.id,
-            Resource.is_active == True,  # noqa: E712
-        )
+    active_resources = await insights_repo.get_active_resources_for_project(
+        db,
+        project_id=project.id,
     )
-    active_resources = list(resources_result.scalars().all())
 
     summary = _task_status_counts(tasks, today)
     overallocated_resources, _ = await _project_overallocation_stats(
@@ -542,16 +527,16 @@ async def get_project_dashboard(
         project_name_by_id={project.id: project.name},
     )
 
-    return ProjectDashboardResponse(
-        summary=summary,
-        schedule=schedule,
-        resources=ProjectDashboardResources(
-            total_resources=len(active_resources),
-            overallocated_count=overallocated_resources,
-        ),
-        cost=cost,
-        critical_path=critical_path,
-        upcoming_milestones=upcoming_milestones,
-        overdue_tasks=overdue_tasks,
-        recent_activity=recent_activity,
-    )
+    return {
+        "summary": summary,
+        "schedule": schedule,
+        "resources": {
+            "total_resources": len(active_resources),
+            "overallocated_count": overallocated_resources,
+        },
+        "cost": cost,
+        "critical_path": critical_path,
+        "upcoming_milestones": upcoming_milestones,
+        "overdue_tasks": overdue_tasks,
+        "recent_activity": recent_activity,
+    }

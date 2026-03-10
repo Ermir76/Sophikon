@@ -24,6 +24,9 @@ Use these defaults:
 
 - Backend endpoints follow the existing FastAPI domain-file pattern.
 - Backend business logic lives in plain service functions, not service classes.
+- Backend layer direction is `api -> service -> repository -> models/db`.
+- Backend services should not import API schema modules for request/response contracts.
+- Backend SQLAlchemy query/persistence logic belongs in `backend/app/repository/`.
 - Frontend code is organized by feature, not by file type.
 - Frontend visual/styling ownership follows:
   - `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`

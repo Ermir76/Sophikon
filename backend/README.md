@@ -10,6 +10,7 @@ app/
   core/               Config, database, security, rate limiting
   models/             SQLAlchemy models (28 tables)
   schema/             Pydantic request/response schemas
+  repository/         SQLAlchemy query + persistence helpers
   service/            Business logic layer
 alembic/              Database migrations
 tests/                Pytest test suite (integration + unit)

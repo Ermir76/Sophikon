@@ -87,7 +87,7 @@ async def create_project(
     project = await project_service.create_project(
         db,
         user,
-        body,
+        body.model_dump(),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -118,12 +118,13 @@ async def get_project_dashboard(
         start_date,
         end_date,
     )
-    return await insights_service.get_project_dashboard(
+    payload = await insights_service.get_project_dashboard(
         db,
         access.project,
         window_start,
         window_end,
     )
+    return ProjectDashboardResponse.model_validate(payload)
 
 
 @router.patch("/{project_id}", response_model=ProjectDetail)
@@ -144,7 +145,7 @@ async def update_project(
     project = await project_service.update_project(
         db,
         access.project,
-        body,
+        body.model_dump(exclude_unset=True),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,

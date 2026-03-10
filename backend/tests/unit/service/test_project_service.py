@@ -9,7 +9,6 @@ from uuid_utils import uuid7
 from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
-from app.schema.project import ProjectCreate
 from app.service import project_service
 
 
@@ -73,11 +72,11 @@ async def test_create_project_creates_owner_membership(
     project = await project_service.create_project(
         session,
         owner,
-        ProjectCreate(
-            organization_id=org_id,
-            name="Owner Membership Project",
-            start_date=date(2026, 3, 1),
-        ),
+        {
+            "organization_id": org_id,
+            "name": "Owner Membership Project",
+            "start_date": date(2026, 3, 1),
+        },
     )
 
     membership_result = await session.execute(
@@ -110,11 +109,11 @@ async def test_list_projects_deduplicates_owned_projects_with_multiple_members(
     project = await project_service.create_project(
         session,
         owner,
-        ProjectCreate(
-            organization_id=org_id,
-            name="Shared Project",
-            start_date=date(2026, 3, 2),
-        ),
+        {
+            "organization_id": org_id,
+            "name": "Shared Project",
+            "start_date": date(2026, 3, 2),
+        },
     )
 
     await _register_user(client, teammate_one_email, "Project List Member One")

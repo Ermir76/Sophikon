@@ -23,7 +23,7 @@ class _TaskStub:
 
 
 def _point_by_day(points, day: date):
-    return next(p for p in points if p.date == day)
+    return next(p for p in points if p["date"] == day)
 
 
 def test_build_trend_keeps_late_completion_overdue_event():
@@ -38,8 +38,8 @@ def test_build_trend_keeps_late_completion_overdue_event():
     trend = _build_trend([task], date(2026, 1, 1), date(2026, 1, 8))
     overdue_day = date(2026, 1, 5)  # day after finish date
 
-    assert _point_by_day(trend, overdue_day).overdue_tasks == 1
-    assert _point_by_day(trend, date(2026, 1, 6)).completed_tasks == 1
+    assert _point_by_day(trend, overdue_day)["overdue_tasks"] == 1
+    assert _point_by_day(trend, date(2026, 1, 6))["completed_tasks"] == 1
 
 
 def test_build_trend_does_not_mark_on_time_completion_as_overdue():
@@ -54,7 +54,7 @@ def test_build_trend_does_not_mark_on_time_completion_as_overdue():
     trend = _build_trend([task], date(2026, 1, 1), date(2026, 1, 8))
     overdue_day = date(2026, 1, 5)
 
-    assert _point_by_day(trend, overdue_day).overdue_tasks == 0
+    assert _point_by_day(trend, overdue_day)["overdue_tasks"] == 0
 
 
 def test_path_span_days_counts_same_day_path_as_one_day():
@@ -371,19 +371,19 @@ async def test_get_project_dashboard_aggregates_summary_and_schedule(
         today,
     )
 
-    assert dashboard.summary.total_tasks == 4
-    assert dashboard.summary.completed_tasks == 1
-    assert dashboard.summary.in_progress_tasks == 1
-    assert dashboard.summary.not_started_tasks == 2
-    assert dashboard.summary.overdue_tasks == 1
-    assert dashboard.summary.milestones == 1
-    assert dashboard.summary.milestones_completed == 0
-    assert dashboard.summary.percent_complete == 25.0
-    assert dashboard.schedule.start_date == project.start_date
-    assert dashboard.schedule.finish_date == today + timedelta(days=5)
-    assert dashboard.schedule.duration_days == 19
-    assert dashboard.schedule.days_elapsed == 14
-    assert dashboard.schedule.days_remaining == 5
+    assert dashboard["summary"]["total_tasks"] == 4
+    assert dashboard["summary"]["completed_tasks"] == 1
+    assert dashboard["summary"]["in_progress_tasks"] == 1
+    assert dashboard["summary"]["not_started_tasks"] == 2
+    assert dashboard["summary"]["overdue_tasks"] == 1
+    assert dashboard["summary"]["milestones"] == 1
+    assert dashboard["summary"]["milestones_completed"] == 0
+    assert dashboard["summary"]["percent_complete"] == 25.0
+    assert dashboard["schedule"]["start_date"] == project.start_date
+    assert dashboard["schedule"]["finish_date"] == today + timedelta(days=5)
+    assert dashboard["schedule"]["duration_days"] == 19
+    assert dashboard["schedule"]["days_elapsed"] == 14
+    assert dashboard["schedule"]["days_remaining"] == 5
 
 
 @pytest.mark.asyncio
@@ -406,18 +406,18 @@ async def test_get_project_dashboard_aggregates_costs_resources_and_activity(
         today,
     )
 
-    assert dashboard.resources.total_resources == 1
-    assert dashboard.resources.overallocated_count == 1
-    assert dashboard.cost.budget == 15000.0
-    assert dashboard.cost.total_cost == 6600.0
-    assert dashboard.cost.actual_cost == 3600.0
-    assert dashboard.cost.remaining_cost == 3000.0
-    assert dashboard.critical_path.task_count == 1
-    assert dashboard.critical_path.total_duration_days == 2
-    assert dashboard.upcoming_milestones[0].name == "Upcoming milestone"
-    assert dashboard.overdue_tasks[0].name == "Overdue critical task"
-    assert dashboard.overdue_tasks[0].days_overdue == 2
-    assert dashboard.recent_activity
+    assert dashboard["resources"]["total_resources"] == 1
+    assert dashboard["resources"]["overallocated_count"] == 1
+    assert dashboard["cost"]["budget"] == 15000.0
+    assert dashboard["cost"]["total_cost"] == 6600.0
+    assert dashboard["cost"]["actual_cost"] == 3600.0
+    assert dashboard["cost"]["remaining_cost"] == 3000.0
+    assert dashboard["critical_path"]["task_count"] == 1
+    assert dashboard["critical_path"]["total_duration_days"] == 2
+    assert dashboard["upcoming_milestones"][0]["name"] == "Upcoming milestone"
+    assert dashboard["overdue_tasks"][0]["name"] == "Overdue critical task"
+    assert dashboard["overdue_tasks"][0]["days_overdue"] == 2
+    assert dashboard["recent_activity"]
 
 
 @pytest.mark.asyncio
@@ -440,16 +440,16 @@ async def test_get_project_dashboard_excludes_summary_rollups_from_leaf_metrics(
         today,
     )
 
-    assert dashboard.summary.total_tasks == 1
-    assert dashboard.summary.in_progress_tasks == 1
-    assert dashboard.summary.overdue_tasks == 1
-    assert dashboard.cost.total_cost == 1000.0
-    assert dashboard.cost.actual_cost == 400.0
-    assert dashboard.cost.remaining_cost == 600.0
-    assert dashboard.critical_path.task_count == 1
-    assert dashboard.critical_path.total_duration_days == 2
-    assert len(dashboard.overdue_tasks) == 1
-    assert dashboard.overdue_tasks[0].name == "Critical child"
+    assert dashboard["summary"]["total_tasks"] == 1
+    assert dashboard["summary"]["in_progress_tasks"] == 1
+    assert dashboard["summary"]["overdue_tasks"] == 1
+    assert dashboard["cost"]["total_cost"] == 1000.0
+    assert dashboard["cost"]["actual_cost"] == 400.0
+    assert dashboard["cost"]["remaining_cost"] == 600.0
+    assert dashboard["critical_path"]["task_count"] == 1
+    assert dashboard["critical_path"]["total_duration_days"] == 2
+    assert len(dashboard["overdue_tasks"]) == 1
+    assert dashboard["overdue_tasks"][0]["name"] == "Critical child"
 
 
 @pytest.mark.asyncio
@@ -471,6 +471,6 @@ async def test_get_project_dashboard_reports_exact_critical_path_length(
         date(2024, 1, 31),
     )
 
-    assert dashboard.critical_path.task_count == 2
-    assert dashboard.critical_path.total_duration_days == 8
-    assert dashboard.critical_path.path_length_days == 12
+    assert dashboard["critical_path"]["task_count"] == 2
+    assert dashboard["critical_path"]["total_duration_days"] == 8
+    assert dashboard["critical_path"]["path_length_days"] == 12

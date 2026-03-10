@@ -13,7 +13,6 @@ from app.models.project_invitation import ProjectInvitation
 from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
-from app.schema.project import ProjectCreate
 from app.schema.project_member import ProjectInvitationAccept, ProjectMemberInvite
 from app.service import project_member_service, project_service
 
@@ -129,11 +128,11 @@ async def test_invite_member_normalizes_email_and_persists_token(
     project = await project_service.create_project(
         session,
         inviter,
-        ProjectCreate(
-            organization_id=org_id,
-            name="Invite Member Project",
-            start_date=date(2026, 3, 2),
-        ),
+        {
+            "organization_id": org_id,
+            "name": "Invite Member Project",
+            "start_date": date(2026, 3, 2),
+        },
     )
 
     monkeypatch.setattr(
@@ -184,11 +183,11 @@ async def test_accept_invitation_creates_memberships_and_marks_invitation_used(
     project = await project_service.create_project(
         session,
         owner,
-        ProjectCreate(
-            organization_id=org_id,
-            name="Accept Member Project",
-            start_date=date(2026, 3, 3),
-        ),
+        {
+            "organization_id": org_id,
+            "name": "Accept Member Project",
+            "start_date": date(2026, 3, 3),
+        },
     )
     member_role = await _ensure_project_role(session, "member")
 

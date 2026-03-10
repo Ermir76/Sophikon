@@ -5,19 +5,16 @@ Handles listing, creating, updating, and soft-deleting tasks.
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError
-from app.models.assignment import Assignment
-from app.models.comment import Comment
-from app.models.dependency import Dependency
-from app.models.enums import AuditAction
+from app.models.enums import AuditAction, ConstraintType, TaskType
 from app.models.project import Project
 from app.models.task import Task
-from app.schema.task import TaskCreate, TaskUpdate
+from app.repository import task_repo
 from app.service import activity_log_service, realtime_service, scheduling_service
 from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
@@ -43,19 +40,7 @@ async def _load_task_comment_counts(
     db: AsyncSession,
     task_ids: list[UUID],
 ) -> dict[UUID, int]:
-    if not task_ids:
-        return {}
-
-    result = await db.execute(
-        select(Comment.entity_id, func.count(Comment.id))
-        .where(
-            Comment.entity_type == "task",
-            Comment.entity_id.in_(task_ids),
-            Comment.is_deleted == False,  # noqa: E712
-        )
-        .group_by(Comment.entity_id)
-    )
-    return {entity_id: count for entity_id, count in result.all()}
+    return await task_repo.count_comments_for_tasks(db, task_ids=task_ids)
 
 
 async def list_tasks(
@@ -71,24 +56,13 @@ async def list_tasks(
 
     Returns (tasks, total_count).
     """
-    base_query = select(Task).where(Task.project_id == project.id)
-
-    if not include_deleted:
-        base_query = base_query.where(Task.is_deleted == False)  # noqa: E712
-
-    # Get total count
-    count_query = select(func.count()).select_from(base_query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    # Apply pagination and ordering by sort_order (global DFS traversal order)
-    offset = (page - 1) * per_page
-    paginated_query = (
-        base_query.order_by(Task.sort_order.asc()).offset(offset).limit(per_page)
+    tasks, total = await task_repo.list_tasks_for_project(
+        db,
+        project_id=project.id,
+        page=page,
+        per_page=per_page,
+        include_deleted=include_deleted,
     )
-
-    result = await db.execute(paginated_query)
-    tasks = list(result.scalars().all())
     comment_counts = await _load_task_comment_counts(db, [task.id for task in tasks])
     for task in tasks:
         task.comments_count = comment_counts.get(task.id, 0)
@@ -101,15 +75,7 @@ async def regenerate_wbs_codes(db: AsyncSession, project_id: UUID) -> None:
     Regenerate WBS codes, outline levels, sort_order, and summary flags
     for all tasks in a project. Fixes orphaned tasks and flushes without committing.
     """
-    result = await db.execute(
-        select(Task)
-        .where(
-            Task.project_id == project_id,
-            Task.is_deleted == False,  # noqa: E712
-        )
-        .order_by(Task.order_index.asc())
-    )
-    tasks = list(result.scalars().all())
+    tasks = await task_repo.list_tasks_for_wbs_regen(db, project_id=project_id)
 
     task_map = {task.id: task for task in tasks}
     children_map: dict[UUID, list[Task]] = {}
@@ -150,58 +116,43 @@ async def regenerate_wbs_codes(db: AsyncSession, project_id: UUID) -> None:
 async def create_task(
     db: AsyncSession,
     project: Project,
-    data: TaskCreate,
+    payload: dict[str, Any],
     activity_context: ActivityContext | None = None,
 ) -> Task:
     """Create a new task in the project."""
 
     # Lock the project row — serializes concurrent task creates for this project
-    await db.execute(
-        select(Project.id).where(Project.id == project.id).with_for_update()
-    )
+    await task_repo.lock_project_row(db, project_id=project.id)
 
     # Now safe — no other transaction can be here for the same project
     # Per-sibling-group order_index: MAX within the same parent
-    parent_condition = (
-        Task.parent_task_id.is_(None)
-        if data.parent_task_id is None
-        else Task.parent_task_id == data.parent_task_id
+    parent_task_id = payload.get("parent_task_id")
+    order_index = await task_repo.get_next_order_index(
+        db,
+        project_id=project.id,
+        parent_task_id=parent_task_id,
     )
-    result = await db.execute(
-        select(func.coalesce(func.max(Task.order_index), 0) + 1).where(
-            Task.project_id == project.id,
-            parent_condition,
-            Task.is_deleted == False,  # noqa: E712
-        )
-    )
-    order_index = result.scalar() or 1
 
     # Calculate outline_level and wbs_code
     outline_level = 1
     wbs_code = str(order_index)
 
-    if data.parent_task_id:
-        parent_result = await db.execute(
-            select(Task).where(
-                Task.id == data.parent_task_id,
-                Task.project_id == project.id,
-                Task.is_deleted == False,  # noqa: E712
-            )
+    if parent_task_id:
+        parent = await task_repo.get_active_task(
+            db,
+            task_id=parent_task_id,
+            project_id=project.id,
         )
-        parent = parent_result.scalar_one_or_none()
         if not parent:
             raise InvalidOperationError("Parent task not found in this project")
 
         outline_level = parent.outline_level + 1
         # Count siblings under this parent
-        sibling_count_result = await db.execute(
-            select(func.count()).where(
-                Task.parent_task_id == data.parent_task_id,
-                Task.project_id == project.id,
-                Task.is_deleted == False,  # noqa: E712
-            )
+        sibling_count = await task_repo.count_active_siblings(
+            db,
+            project_id=project.id,
+            parent_task_id=parent_task_id,
         )
-        sibling_count = sibling_count_result.scalar() or 0
         wbs_code = f"{parent.wbs_code}.{sibling_count + 1}"
 
         # Mark parent as summary
@@ -211,39 +162,41 @@ async def create_task(
     hours_per_day = project.settings.get("hours_per_day", 8)
     minutes_per_day = hours_per_day * 60
     duration_days = (
-        max(1, data.duration // minutes_per_day) if not data.is_milestone else 0
+        max(1, payload["duration"] // minutes_per_day)
+        if not payload.get("is_milestone", False)
+        else 0
     )
     # TODO(2026-03-07): Align finish_date convention with scheduling/calendar math
     # (inclusive vs exclusive end date) across create, rollup, and scheduler flows.
-    finish_date = data.start_date + timedelta(days=duration_days)
+    finish_date = payload["start_date"] + timedelta(days=duration_days)
 
     task = Task(
         project_id=project.id,
-        parent_task_id=data.parent_task_id,
-        name=data.name,
-        notes=data.notes,
+        parent_task_id=parent_task_id,
+        name=payload["name"],
+        notes=payload.get("notes"),
         wbs_code=wbs_code,
         outline_level=outline_level,
         order_index=order_index,
-        start_date=data.start_date,
+        start_date=payload["start_date"],
         finish_date=finish_date,
-        duration=data.duration,
+        duration=payload["duration"],
         actual_duration=0,
-        remaining_duration=data.duration,
-        is_milestone=data.is_milestone,
-        task_type=data.task_type,
-        effort_driven=data.effort_driven,
-        constraint_type=data.constraint_type,
-        constraint_date=data.constraint_date,
-        deadline=data.deadline,
-        priority=data.priority,
-        fixed_cost=data.fixed_cost,
+        remaining_duration=payload["duration"],
+        is_milestone=payload.get("is_milestone", False),
+        task_type=payload.get("task_type", TaskType.FIXED_UNITS),
+        effort_driven=payload.get("effort_driven", True),
+        constraint_type=payload.get("constraint_type", ConstraintType.ASAP),
+        constraint_date=payload.get("constraint_date"),
+        deadline=payload.get("deadline"),
+        priority=payload.get("priority", 500),
+        fixed_cost=payload.get("fixed_cost", 0),
     )
     sync_leaf_duration_progress(task)
     db.add(task)
     await db.flush()
-    if data.parent_task_id:
-        await recalculate_summary(db, project.id, data.parent_task_id)
+    if parent_task_id:
+        await recalculate_summary(db, project.id, parent_task_id)
 
     await regenerate_wbs_codes(db, project.id)
 
@@ -281,45 +234,31 @@ async def get_task_by_id(
     project_id: UUID,
 ) -> Task | None:
     """Get a task by ID within a project (excludes deleted)."""
-    comment_count_subquery = (
-        select(func.count(Comment.id))
-        .where(
-            Comment.entity_type == "task",
-            Comment.entity_id == Task.id,
-            Comment.is_deleted == False,  # noqa: E712
-        )
-        .correlate(Task)
-        .scalar_subquery()
+    row = await task_repo.get_task_with_comment_count(
+        db,
+        task_id=task_id,
+        project_id=project_id,
     )
-    result = await db.execute(
-        select(Task, comment_count_subquery.label("comments_count")).where(
-            Task.id == task_id,
-            Task.project_id == project_id,
-            Task.is_deleted == False,  # noqa: E712
-        )
-    )
-    row = result.one_or_none()
     if row is None:
         return None
 
     task, comments_count = row
-    task.comments_count = int(comments_count or 0)
+    task.comments_count = comments_count
     return task
 
 
 async def update_task(
     db: AsyncSession,
     task: Task,
-    data: TaskUpdate,
+    patch: dict[str, Any],
     project: Project | None = None,
     activity_context: ActivityContext | None = None,
 ) -> Task:
     """Update a task with partial data."""
-    update_data = data.model_dump(exclude_unset=True)
-    before = {field: getattr(task, field) for field in update_data}
-    validate_summary_rollup_edit(task, update_data)
+    before = {field: getattr(task, field) for field in patch}
+    validate_summary_rollup_edit(task, patch)
 
-    for field, value in update_data.items():
+    for field, value in patch.items():
         setattr(task, field, value)
     if not task.is_summary:
         sync_leaf_duration_progress(task)
@@ -334,13 +273,13 @@ async def update_task(
         await recalculate_summary(db, task.project_id, task.parent_task_id)
 
     # Auto-recalculate schedule if scheduling-relevant fields changed
-    if project and update_data.keys() & _SCHEDULE_FIELDS:
+    if project and patch.keys() & _SCHEDULE_FIELDS:
         if project.settings.get("auto_calculate", True):
             await scheduling_service.calculate_schedule(db, project)
 
     changes = activity_log_service.build_change_set(
         before,
-        {field: getattr(task, field) for field in update_data},
+        {field: getattr(task, field) for field in patch},
     )
     if changes is not None:
         await activity_log_service.log_activity(
@@ -385,10 +324,7 @@ async def soft_delete_task(
     after the top-level call finishes, to ensure atomicity.
     """
     # 1. Soft delete children recursively
-    children_result = await db.execute(
-        select(Task).where(Task.parent_task_id == task.id, Task.is_deleted == False)  # noqa: E712
-    )
-    children = children_result.scalars().all()
+    children = await task_repo.list_active_children(db, parent_task_id=task.id)
     for child in children:
         # Pass None for project in recursive calls to prevent redundant recalculations
         await soft_delete_task(db, child, project=None, activity_context=None)
@@ -396,25 +332,13 @@ async def soft_delete_task(
     # 2. Hard delete assignments (Assignments belong to task -> remove)
     # Using CORE delete for efficiency
 
-    await db.execute(delete(Assignment).where(Assignment.task_id == task.id))
+    await task_repo.delete_assignments_for_task(db, task_id=task.id)
 
     # 3. Hard delete dependencies (Predecessor/Successor relationships involving this task)
-    await db.execute(
-        delete(Dependency).where(
-            (Dependency.predecessor_id == task.id)
-            | (Dependency.successor_id == task.id)
-        )
-    )
+    await task_repo.delete_dependencies_for_task(db, task_id=task.id)
 
     # 4. Soft delete comments for this task entity
-    comments_result = await db.execute(
-        select(Comment).where(
-            Comment.entity_type == "task",
-            Comment.entity_id == task.id,
-            Comment.is_deleted == False,  # noqa: E712
-        )
-    )
-    comments = comments_result.scalars().all()
+    comments = await task_repo.list_active_task_comments(db, task_id=task.id)
     deleted_at = datetime.now(UTC)
     for comment in comments:
         comment.is_deleted = True
@@ -466,31 +390,24 @@ async def recalculate_summary(
     if parent_task_id is None:
         return
 
-    project_result = await db.execute(select(Project).where(Project.id == project_id))
-    project = project_result.scalar_one_or_none()
+    project = await task_repo.get_project_by_id(db, project_id=project_id)
     if not project:
         return
     work_week, exceptions = await load_project_rollup_calendar(db, project)
 
-    parent_result = await db.execute(
-        select(Task).where(
-            Task.id == parent_task_id,
-            Task.project_id == project_id,
-            Task.is_deleted == False,  # noqa: E712
-        )
+    parent = await task_repo.get_task_for_rollup(
+        db,
+        task_id=parent_task_id,
+        project_id=project_id,
     )
-    parent = parent_result.scalar_one_or_none()
     if not parent:
         return
 
-    children_result = await db.execute(
-        select(Task).where(
-            Task.parent_task_id == parent.id,
-            Task.project_id == project_id,
-            Task.is_deleted == False,  # noqa: E712
-        )
+    children = await task_repo.list_children_for_rollup(
+        db,
+        parent_task_id=parent.id,
+        project_id=project_id,
     )
-    children = list(children_result.scalars().all())
 
     if not children:
         clear_summary_rollup(parent, work_week, exceptions)

@@ -40,6 +40,7 @@ async def get_dashboard_insights(
     window_start, window_end = resolve_window_or_422(
         window_preset, start_date, end_date
     )
-    return await insights_service.get_org_dashboard_insights(
+    payload = await insights_service.get_org_dashboard_insights(
         db, access.organization, window_start, window_end
     )
+    return DashboardInsightsResponse.model_validate(payload)
