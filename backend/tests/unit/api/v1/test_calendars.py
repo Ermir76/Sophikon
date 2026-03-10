@@ -124,6 +124,51 @@ async def test_create_calendar_custom_work_week(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_calendar_rejects_invalid_work_week_length(client: AsyncClient):
+    """Create calendar rejects work_week lists that are not 7 days."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cal_week_invalid@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cal Week Invalid",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Cal Week Invalid", "slug": "org-cal-week-invalid"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Cal Week Invalid",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    invalid_week = [
+        None,
+        {"start": "08:00", "end": "16:00", "breaks": []},
+        {"start": "08:00", "end": "16:00", "breaks": []},
+        {"start": "08:00", "end": "16:00", "breaks": []},
+        {"start": "08:00", "end": "16:00", "breaks": []},
+        {"start": "08:00", "end": "16:00", "breaks": []},
+        None,
+        None,
+    ]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/calendars",
+        json={"name": "Invalid Week", "work_week": invalid_week},
+    )
+
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_get_calendar_success(client: AsyncClient):
     """Get — success (200)."""
     await client.post(
@@ -314,6 +359,55 @@ async def test_create_exception_success(client: AsyncClient):
     data = resp.json()
     assert data["name"] == "Christmas"
     assert data["is_working"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_exception_rejects_invalid_recurrence_month(client: AsyncClient):
+    """Create exception rejects out-of-range recurrence month values."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "exc_recurrence_invalid@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Exc Recurrence Invalid",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={
+            "name": "Org Exc Recurrence Invalid",
+            "slug": "org-exc-recurrence-invalid",
+        },
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Exc Recurrence Invalid",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    cal_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/calendars",
+        json={"name": "Cal With Invalid Recurrence"},
+    )
+    cal_id = cal_resp.json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/calendars/{cal_id}/exceptions",
+        json={
+            "name": "Unsupported Pattern",
+            "start_date": "2024-12-25",
+            "end_date": "2024-12-25",
+            "is_working": False,
+            "recurrence": {"type": "yearly", "month": 13, "day": 25},
+        },
+    )
+
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio

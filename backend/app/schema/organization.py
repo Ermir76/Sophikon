@@ -13,6 +13,17 @@ from app.schema._patch import ModelPatchSchema
 # Request Schemas
 
 
+class OrganizationSettingsPatch(BaseModel):
+    """
+    Patchable organization settings payload.
+
+    V1 keeps organization settings closed (empty object only) until
+    explicit keys are specified in the API contract.
+    """
+
+    model_config = {"extra": "forbid"}
+
+
 class OrganizationCreate(BaseModel):
     """Create a new organization."""
 
@@ -38,7 +49,7 @@ class OrganizationUpdate(ModelPatchSchema):
         max_length=255,
         pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
     )
-    settings: dict | None = Field(default=None)
+    settings: OrganizationSettingsPatch | None = Field(default=None)
 
 
 # Response Schemas

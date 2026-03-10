@@ -8,11 +8,25 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
-from app.models.enums import ProjectStatus, ScheduleFrom
+from app.models.enums import ProjectStatus, ScheduleFrom, TaskType
 from app.models.project import Project
 from app.schema._patch import ModelPatchSchema
 
 # Request Schemas
+
+
+class ProjectSettingsPatch(BaseModel):
+    """Patchable project settings payload (bounded known keys only)."""
+
+    model_config = {"extra": "forbid"}
+
+    hours_per_day: int | None = Field(default=None, ge=1, le=24)
+    hours_per_week: int | None = Field(default=None, ge=1, le=168)
+    days_per_month: int | None = Field(default=None, ge=1, le=31)
+    first_day_of_week: int | None = Field(default=None, ge=0, le=6)
+    default_task_type: TaskType | None = Field(default=None)
+    new_tasks_effort_driven: bool | None = Field(default=None)
+    auto_calculate: bool | None = Field(default=None)
 
 
 class ProjectCreate(BaseModel):
@@ -25,7 +39,7 @@ class ProjectCreate(BaseModel):
     schedule_from: ScheduleFrom = ScheduleFrom.START
     currency: str = Field(default="USD", min_length=3, max_length=3)
     budget: Decimal | None = None
-    settings: dict | None = None
+    settings: ProjectSettingsPatch | None = None
     color: str | None = None
 
 
@@ -44,7 +58,7 @@ class ProjectUpdate(ModelPatchSchema):
     status: ProjectStatus | None = Field(default=None)
     schedule_from: ScheduleFrom | None = Field(default=None)
     currency: str | None = Field(default=None, min_length=3, max_length=3)
-    settings: dict | None = Field(default=None)
+    settings: ProjectSettingsPatch | None = Field(default=None)
 
     description: str | None = None
     finish_date: date | None = None

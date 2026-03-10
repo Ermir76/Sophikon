@@ -180,6 +180,36 @@ async def test_create_organization_duplicate_slug(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClient):
+    """Create - soft-deleted slug reuse still returns 409 (no 500)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "dup_deleted_slug@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Dup Deleted Slug",
+        },
+    )
+
+    create_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org To Delete", "slug": "dup-deleted-slug"},
+    )
+    org_id = create_resp.json()["id"]
+
+    delete_resp = await client.delete(f"/api/v1/organizations/{org_id}")
+    assert delete_resp.status_code == 204
+
+    response = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Recreate", "slug": "dup-deleted-slug"},
+    )
+    assert response.status_code == 409
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "RESOURCE_CONFLICT"
+
+
+@pytest.mark.asyncio
 async def test_create_organization_missing_fields(client: AsyncClient):
     """Create — missing required fields — returns 422."""
     # Register
@@ -390,6 +420,30 @@ async def test_update_organization_success(client: AsyncClient):
     data = response.json()
     assert data["name"] == "New Name"
     assert data["slug"] == "new-slug"
+
+
+@pytest.mark.asyncio
+async def test_update_organization_rejects_unknown_settings_keys(client: AsyncClient):
+    """Update rejects unknown organization settings keys (422)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_org_set_inv@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Org Set Inv",
+        },
+    )
+    create_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Set Inv", "slug": "org-set-inv"},
+    )
+    org_id = create_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/organizations/{org_id}",
+        json={"settings": {"arbitrary_key": "value"}},
+    )
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio

@@ -201,6 +201,35 @@ async def test_create_project_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_project_rejects_unknown_settings_keys(client: AsyncClient):
+    """Create rejects unknown project settings keys (422)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_proj_set_inv@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr Proj Set Inv",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Cr Proj Set Inv", "slug": "org-cr-proj-set-inv"},
+    )
+    org_id = org_resp.json()["id"]
+
+    response = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "New Proj Invalid Settings",
+            "organization_id": org_id,
+            "start_date": "2024-05-01",
+            "settings": {"evil_toggle": True},
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_create_project_non_org_member(client: AsyncClient):
     """Create — non-org-member — returns 403."""
     # Register User A (Intruder)
@@ -316,6 +345,38 @@ async def test_update_project_success_owner(client: AsyncClient):
     )
     assert response.status_code == 200
     assert response.json()["name"] == "Proj Upd New"
+
+
+@pytest.mark.asyncio
+async def test_update_project_rejects_unknown_settings_keys(client: AsyncClient):
+    """Update rejects unknown project settings keys (422)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_set_inv@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Set Inv",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd Set", "slug": "org-upd-set"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Set",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"settings": {"unexpected_key": "value"}},
+    )
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio

@@ -3,13 +3,16 @@ Typed schemas for realtime websocket messages.
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from app.models.enums import AuditAction
 from app.schema._uuid import SchemaUUID
 from app.schema.notification import NotificationItem
+
+type JsonPrimitive = str | int | float | bool | None
+type JsonValue = JsonPrimitive | list[JsonValue] | dict[str, JsonValue]
 
 RealtimeChannel = Literal[
     "tasks",
@@ -81,7 +84,7 @@ class RealtimeEventMessage(BaseModel):
     entity_id: SchemaUUID | None = None
     entity_name: str | None = None
     occurred_at: datetime
-    metadata: dict[str, Any] | None = Field(default=None)
+    metadata: dict[str, JsonValue] | None = Field(default=None)
 
 
 class SubscribeMessage(BaseModel):

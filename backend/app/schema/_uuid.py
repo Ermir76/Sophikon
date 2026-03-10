@@ -14,7 +14,7 @@ def coerce_uuid(value: Any) -> UUID | None:
 
     try:
         return UUID(str(value))
-    except (TypeError, ValueError, AttributeError) as exc:
+    except (TypeError, ValueError) as exc:
         raise ValueError("Invalid UUID format") from exc
 
 

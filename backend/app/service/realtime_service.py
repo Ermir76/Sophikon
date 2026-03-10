@@ -3,6 +3,7 @@ Helpers for queuing and publishing realtime events after commit.
 """
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 from uuid import UUID
 
@@ -14,6 +15,7 @@ from app.core.user_notification_websocket_manager import (
 from app.core.websocket_manager import websocket_manager
 from app.models.enums import AuditAction
 from app.schema.realtime import (
+    JsonValue,
     RealtimeActor,
     RealtimeChannel,
     RealtimeEntityType,
@@ -225,7 +227,7 @@ def _build_event_payload(
         entity_id=entity_id,
         entity_name=entity_name,
         occurred_at=_timestamp(context),
-        metadata=_serialize_realtime_metadata(metadata)
+        metadata=_serialize_realtime_metadata_object(metadata)
         if metadata is not None
         else None,
     ).model_dump(mode="json")
@@ -249,13 +251,23 @@ def _timestamp(context: ActivityContext | None):
     return datetime.now(UTC)
 
 
-def _serialize_realtime_metadata(value: Any) -> Any:
+def _serialize_realtime_metadata_object(
+    value: Mapping[str, Any],
+) -> dict[str, JsonValue]:
+    return {
+        str(key): _serialize_realtime_metadata_value(item)
+        for key, item in value.items()
+    }
+
+
+def _serialize_realtime_metadata_value(value: Any) -> JsonValue:
     if isinstance(value, dict):
         return {
-            str(key): _serialize_realtime_metadata(item) for key, item in value.items()
+            str(key): _serialize_realtime_metadata_value(item)
+            for key, item in value.items()
         }
     if isinstance(value, (list, tuple)):
-        return [_serialize_realtime_metadata(item) for item in value]
+        return [_serialize_realtime_metadata_value(item) for item in value]
 
     serialized = serialize_activity_value(value)
     if serialized is not value:

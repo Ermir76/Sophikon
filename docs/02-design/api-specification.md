@@ -1418,11 +1418,15 @@ Outdent task.
 
 ## 7. Dependency Endpoints `[V1.0]`
 
+> NOTE: Current write policy is `owner or manager`. A future RBAC extension may allow delegated member write access (for example, an explicit `dependency:write` permission granted by owner/manager).
+
 ### GET /projects/:id/dependencies
 
 Get all dependencies.
 
 **Response:** `200 OK`
+
+**Permissions:** Any project member
 
 ```json
 {
@@ -1465,6 +1469,8 @@ Create dependency.
 
 **Response:** `201 Created`
 
+**Permissions:** owner or manager
+
 **Errors:** `400` - Circular dependency, `409` - Already exists
 
 ---
@@ -1485,6 +1491,8 @@ Update dependency.
 
 **Response:** `200 OK`
 
+**Permissions:** owner or manager
+
 ---
 
 ### DELETE /projects/:id/dependencies/:depId
@@ -1492,6 +1500,8 @@ Update dependency.
 Delete dependency.
 
 **Response:** `204 No Content`
+
+**Permissions:** owner or manager
 
 ---
 
@@ -2902,7 +2912,7 @@ Supported server event types:
 - `project_created`, `project_updated`, `project_deleted`
 - `task_created`, `task_updated`, `task_deleted`
 - `resource_created`, `resource_updated`, `resource_deleted`
-- `assignment_created`, `assignment_deleted`
+- `assignment_created`, `assignment_updated`, `assignment_deleted`
 - `dependency_created`, `dependency_deleted`
 - `project_member_created`, `project_member_updated`, `project_member_deleted`
 - `comment_created`, `comment_updated`, `comment_deleted`

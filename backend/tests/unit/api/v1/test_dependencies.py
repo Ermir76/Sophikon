@@ -353,6 +353,66 @@ async def test_create_dependency_forbidden_viewer(
 
 
 @pytest.mark.asyncio
+async def test_create_dependency_forbidden_member(
+    client: AsyncClient, session: AsyncSession, setup_roles
+):
+    """Create - member role - returns 403."""
+    # Owner
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_dep_mo@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr Dep MO",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Cr DepM", "slug": "org-cr-depm"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Cr DepM",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+    t1 = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+    )
+    tid1 = t1.json()["id"]
+    t2 = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+    )
+    tid2 = t2.json()["id"]
+
+    # Member
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_dep_mu@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr Dep MU",
+        },
+    )
+    await add_project_member(session, proj_id, "cr_dep_mu@x.com", "member")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "cr_dep_mu@x.com", "password": "StrongPassword123!"},
+    )
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": tid1, "successor_id": tid2, "type": "FS"},
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_create_dependency_missing_fields(client: AsyncClient):
     """Create — missing required fields — returns 422."""
     await client.post(
@@ -494,6 +554,70 @@ async def test_update_dependency_forbidden_viewer(
     await client.post(
         "/api/v1/auth/login",
         json={"email": "upd_dep_vu@x.com", "password": "StrongPassword123!"},
+    )
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/dependencies/{did}", json={"type": "SS"}
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_update_dependency_forbidden_member(
+    client: AsyncClient, session: AsyncSession, setup_roles
+):
+    """Update - member role - returns 403."""
+    # Owner
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_dep_mo@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Dep MO",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd DepM", "slug": "org-upd-depm"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd DepM",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+    t1 = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T1", "start_date": "2024-01-01", "duration": 480},
+    )
+    tid1 = t1.json()["id"]
+    t2 = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "T2", "start_date": "2024-01-01", "duration": 480},
+    )
+    tid2 = t2.json()["id"]
+    d_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/dependencies",
+        json={"predecessor_id": tid1, "successor_id": tid2, "type": "FS"},
+    )
+    did = d_resp.json()["id"]
+
+    # Member
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_dep_mu@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Dep MU",
+        },
+    )
+    await add_project_member(session, proj_id, "upd_dep_mu@x.com", "member")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "upd_dep_mu@x.com", "password": "StrongPassword123!"},
     )
 
     resp = await client.patch(
