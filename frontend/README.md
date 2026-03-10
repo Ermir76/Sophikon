@@ -37,6 +37,7 @@ Visual ownership is enforced in this order:
 4. `src/features/**` for composition only (no private design systems)
 
 Authoritative docs:
+
 - `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
 - `docs/02-design/frontend-architecture.md`
 - `docs/03-implementation/ui-ux-recovery-tracker.md`
