@@ -30,6 +30,7 @@ MENTION_TOKEN_PATTERN = re.compile(
     r"@\[[^\]]+\]\(user:(?P<user_id>[0-9a-fA-F]{8}-"
     r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)"
 )
+COMMENT_MAX_THREAD_DEPTH = 32
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +86,53 @@ def to_comment_item(comment: Comment) -> CommentItem:
         created_at=comment.created_at,
         replies=[],
     )
+
+
+async def _validate_reply_parent_chain(
+    db: AsyncSession,
+    *,
+    entity_type: CommentEntityType,
+    entity_id: UUID,
+    parent_comment_id: UUID,
+) -> None:
+    depth = 1
+    current_parent_id = parent_comment_id
+    seen_parent_ids: set[UUID] = set()
+
+    while current_parent_id is not None:
+        if current_parent_id in seen_parent_ids:
+            raise InvalidOperationError("Comment thread cycle detected")
+        seen_parent_ids.add(current_parent_id)
+
+        result = await db.execute(
+            select(
+                Comment.parent_comment_id,
+                Comment.entity_type,
+                Comment.entity_id,
+                Comment.is_deleted,
+            )
+            .where(Comment.id == current_parent_id)
+            .with_for_update()
+        )
+        row = result.one_or_none()
+        if row is None:
+            raise InvalidOperationError("Parent comment not found for this entity")
+
+        next_parent_id, parent_entity_type, parent_entity_id, parent_is_deleted = row
+        if (
+            parent_is_deleted
+            or _coerce_comment_entity_type(parent_entity_type) != entity_type
+            or parent_entity_id != entity_id
+        ):
+            raise InvalidOperationError("Parent comment not found for this entity")
+
+        if depth >= COMMENT_MAX_THREAD_DEPTH:
+            raise InvalidOperationError(
+                f"Comment reply depth limit ({COMMENT_MAX_THREAD_DEPTH}) exceeded"
+            )
+
+        depth += 1
+        current_parent_id = next_parent_id
 
 
 async def resolve_entity_context(
@@ -214,25 +262,23 @@ async def list_comments(
         .order_by(Comment.created_at.asc())
     )
     comments = list(result.scalars().all())
-    comment_ids = {comment.id for comment in comments}
-    children_map: dict[UUID | None, list[Comment]] = defaultdict(list)
+    items_by_id = {comment.id: to_comment_item(comment) for comment in comments}
+    root_items: list[CommentItem] = []
     for comment in comments:
-        if (
-            comment.parent_comment_id is not None
-            and comment.parent_comment_id not in comment_ids
-        ):
+        item = items_by_id[comment.id]
+        if comment.parent_comment_id is None:
+            root_items.append(item)
+            continue
+
+        parent_item = items_by_id.get(comment.parent_comment_id)
+        if parent_item is None:
             # TODO:(2026-03-08): Add a periodic cleanup job for orphan comments
             # created by historical races/corruption so these rows are healed
             # instead of only being hidden at read time.
             continue
-        children_map[comment.parent_comment_id].append(comment)
+        parent_item.replies.append(item)
 
-    def _to_item(comment: Comment) -> CommentItem:
-        item = to_comment_item(comment)
-        item.replies = [_to_item(reply) for reply in children_map.get(comment.id, [])]
-        return item
-
-    return [_to_item(comment) for comment in children_map.get(None, [])]
+    return root_items
 
 
 async def get_comment_by_id(
@@ -263,18 +309,12 @@ async def create_comment(
     mentions = await _resolve_mentions_for_project(db, context.project_id, content)
 
     if parent_comment_id is not None:
-        parent_result = await db.execute(
-            select(Comment)
-            .where(
-                Comment.id == parent_comment_id,
-                Comment.entity_type == context.entity_type,
-                Comment.entity_id == context.entity_id,
-                Comment.is_deleted == False,  # noqa: E712
-            )
-            .with_for_update()
+        await _validate_reply_parent_chain(
+            db,
+            entity_type=context.entity_type,
+            entity_id=context.entity_id,
+            parent_comment_id=parent_comment_id,
         )
-        if parent_result.scalar_one_or_none() is None:
-            raise InvalidOperationError("Parent comment not found for this entity")
 
     comment = Comment(
         entity_type=context.entity_type,

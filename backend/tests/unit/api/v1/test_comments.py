@@ -386,3 +386,39 @@ async def test_create_comment_on_project_entity(
     )
     assert response.status_code == 201
     assert response.json()["entity_type"] == "project"
+
+
+@pytest.mark.asyncio
+async def test_create_comment_rejects_reply_depth_above_limit(
+    client: AsyncClient,
+):
+    await _register(client, "owner-depth-comments@example.com", "Owner Depth")
+    await _login(client, "owner-depth-comments@example.com")
+    _, task_id = await _create_project_and_task(client)
+
+    parent_comment_id: str | None = None
+    # Max depth is 32 in comment_service; depth <= 32 should be valid.
+    for index in range(32):
+        response = await client.post(
+            "/api/v1/comments",
+            json={
+                "entity_type": "task",
+                "entity_id": task_id,
+                "content": f"Depth {index + 1}",
+                "parent_comment_id": parent_comment_id,
+            },
+        )
+        assert response.status_code == 201, response.text
+        parent_comment_id = response.json()["id"]
+
+    too_deep_response = await client.post(
+        "/api/v1/comments",
+        json={
+            "entity_type": "task",
+            "entity_id": task_id,
+            "content": "Depth overflow",
+            "parent_comment_id": parent_comment_id,
+        },
+    )
+    assert too_deep_response.status_code == 400, too_deep_response.text
+    assert too_deep_response.json()["error"]["code"] == "INVALID_OPERATION"
