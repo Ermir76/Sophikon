@@ -4,41 +4,25 @@ Comment business logic.
 
 import re
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import InvalidOperationError, NotFoundError
-from app.models.assignment import Assignment
 from app.models.comment import Comment
-from app.models.dependency import Dependency
-from app.models.enums import AuditAction, NotificationType
-from app.models.project import Project
-from app.models.project_member import ProjectMember
-from app.models.resource import Resource
-from app.models.task import Task
+from app.models.enums import AuditAction, CommentEntityType, NotificationType
 from app.models.user import User
-from app.schema.comment import CommentAuthor, CommentEntityType, CommentItem
+from app.repository import comment_repo
 from app.service import activity_log_service, notification_service, realtime_service
 from app.service.activity_log_service import ActivityContext
+from app.service.contracts.comment import CommentEntityContext, CommentItemData
 
 MENTION_TOKEN_PATTERN = re.compile(
     r"@\[[^\]]+\]\(user:(?P<user_id>[0-9a-fA-F]{8}-"
     r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)"
 )
 COMMENT_MAX_THREAD_DEPTH = 32
-
-
-@dataclass(frozen=True, slots=True)
-class CommentEntityContext:
-    entity_type: CommentEntityType
-    entity_id: UUID
-    project_id: UUID
-    entity_name: str | None = None
 
 
 def parse_mention_user_ids(content: str) -> list[UUID]:
@@ -67,25 +51,25 @@ def _coerce_comment_entity_type(
         raise InvalidOperationError("Unsupported comment entity type") from exc
 
 
-def to_comment_item(comment: Comment) -> CommentItem:
+def to_comment_item_data(comment: Comment) -> CommentItemData:
     entity_type = _coerce_comment_entity_type(comment.entity_type)
-    return CommentItem(
-        id=comment.id,
-        entity_type=entity_type,
-        entity_id=comment.entity_id,
-        author=CommentAuthor(
-            id=comment.author.id,
-            full_name=comment.author.full_name,
-            avatar_url=comment.author.avatar_url,
-        ),
-        content=comment.content,
-        mentions=list(comment.mentions or []),
-        parent_comment_id=comment.parent_comment_id,
-        is_edited=comment.is_edited,
-        edited_at=comment.edited_at,
-        created_at=comment.created_at,
-        replies=[],
-    )
+    return {
+        "id": comment.id,
+        "entity_type": entity_type,
+        "entity_id": comment.entity_id,
+        "author": {
+            "id": comment.author.id,
+            "full_name": comment.author.full_name,
+            "avatar_url": comment.author.avatar_url,
+        },
+        "content": comment.content,
+        "mentions": list(comment.mentions or []),
+        "parent_comment_id": comment.parent_comment_id,
+        "is_edited": comment.is_edited,
+        "edited_at": comment.edited_at,
+        "created_at": comment.created_at,
+        "replies": [],
+    }
 
 
 async def _validate_reply_parent_chain(
@@ -104,17 +88,10 @@ async def _validate_reply_parent_chain(
             raise InvalidOperationError("Comment thread cycle detected")
         seen_parent_ids.add(current_parent_id)
 
-        result = await db.execute(
-            select(
-                Comment.parent_comment_id,
-                Comment.entity_type,
-                Comment.entity_id,
-                Comment.is_deleted,
-            )
-            .where(Comment.id == current_parent_id)
-            .with_for_update()
+        row = await comment_repo.get_parent_chain_row_for_update(
+            db,
+            comment_id=current_parent_id,
         )
-        row = result.one_or_none()
         if row is None:
             raise InvalidOperationError("Parent comment not found for this entity")
 
@@ -142,13 +119,7 @@ async def resolve_entity_context(
     entity_id: UUID,
 ) -> CommentEntityContext:
     if entity_type == "project":
-        result = await db.execute(
-            select(Project.id, Project.name).where(
-                Project.id == entity_id,
-                Project.is_deleted == False,  # noqa: E712
-            )
-        )
-        row = result.one_or_none()
+        row = await comment_repo.get_project_context(db, entity_id=entity_id)
         if row is None:
             raise NotFoundError("Project not found")
         project_id, project_name = row
@@ -160,13 +131,7 @@ async def resolve_entity_context(
         )
 
     if entity_type == "task":
-        result = await db.execute(
-            select(Task.project_id, Task.name).where(
-                Task.id == entity_id,
-                Task.is_deleted == False,  # noqa: E712
-            )
-        )
-        row = result.one_or_none()
+        row = await comment_repo.get_task_context(db, entity_id=entity_id)
         if row is None:
             raise NotFoundError("Task not found")
         project_id, task_name = row
@@ -178,10 +143,7 @@ async def resolve_entity_context(
         )
 
     if entity_type == "resource":
-        result = await db.execute(
-            select(Resource.project_id, Resource.name).where(Resource.id == entity_id)
-        )
-        row = result.one_or_none()
+        row = await comment_repo.get_resource_context(db, entity_id=entity_id)
         if row is None:
             raise NotFoundError("Resource not found")
         project_id, resource_name = row
@@ -193,15 +155,7 @@ async def resolve_entity_context(
         )
 
     if entity_type == "assignment":
-        result = await db.execute(
-            select(Task.project_id, Task.name)
-            .join(Assignment, Assignment.task_id == Task.id)
-            .where(
-                Assignment.id == entity_id,
-                Task.is_deleted == False,  # noqa: E712
-            )
-        )
-        row = result.one_or_none()
+        row = await comment_repo.get_assignment_context(db, entity_id=entity_id)
         if row is None:
             raise NotFoundError("Assignment not found")
         project_id, task_name = row
@@ -213,10 +167,7 @@ async def resolve_entity_context(
         )
 
     if entity_type == "dependency":
-        result = await db.execute(
-            select(Dependency.project_id).where(Dependency.id == entity_id)
-        )
-        project_id = result.scalar_one_or_none()
+        project_id = await comment_repo.get_dependency_context(db, entity_id=entity_id)
         if project_id is None:
             raise NotFoundError("Dependency not found")
         return CommentEntityContext(
@@ -227,12 +178,7 @@ async def resolve_entity_context(
         )
 
     if entity_type == "project_member":
-        result = await db.execute(
-            select(ProjectMember.project_id, User.full_name)
-            .join(User, User.id == ProjectMember.user_id)
-            .where(ProjectMember.id == entity_id)
-        )
-        row = result.one_or_none()
+        row = await comment_repo.get_project_member_context(db, entity_id=entity_id)
         if row is None:
             raise NotFoundError("Project member not found")
         project_id, member_name = row
@@ -250,20 +196,14 @@ async def list_comments(
     db: AsyncSession,
     *,
     context: CommentEntityContext,
-) -> list[CommentItem]:
-    result = await db.execute(
-        select(Comment)
-        .options(selectinload(Comment.author))
-        .where(
-            Comment.entity_type == context.entity_type,
-            Comment.entity_id == context.entity_id,
-            Comment.is_deleted == False,  # noqa: E712
-        )
-        .order_by(Comment.created_at.asc())
+) -> list[CommentItemData]:
+    comments = await comment_repo.list_active_for_entity_with_author(
+        db,
+        entity_type=context.entity_type,
+        entity_id=context.entity_id,
     )
-    comments = list(result.scalars().all())
-    items_by_id = {comment.id: to_comment_item(comment) for comment in comments}
-    root_items: list[CommentItem] = []
+    items_by_id = {comment.id: to_comment_item_data(comment) for comment in comments}
+    root_items: list[CommentItemData] = []
     for comment in comments:
         item = items_by_id[comment.id]
         if comment.parent_comment_id is None:
@@ -276,7 +216,7 @@ async def list_comments(
             # created by historical races/corruption so these rows are healed
             # instead of only being hidden at read time.
             continue
-        parent_item.replies.append(item)
+        parent_item["replies"].append(item)
 
     return root_items
 
@@ -286,15 +226,10 @@ async def get_comment_by_id(
     *,
     comment_id: UUID,
 ) -> Comment | None:
-    result = await db.execute(
-        select(Comment)
-        .options(selectinload(Comment.author))
-        .where(
-            Comment.id == comment_id,
-            Comment.is_deleted == False,  # noqa: E712
-        )
+    return await comment_repo.get_active_by_id_with_author(
+        db,
+        comment_id=comment_id,
     )
-    return result.scalar_one_or_none()
 
 
 async def create_comment(
@@ -443,16 +378,11 @@ async def soft_delete_comment(
     # TODO(2026-03-08): This currently loads and locks all non-deleted comments
     # for the entity to compute a subtree delete. Revisit if comment volumes grow
     # (use recursive SQL/CTE or chunked traversal to reduce lock scope).
-    result = await db.execute(
-        select(Comment)
-        .where(
-            Comment.entity_type == comment.entity_type,
-            Comment.entity_id == comment.entity_id,
-            Comment.is_deleted == False,  # noqa: E712
-        )
-        .with_for_update()
+    comments = await comment_repo.list_active_for_entity_for_update(
+        db,
+        entity_type=comment_entity_type,
+        entity_id=comment.entity_id,
     )
-    comments = list(result.scalars().all())
     by_id = {row.id: row for row in comments}
     children: dict[UUID | None, list[UUID]] = defaultdict(list)
     for row in comments:
@@ -508,20 +438,15 @@ async def _resolve_mentions_for_project(
     if not mention_ids:
         return []
 
-    project_result = await db.execute(
-        select(Project.owner_id).where(
-            Project.id == project_id,
-            Project.is_deleted == False,  # noqa: E712
-        )
-    )
-    owner_id = project_result.scalar_one_or_none()
+    owner_id = await comment_repo.get_project_owner_id(db, project_id=project_id)
     if owner_id is None:
         raise NotFoundError("Project not found")
 
-    members_result = await db.execute(
-        select(ProjectMember.user_id).where(ProjectMember.project_id == project_id)
+    member_user_ids = await comment_repo.list_project_member_user_ids(
+        db,
+        project_id=project_id,
     )
-    allowed_user_ids = {owner_id, *members_result.scalars().all()}
+    allowed_user_ids = {owner_id, *member_user_ids}
     invalid_user_ids = [
         mention_id for mention_id in mention_ids if mention_id not in allowed_user_ids
     ]
@@ -542,10 +467,9 @@ async def _create_mention_notifications(
     if not mentioned_user_ids:
         return
 
-    project_result = await db.execute(
-        select(Project.name).where(Project.id == project_id)
+    project_name = (
+        await comment_repo.get_project_name(db, project_id=project_id) or "Project"
     )
-    project_name = project_result.scalar_one_or_none() or "Project"
     for user_id in mentioned_user_ids:
         if user_id == actor_id:
             continue

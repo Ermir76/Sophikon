@@ -116,7 +116,7 @@ async def bulk_create_tasks(
     tasks, errors = await task_bulk_service.bulk_create_tasks(
         db,
         access.project,
-        body.tasks,
+        [task.model_dump(mode="python") for task in body.tasks],
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,
@@ -143,7 +143,13 @@ async def bulk_update_tasks(
     succeeded, failed, errors = await task_bulk_service.bulk_update_tasks(
         db,
         access.project,
-        body.tasks,
+        [
+            {
+                "id": task.id,
+                "data": task.data.model_dump(mode="python", exclude_unset=True),
+            }
+            for task in body.tasks
+        ],
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,

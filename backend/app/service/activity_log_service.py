@@ -6,20 +6,22 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from fastapi import Request
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.activity_log import ActivityLog
 from app.models.enums import AuditAction
 from app.models.user import User
-from app.schema.activity_log import ActivityEntityType
-
-if TYPE_CHECKING:
-    from app.schema.activity_log import ActivityLogItem
+from app.repository import activity_log_repo
+from app.service.contracts.activity_log import (
+    ActivityActorData,
+    ActivityChangesData,
+    ActivityEntityType,
+    ActivityLogItemData,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,7 +101,8 @@ async def log_activity(
     context: ActivityContext | None = None,
 ) -> ActivityLog:
     """Insert an activity row into the current transaction."""
-    entry = ActivityLog(
+    entry = await activity_log_repo.create(
+        db,
         project_id=project_id,
         user_id=context.user_id if context else None,
         action=action,
@@ -110,8 +113,6 @@ async def log_activity(
         ip_address=context.ip_address if context else None,
         user_agent=context.user_agent if context else None,
     )
-    db.add(entry)
-    await db.flush()
     if project_id is not None:
         from app.service import realtime_service
 
@@ -138,57 +139,41 @@ async def list_activity(
     user_id: UUID | None = None,
     entity_type: ActivityEntityType | None = None,
     action: AuditAction | None = None,
-) -> tuple[list["ActivityLogItem"], int]:
+) -> tuple[list[ActivityLogItemData], int]:
     """List paginated project activity entries, newest first."""
-    from app.schema.activity_log import ActivityActor, ActivityChanges, ActivityLogItem
-
-    filters = [ActivityLog.project_id == project_id]
-    if user_id is not None:
-        filters.append(ActivityLog.user_id == user_id)
-    if entity_type is not None:
-        filters.append(ActivityLog.entity_type == entity_type)
-    if action is not None:
-        filters.append(ActivityLog.action == action)
-
-    count_query = select(func.count()).select_from(
-        select(ActivityLog.id).where(*filters).subquery()
-    )
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(ActivityLog, User.id, User.full_name, User.avatar_url)
-        .outerjoin(User, User.id == ActivityLog.user_id)
-        .where(*filters)
-        .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
-        .offset(offset)
-        .limit(per_page)
+    rows, total = await activity_log_repo.list_with_user_info(
+        db,
+        project_id=project_id,
+        page=page,
+        per_page=per_page,
+        user_id=user_id,
+        entity_type=entity_type,
+        action=action,
     )
 
-    items: list[ActivityLogItem] = []
-    for entry, actor_id, actor_name, avatar_url in result.all():
+    items: list[ActivityLogItemData] = []
+    for entry, actor_id, actor_name, avatar_url in rows:
+        actor: ActivityActorData | None = None
+        if actor_id is not None:
+            actor = {
+                "id": actor_id,
+                "full_name": actor_name,
+                "avatar_url": avatar_url,
+            }
+        changes: ActivityChangesData | None = None
+        if entry.changes:
+            changes = entry.changes
         items.append(
-            ActivityLogItem(
-                id=entry.id,
-                user=(
-                    ActivityActor(
-                        id=actor_id,
-                        full_name=actor_name,
-                        avatar_url=avatar_url,
-                    )
-                    if actor_id is not None
-                    else None
-                ),
-                action=entry.action,
-                entity_type=entry.entity_type,
-                entity_id=entry.entity_id,
-                entity_name=entry.entity_name,
-                changes=ActivityChanges.model_validate(entry.changes)
-                if entry.changes
-                else None,
-                created_at=entry.created_at,
-            )
+            {
+                "id": entry.id,
+                "user": actor,
+                "action": entry.action,
+                "entity_type": entry.entity_type,
+                "entity_id": entry.entity_id,
+                "entity_name": entry.entity_name,
+                "changes": changes,
+                "created_at": entry.created_at,
+            }
         )
 
-    return items, total
+    return items, int(total)

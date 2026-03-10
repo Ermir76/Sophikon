@@ -41,7 +41,7 @@ async def list_project_activity(
         action=action,
     )
     return PaginatedResponse(
-        items=items,
+        items=[ActivityLogItem.model_validate(item) for item in items],
         total=total,
         page=page,
         per_page=per_page,

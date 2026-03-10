@@ -176,18 +176,18 @@ async def test_list_activity_filters_and_paginates_results(
     )
 
     assert total == 3
-    assert [item.action for item in page_one_items] == [
+    assert [item["action"] for item in page_one_items] == [
         AuditAction.DELETED,
         AuditAction.UPDATED,
     ]
-    assert [item.entity_name for item in page_one_items] == [
+    assert [item["entity_name"] for item in page_one_items] == [
         "Lead Engineer",
         "Kickoff",
     ]
-    assert page_one_items[0].user is not None
-    assert page_one_items[0].user.full_name == "Activity Reviewer"
-    assert page_one_items[1].changes is not None
-    assert [field.model_dump() for field in page_one_items[1].changes.fields] == [
+    assert page_one_items[0]["user"] is not None
+    assert page_one_items[0]["user"]["full_name"] == "Activity Reviewer"
+    assert page_one_items[1]["changes"] is not None
+    assert page_one_items[1]["changes"]["fields"] == [
         {"field": "percent_complete", "old": 10, "new": 25}
     ]
 
@@ -199,9 +199,9 @@ async def test_list_activity_filters_and_paginates_results(
     )
 
     assert page_two_total == 3
-    assert [item.action for item in page_two_items] == [AuditAction.CREATED]
-    assert page_two_items[0].user is not None
-    assert page_two_items[0].user.id == owner.id
+    assert [item["action"] for item in page_two_items] == [AuditAction.CREATED]
+    assert page_two_items[0]["user"] is not None
+    assert page_two_items[0]["user"]["id"] == owner.id
 
     filtered_items, filtered_total = await activity_log_service.list_activity(
         session,
@@ -215,7 +215,7 @@ async def test_list_activity_filters_and_paginates_results(
 
     assert filtered_total == 1
     assert len(filtered_items) == 1
-    assert filtered_items[0].action == AuditAction.UPDATED
-    assert filtered_items[0].entity_type == "task"
-    assert filtered_items[0].user is not None
-    assert filtered_items[0].user.id == owner.id
+    assert filtered_items[0]["action"] == AuditAction.UPDATED
+    assert filtered_items[0]["entity_type"] == "task"
+    assert filtered_items[0]["user"] is not None
+    assert filtered_items[0]["user"]["id"] == owner.id

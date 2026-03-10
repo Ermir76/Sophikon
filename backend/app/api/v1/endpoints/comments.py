@@ -50,7 +50,9 @@ async def list_comments(
         db,
         context=context,
     )
-    return CommentListResponse(data=comments)
+    return CommentListResponse(
+        data=[CommentItem.model_validate(item) for item in comments]
+    )
 
 
 @router.post("", response_model=CommentItem, status_code=status.HTTP_201_CREATED)
@@ -81,7 +83,7 @@ async def create_comment(
     comment = await comment_service.get_comment_by_id(db, comment_id=comment.id)
     if comment is None:
         raise NotFoundError("Comment not found")
-    return comment_service.to_comment_item(comment)
+    return CommentItem.model_validate(comment_service.to_comment_item_data(comment))
 
 
 @router.patch("/{comment_id}", response_model=CommentItem)
@@ -117,7 +119,7 @@ async def update_comment(
     comment = await comment_service.get_comment_by_id(db, comment_id=comment.id)
     if comment is None:
         raise NotFoundError("Comment not found")
-    return comment_service.to_comment_item(comment)
+    return CommentItem.model_validate(comment_service.to_comment_item_data(comment))
 
 
 @router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -14,9 +14,9 @@ from app.core.exceptions import InvalidOperationError
 from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
-from app.schema.task import TaskBulkUpdateItem, TaskCreate
 from app.service import activity_log_service, realtime_service, scheduling_service
 from app.service.activity_log_service import ActivityContext
+from app.service.contracts.task_bulk import TaskBulkUpdateInputItem, TaskCreateInput
 from app.service.task_rollup_service import (
     sync_leaf_duration_progress,
     validate_summary_rollup_edit,
@@ -32,7 +32,7 @@ from app.service.task_service import (
 async def bulk_create_tasks(
     db: AsyncSession,
     project: Project,
-    data: list[TaskCreate],
+    data: list[TaskCreateInput],
     activity_context: ActivityContext | None = None,
 ) -> tuple[list[Task], list[dict]]:
     """
@@ -76,10 +76,10 @@ async def bulk_create_tasks(
         )
         try:
             async with db.begin_nested():
-                if task_data.parent_task_id:
+                if task_data["parent_task_id"]:
                     parent_result = await db.execute(
                         select(Task).where(
-                            Task.id == task_data.parent_task_id,
+                            Task.id == task_data["parent_task_id"],
                             Task.project_id == project.id,
                             Task.is_deleted == False,  # noqa: E712
                         )
@@ -87,41 +87,41 @@ async def bulk_create_tasks(
                     parent = parent_result.scalar_one_or_none()
                     if not parent:
                         raise InvalidOperationError(
-                            f"Parent task {task_data.parent_task_id} not found"
+                            f"Parent task {task_data['parent_task_id']} not found"
                         )
                     parent_ids_to_recalc.add(parent.id)
 
-                order_index = await get_next_order(task_data.parent_task_id)
+                order_index = await get_next_order(task_data["parent_task_id"])
                 duration_days = (
-                    max(1, task_data.duration // minutes_per_day)
-                    if not task_data.is_milestone
+                    max(1, task_data["duration"] // minutes_per_day)
+                    if not task_data["is_milestone"]
                     else 0
                 )
                 # TODO(2026-03-07): Align finish_date convention with
                 # scheduling/calendar math (inclusive vs exclusive end date).
-                finish_date = task_data.start_date + timedelta(days=duration_days)
+                finish_date = task_data["start_date"] + timedelta(days=duration_days)
 
                 task = Task(
                     project_id=project.id,
-                    parent_task_id=task_data.parent_task_id,
-                    name=task_data.name,
-                    notes=task_data.notes,
+                    parent_task_id=task_data["parent_task_id"],
+                    name=task_data["name"],
+                    notes=task_data["notes"],
                     wbs_code="TEMP",  # Will be fixed by regenerate_wbs_codes
                     outline_level=1,  # Will be fixed by regenerate_wbs_codes
                     order_index=order_index,
-                    start_date=task_data.start_date,
+                    start_date=task_data["start_date"],
                     finish_date=finish_date,
-                    duration=task_data.duration,
+                    duration=task_data["duration"],
                     actual_duration=0,
-                    remaining_duration=task_data.duration,
-                    is_milestone=task_data.is_milestone,
-                    task_type=task_data.task_type,
-                    effort_driven=task_data.effort_driven,
-                    constraint_type=task_data.constraint_type,
-                    constraint_date=task_data.constraint_date,
-                    deadline=task_data.deadline,
-                    priority=task_data.priority,
-                    fixed_cost=task_data.fixed_cost,
+                    remaining_duration=task_data["duration"],
+                    is_milestone=task_data["is_milestone"],
+                    task_type=task_data["task_type"],
+                    effort_driven=task_data["effort_driven"],
+                    constraint_type=task_data["constraint_type"],
+                    constraint_date=task_data["constraint_date"],
+                    deadline=task_data["deadline"],
+                    priority=task_data["priority"],
+                    fixed_cost=task_data["fixed_cost"],
                 )
                 sync_leaf_duration_progress(task)
                 db.add(task)
@@ -173,7 +173,7 @@ async def bulk_create_tasks(
 async def bulk_update_tasks(
     db: AsyncSession,
     project: Project,
-    updates: list[TaskBulkUpdateItem],
+    updates: list[TaskBulkUpdateInputItem],
     activity_context: ActivityContext | None = None,
 ) -> tuple[int, int, list[dict]]:
     """
@@ -198,20 +198,20 @@ async def bulk_update_tasks(
             async with db.begin_nested():
                 task_result = await db.execute(
                     select(Task).where(
-                        Task.id == update_item.id,
+                        Task.id == update_item["id"],
                         Task.project_id == project.id,
                         Task.is_deleted == False,  # noqa: E712
                     )
                 )
                 task = task_result.scalar_one_or_none()
                 if not task:
-                    raise InvalidOperationError(f"Task {update_item.id} not found")
+                    raise InvalidOperationError(f"Task {update_item['id']} not found")
 
                 # Store parents for recalculation before mutating
                 if task.parent_task_id:
                     parent_ids_to_recalc.add(task.parent_task_id)
 
-                update_data = update_item.data.model_dump(exclude_unset=True)
+                update_data = dict(update_item["data"])
                 before = {field: getattr(task, field) for field in update_data}
 
                 # Check if parent changed
@@ -281,7 +281,9 @@ async def bulk_update_tasks(
             if pending is not None:
                 del pending[pending_before:]
             failed += 1
-            errors.append({"index": idx, "task_id": update_item.id, "message": str(e)})
+            errors.append(
+                {"index": idx, "task_id": update_item["id"], "message": str(e)}
+            )
             continue
 
     if succeeded > 0:
