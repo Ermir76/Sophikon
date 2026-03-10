@@ -1,21 +1,9 @@
 from datetime import date, datetime
-from typing import Annotated, Literal
-from uuid import UUID
+from typing import Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-
-def _coerce_uuid(value):
-    if value is None or isinstance(value, UUID):
-        return value
-
-    try:
-        return UUID(str(value))
-    except (TypeError, ValueError, AttributeError):
-        return value
-
-
-SchemaUUID = Annotated[UUID, BeforeValidator(_coerce_uuid)]
+from app.schema._uuid import SchemaUUID
 
 
 class UiContext(BaseModel):

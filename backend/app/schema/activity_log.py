@@ -4,11 +4,14 @@ Pydantic schemas for project activity log endpoints.
 
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel
 
 from app.models.enums import AuditAction
+
+type JsonPrimitive = str | int | float | bool | None
+type JsonValue = JsonPrimitive | list[JsonValue] | dict[str, JsonValue]
 
 ActivityEntityType = Literal[
     "project",
@@ -29,8 +32,8 @@ class ActivityActor(BaseModel):
 
 class ActivityChangeField(BaseModel):
     field: str
-    old: Any = None
-    new: Any = None
+    old: JsonValue = None
+    new: JsonValue = None
 
 
 class ActivityChanges(BaseModel):

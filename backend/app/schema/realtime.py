@@ -3,12 +3,12 @@ Typed schemas for realtime websocket messages.
 """
 
 from datetime import datetime
-from typing import Annotated, Any, Literal
-from uuid import UUID
+from typing import Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, Field
+from pydantic import BaseModel, Field
 
 from app.models.enums import AuditAction
+from app.schema._uuid import SchemaUUID
 from app.schema.notification import NotificationItem
 
 RealtimeChannel = Literal[
@@ -37,19 +37,6 @@ RealtimeEntityType = Literal[
     "project_member",
     "comment",
 ]
-
-
-def _coerce_uuid(value):
-    if value is None or isinstance(value, UUID):
-        return value
-
-    try:
-        return UUID(str(value))
-    except (TypeError, ValueError, AttributeError):
-        return value
-
-
-SchemaUUID = Annotated[UUID, BeforeValidator(_coerce_uuid)]
 
 
 class RealtimeActor(BaseModel):
@@ -99,7 +86,7 @@ class RealtimeEventMessage(BaseModel):
 
 class SubscribeMessage(BaseModel):
     type: Literal["subscribe"]
-    channels: list[RealtimeChannel]
+    channels: list[RealtimeChannel] = Field(max_length=32)
 
 
 class PresenceMessage(BaseModel):
