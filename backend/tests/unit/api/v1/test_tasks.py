@@ -496,6 +496,44 @@ async def test_create_task_invalid_priority(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_task_rejects_overlong_notes_and_color(client: AsyncClient):
+    """Create — overlong notes/color — 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_t_len@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr T Len",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org T Len", "slug": "org-t-len"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj T Len",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Too Long Task",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "notes": "n" * 5001,
+            "color": "c" * 33,
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_get_task_success(client: AsyncClient):
     """Get — success — returns task (200)."""
     await client.post(
@@ -685,6 +723,50 @@ async def test_update_task_syncs_duration_progress_fields(client: AsyncClient):
     updated2 = resp2.json()
     assert updated2["actual_duration"] == 150
     assert updated2["remaining_duration"] == 450
+
+
+@pytest.mark.asyncio
+async def test_update_task_rejects_overlong_notes_and_color(client: AsyncClient):
+    """Update — overlong notes/color — 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_t_len@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd T Len",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd TL", "slug": "org-upd-t-len"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd TL",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    task_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "Task Len", "start_date": "2024-01-01", "duration": 480},
+    )
+    task_id = task_resp.json()["id"]
+
+    notes_response = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}",
+        json={"notes": "n" * 5001},
+    )
+    assert notes_response.status_code == 422
+
+    color_response = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}",
+        json={"color": "c" * 33},
+    )
+    assert color_response.status_code == 422
 
 
 @pytest.mark.asyncio

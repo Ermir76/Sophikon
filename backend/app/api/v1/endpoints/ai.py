@@ -27,8 +27,19 @@ from app.schema.ai import (
     AISuggestionsResponse,
 )
 from app.service import ai_service
+from app.service.contracts.ai import AIChatInput, AIEstimateInput
 
 router = APIRouter(prefix="/projects/{project_id}/ai", tags=["ai"])
+
+
+def _to_chat_input(body: AIChatRequest) -> AIChatInput:
+    # API schema has already validated the request body.
+    return AIChatInput.model_construct(**body.model_dump(mode="python"))
+
+
+def _to_estimate_input(body: AIEstimateRequest) -> AIEstimateInput:
+    # API schema has already validated the request body.
+    return AIEstimateInput.model_construct(**body.model_dump(mode="python"))
 
 
 @router.post("/chat")
@@ -39,11 +50,12 @@ async def chat_with_ai(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     check_role(access, "owner", "manager", "member", "viewer")
+    service_body = _to_chat_input(body)
     stream = await ai_service.prepare_chat_stream(
         db,
         project=access.project,
         user_id=user.id,
-        body=body,
+        body=service_body,
     )
 
     return StreamingResponse(
@@ -65,12 +77,13 @@ async def estimate_with_ai(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     check_role(access, "owner", "manager", "member")
-    return await ai_service.estimate_for_project(
+    result = await ai_service.estimate_for_project(
         db,
         project=access.project,
         user_id=user.id,
-        body=body,
+        body=_to_estimate_input(body),
     )
+    return result
 
 
 @router.get("/suggestions", response_model=AISuggestionsResponse)

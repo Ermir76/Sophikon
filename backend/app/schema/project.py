@@ -34,13 +34,13 @@ class ProjectCreate(BaseModel):
 
     organization_id: uuid.UUID
     name: str = Field(min_length=1, max_length=255)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=4000)
     start_date: date
     schedule_from: ScheduleFrom = ScheduleFrom.START
     currency: str = Field(default="USD", min_length=3, max_length=3)
     budget: Decimal | None = None
     settings: ProjectSettingsPatch | None = None
-    color: str | None = None
+    color: str | None = Field(default=None, max_length=32)
 
 
 class ProjectUpdate(ModelPatchSchema):
@@ -60,12 +60,12 @@ class ProjectUpdate(ModelPatchSchema):
     currency: str | None = Field(default=None, min_length=3, max_length=3)
     settings: ProjectSettingsPatch | None = Field(default=None)
 
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=4000)
     finish_date: date | None = None
     status_date: date | None = None
     default_calendar_id: uuid.UUID | None = None
     budget: Decimal | None = None
-    color: str | None = None
+    color: str | None = Field(default=None, max_length=32)
 
 
 # Response Schemas

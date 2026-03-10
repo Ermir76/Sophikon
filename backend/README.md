@@ -60,6 +60,12 @@ The `Dockerfile` uses a multi-stage build with `uv` for dependency installation.
 docker compose up backend --build
 ```
 
+## Request Size Limits
+
+Ingress request size is capped at `10M` via Nginx in both:
+- `nginx/nginx.conf`
+- `nginx/nginx.ssl.conf`
+
 ## Linting
 
 ```bash

@@ -643,6 +643,40 @@ async def test_create_project_missing_fields(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_project_rejects_overlong_description_and_color(
+    client: AsyncClient,
+):
+    """Create — overlong description/color — returns 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_proj_len@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr Proj Len",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Len", "slug": "org-proj-len"}
+    )
+    org_id = org_resp.json()["id"]
+
+    overlong_description = "x" * 4001
+    overlong_color = "c" * 33
+
+    response = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Too Long",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+            "description": overlong_description,
+            "color": overlong_color,
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_get_project_success(
     client: AsyncClient, session: AsyncSession, setup_roles
 ):
@@ -1037,6 +1071,50 @@ async def test_update_project_invalid_fields(client: AsyncClient):
         f"/api/v1/projects/{proj_id}", json={"start_date": "invalid-date"}
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_project_rejects_overlong_description_and_color(
+    client: AsyncClient,
+):
+    """Update — overlong description/color — returns 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_len@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Len",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Upd Len", "slug": "org-upd-proj-len"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Len",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    overlong_description = "x" * 4001
+    overlong_color = "c" * 33
+
+    description_response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"description": overlong_description},
+    )
+    assert description_response.status_code == 422
+
+    color_response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"color": overlong_color},
+    )
+    assert color_response.status_code == 422
 
 
 @pytest.mark.asyncio

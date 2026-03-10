@@ -20,7 +20,7 @@ class TaskCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=500)
     parent_task_id: uuid.UUID | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=5000)
     start_date: date
     duration: int = Field(default=480, ge=0, description="Duration in minutes")
     is_milestone: bool = False
@@ -31,7 +31,7 @@ class TaskCreate(BaseModel):
     deadline: date | None = None
     priority: int = Field(default=500, ge=0, le=1000)
     fixed_cost: Decimal = Decimal("0")
-    color: str | None = None
+    color: str | None = Field(default=None, max_length=32)
 
 
 class TaskUpdate(ModelPatchSchema):
@@ -57,10 +57,10 @@ class TaskUpdate(ModelPatchSchema):
     fixed_cost: Decimal | None = Field(default=None)
 
     parent_task_id: uuid.UUID | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=5000)
     constraint_date: date | None = None
     deadline: date | None = None
-    color: str | None = None
+    color: str | None = Field(default=None, max_length=32)
 
 
 class TaskReorder(BaseModel):
