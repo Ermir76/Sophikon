@@ -19,16 +19,16 @@ from app.models.ai_usage import AIUsage
 from app.models.enums import AIMessageRole
 from app.models.project import Project
 from app.models.task import Task
-from app.schema.ai import (
+from app.service.contracts.ai import (
     AIChatEvent,
-    AIChatRequest,
-    AIEstimateRequest,
-    AIEstimateResponse,
-    AIServiceChatRequest,
-    AIServiceEstimateRequest,
-    AIServiceEstimateTaskInput,
-    AIServiceSuggestionsRequest,
-    AISuggestionsResponse,
+    AIChatInput,
+    AIEstimateInput,
+    AIEstimateResult,
+    AIProviderChatRequest,
+    AIProviderEstimateRequest,
+    AIProviderEstimateTaskInput,
+    AIProviderSuggestionsRequest,
+    AISuggestionsResult,
     AIUsageMeta,
     ProjectContext,
     ProjectContextTask,
@@ -199,7 +199,7 @@ async def track_usage(
 
 
 async def stream_chat(
-    body: AIServiceChatRequest,
+    body: AIProviderChatRequest,
 ) -> AsyncGenerator[AIChatEvent]:
     try:
         async with httpx.AsyncClient(timeout=_request_timeout()) as client:
@@ -229,7 +229,7 @@ async def stream_chat(
         raise InvalidOperationError("AI service is unavailable")
 
 
-async def request_estimate(body: AIServiceEstimateRequest) -> dict:
+async def request_estimate(body: AIProviderEstimateRequest) -> dict:
     try:
         async with httpx.AsyncClient(timeout=_request_timeout()) as client:
             response = await client.post(
@@ -247,7 +247,7 @@ async def request_estimate(body: AIServiceEstimateRequest) -> dict:
         raise InvalidOperationError("AI estimation service is unavailable")
 
 
-async def request_suggestions(body: AIServiceSuggestionsRequest) -> dict:
+async def request_suggestions(body: AIProviderSuggestionsRequest) -> dict:
     try:
         async with httpx.AsyncClient(timeout=_request_timeout()) as client:
             response = await client.post(
@@ -275,7 +275,7 @@ async def prepare_chat_stream(
     *,
     project: Project,
     user_id: UUID,
-    body: AIChatRequest,
+    body: AIChatInput,
 ) -> AsyncGenerator[str]:
     conversation = await get_or_create_conversation(
         db,
@@ -293,7 +293,7 @@ async def prepare_chat_stream(
     await db.commit()
 
     context = await build_project_context(db, project)
-    service_request = AIServiceChatRequest(
+    service_request = AIProviderChatRequest(
         message=body.message,
         project_context=context,
         conversation_id=conversation.id,
@@ -405,9 +405,9 @@ async def _build_estimate_task_inputs(
     db: AsyncSession,
     *,
     project_id: UUID,
-    body: AIEstimateRequest,
-) -> list[AIServiceEstimateTaskInput]:
-    task_inputs: list[AIServiceEstimateTaskInput] = []
+    body: AIEstimateInput,
+) -> list[AIProviderEstimateTaskInput]:
+    task_inputs: list[AIProviderEstimateTaskInput] = []
 
     if body.task_ids:
         result = await db.execute(
@@ -424,7 +424,7 @@ async def _build_estimate_task_inputs(
             raise NotFoundError("One or more tasks were not found in this project")
 
         task_inputs.extend(
-            AIServiceEstimateTaskInput(
+            AIProviderEstimateTaskInput(
                 task_id=task.id,
                 task_name=task.name,
                 task_description=task.notes,
@@ -434,7 +434,7 @@ async def _build_estimate_task_inputs(
         )
     elif body.task_name:
         task_inputs.append(
-            AIServiceEstimateTaskInput(
+            AIProviderEstimateTaskInput(
                 task_name=body.task_name,
                 task_description=body.task_description,
                 duration=None,
@@ -449,22 +449,22 @@ async def estimate_for_project(
     *,
     project: Project,
     user_id: UUID,
-    body: AIEstimateRequest,
-) -> AIEstimateResponse:
+    body: AIEstimateInput,
+) -> AIEstimateResult:
     task_inputs = await _build_estimate_task_inputs(
         db,
         project_id=project.id,
         body=body,
     )
     context = await build_project_context(db, project)
-    service_request = AIServiceEstimateRequest(
+    service_request = AIProviderEstimateRequest(
         project_context=context,
         task_inputs=task_inputs,
         include_reasoning=body.include_reasoning,
     )
 
     raw_response = await request_estimate(service_request)
-    response = AIEstimateResponse.model_validate(raw_response)
+    response = AIEstimateResult.model_validate(raw_response)
 
     await track_usage(
         db,
@@ -482,15 +482,15 @@ async def suggestions_for_project(
     project: Project,
     user_id: UUID,
     limit: int,
-) -> AISuggestionsResponse:
+) -> AISuggestionsResult:
     context = await build_project_context(db, project)
-    service_request = AIServiceSuggestionsRequest(
+    service_request = AIProviderSuggestionsRequest(
         project_context=context,
         limit=limit,
     )
 
     raw_response = await request_suggestions(service_request)
-    response = AISuggestionsResponse.model_validate(raw_response)
+    response = AISuggestionsResult.model_validate(raw_response)
 
     await track_usage(
         db,

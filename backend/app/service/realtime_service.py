@@ -14,14 +14,14 @@ from app.core.user_notification_websocket_manager import (
 )
 from app.core.websocket_manager import websocket_manager
 from app.models.enums import AuditAction
-from app.schema.realtime import (
+from app.service.activity_log_service import ActivityContext, serialize_activity_value
+from app.service.contracts.realtime import (
     JsonValue,
     RealtimeActor,
     RealtimeChannel,
     RealtimeEntityType,
-    RealtimeEventMessage,
+    RealtimeEventPayload,
 )
-from app.service.activity_log_service import ActivityContext, serialize_activity_value
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ def _build_event_payload(
     context: ActivityContext | None,
     metadata: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    return RealtimeEventMessage(
+    return RealtimeEventPayload(
         type=event_type,
         project_id=project_id,
         actor=_actor_from_context(context),

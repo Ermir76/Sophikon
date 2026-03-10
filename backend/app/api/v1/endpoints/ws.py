@@ -12,7 +12,7 @@ from app.core.exceptions import (
     NotFoundError,
     PermissionDeniedError,
 )
-from app.schema.realtime import RealtimeChannel
+from app.service.contracts.realtime import RealtimeChannel
 from app.service.ws_session_service import (
     serve_notification_socket,
     serve_project_socket,

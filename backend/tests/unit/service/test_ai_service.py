@@ -17,16 +17,16 @@ from app.models.enums import AIMessageRole, ProjectStatus
 from app.models.project import Project
 from app.models.task import Task
 from app.models.user import User
-from app.schema.ai import (
+from app.service import ai_service
+from app.service.contracts.ai import (
     AIChatEvent,
-    AIChatRequest,
-    AIEstimateRequest,
-    AIServiceChatRequest,
-    AIServiceEstimateRequest,
-    AIServiceSuggestionsRequest,
+    AIChatInput,
+    AIEstimateInput,
+    AIProviderChatRequest,
+    AIProviderEstimateRequest,
+    AIProviderSuggestionsRequest,
     AIUsageMeta,
 )
-from app.service import ai_service
 
 
 async def _register_user(client: AsyncClient, email: str, full_name: str) -> None:
@@ -158,7 +158,7 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
         session,
         project=project,
         user_id=user.id,
-        body=AIChatRequest(message="How are we doing?"),
+        body=AIChatInput(message="How are we doing?"),
     )
     payloads = [chunk async for chunk in stream]
 
@@ -202,7 +202,7 @@ def test_ai_schema_accepts_uuid_utils_uuid_values():
     user_id = uuid7()
     project_id = uuid7()
 
-    request = AIServiceChatRequest(
+    request = AIProviderChatRequest(
         message="Hello",
         project_context={
             "project_id": project_id,
@@ -273,7 +273,7 @@ async def test_estimate_for_project_builds_task_inputs_and_tracks_usage(
         session,
         project=project,
         user_id=user.id,
-        body=AIEstimateRequest(task_ids=[task.id], include_reasoning=True),
+        body=AIEstimateInput(task_ids=[task.id], include_reasoning=True),
     )
 
     usage_rows = list(
@@ -309,7 +309,7 @@ async def test_estimate_for_project_rejects_missing_task_ids(
             session,
             project=project,
             user_id=user.id,
-            body=AIEstimateRequest(task_ids=[uuid.uuid4()]),
+            body=AIEstimateInput(task_ids=[uuid.uuid4()]),
         )
 
 
@@ -348,7 +348,7 @@ async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
     events = [
         event
         async for event in ai_service.stream_chat(
-            AIServiceChatRequest(
+            AIProviderChatRequest(
                 message="Status?",
                 project_context=_service_project_context_payload(),
                 conversation_id=uuid.uuid4(),
@@ -385,7 +385,7 @@ async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailab
 
     with pytest.raises(InvalidOperationError, match="AI service is unavailable"):
         events = ai_service.stream_chat(
-            AIServiceChatRequest(
+            AIProviderChatRequest(
                 message="Status?",
                 project_context=_service_project_context_payload(),
                 conversation_id=uuid.uuid4(),
@@ -423,7 +423,7 @@ async def test_request_estimate_rejects_malformed_ai_response(
 
     with pytest.raises(InvalidOperationError, match="Malformed AI estimation response"):
         await ai_service.request_estimate(
-            AIServiceEstimateRequest(
+            AIProviderEstimateRequest(
                 project_context=_service_project_context_payload(),
                 task_inputs=[
                     {
@@ -468,7 +468,7 @@ async def test_request_suggestions_rejects_malformed_ai_response(
         match="Malformed AI suggestions response",
     ):
         await ai_service.request_suggestions(
-            AIServiceSuggestionsRequest(
+            AIProviderSuggestionsRequest(
                 project_context=_service_project_context_payload(),
                 limit=5,
             )

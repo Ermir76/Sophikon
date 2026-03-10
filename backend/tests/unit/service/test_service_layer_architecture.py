@@ -4,15 +4,22 @@ import ast
 from pathlib import Path
 
 MIGRATED_SERVICE_MODULES = (
+    "activity_log_service.py",
+    "ai_service.py",
     "assignment_service.py",
     "calendar_service.py",
+    "comment_service.py",
     "dependency_service.py",
     "organization_member_service.py",
     "organization_service.py",
     "project_member_service.py",
     "project_service.py",
+    "realtime_service.py",
     "resource_service.py",
+    "task_bulk_service.py",
     "task_service.py",
+    "ws_protocol.py",
+    "ws_session_service.py",
 )
 
 

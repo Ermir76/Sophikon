@@ -14,8 +14,8 @@ from app.core.user_notification_websocket_manager import (
 )
 from app.core.websocket_manager import websocket_manager
 from app.models.user import User
-from app.schema.realtime import RealtimeChannel
 from app.service import notification_service
+from app.service.contracts.realtime import RealtimeChannel
 from app.service.ws_protocol import (
     build_error_payload,
     parse_notification_client_message,
