@@ -6,9 +6,10 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, computed_field
+from pydantic import BaseModel, BeforeValidator, computed_field, model_validator
 
 from app.models.enums import NotificationType
+from app.schema._patch import reject_explicit_nulls_for_fields_set
 
 
 def _coerce_uuid(value):
@@ -66,10 +67,16 @@ class NotificationSettings(BaseModel):
 
 
 class NotificationSettingsUpdate(BaseModel):
-    email_task_assigned: bool = None
-    email_mentioned: bool = None
-    email_deadline_approaching: bool = None
-    push_enabled: bool = None
+    email_task_assigned: bool | None = None
+    email_mentioned: bool | None = None
+    email_deadline_approaching: bool | None = None
+    push_enabled: bool | None = None
+
+    @model_validator(mode="after")
+    def reject_explicit_nulls(self) -> "NotificationSettingsUpdate":
+        # Keep settings PATCH strict: settings keys may be omitted, but never null.
+        reject_explicit_nulls_for_fields_set(self)
+        return self
 
 
 class NotificationReadAllResponse(BaseModel):

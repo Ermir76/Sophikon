@@ -8,9 +8,11 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from app.models.assignment import Assignment
 from app.models.enums import RateTable, WorkContour
+from app.schema._patch import ModelPatchSchema
 
-# ── Request Schemas ──
+# Request Schemas
 
 
 class AssignmentCreate(BaseModel):
@@ -25,27 +27,28 @@ class AssignmentCreate(BaseModel):
     rate_table: RateTable = RateTable.A
 
 
-class AssignmentUpdate(BaseModel):
+class AssignmentUpdate(ModelPatchSchema):
     """
     Update an existing assignment (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    units: Decimal = Field(default=None, ge=0)
-    start_date: date = None
-    finish_date: date = None
-    work: int = Field(default=None, ge=0)
-    actual_work: int = Field(default=None, ge=0)
-    remaining_work: int = Field(default=None, ge=0)
-    work_contour: WorkContour = None
-    rate_table: RateTable = None
-    percent_work_complete: Decimal = Field(default=None, ge=0, le=100)
-    is_confirmed: bool = None
+    __sa_model__ = Assignment
+
+    units: Decimal | None = Field(default=None, ge=0)
+    start_date: date | None = Field(default=None)
+    finish_date: date | None = Field(default=None)
+    work: int | None = Field(default=None, ge=0)
+    actual_work: int | None = Field(default=None, ge=0)
+    remaining_work: int | None = Field(default=None, ge=0)
+    work_contour: WorkContour | None = Field(default=None)
+    rate_table: RateTable | None = Field(default=None)
+    percent_work_complete: Decimal | None = Field(default=None, ge=0, le=100)
+    is_confirmed: bool | None = Field(default=None)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class AssignmentResponse(BaseModel):

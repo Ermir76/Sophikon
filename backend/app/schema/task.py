@@ -9,8 +9,10 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import ConstraintType, TaskType
+from app.models.task import Task
+from app.schema._patch import ModelPatchSchema
 
-# ── Request Schemas ──
+# Request Schemas
 
 
 class TaskCreate(BaseModel):
@@ -32,27 +34,28 @@ class TaskCreate(BaseModel):
     color: str | None = None
 
 
-class TaskUpdate(BaseModel):
+class TaskUpdate(ModelPatchSchema):
     """
     Update an existing task (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
+    Nullable fields keep `| None` to allow explicit null.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    name: str = Field(default=None, min_length=1, max_length=500)
-    start_date: date = None
-    finish_date: date = None
-    duration: int = Field(default=None, ge=0)
-    is_milestone: bool = None
-    task_type: TaskType = None
-    effort_driven: bool = None
-    constraint_type: ConstraintType = None
-    priority: int = Field(default=None, ge=0, le=1000)
-    percent_complete: Decimal = Field(default=None, ge=0, le=100)
-    fixed_cost: Decimal = None
+    __sa_model__ = Task
 
-    # Nullable fields — can be explicitly set to null
+    name: str | None = Field(default=None, min_length=1, max_length=500)
+    start_date: date | None = Field(default=None)
+    finish_date: date | None = Field(default=None)
+    duration: int | None = Field(default=None, ge=0)
+    is_milestone: bool | None = Field(default=None)
+    task_type: TaskType | None = Field(default=None)
+    effort_driven: bool | None = Field(default=None)
+    constraint_type: ConstraintType | None = Field(default=None)
+    priority: int | None = Field(default=None, ge=0, le=1000)
+    percent_complete: Decimal | None = Field(default=None, ge=0, le=100)
+    fixed_cost: Decimal | None = Field(default=None)
+
     parent_task_id: uuid.UUID | None = None
     notes: str | None = None
     constraint_date: date | None = None
@@ -74,7 +77,7 @@ class TaskReorder(BaseModel):
         return self
 
 
-# ── Bulk Schemas ──
+# Bulk Schemas
 
 
 class TaskBulkCreate(BaseModel):
@@ -102,7 +105,7 @@ class TaskBulkDelete(BaseModel):
     task_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class TaskResponse(BaseModel):

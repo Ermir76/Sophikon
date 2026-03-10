@@ -9,8 +9,10 @@ from decimal import Decimal
 from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import CostAccrual, ResourceType
+from app.models.resource import Resource
+from app.schema._patch import ModelPatchSchema
 
-# ── Request Schemas ──
+# Request Schemas
 
 
 class ResourceCreate(BaseModel):
@@ -31,25 +33,26 @@ class ResourceCreate(BaseModel):
     accrue_at: CostAccrual = CostAccrual.PRORATED
 
 
-class ResourceUpdate(BaseModel):
+class ResourceUpdate(ModelPatchSchema):
     """
     Update an existing resource (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
+    Nullable fields keep `| None` to allow explicit null.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    name: str = Field(default=None, min_length=1, max_length=255)
-    type: ResourceType = None
-    max_units: Decimal = Field(default=None, ge=0)
-    is_generic: bool = None
-    is_active: bool = None
-    standard_rate: Decimal = None
-    overtime_rate: Decimal = None
-    cost_per_use: Decimal = None
-    accrue_at: CostAccrual = None
+    __sa_model__ = Resource
 
-    # Nullable fields — can be explicitly set to null
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    type: ResourceType | None = Field(default=None)
+    max_units: Decimal | None = Field(default=None, ge=0)
+    is_generic: bool | None = Field(default=None)
+    is_active: bool | None = Field(default=None)
+    standard_rate: Decimal | None = Field(default=None)
+    overtime_rate: Decimal | None = Field(default=None)
+    cost_per_use: Decimal | None = Field(default=None)
+    accrue_at: CostAccrual | None = Field(default=None)
+
     initials: str | None = Field(default=None, max_length=10)
     email: EmailStr | None = None
     material_label: str | None = Field(default=None, max_length=50)
@@ -57,7 +60,7 @@ class ResourceUpdate(BaseModel):
     code: str | None = Field(default=None, max_length=50)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class ResourceResponse(BaseModel):

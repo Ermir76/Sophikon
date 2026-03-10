@@ -7,7 +7,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-# ── Request Schemas ──
+from app.models.organization import Organization
+from app.schema._patch import ModelPatchSchema
+
+# Request Schemas
 
 
 class OrganizationCreate(BaseModel):
@@ -19,24 +22,26 @@ class OrganizationCreate(BaseModel):
     )
 
 
-class OrganizationUpdate(BaseModel):
+class OrganizationUpdate(ModelPatchSchema):
     """
     Update an existing organization (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     """
 
-    name: str = Field(default=None, min_length=1, max_length=255)
-    slug: str = Field(
+    __sa_model__ = Organization
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: str | None = Field(
         default=None,
         min_length=1,
         max_length=255,
         pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
     )
-    settings: dict = None
+    settings: dict | None = Field(default=None)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class OrganizationListItem(BaseModel):

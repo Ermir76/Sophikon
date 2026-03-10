@@ -7,7 +7,11 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-# ── Request Schemas ──
+from app.models.calendar import Calendar
+from app.models.calendar_exception import CalendarException
+from app.schema._patch import ModelPatchSchema
+
+# Request Schemas
 
 
 class CalendarCreate(BaseModel):
@@ -19,20 +23,19 @@ class CalendarCreate(BaseModel):
     base_calendar_id: uuid.UUID | None = None
 
 
-class CalendarUpdate(BaseModel):
+class CalendarUpdate(ModelPatchSchema):
     """
     Update an existing calendar (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    name: str = Field(default=None, min_length=1, max_length=100)
-    is_base: bool = None
-    work_week: list = None
+    __sa_model__ = Calendar
 
-    # Nullable fields — can be explicitly set to null
-    base_calendar_id: uuid.UUID | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    is_base: bool | None = Field(default=None)
+    work_week: list | None = Field(default=None)
+    base_calendar_id: uuid.UUID | None = Field(default=None)
 
 
 class CalendarExceptionCreate(BaseModel):
@@ -46,25 +49,24 @@ class CalendarExceptionCreate(BaseModel):
     recurrence: dict | None = None
 
 
-class CalendarExceptionUpdate(BaseModel):
+class CalendarExceptionUpdate(ModelPatchSchema):
     """
     Update an existing calendar exception (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    name: str = Field(default=None, min_length=1, max_length=100)
-    start_date: date = None
-    end_date: date = None
-    is_working: bool = None
+    __sa_model__ = CalendarException
 
-    # Nullable fields — can be explicitly set to null
-    work_times: dict | None = None
-    recurrence: dict | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    start_date: date | None = Field(default=None)
+    end_date: date | None = Field(default=None)
+    is_working: bool | None = Field(default=None)
+    work_times: dict | None = Field(default=None)
+    recurrence: dict | None = Field(default=None)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class CalendarExceptionResponse(BaseModel):

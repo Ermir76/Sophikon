@@ -9,8 +9,10 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from app.models.enums import ProjectStatus, ScheduleFrom
+from app.models.project import Project
+from app.schema._patch import ModelPatchSchema
 
-# ── Request Schemas ──
+# Request Schemas
 
 
 class ProjectCreate(BaseModel):
@@ -27,23 +29,23 @@ class ProjectCreate(BaseModel):
     color: str | None = None
 
 
-class ProjectUpdate(BaseModel):
+class ProjectUpdate(ModelPatchSchema):
     """
     Update an existing project (all fields optional).
 
-    NOT NULL fields use `= None` (optional) but NOT `| None` (rejects explicit null).
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     Nullable fields keep `| None` to allow explicit null.
     """
 
-    # NOT NULL fields — optional but reject explicit null
-    name: str = Field(default=None, min_length=1, max_length=255)
-    start_date: date = None
-    status: ProjectStatus = None
-    schedule_from: ScheduleFrom = None
-    currency: str = Field(default=None, min_length=3, max_length=3)
-    settings: dict = None
+    __sa_model__ = Project
 
-    # Nullable fields — can be explicitly set to null
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    start_date: date | None = Field(default=None)
+    status: ProjectStatus | None = Field(default=None)
+    schedule_from: ScheduleFrom | None = Field(default=None)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    settings: dict | None = Field(default=None)
+
     description: str | None = None
     finish_date: date | None = None
     status_date: date | None = None
@@ -52,7 +54,7 @@ class ProjectUpdate(BaseModel):
     color: str | None = None
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class ProjectListItem(BaseModel):

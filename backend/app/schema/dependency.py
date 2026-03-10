@@ -7,9 +7,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.models.dependency import Dependency
 from app.models.enums import DependencyType, LagFormat
+from app.schema._patch import ModelPatchSchema
 
-# ── Request Schemas ──
+# Request Schemas
 
 
 class DependencyCreate(BaseModel):
@@ -22,26 +24,28 @@ class DependencyCreate(BaseModel):
     lag_format: LagFormat = LagFormat.DURATION
 
     @model_validator(mode="after")
-    def validate_no_self_reference(self):
+    def validate_no_self_reference(self) -> "DependencyCreate":
         if self.predecessor_id == self.successor_id:
             raise ValueError("A task cannot depend on itself")
         return self
 
 
-class DependencyUpdate(BaseModel):
+class DependencyUpdate(ModelPatchSchema):
     """
     Update an existing dependency (all fields optional).
 
-    All fields are NOT NULL, so reject explicit nulls.
+    NOT NULL fields are optional to omit, but explicit null is rejected.
     """
 
-    type: DependencyType = None
-    lag: int = None
-    lag_format: LagFormat = None
-    is_disabled: bool = None
+    __sa_model__ = Dependency
+
+    type: DependencyType | None = Field(default=None)
+    lag: int | None = Field(default=None)
+    lag_format: LagFormat | None = Field(default=None)
+    is_disabled: bool | None = Field(default=None)
 
 
-# ── Response Schemas ──
+# Response Schemas
 
 
 class DependencyResponse(BaseModel):
