@@ -3,63 +3,62 @@ Notification business logic.
 """
 
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, func, select
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid_utils import UUID as UUIDUtils
 
 from app.core.exceptions import NotFoundError
 from app.models.enums import NotificationType
 from app.models.notification import Notification
 from app.models.user import User
-from app.schema.notification import (
-    NotificationActor,
-    NotificationItem,
-    NotificationSettings,
-    NotificationSettingsUpdate,
-)
-from app.schema.realtime import (
-    NotificationCreatedMessage,
-    NotificationSnapshotMessage,
-    NotificationsReadAllMessage,
-    NotificationUpdatedMessage,
-)
+from app.repository import notification_repo
 from app.service import realtime_service
 
-DEFAULT_NOTIFICATION_SETTINGS = NotificationSettings()
+DEFAULT_NOTIFICATION_SETTINGS = {
+    "email_task_assigned": True,
+    "email_mentioned": True,
+    "email_deadline_approaching": True,
+    "push_enabled": False,
+}
 _SETTINGS_KEY = "notification_settings"
+_UUID_ENCODERS = {UUIDUtils: lambda value: UUID(bytes=value.bytes)}
 
 
-def _notification_query_for_user(user_id: UUID) -> Select[tuple[Notification]]:
-    return select(Notification).where(Notification.user_id == user_id)
+def _encode_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return jsonable_encoder(payload, custom_encoder=_UUID_ENCODERS)
 
 
-def _to_item(
-    notification: Notification,
+def _notification_to_payload(
     *,
+    notification: Notification,
     actor_id: UUID | None = None,
     actor_full_name: str | None = None,
     actor_avatar_url: str | None = None,
-) -> NotificationItem:
+) -> dict[str, Any]:
     actor = None
     if actor_id is not None:
-        actor = NotificationActor(
-            id=actor_id,
-            full_name=actor_full_name,
-            avatar_url=actor_avatar_url,
-        )
+        actor = {
+            "id": actor_id,
+            "full_name": actor_full_name,
+            "avatar_url": actor_avatar_url,
+        }
 
-    return NotificationItem(
-        id=notification.id,
-        type=notification.type,
-        title=notification.title,
-        message=notification.message,
-        entity_type=notification.entity_type,
-        entity_id=notification.entity_id,
-        actor=actor,
-        is_read=notification.is_read,
-        read_at=notification.read_at,
-        created_at=notification.created_at,
+    return _encode_payload(
+        {
+            "id": notification.id,
+            "type": notification.type,
+            "title": notification.title,
+            "message": notification.message,
+            "entity_type": notification.entity_type,
+            "entity_id": notification.entity_id,
+            "actor": actor,
+            "is_read": notification.is_read,
+            "read_at": notification.read_at,
+            "created_at": notification.created_at,
+        }
     )
 
 
@@ -68,13 +67,7 @@ async def get_unread_count(
     *,
     user_id: UUID,
 ) -> int:
-    result = await db.execute(
-        select(func.count(Notification.id)).where(
-            Notification.user_id == user_id,
-            Notification.is_read == False,  # noqa: E712
-        )
-    )
-    return int(result.scalar() or 0)
+    return await notification_repo.count_unread(db, user_id=user_id)
 
 
 async def build_snapshot_payload(
@@ -83,9 +76,7 @@ async def build_snapshot_payload(
     user_id: UUID,
 ) -> dict:
     unread_count = await get_unread_count(db, user_id=user_id)
-    return NotificationSnapshotMessage(unread_count=unread_count).model_dump(
-        mode="json"
-    )
+    return {"type": "notification_snapshot", "unread_count": unread_count}
 
 
 async def list_notifications(
@@ -95,63 +86,32 @@ async def list_notifications(
     page: int = 1,
     per_page: int = 20,
     unread_only: bool = False,
-) -> tuple[list[NotificationItem], int, int]:
-    filters = [Notification.user_id == user_id]
-    if unread_only:
-        filters.append(Notification.is_read == False)  # noqa: E712
-
-    count_query = select(func.count()).select_from(
-        select(Notification.id).where(*filters).subquery()
+) -> tuple[list[notification_repo.NotificationRow], int, int]:
+    items, total = await notification_repo.list_with_actor(
+        db,
+        user_id=user_id,
+        page=page,
+        per_page=per_page,
+        unread_only=unread_only,
     )
-    total_result = await db.execute(count_query)
-    total = int(total_result.scalar() or 0)
-
     unread_count = await get_unread_count(db, user_id=user_id)
-    offset = (page - 1) * per_page
-    rows = await db.execute(
-        select(Notification, User.id, User.full_name, User.avatar_url)
-        .outerjoin(User, User.id == Notification.actor_id)
-        .where(*filters)
-        .order_by(Notification.created_at.desc(), Notification.id.desc())
-        .offset(offset)
-        .limit(per_page)
-    )
-    items = [
-        _to_item(
-            notification,
-            actor_id=actor_id,
-            actor_full_name=actor_name,
-            actor_avatar_url=avatar_url,
-        )
-        for notification, actor_id, actor_name, avatar_url in rows.all()
-    ]
     return items, total, unread_count
 
 
-async def get_notification_item_by_id(
+async def get_notification_by_id(
     db: AsyncSession,
     *,
     user_id: UUID,
     notification_id: UUID,
-) -> NotificationItem:
-    row = await db.execute(
-        select(Notification, User.id, User.full_name, User.avatar_url)
-        .outerjoin(User, User.id == Notification.actor_id)
-        .where(
-            Notification.user_id == user_id,
-            Notification.id == notification_id,
-        )
+) -> notification_repo.NotificationRow:
+    row = await notification_repo.get_with_actor_by_id(
+        db,
+        user_id=user_id,
+        notification_id=notification_id,
     )
-    result = row.one_or_none()
-    if result is None:
+    if row is None:
         raise NotFoundError("Notification not found")
-    notification, actor_id, actor_name, actor_avatar_url = result
-    return _to_item(
-        notification,
-        actor_id=actor_id,
-        actor_full_name=actor_name,
-        actor_avatar_url=actor_avatar_url,
-    )
+    return row
 
 
 async def create_notification(
@@ -165,7 +125,8 @@ async def create_notification(
     entity_id: UUID | None = None,
     actor_id: UUID | None = None,
 ) -> Notification:
-    notification = Notification(
+    notification = await notification_repo.create_notification(
+        db,
         user_id=user_id,
         type=type,
         title=title,
@@ -174,33 +135,32 @@ async def create_notification(
         entity_id=entity_id,
         actor_id=actor_id,
     )
-    db.add(notification)
-    await db.flush()
 
     actor_id_value = actor_id
     actor_name: str | None = None
     actor_avatar: str | None = None
     if actor_id_value is not None:
-        actor_result = await db.execute(
-            select(User.full_name, User.avatar_url).where(User.id == actor_id_value)
+        actor_profile = await notification_repo.get_actor_profile(
+            db,
+            actor_id=actor_id_value,
         )
-        actor_row = actor_result.one_or_none()
-        if actor_row is not None:
-            actor_name, actor_avatar = actor_row
+        if actor_profile is not None:
+            actor_name, actor_avatar = actor_profile
 
     unread_count = await get_unread_count(db, user_id=user_id)
     realtime_service.queue_user_notification_event(
         db,
         user_id=user_id,
-        payload=NotificationCreatedMessage(
-            notification=_to_item(
-                notification,
+        payload={
+            "type": "notification_created",
+            "notification": _notification_to_payload(
+                notification=notification,
                 actor_id=actor_id_value,
                 actor_full_name=actor_name,
                 actor_avatar_url=actor_avatar,
             ),
-            unread_count=unread_count,
-        ).model_dump(mode="json"),
+            "unread_count": unread_count,
+        },
     )
     return notification
 
@@ -210,13 +170,15 @@ async def mark_read(
     *,
     notification_id: UUID,
     user_id: UUID,
-) -> Notification:
-    result = await db.execute(
-        _notification_query_for_user(user_id).where(Notification.id == notification_id)
+) -> notification_repo.NotificationRow:
+    row = await notification_repo.get_with_actor_by_id(
+        db,
+        user_id=user_id,
+        notification_id=notification_id,
     )
-    notification = result.scalar_one_or_none()
-    if notification is None:
+    if row is None:
         raise NotFoundError("Notification not found")
+    notification = row.notification
 
     if not notification.is_read:
         notification.is_read = True
@@ -227,14 +189,17 @@ async def mark_read(
     realtime_service.queue_user_notification_event(
         db,
         user_id=user_id,
-        payload=NotificationUpdatedMessage(
-            notification_id=notification.id,
-            is_read=notification.is_read,
-            read_at=notification.read_at,
-            unread_count=unread_count,
-        ).model_dump(mode="json"),
+        payload=_encode_payload(
+            {
+                "type": "notification_updated",
+                "notification_id": notification.id,
+                "is_read": notification.is_read,
+                "read_at": notification.read_at,
+                "unread_count": unread_count,
+            }
+        ),
     )
-    return notification
+    return row
 
 
 async def mark_all_read(
@@ -242,12 +207,10 @@ async def mark_all_read(
     *,
     user_id: UUID,
 ) -> tuple[int, int]:
-    result = await db.execute(
-        _notification_query_for_user(user_id).where(
-            Notification.is_read == False  # noqa: E712
-        )
+    notifications = await notification_repo.list_unread_for_user(
+        db,
+        user_id=user_id,
     )
-    notifications = list(result.scalars().all())
     if notifications:
         read_at = datetime.now(UTC)
         for notification in notifications:
@@ -259,51 +222,52 @@ async def mark_all_read(
     realtime_service.queue_user_notification_event(
         db,
         user_id=user_id,
-        payload=NotificationsReadAllMessage(unread_count=unread_count).model_dump(
-            mode="json"
-        ),
+        payload={
+            "type": "notifications_read_all",
+            "unread_count": unread_count,
+        },
     )
     return len(notifications), unread_count
 
 
-def get_settings(user: User) -> NotificationSettings:
+def get_settings(user: User) -> dict[str, bool]:
     preferences = user.preferences if isinstance(user.preferences, dict) else {}
     raw = preferences.get(_SETTINGS_KEY, {})
     if not isinstance(raw, dict):
         raw = {}
-    return NotificationSettings(
-        email_task_assigned=bool(
+    return {
+        "email_task_assigned": bool(
             raw.get(
                 "email_task_assigned",
-                DEFAULT_NOTIFICATION_SETTINGS.email_task_assigned,
+                DEFAULT_NOTIFICATION_SETTINGS["email_task_assigned"],
             )
         ),
-        email_mentioned=bool(
+        "email_mentioned": bool(
             raw.get(
                 "email_mentioned",
-                DEFAULT_NOTIFICATION_SETTINGS.email_mentioned,
+                DEFAULT_NOTIFICATION_SETTINGS["email_mentioned"],
             )
         ),
-        email_deadline_approaching=bool(
+        "email_deadline_approaching": bool(
             raw.get(
                 "email_deadline_approaching",
-                DEFAULT_NOTIFICATION_SETTINGS.email_deadline_approaching,
+                DEFAULT_NOTIFICATION_SETTINGS["email_deadline_approaching"],
             )
         ),
-        push_enabled=bool(
-            raw.get("push_enabled", DEFAULT_NOTIFICATION_SETTINGS.push_enabled)
+        "push_enabled": bool(
+            raw.get("push_enabled", DEFAULT_NOTIFICATION_SETTINGS["push_enabled"])
         ),
-    )
+    }
 
 
-def update_settings(
-    user: User, data: NotificationSettingsUpdate
-) -> NotificationSettings:
+def update_settings(user: User, patch: dict[str, bool]) -> dict[str, bool]:
     current = get_settings(user)
-    patch = data.model_dump(exclude_unset=True)
-    next_settings = current.model_copy(update=patch)
+    next_settings = {
+        **current,
+        **patch,
+    }
 
     preferences = dict(user.preferences or {})
-    preferences[_SETTINGS_KEY] = next_settings.model_dump()
+    preferences[_SETTINGS_KEY] = next_settings
     user.preferences = preferences
     return next_settings

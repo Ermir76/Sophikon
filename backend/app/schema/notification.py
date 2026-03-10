@@ -2,27 +2,13 @@
 Pydantic schemas for notification endpoints.
 """
 
-import uuid
 from datetime import datetime
-from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, computed_field, model_validator
+from pydantic import BaseModel, computed_field, model_validator
 
 from app.models.enums import NotificationType
 from app.schema._patch import reject_explicit_nulls_for_fields_set
-
-
-def _coerce_uuid(value):
-    if value is None or isinstance(value, uuid.UUID):
-        return value
-
-    try:
-        return uuid.UUID(str(value))
-    except (TypeError, ValueError, AttributeError):
-        return value
-
-
-SchemaUUID = Annotated[uuid.UUID, BeforeValidator(_coerce_uuid)]
+from app.schema._uuid import SchemaUUID
 
 
 class NotificationActor(BaseModel):

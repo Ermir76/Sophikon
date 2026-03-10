@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid_utils import uuid7
 
 from app.models.enums import NotificationType
 from app.models.notification import Notification
@@ -85,7 +86,7 @@ async def test_list_and_read_notifications_with_unread_count(
     session.add_all(
         [
             Notification(
-                id=uuid.uuid4(),
+                id=uuid.UUID(bytes=uuid7().bytes),
                 user_id=user.id,
                 type=NotificationType.MENTIONED,
                 title="Mention one",
@@ -93,7 +94,7 @@ async def test_list_and_read_notifications_with_unread_count(
                 entity_id=uuid.uuid4(),
             ),
             Notification(
-                id=uuid.uuid4(),
+                id=uuid.UUID(bytes=uuid7().bytes),
                 user_id=user.id,
                 type=NotificationType.TASK_ASSIGNED,
                 title="Assigned",
@@ -102,7 +103,7 @@ async def test_list_and_read_notifications_with_unread_count(
                 is_read=True,
             ),
             Notification(
-                id=uuid.uuid4(),
+                id=uuid.UUID(bytes=uuid7().bytes),
                 user_id=user.id,
                 type=NotificationType.MENTIONED,
                 title="Mention two",
@@ -175,7 +176,7 @@ async def test_mark_all_read_is_idempotent(
     session.add_all(
         [
             Notification(
-                id=uuid.uuid4(),
+                id=uuid.UUID(bytes=uuid7().bytes),
                 user_id=user.id,
                 type=NotificationType.MENTIONED,
                 title="Unread one",
@@ -183,7 +184,7 @@ async def test_mark_all_read_is_idempotent(
                 entity_id=uuid.uuid4(),
             ),
             Notification(
-                id=uuid.uuid4(),
+                id=uuid.UUID(bytes=uuid7().bytes),
                 user_id=user.id,
                 type=NotificationType.MENTIONED,
                 title="Unread two",

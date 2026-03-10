@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps.auth import get_current_active_user
 from app.core.database import get_db
 from app.models.user import User
+from app.repository.notification_repo import NotificationRow
 from app.schema.notification import (
+    NotificationActor,
     NotificationItem,
     NotificationListResponse,
     NotificationReadAllResponse,
@@ -21,6 +23,29 @@ from app.schema.notification import (
 from app.service import notification_service, realtime_service
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+
+def _to_notification_item(row: NotificationRow) -> NotificationItem:
+    actor = None
+    if row.actor_id is not None:
+        actor = NotificationActor(
+            id=row.actor_id,
+            full_name=row.actor_full_name,
+            avatar_url=row.actor_avatar_url,
+        )
+    notification = row.notification
+    return NotificationItem(
+        id=notification.id,
+        type=notification.type,
+        title=notification.title,
+        message=notification.message,
+        entity_type=notification.entity_type,
+        entity_id=notification.entity_id,
+        actor=actor,
+        is_read=notification.is_read,
+        read_at=notification.read_at,
+        created_at=notification.created_at,
+    )
 
 
 @router.get("", response_model=NotificationListResponse)
@@ -39,7 +64,7 @@ async def list_notifications(
         per_page=per_page,
     )
     return NotificationListResponse(
-        items=items,
+        items=[_to_notification_item(item) for item in items],
         total=total,
         page=page,
         per_page=per_page,
@@ -53,17 +78,13 @@ async def mark_notification_read(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await notification_service.mark_read(
+    row = await notification_service.mark_read(
         db,
         notification_id=notification_id,
         user_id=user.id,
     )
     await realtime_service.commit_and_publish(db)
-    return await notification_service.get_notification_item_by_id(
-        db,
-        user_id=user.id,
-        notification_id=notification_id,
-    )
+    return _to_notification_item(row)
 
 
 @router.post("/read-all", response_model=NotificationReadAllResponse)
@@ -85,7 +106,7 @@ async def mark_all_notifications_read(
 async def get_notification_settings(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return notification_service.get_settings(user)
+    return NotificationSettings.model_validate(notification_service.get_settings(user))
 
 
 @router.patch("/settings", response_model=NotificationSettings)
@@ -94,6 +115,9 @@ async def update_notification_settings(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    settings = notification_service.update_settings(user, body)
+    settings = notification_service.update_settings(
+        user,
+        body.model_dump(exclude_unset=True),
+    )
     await db.commit()
-    return settings
+    return NotificationSettings.model_validate(settings)
