@@ -230,6 +230,46 @@ async def test_create_project_rejects_unknown_settings_keys(client: AsyncClient)
 
 
 @pytest.mark.asyncio
+async def test_create_project_with_partial_settings_allows_task_create(
+    client: AsyncClient,
+):
+    """
+    Create - partial settings payload does not null-out required scheduling defaults.
+    """
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_proj_partial_set@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr Proj Partial Set",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Partial Settings", "slug": "org-partial-settings"},
+    )
+    org_id = org_resp.json()["id"]
+
+    project_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Partial Settings",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+            "settings": {"auto_calculate": False},
+        },
+    )
+    assert project_resp.status_code == 201, project_resp.text
+    project_id = project_resp.json()["id"]
+
+    task_resp = await client.post(
+        f"/api/v1/projects/{project_id}/tasks",
+        json={"name": "Task from Partial Settings", "start_date": "2024-01-01"},
+    )
+    assert task_resp.status_code == 201, task_resp.text
+
+
+@pytest.mark.asyncio
 async def test_create_project_non_org_member(client: AsyncClient):
     """Create — non-org-member — returns 403."""
     # Register User A (Intruder)

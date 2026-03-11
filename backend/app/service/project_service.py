@@ -18,6 +18,12 @@ from app.service import activity_log_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 
 
+def _sanitize_settings_payload(settings: object) -> object:
+    if not isinstance(settings, dict):
+        return settings
+    return {key: value for key, value in settings.items() if value is not None}
+
+
 async def list_projects(
     db: AsyncSession,
     user: User,
@@ -46,6 +52,12 @@ async def create_project(
     activity_context: ActivityContext | None = None,
 ) -> Project:
     """Create a new project owned by the user."""
+    if "settings" in payload:
+        payload = {
+            **payload,
+            "settings": _sanitize_settings_payload(payload["settings"]),
+        }
+
     owner_role = await project_repo.get_project_owner_role(db)
     if owner_role is None:
         owner_role = await project_repo.create_project_owner_role(db)
@@ -103,6 +115,8 @@ async def update_project(
 ) -> Project:
     """Update a project with partial data."""
     before = {field: getattr(project, field) for field in patch}
+    if "settings" in patch:
+        patch = {**patch, "settings": _sanitize_settings_payload(patch["settings"])}
     for field, value in patch.items():
         setattr(project, field, value)
 

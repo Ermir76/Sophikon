@@ -9,15 +9,15 @@ from datetime import date, timedelta
 
 from app.models.calendar_exception import CalendarException
 
-# Default standard work week (Mon-Fri 09:00-17:00 with 1h lunch break)
+# Default standard work week (Mon-Fri 09:00-17:00, 8h/day).
 # Sunday=0, Saturday=6
 DEFAULT_WORK_WEEK: list[dict | None] = [
     None,  # Sunday
-    {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-    {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-    {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-    {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-    {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
+    {"start": "09:00", "end": "17:00", "breaks": []},
+    {"start": "09:00", "end": "17:00", "breaks": []},
+    {"start": "09:00", "end": "17:00", "breaks": []},
+    {"start": "09:00", "end": "17:00", "breaks": []},
+    {"start": "09:00", "end": "17:00", "breaks": []},
     None,  # Saturday
 ]
 

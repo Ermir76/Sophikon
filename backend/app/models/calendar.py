@@ -79,11 +79,11 @@ class Calendar(Base):
         nullable=False,
         server_default=text("""'[
             null,
-            {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-            {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-            {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-            {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
-            {"start": "09:00", "end": "17:00", "breaks": [{"start": "12:00", "end": "13:00"}]},
+            {"start": "09:00", "end": "17:00", "breaks": []},
+            {"start": "09:00", "end": "17:00", "breaks": []},
+            {"start": "09:00", "end": "17:00", "breaks": []},
+            {"start": "09:00", "end": "17:00", "breaks": []},
+            {"start": "09:00", "end": "17:00", "breaks": []},
             null
         ]'::jsonb"""),
         comment="7-day work pattern (Sunday=0)",

@@ -29,7 +29,11 @@ async def _seed_project_with_data(client: AsyncClient, email: str, slug: str):
 
     task_resp = await client.post(
         f"/api/v1/projects/{project_id}/tasks",
-        json={"name": "Task A", "start_date": "2024-01-01", "duration": 480},
+        json={
+            "name": "Task A",
+            "start_date": "2024-01-01",
+            "duration": 480,  # 1 working day
+        },
     )
     task_id = task_resp.json()["id"]
 
@@ -45,7 +49,7 @@ async def _seed_project_with_data(client: AsyncClient, email: str, slug: str):
     )
     resource_id = resource_resp.json()["id"]
 
-    # Force over-allocation signal.
+    # Force over-allocation signal (1.5 units > 1.0 max).
     await client.post(
         f"/api/v1/projects/{project_id}/tasks/{task_id}/assignments",
         json={
@@ -61,6 +65,7 @@ async def _seed_project_with_data(client: AsyncClient, email: str, slug: str):
 
 @pytest.mark.asyncio
 async def test_dashboard_insights_success(client: AsyncClient):
+    """Dashboard — returns KPIs, health, trend, and activity for seeded project."""
     org_id, _ = await _seed_project_with_data(
         client, email="ins_dash@x.com", slug="org-ins-dash"
     )
@@ -71,15 +76,27 @@ async def test_dashboard_insights_success(client: AsyncClient):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert "kpis" in data
+
+    # Verify all top-level sections exist AND contain correct values
+    # A newly created project defaults to PLANNING; the KPI intentionally counts
+    # only ACTIVE status projects, so this remains 0 unless setup explicitly
+    # transitions project status to ACTIVE.
+    assert data["kpis"]["active_projects"] == 0
+    assert data["kpis"]["completed_projects"] == 0
+    assert data["kpis"]["task_completion_pct"] == 0
+    assert data["kpis"]["overdue_tasks"] == 1
     assert "project_health" in data
+    assert isinstance(data["project_health"], list)
     assert "trend" in data
+    assert isinstance(data["trend"], list)
     assert "recent_activity" in data
-    assert data["kpis"]["active_projects"] >= 0
+    assert isinstance(data["recent_activity"], list)
+    assert len(data["recent_activity"]) >= 1  # at least 1 activity from task creation
 
 
 @pytest.mark.asyncio
 async def test_insights_custom_window_requires_dates(client: AsyncClient):
+    """Dashboard — custom window preset without dates → 422 validation error."""
     org_id, _ = await _seed_project_with_data(
         client, email="ins_val@x.com", slug="org-ins-val"
     )
@@ -89,3 +106,4 @@ async def test_insights_custom_window_requires_dates(client: AsyncClient):
         params={"window_preset": "custom"},
     )
     assert org_resp.status_code == 422
+    assert org_resp.json()["error"]["code"] == "VALIDATION_ERROR"

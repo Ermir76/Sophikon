@@ -193,6 +193,7 @@ async def test_create_assignment_resource_not_in_project(client: AsyncClient):
         },
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -247,6 +248,7 @@ async def test_create_assignment_inactive_resource_rejected(client: AsyncClient)
         },
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio

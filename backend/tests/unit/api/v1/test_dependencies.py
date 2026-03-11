@@ -204,6 +204,7 @@ async def test_create_dependency_task_not_in_project(client: AsyncClient):
         json={"predecessor_id": tid1, "successor_id": tid2, "type": "FS"},
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio

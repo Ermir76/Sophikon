@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
 
@@ -90,7 +92,7 @@ async def test_list_organizations_pagination(client: AsyncClient):
     assert resp1.status_code == 200
     data1 = resp1.json()
     assert len(data1["items"]) == 2
-    assert data1["total"] >= 6  # 5 created + 1 personal
+    assert data1["total"] == 6  # 5 created + 1 personal
 
     # List page 2, per_page 2
     resp2 = await client.get("/api/v1/organizations?page=2&per_page=2")
@@ -182,19 +184,25 @@ async def test_create_organization_duplicate_slug(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClient):
     """Create - soft-deleted slug reuse still returns 409 (no 500)."""
-    await client.post(
+    suffix = uuid4().hex[:8]
+    slug = f"dup-deleted-slug-{suffix}"
+    email = f"dupdeletedslug{suffix}@example.com"
+
+    register_resp = await client.post(
         "/api/v1/auth/register",
         json={
-            "email": "dup_deleted_slug@example.com",
+            "email": email,
             "password": "StrongPassword123!",
             "full_name": "Dup Deleted Slug",
         },
     )
+    assert register_resp.status_code == 201
 
     create_resp = await client.post(
         "/api/v1/organizations",
-        json={"name": "Org To Delete", "slug": "dup-deleted-slug"},
+        json={"name": "Org To Delete", "slug": slug},
     )
+    assert create_resp.status_code == 201
     org_id = create_resp.json()["id"]
 
     delete_resp = await client.delete(f"/api/v1/organizations/{org_id}")
@@ -202,7 +210,7 @@ async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClie
 
     response = await client.post(
         "/api/v1/organizations",
-        json={"name": "Org Recreate", "slug": "dup-deleted-slug"},
+        json={"name": "Org Recreate", "slug": slug},
     )
     assert response.status_code == 409
     assert "error" in response.json()

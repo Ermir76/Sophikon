@@ -172,7 +172,7 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
             )
         ).scalars()
     )
-    assert len(conversations) >= 1
+    assert len(conversations) == 1  # exactly 1 conversation created
     conversation = conversations[-1]
 
     messages = list(

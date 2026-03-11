@@ -11,26 +11,27 @@ from httpx import AsyncClient
 # ── Helpers ──
 
 
-async def _setup_project(client: AsyncClient) -> str:
+async def _setup_project(client: AsyncClient, suffix: str) -> str:
     """Register, create org, create project. Returns project_id."""
     await client.post(
         "/api/v1/auth/register",
         json={
-            "email": "sched@x.com",
+            "email": f"sched_{suffix}@x.com",
             "password": "StrongPassword123!",
-            "full_name": "Sched User",
+            "full_name": f"Sched {suffix}",
         },
     )
     org_resp = await client.post(
-        "/api/v1/organizations", json={"name": "Org Sched", "slug": "org-sched"}
+        "/api/v1/organizations",
+        json={"name": f"Org {suffix}", "slug": f"org-sched-{suffix}"},
     )
     org_id = org_resp.json()["id"]
     proj_resp = await client.post(
         "/api/v1/projects",
         json={
-            "name": "Proj Sched",
+            "name": f"Proj {suffix}",
             "organization_id": org_id,
-            "start_date": "2024-01-01",
+            "start_date": "2024-01-01",  # Monday
         },
     )
     return proj_resp.json()["id"]
@@ -38,7 +39,12 @@ async def _setup_project(client: AsyncClient) -> str:
 
 async def _create_task(client: AsyncClient, proj_id: str, name: str, **kwargs) -> str:
     """Create a task, return its ID."""
-    payload = {"name": name, "start_date": "2024-01-01", "duration": 480, **kwargs}
+    payload = {
+        "name": name,
+        "start_date": "2024-01-01",
+        "duration": 480,  # 1 working day (8h × 60min)
+        **kwargs,
+    }
     resp = await client.post(f"/api/v1/projects/{proj_id}/tasks", json=payload)
     assert resp.status_code == 201, resp.text
     return resp.json()["id"]
@@ -59,16 +65,23 @@ async def _create_dep(
     return resp.json()["id"]
 
 
+async def _get_task(client: AsyncClient, proj_id: str, task_id: str) -> dict:
+    """Fetch a single task by ID."""
+    resp = await client.get(f"/api/v1/projects/{proj_id}/tasks/{task_id}")
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
 # ── POST /schedule/calculate ──
 
 
 @pytest.mark.asyncio
 async def test_calculate_schedule_simple_chain(client: AsyncClient):
-    """Calculate — A→B→C (FS): dates propagate correctly."""
-    proj_id = await _setup_project(client)
-    a_id = await _create_task(client, proj_id, "A")
-    b_id = await _create_task(client, proj_id, "B")
-    c_id = await _create_task(client, proj_id, "C")
+    """Calculate — A→B→C (FS): dates propagate in sequence, all 3 tasks updated."""
+    proj_id = await _setup_project(client, "chain")
+    a_id = await _create_task(client, proj_id, "A")  # 1 working day
+    b_id = await _create_task(client, proj_id, "B")  # 1 working day
+    c_id = await _create_task(client, proj_id, "C")  # 1 working day
 
     await _create_dep(client, proj_id, a_id, b_id)
     await _create_dep(client, proj_id, b_id, c_id)
@@ -76,35 +89,26 @@ async def test_calculate_schedule_simple_chain(client: AsyncClient):
     resp = await client.post(f"/api/v1/projects/{proj_id}/schedule/calculate")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["tasks_updated"] >= 3
-    assert data["project_finish_date"] is not None
+    assert data["tasks_updated"] == 3
+    assert data["project_finish_date"] == "2024-01-03"  # Mon A, Tue B, Wed C
+
+    # Verify dates propagated correctly
+    a = await _get_task(client, proj_id, a_id)
+    b = await _get_task(client, proj_id, b_id)
+    c = await _get_task(client, proj_id, c_id)
+
+    assert a["start_date"] == "2024-01-01"
+    assert b["start_date"] == "2024-01-02"  # day after A
+    assert c["start_date"] == "2024-01-03"  # day after B
+
+    # All 3 form a single chain → all are on the critical path
+    assert set(data["critical_path_task_ids"]) == {a_id, b_id, c_id}
 
 
 @pytest.mark.asyncio
 async def test_calculate_schedule_no_tasks(client: AsyncClient):
-    """Calculate — empty project returns gracefully."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "sched_empty@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Sched Empty",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations",
-        json={"name": "Org Sched Empty", "slug": "org-sched-empty"},
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj Empty",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Calculate — empty project → 0 tasks updated, empty critical path."""
+    proj_id = await _setup_project(client, "empty")
 
     resp = await client.post(f"/api/v1/projects/{proj_id}/schedule/calculate")
     assert resp.status_code == 200
@@ -115,69 +119,31 @@ async def test_calculate_schedule_no_tasks(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_calculate_schedule_no_dependencies(client: AsyncClient):
-    """Calculate — tasks without deps keep project start date."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "sched_nodep@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Sched NoDep",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations",
-        json={"name": "Org Sched NoDep", "slug": "org-sched-nodep"},
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj NoDep",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Calculate — standalone task with no deps → starts at project start, 1 task updated."""
+    proj_id = await _setup_project(client, "nodep")
 
-    await _create_task(client, proj_id, "Standalone")
+    task_id = await _create_task(client, proj_id, "Standalone")  # 1 working day
 
     resp = await client.post(f"/api/v1/projects/{proj_id}/schedule/calculate")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["tasks_updated"] >= 1
+    assert data["tasks_updated"] == 1
+
+    # Task should keep project start date
+    task = await _get_task(client, proj_id, task_id)
+    assert task["start_date"] == "2024-01-01"
 
 
 @pytest.mark.asyncio
 async def test_calculate_schedule_critical_path(client: AsyncClient):
-    """Calculate — parallel paths: longest path is critical."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "sched_cp@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Sched CP",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations",
-        json={"name": "Org Sched CP", "slug": "org-sched-cp"},
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj CP",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Calculate — parallel paths: long chain A→B is critical, standalone C is not."""
+    proj_id = await _setup_project(client, "cp")
 
-    # Long path: A → B (each 480 min = 1 work day)
-    a_id = await _create_task(client, proj_id, "A", duration=2100)  # ~5 days
-    b_id = await _create_task(client, proj_id, "B", duration=2100)  # ~5 days
-    # Short path: C (1 day)
-    await _create_task(client, proj_id, "C", duration=480)
+    # Long path: A → B (each ~4.4 working days)
+    a_id = await _create_task(client, proj_id, "A", duration=2100)  # ~4.4 working days
+    b_id = await _create_task(client, proj_id, "B", duration=2100)  # ~4.4 working days
+    # Short path: C (1 working day, no deps)
+    c_id = await _create_task(client, proj_id, "C")  # 1 working day
 
     await _create_dep(client, proj_id, a_id, b_id)
 
@@ -186,9 +152,13 @@ async def test_calculate_schedule_critical_path(client: AsyncClient):
     data = resp.json()
 
     # A and B should be on critical path, C should not
-    critical_ids = data["critical_path_task_ids"]
-    assert a_id in critical_ids
-    assert b_id in critical_ids
+    assert a_id in data["critical_path_task_ids"]
+    assert b_id in data["critical_path_task_ids"]
+    assert c_id not in data["critical_path_task_ids"]
+
+    # Verify C has positive slack (it's not critical)
+    c = await _get_task(client, proj_id, c_id)
+    assert c["total_slack"] > 0
 
 
 # ── GET /schedule/critical-path ──
@@ -196,32 +166,11 @@ async def test_calculate_schedule_critical_path(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_critical_path_endpoint(client: AsyncClient):
-    """Critical path — returns tasks with is_critical flag."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "sched_cpget@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Sched CPGet",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations",
-        json={"name": "Org Sched CPGet", "slug": "org-sched-cpget"},
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj CPGet",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Critical path — returns tasks with correct shape and slack values."""
+    proj_id = await _setup_project(client, "cpget")
 
-    a_id = await _create_task(client, proj_id, "A")
-    b_id = await _create_task(client, proj_id, "B")
+    a_id = await _create_task(client, proj_id, "A")  # 1 working day
+    b_id = await _create_task(client, proj_id, "B")  # 1 working day
     await _create_dep(client, proj_id, a_id, b_id)
 
     # Calculate first
@@ -231,10 +180,9 @@ async def test_critical_path_endpoint(client: AsyncClient):
     resp = await client.get(f"/api/v1/projects/{proj_id}/schedule/critical-path")
     assert resp.status_code == 200
     data = resp.json()
-    assert "critical_path" in data
-    assert len(data["critical_path"]) >= 2
+    assert len(data["critical_path"]) == 2
 
-    # Check response shape
+    # Check response shape for every critical task
     for task in data["critical_path"]:
         assert "id" in task
         assert "name" in task
@@ -242,3 +190,8 @@ async def test_critical_path_endpoint(client: AsyncClient):
         assert "start_date" in task
         assert "finish_date" in task
         assert "total_slack" in task
+        assert task["total_slack"] == 0  # Critical tasks have zero slack
+
+    # Verify the correct tasks are on the critical path
+    cp_ids = {t["id"] for t in data["critical_path"]}
+    assert cp_ids == {a_id, b_id}

@@ -13,6 +13,19 @@ from app.models.calendar import Calendar
 from app.models.calendar_exception import CalendarException
 
 
+def _default_work_week() -> list[dict | None]:
+    # Default Mon-Fri 09:00-17:00 (8h/day), no implicit lunch break.
+    return [
+        None,
+        {"start": "09:00", "end": "17:00", "breaks": []},
+        {"start": "09:00", "end": "17:00", "breaks": []},
+        {"start": "09:00", "end": "17:00", "breaks": []},
+        {"start": "09:00", "end": "17:00", "breaks": []},
+        {"start": "09:00", "end": "17:00", "breaks": []},
+        None,
+    ]
+
+
 async def list_for_project(
     db: AsyncSession,
     *,
@@ -32,14 +45,18 @@ async def create(
     project_id: UUID,
     payload: Mapping[str, Any],
 ) -> Calendar:
+    work_week = (
+        payload["work_week"]
+        if payload["work_week"] is not None
+        else _default_work_week()
+    )
     calendar = Calendar(
         project_id=project_id,
         name=payload["name"],
         is_base=payload["is_base"],
         base_calendar_id=payload["base_calendar_id"],
+        work_week=work_week,
     )
-    if payload["work_week"] is not None:
-        calendar.work_week = payload["work_week"]
     db.add(calendar)
     await db.flush()
     return calendar

@@ -31,8 +31,8 @@ async def test_register_creates_personal_org(client: AsyncClient):
     assert org_resp.status_code == 200
     items = org_resp.json()["items"]
 
-    # Verify at least one org exists (Personal Org)
-    assert len(items) >= 1
+    # After registration, exactly 1 personal org should exist
+    assert len(items) == 1
     # Optional: Verify name format if known, but existence is key here.
 
 

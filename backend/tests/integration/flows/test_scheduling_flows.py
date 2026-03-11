@@ -115,24 +115,28 @@ async def test_full_scheduling_flow(client: AsyncClient):
     assert calc_resp.status_code == 200
     calc_data = calc_resp.json()
 
-    assert calc_data["tasks_updated"] >= 3
-    assert len(calc_data["critical_path_task_ids"]) >= 2
+    assert calc_data["tasks_updated"] == 3
+    assert (
+        len(calc_data["critical_path_task_ids"]) == 3
+    )  # A, B, C are all critical (single chain)
 
     # Verify dates propagated
     a_data = await _get_task(client, proj_id, a["id"])
     b_data = await _get_task(client, proj_id, b["id"])
     c_data = await _get_task(client, proj_id, c["id"])
 
-    # B should start after A finishes
-    assert b_data["start_date"] >= a_data["finish_date"]
-    # C should start after B finishes
-    assert c_data["start_date"] >= b_data["finish_date"]
+    # FS chain: A=Mon, B=Tue, C=Wed (project starts Mon 2024-01-01)
+    assert a_data["start_date"] == "2024-01-01"
+    assert b_data["start_date"] == "2024-01-02"
+    assert c_data["start_date"] == "2024-01-03"
 
     # Verify critical path endpoint
     cp_resp = await client.get(f"/api/v1/projects/{proj_id}/schedule/critical-path")
     assert cp_resp.status_code == 200
     cp_data = cp_resp.json()
-    assert len(cp_data["critical_path"]) >= 2
+    assert (
+        len(cp_data["critical_path"]) == 3
+    )  # All tasks are critical in a single chain
 
 
 @pytest.mark.asyncio
@@ -181,8 +185,8 @@ async def test_dependency_change_triggers_reschedule(client: AsyncClient):
     """
     proj_id = await _setup(client, "dep_resch")
 
-    a = await _task(client, proj_id, "A", duration=480)  # 1 day
-    b = await _task(client, proj_id, "B", duration=480)  # 1 day
+    a = await _task(client, proj_id, "A", duration=480)  # 1 working day
+    b = await _task(client, proj_id, "B", duration=480)  # 1 working day
     await _dep(client, proj_id, a["id"], b["id"])
 
     # Recalculate to establish baseline
@@ -190,7 +194,7 @@ async def test_dependency_change_triggers_reschedule(client: AsyncClient):
 
     b_before = await _get_task(client, proj_id, b["id"])
 
-    # Change A's duration to 5 days (2100 min)
+    # Change A's duration to ~4.4 working days (2100 min)
     await client.patch(
         f"/api/v1/projects/{proj_id}/tasks/{a['id']}",
         json={"duration": 2100},
@@ -198,9 +202,8 @@ async def test_dependency_change_triggers_reschedule(client: AsyncClient):
 
     b_after = await _get_task(client, proj_id, b["id"])
 
-    # B should have shifted later (or stayed the same if auto_calc didn't fire,
-    # but either way it should be >= the old start)
-    assert b_after["start_date"] >= b_before["start_date"]
+    # B must have shifted later — A now takes ~4.4 days instead of 1 day
+    assert b_after["start_date"] > b_before["start_date"]
 
 
 @pytest.mark.asyncio
@@ -210,9 +213,9 @@ async def test_dependency_delete_reschedule(client: AsyncClient):
     """
     proj_id = await _setup(client, "dep_del")
 
-    a = await _task(client, proj_id, "A", duration=2100)  # 5 days
-    b = await _task(client, proj_id, "B", duration=480)
-    c = await _task(client, proj_id, "C", duration=480)
+    a = await _task(client, proj_id, "A", duration=2100)  # ~4.4 working days
+    b = await _task(client, proj_id, "B", duration=480)  # 1 working day
+    c = await _task(client, proj_id, "C", duration=480)  # 1 working day
 
     dep_ab = await _dep(client, proj_id, a["id"], b["id"])
     await _dep(client, proj_id, b["id"], c["id"])
@@ -229,7 +232,8 @@ async def test_dependency_delete_reschedule(client: AsyncClient):
     b_free = await _get_task(client, proj_id, b["id"])
 
     # B should now start at project start (no predecessor constraint)
-    assert b_free["start_date"] <= b_chained["start_date"]
+    assert b_free["start_date"] == "2024-01-01"  # freed from A, starts at project start
+    assert b_free["start_date"] < b_chained["start_date"]  # earlier than when chained
 
 
 @pytest.mark.asyncio
@@ -270,9 +274,9 @@ async def test_parallel_paths_critical_path(client: AsyncClient):
     """
     proj_id = await _setup(client, "parallel")
 
-    a = await _task(client, proj_id, "A", duration=2100)  # 5 days
-    b = await _task(client, proj_id, "B", duration=2100)  # 5 days
-    c = await _task(client, proj_id, "C", duration=480)  # 1 day
+    a = await _task(client, proj_id, "A", duration=2100)  # ~4.4 working days
+    b = await _task(client, proj_id, "B", duration=2100)  # ~4.4 working days
+    c = await _task(client, proj_id, "C", duration=480)  # 1 working day
 
     await _dep(client, proj_id, a["id"], b["id"])
 
@@ -283,10 +287,11 @@ async def test_parallel_paths_critical_path(client: AsyncClient):
     cp_resp = await client.get(f"/api/v1/projects/{proj_id}/schedule/critical-path")
     cp_data = cp_resp.json()
 
-    cp_ids = [t["id"] for t in cp_data["critical_path"]]
+    cp_ids = {t["id"] for t in cp_data["critical_path"]}
     assert a["id"] in cp_ids
     assert b["id"] in cp_ids
+    assert c["id"] not in cp_ids  # C is not on the critical path
 
-    # C should have positive slack (not critical)
+    # C must have positive slack (shorter path than A→B)
     c_data = await _get_task(client, proj_id, c["id"])
-    assert c_data["total_slack"] >= 0
+    assert c_data["total_slack"] > 0  # not >= 0, which is always true for any task

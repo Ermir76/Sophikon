@@ -43,6 +43,16 @@ async def _load_task_comment_counts(
     return await task_repo.count_comments_for_tasks(db, task_ids=task_ids)
 
 
+def _resolve_hours_per_day(settings: object) -> int:
+    """Return a safe working-hours default for duration-to-date math."""
+    if not isinstance(settings, dict):
+        return 8
+    value = settings.get("hours_per_day")
+    if isinstance(value, int) and value > 0:
+        return value
+    return 8
+
+
 async def list_tasks(
     db: AsyncSession,
     project: Project,
@@ -159,7 +169,7 @@ async def create_task(
         parent.is_summary = True
 
     # Calculate finish_date based on duration (simple: 1 day = 480 minutes)
-    hours_per_day = project.settings.get("hours_per_day", 8)
+    hours_per_day = _resolve_hours_per_day(project.settings)
     minutes_per_day = hours_per_day * 60
     duration_days = (
         max(1, payload["duration"] // minutes_per_day)

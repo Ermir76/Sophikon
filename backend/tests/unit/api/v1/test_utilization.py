@@ -1,59 +1,111 @@
+"""
+API tests for resource utilization endpoints.
+
+GET    /projects/{project_id}/utilization/{resource_id}      - Resource utilization
+GET    /projects/{project_id}/utilization                     - Project utilization summary
+GET    /projects/{project_id}/utilization/over-allocations    - Over-allocation detection
+"""
+
+import uuid
+
 import pytest
 from httpx import AsyncClient
 
+# ── Helpers ──
 
-@pytest.mark.asyncio
-async def test_resource_utilization_success(client: AsyncClient):
-    """Utilization — single resource — returns daily allocations (200)."""
-    # Setup
-    await client.post(
+
+async def _setup(client: AsyncClient, suffix: str) -> str:
+    """Register, create org + project. Returns project_id."""
+    slug_suffix = suffix.lower().replace("_", "-")
+
+    register_resp = await client.post(
         "/api/v1/auth/register",
         json={
-            "email": "util_o@x.com",
+            "email": f"util_{slug_suffix}@x.com",
             "password": "StrongPassword123!",
-            "full_name": "Util Owner",
+            "full_name": f"Util {suffix}",
         },
     )
+    assert register_resp.status_code == 201, register_resp.text
+
     org_resp = await client.post(
-        "/api/v1/organizations", json={"name": "Org Util", "slug": "org-util"}
+        "/api/v1/organizations",
+        json={"name": f"Org Util {suffix}", "slug": f"org-util-{slug_suffix}"},
     )
+    assert org_resp.status_code == 201, org_resp.text
     org_id = org_resp.json()["id"]
+
     proj_resp = await client.post(
         "/api/v1/projects",
         json={
-            "name": "Proj Util",
+            "name": f"Proj Util {suffix}",
             "organization_id": org_id,
             "start_date": "2024-01-01",
         },
     )
-    proj_id = proj_resp.json()["id"]
+    assert proj_resp.status_code == 201, proj_resp.text
+    return proj_resp.json()["id"]
 
-    # Create resource (max_units=1.0 = 100%)
+
+async def _setup_with_resource(
+    client: AsyncClient, suffix: str, max_units: float = 1.0
+) -> tuple[str, str]:
+    """Register, create org + project + resource. Returns (project_id, resource_id)."""
+    proj_id = await _setup(client, suffix)
     res_resp = await client.post(
         f"/api/v1/projects/{proj_id}/resources",
-        json={"name": "Dev 1", "max_units": 1.0},
+        json={"name": f"Dev {suffix}", "max_units": max_units},
     )
-    res_id = res_resp.json()["id"]
+    assert res_resp.status_code == 201, res_resp.text
+    return proj_id, res_resp.json()["id"]
 
-    # Create task
+
+async def _create_task_and_assign(
+    client: AsyncClient,
+    proj_id: str,
+    res_id: str,
+    task_name: str,
+    units: float,
+    start: str = "2024-03-01",
+    finish: str = "2024-03-05",
+    duration: int = 2400,  # 5 working days
+) -> str:
+    """Create a task and assign a resource to it. Returns task_id."""
     task_resp = await client.post(
         f"/api/v1/projects/{proj_id}/tasks",
-        json={"name": "Task 1", "start_date": "2024-03-01", "duration": 2400},
+        json={"name": task_name, "start_date": start, "duration": duration},
     )
+    assert task_resp.status_code == 201, task_resp.text
     task_id = task_resp.json()["id"]
 
-    # Assign resource to task
     await client.post(
         f"/api/v1/projects/{proj_id}/tasks/{task_id}/assignments",
         json={
             "resource_id": res_id,
-            "units": 0.5,
-            "start_date": "2024-03-01",
-            "finish_date": "2024-03-05",
+            "units": units,
+            "start_date": start,
+            "finish_date": finish,
         },
     )
+    return task_id
 
-    # Get utilization
+
+# ── GET /utilization/{resource_id} ──
+
+
+@pytest.mark.asyncio
+async def test_resource_utilization_success(client: AsyncClient):
+    """Utilization — single resource at 50% → daily allocations show 0.5 units, not over-allocated."""
+    proj_id, res_id = await _setup_with_resource(client, "success")
+
+    await _create_task_and_assign(
+        client,
+        proj_id,
+        res_id,
+        "Task 1",
+        units=0.5,
+    )
+
     resp = await client.get(
         f"/api/v1/projects/{proj_id}/utilization/{res_id}",
         params={"start_date": "2024-03-01", "end_date": "2024-03-05"},
@@ -61,9 +113,9 @@ async def test_resource_utilization_success(client: AsyncClient):
     assert resp.status_code == 200
     data = resp.json()
     assert data["resource_id"] == res_id
-    assert data["resource_name"] == "Dev 1"
+    assert data["resource_name"] == "Dev success"
     assert len(data["daily_allocations"]) == 5
-    # Each day should show 0.5 units allocated
+    # Each day should show exactly 0.5 units allocated
     for day in data["daily_allocations"]:
         assert float(day["allocated_units"]) == 0.5
         assert day["is_over_allocated"] is False
@@ -71,30 +123,8 @@ async def test_resource_utilization_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_resource_utilization_not_found(client: AsyncClient):
-    """Utilization — non-existent resource — 404."""
-    import uuid
-
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "util_nf@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "Util NF",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations", json={"name": "Org Util NF", "slug": "org-util-nf"}
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj Util NF",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Utilization — non-existent resource → 404 with NOT_FOUND error code."""
+    proj_id = await _setup(client, "nf")
 
     rand_id = str(uuid.uuid4())
     resp = await client.get(
@@ -102,36 +132,26 @@ async def test_resource_utilization_not_found(client: AsyncClient):
         params={"start_date": "2024-03-01", "end_date": "2024-03-05"},
     )
     assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "NOT_FOUND"
+
+
+# ── GET /utilization (project summary) ──
 
 
 @pytest.mark.asyncio
 async def test_project_utilization_summary(client: AsyncClient):
-    """Project utilization — returns all resources (200)."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "putil_o@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "PUtil Owner",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations", json={"name": "Org PUtil", "slug": "org-putil"}
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj PUtil",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Project utilization — returns all 2 resources (200)."""
+    proj_id = await _setup(client, "summary")
 
     # Create 2 resources
-    await client.post(f"/api/v1/projects/{proj_id}/resources", json={"name": "Dev A"})
-    await client.post(f"/api/v1/projects/{proj_id}/resources", json={"name": "Dev B"})
+    await client.post(
+        f"/api/v1/projects/{proj_id}/resources",
+        json={"name": "Dev A"},
+    )
+    await client.post(
+        f"/api/v1/projects/{proj_id}/resources",
+        json={"name": "Dev B"},
+    )
 
     resp = await client.get(
         f"/api/v1/projects/{proj_id}/utilization",
@@ -142,72 +162,30 @@ async def test_project_utilization_summary(client: AsyncClient):
     assert len(data["resources"]) == 2
 
 
+# ── GET /utilization/over-allocations ──
+
+
 @pytest.mark.asyncio
 async def test_over_allocation_detection(client: AsyncClient):
-    """Over-allocation — detects when total units > max_units (200)."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "oalloc_o@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "OAlloc Owner",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations", json={"name": "Org OAlloc", "slug": "org-oalloc"}
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj OAlloc",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Over-allocation — 2 tasks × 75% on same resource (total 150% > 100%) → detected."""
+    proj_id, res_id = await _setup_with_resource(client, "oalloc")
 
-    # Create resource (max_units=1.0 = 100%)
-    res_resp = await client.post(
-        f"/api/v1/projects/{proj_id}/resources",
-        json={"name": "Dev Over", "max_units": 1.0},
+    # Assign same resource to 2 overlapping tasks at 75% each (total = 150% > 100%)
+    await _create_task_and_assign(
+        client,
+        proj_id,
+        res_id,
+        "Task A",
+        units=0.75,
     )
-    res_id = res_resp.json()["id"]
-
-    # Create 2 tasks with overlapping dates
-    t1 = await client.post(
-        f"/api/v1/projects/{proj_id}/tasks",
-        json={"name": "Task A", "start_date": "2024-03-01", "duration": 2400},
-    )
-    t1_id = t1.json()["id"]
-
-    t2 = await client.post(
-        f"/api/v1/projects/{proj_id}/tasks",
-        json={"name": "Task B", "start_date": "2024-03-01", "duration": 2400},
-    )
-    t2_id = t2.json()["id"]
-
-    # Assign same resource to both at 75% (total = 150% > 100%)
-    await client.post(
-        f"/api/v1/projects/{proj_id}/tasks/{t1_id}/assignments",
-        json={
-            "resource_id": res_id,
-            "units": 0.75,
-            "start_date": "2024-03-01",
-            "finish_date": "2024-03-05",
-        },
-    )
-    await client.post(
-        f"/api/v1/projects/{proj_id}/tasks/{t2_id}/assignments",
-        json={
-            "resource_id": res_id,
-            "units": 0.75,
-            "start_date": "2024-03-01",
-            "finish_date": "2024-03-05",
-        },
+    await _create_task_and_assign(
+        client,
+        proj_id,
+        res_id,
+        "Task B",
+        units=0.75,
     )
 
-    # Detect over-allocations
     resp = await client.get(
         f"/api/v1/projects/{proj_id}/utilization/over-allocations",
         params={"start_date": "2024-03-01", "end_date": "2024-03-05"},
@@ -217,59 +195,24 @@ async def test_over_allocation_detection(client: AsyncClient):
     assert data["total_count"] > 0
     # Every day should be over-allocated (0.75 + 0.75 = 1.5 > 1.0)
     for item in data["items"]:
-        assert item["resource_name"] == "Dev Over"
+        assert item["resource_name"] == "Dev oalloc"
         assert float(item["allocated_units"]) == 1.5
         assert float(item["exceeds_by"]) == 0.5
 
 
 @pytest.mark.asyncio
 async def test_no_over_allocation(client: AsyncClient):
-    """Over-allocation — no over-allocation when within limits (200)."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "no_oalloc@x.com",
-            "password": "StrongPassword123!",
-            "full_name": "No OAlloc",
-        },
-    )
-    org_resp = await client.post(
-        "/api/v1/organizations",
-        json={"name": "Org No OAlloc", "slug": "org-no-oalloc"},
-    )
-    org_id = org_resp.json()["id"]
-    proj_resp = await client.post(
-        "/api/v1/projects",
-        json={
-            "name": "Proj No OAlloc",
-            "organization_id": org_id,
-            "start_date": "2024-01-01",
-        },
-    )
-    proj_id = proj_resp.json()["id"]
+    """Over-allocation — 1 task at 50% on resource (max 100%) → 0 over-allocations."""
+    proj_id, res_id = await _setup_with_resource(client, "no_oalloc")
 
-    # Resource with 100% capacity
-    res_resp = await client.post(
-        f"/api/v1/projects/{proj_id}/resources",
-        json={"name": "Dev Fine", "max_units": 1.0},
-    )
-    res_id = res_resp.json()["id"]
-
-    # One task at 50%
-    t1 = await client.post(
-        f"/api/v1/projects/{proj_id}/tasks",
-        json={"name": "Task OK", "start_date": "2024-03-01", "duration": 2400},
-    )
-    t1_id = t1.json()["id"]
-
-    await client.post(
-        f"/api/v1/projects/{proj_id}/tasks/{t1_id}/assignments",
-        json={
-            "resource_id": res_id,
-            "units": 0.5,
-            "start_date": "2024-03-01",
-            "finish_date": "2024-03-03",
-        },
+    await _create_task_and_assign(
+        client,
+        proj_id,
+        res_id,
+        "Task OK",
+        units=0.5,
+        start="2024-03-01",
+        finish="2024-03-03",
     )
 
     resp = await client.get(

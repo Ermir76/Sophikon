@@ -333,6 +333,7 @@ async def test_create_task_invalid_parent(client: AsyncClient):
         },
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -1223,6 +1224,7 @@ async def test_indent_first_task(client: AsyncClient):
 
     resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t1_id}/indent")
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -1374,6 +1376,7 @@ async def test_outdent_root_task(client: AsyncClient):
 
     resp = await client.post(f"/api/v1/projects/{proj_id}/tasks/{t1_id}/outdent")
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -1650,6 +1653,7 @@ async def test_reorder_descendant(client: AsyncClient):
         json={"new_parent_id": t2_id},
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio

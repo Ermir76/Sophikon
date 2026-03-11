@@ -87,7 +87,7 @@ async def create_project(
     project = await project_service.create_project(
         db,
         user,
-        body.model_dump(),
+        body.model_dump(mode="python", exclude_none=True),
         activity_context=activity_log_service.activity_context_from_request(
             user,
             request,

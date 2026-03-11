@@ -200,6 +200,7 @@ async def test_owner_role_change_and_last_owner_protection(
         json={"role": "manager"},
     )
     assert demote_last_owner.status_code == 400
+    assert demote_last_owner.json()["error"]["code"] == "INVALID_OPERATION"
 
     promote_member = await client.patch(
         f"/api/v1/projects/{project_id}/members/{target_member_id}",
@@ -438,6 +439,7 @@ async def test_accept_invitation_rejects_email_mismatch_and_invalid_token(
         json={"token": "not-a-valid-token"},
     )
     assert invalid_response.status_code == 400
+    assert invalid_response.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio
@@ -483,6 +485,7 @@ async def test_accept_invitation_rejects_revoked_expired_and_already_accepted(
         json={"token": token},
     )
     assert revoked_response.status_code == 400
+    assert revoked_response.json()["error"]["code"] == "INVALID_OPERATION"
 
     invitation.is_revoked = False
     invitation.expires_at = datetime.now(UTC) - timedelta(minutes=1)
@@ -492,6 +495,7 @@ async def test_accept_invitation_rejects_revoked_expired_and_already_accepted(
         json={"token": token},
     )
     assert expired_response.status_code == 400
+    assert expired_response.json()["error"]["code"] == "INVALID_OPERATION"
 
     invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
     invitation.accepted_at = None
@@ -507,3 +511,4 @@ async def test_accept_invitation_rejects_revoked_expired_and_already_accepted(
         json={"token": token},
     )
     assert accepted_again_response.status_code == 400
+    assert accepted_again_response.json()["error"]["code"] == "INVALID_OPERATION"

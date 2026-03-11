@@ -125,3 +125,4 @@ async def test_cross_project_assignment_blocked(client: AsyncClient):
         },
     )
     assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVALID_OPERATION"
