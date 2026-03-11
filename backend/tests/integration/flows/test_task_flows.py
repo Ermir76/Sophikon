@@ -253,10 +253,12 @@ async def test_summary_rollup_flow(client: AsyncClient):
     assert parent_check["is_summary"] is True
     # The parent takes the min start date of its children
     assert parent_check["start_date"] == "2024-01-05"
-    assert parent_check["finish_date"] == "2024-01-11"
+    # Scheduling normalizes 480 minutes to a one-day task (same-day finish).
+    # Parent rollup finish is the max child finish date after schedule calc.
+    assert parent_check["finish_date"] == "2024-01-10"
     assert parent_check["duration"] == working_minutes_between(
         date(2024, 1, 5),
-        date(2024, 1, 11),
+        date(2024, 1, 10),
         DEFAULT_WORK_WEEK,
         [],
     )
