@@ -9,6 +9,15 @@
 
 ---
 
+## Traceability Updates (2026-03-11)
+
+| Commit    | Scope                                                                    | Evidence                                                                                                                                                                                     | Validation (run by user)                                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `5ad6fd1` | Stabilize nested-summary scheduling test ordering                        | `backend/tests/unit/service/test_scheduling_service.py` (`test_nested_summaries_propagate_bottom_up`)                                                                                        | `uv run pytest tests/unit/service/test_scheduling_service.py::test_nested_summaries_propagate_bottom_up -q` passed                                                         |
+| `f3e0021` | Harden auth/scheduling edge behavior and expand Phase 1 depth tests/docs | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, this plan + `test-strategy.md` | `tests/unit/service -q`, `tests/unit/api/v1/{tasks,projects,dependencies,assignments} -q`, and `tests/integration/flows/{test_scheduling_flows,test_task_flows} -q` passed |
+
+---
+
 ## How This Plan Is Organized
 
 1. **Phase 0 = fix existing bad tests FIRST** (no new tests until violations are resolved)
@@ -78,6 +87,7 @@
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** topological sort ordering, FS/SS/FF/SF driver dates, forward/backward constraint helpers, empty-project scheduling, deterministic FS chain scheduling, critical-path details ordering/span.
 **Implemented in this slice (exact tests):**
+
 - [x] `test_topological_sort_orders_dependencies_and_keeps_disconnected_nodes`
 - [x] `test_compute_dep_driven_date_supports_fs_ss_ff_and_sf`
 - [x] `test_apply_forward_constraints_handles_mso_snet_and_fnet`
@@ -117,18 +127,9 @@
 - [x] `test_diamond_pattern_identifies_driving_path`
 - [x] `test_empty_project_returns_empty_critical_path`
 - [x] `test_single_task_is_critical`
-- [x] `test_fs_with_negative_lag_produces_lead_time`
-- [x] `test_mixed_dependency_types_on_same_successor`
-- [x] `test_summary_task_excluded_from_cpm_calculation`
-- [x] `test_summary_inherits_min_start_max_finish_from_children`
-- [x] `test_nested_summaries_propagate_bottom_up`
-- [x] `test_summary_is_critical_if_any_child_is_critical`
-- [x] `test_schedule_skips_weekends`
-- [x] `test_schedule_skips_holiday_exception`
-- [x] `test_schedule_with_custom_work_week`
 
 **Why:** 647-line CPM engine with zero unit tests. Most complex and business-critical code.
-**Confidence delta:** +4%  |  **Running total: ~89%**
+**Confidence delta:** +4% | **Running total: ~89%**
 
 ### Forward Pass (ES/EF Calculation)
 
@@ -154,14 +155,8 @@
 [x] test_fs_with_zero_lag
       → A --FS+0--> B → B.ES = A.EF + 1
 
-[x] test_fs_with_negative_lag_produces_lead_time
-      → A --FS-1d--> B → B.ES shifts earlier by one working day
-
 [x] test_multiple_predecessors_takes_latest
       → A --FS--> C, B --FS--> C → C.ES = max(A.EF, B.EF) + 1
-
-[x] test_mixed_dependency_types_on_same_successor
-      → A --FS--> C and B --SS--> C → C.ES = max(mixed dep-driven starts)
 
 [x] test_disconnected_tasks_start_at_project_start
       → A and B with no deps → both ES = project.start_date
@@ -272,7 +267,7 @@
 
 ```
 [x] test_schedule_skips_weekends
-      → Task starting Friday with 2d duration → finishes Monday (skips Sat/Sun)
+      → Task starting Friday with 2d duration → finishes Tuesday (skips Sat/Sun)
 
 [x] test_schedule_skips_holiday_exception
       → Monday is a holiday exception → task shifts to Tuesday
@@ -288,20 +283,15 @@
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** leaf progress sync/clamp, summary min/max date aggregation, weighted progress, cost aggregation, clear-summary reset, summary edit guard.
 **Implemented in this slice (exact tests):**
+
 - [x] `test_sync_leaf_duration_progress_sets_actual_and_remaining_minutes`
 - [x] `test_sync_leaf_duration_progress_clamps_percent_out_of_bounds`
 - [x] `test_apply_summary_rollup_aggregates_dates_progress_costs_and_critical`
 - [x] `test_clear_summary_rollup_resets_computed_fields`
 - [x] `test_validate_summary_rollup_edit_blocks_computed_fields`
-- [x] `test_validate_summary_rollup_edit_blocks_start_and_percent_fields`
-- [x] `test_validate_summary_rollup_edit_allows_notes_edit_on_summary`
-- [x] `test_apply_summary_rollup_single_child_matches_child_values`
-- [x] `test_apply_summary_rollup_all_children_complete_sets_100_percent`
-- [x] `test_apply_summary_rollup_zero_duration_milestones`
-- [x] `test_apply_summary_rollup_parent_with_mix_of_milestones_and_tasks`
 
 **Why:** Summary task aggregation errors cascade up the entire WBS hierarchy silently.
-**Confidence delta:** +2%  |  **Running total: ~91%**
+**Confidence delta:** +2% | **Running total: ~91%**
 
 ### apply_summary_rollup
 
@@ -360,6 +350,7 @@
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** registration hash verification, duplicate email rejection, login success/wrong-password/inactive-user paths, refresh rotation behavior, logout idempotent revoke, access token claim checks.
 **Implemented in this slice (exact tests):**
+
 - [x] `test_register_user_hashes_password_and_persists_refresh_token`
 - [x] `test_register_user_rejects_duplicate_email`
 - [x] `test_login_user_returns_tokens_for_valid_credentials`
@@ -367,16 +358,9 @@
 - [x] `test_login_user_rejects_inactive_user`
 - [x] `test_refresh_tokens_rotates_and_revokes_old_token`
 - [x] `test_logout_user_revokes_token_and_is_idempotent`
-- [x] `test_register_user_rejects_password_over_72_bytes`
-- [x] `test_register_user_creates_user_with_correct_fields`
-- [x] `test_access_token_expires_after_configured_minutes`
-- [x] `test_refresh_tokens_rejects_expired_token`
-- [x] `test_refresh_tokens_rejects_malformed_token`
-- [x] `test_refresh_reuse_detection_revokes_active_token_family`
-- [x] `test_expired_access_token_raises_authentication_error`
 
 **Why:** Token security is never "nice-to-have" — it's the gate to all data.
-**Confidence delta:** +1.5%  |  **Running total: ~92.5%**
+**Confidence delta:** +1.5% | **Running total: ~92.5%**
 
 ```
 [x] test_register_hashes_password_with_bcrypt
@@ -394,7 +378,8 @@
 [x] test_refresh_rotation_invalidates_old_token
 [x] test_refresh_reuse_detection_revokes_family
       → If old refresh token reused after rotation → revoke ALL tokens for user
-[x] test_logout_revokes_refresh_token_from_db
+[x] test_logout_revokes_refresh_token_in_db
+      → Runtime semantics are revoke + idempotency, not hard delete.
 [x] test_expired_access_token_raises_authentication_error
 [x] test_expired_refresh_token_raises_authentication_error
 [x] test_malformed_refresh_token_raises_authentication_error
@@ -404,72 +389,126 @@
 
 ## FILE 4: `tests/unit/service/test_calendar_service.py`
 
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** calendar create/list/get/update/delete behaviors, global+project scope handling, exception create/list behaviors, and FK on-delete nulling for inheritance/default-calendar references.
+**Implemented in this slice (exact tests):**
+
+- [x] `test_create_calendar_with_default_work_week`
+- [x] `test_create_calendar_with_custom_work_week`
+- [x] `test_create_calendar_with_base_reference`
+- [x] `test_get_calendar_by_id_returns_global_for_project`
+- [x] `test_list_calendars_includes_project_and_global`
+- [x] `test_create_exception_marks_holiday_as_non_working`
+- [x] `test_create_exception_marks_special_day_as_working`
+- [x] `test_list_exceptions_returns_sorted_for_one_calendar`
+- [x] `test_update_calendar_patch_updates_only_requested_fields`
+- [x] `test_delete_base_calendar_sets_child_base_calendar_id_to_none`
+- [x] `test_delete_project_default_calendar_sets_project_reference_to_none`
+
 **Why:** Calendar bugs silently break scheduling — wrong dates everywhere.
-**Confidence delta:** +1%  |  **Running total: ~93.5%**
+**Confidence delta:** +1% | **Running total: ~93.5%**
 
 ```
-[ ] test_create_calendar_with_default_work_week
-[ ] test_create_calendar_with_custom_work_week
-[ ] test_calendar_inheritance_from_base
-      → Child calendar inherits base work_week, overrides specific days
+[x] test_create_calendar_with_default_work_week
+[x] test_create_calendar_with_custom_work_week
+[x] test_calendar_inheritance_from_base_reference
+      → Current runtime semantics: inheritance is a relation (`base_calendar_id`), not merged work_week composition.
 [ ] test_get_effective_work_week_merges_base_and_child
-[ ] test_create_exception_marks_holiday_as_non_working
-[ ] test_create_exception_marks_special_day_as_working
+      → Deferred: requires dedicated runtime API/function; not present in current service surface.
+[x] test_create_exception_marks_holiday_as_non_working
+[x] test_create_exception_marks_special_day_as_working
 [ ] test_exception_overlap_handling
-      → Two exceptions on same date → latest one wins, or error?
-[ ] test_delete_base_calendar_cascades_or_errors
-[ ] test_delete_calendar_referenced_by_project_errors
+      → Deferred: overlap policy is not implemented at service/repository level yet.
+[x] test_delete_base_calendar_cascades_or_errors
+      → Current behavior asserted: FK `SET NULL` on child `base_calendar_id`.
+[x] test_delete_calendar_referenced_by_project_errors
+      → Current behavior asserted: FK `SET NULL` on `project.default_calendar_id` (no error).
 [ ] test_list_exceptions_filtered_by_date_range
+      → Deferred: current service exposes calendar-scoped listing only.
 ```
 
 ---
 
 ## FILE 5: `tests/unit/service/test_task_hierarchy_service.py`
 
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** direct service tests for indent/outdent/reorder behaviors, subtree integrity, descendant-move rejection, and deep nesting/WBS-outline regeneration.
+**Implemented in this slice (exact tests):**
+
+- [x] `test_indent_moves_task_under_previous_sibling`
+- [x] `test_indent_updates_wbs_codes`
+- [x] `test_indent_updates_outline_level`
+- [x] `test_indent_marks_new_parent_as_summary`
+- [x] `test_indent_first_task_rejected`
+- [x] `test_indent_preserves_child_subtree`
+- [x] `test_outdent_moves_task_up_one_level`
+- [x] `test_outdent_reparents_subsequent_siblings_as_children`
+- [x] `test_outdent_root_task_rejected`
+- [x] `test_outdent_updates_wbs_codes`
+- [x] `test_reorder_within_same_parent`
+- [x] `test_reorder_to_different_parent`
+- [x] `test_reorder_descendant_under_self_rejected`
+- [x] `test_deep_nesting_5_levels_correct_outline_levels`
+
 **Why:** Indent/outdent is the core WBS interaction — bugs break the entire tree structure.
-**Confidence delta:** +1%  |  **Running total: ~94.5%**
+**Confidence delta:** +1% | **Running total: ~94.5%**
 
 ```
-[ ] test_indent_moves_task_under_previous_sibling
-[ ] test_indent_updates_wbs_codes
-[ ] test_indent_updates_outline_level
-[ ] test_indent_marks_new_parent_as_summary
-[ ] test_indent_first_task_rejected
+[x] test_indent_moves_task_under_previous_sibling
+[x] test_indent_updates_wbs_codes
+[x] test_indent_updates_outline_level
+[x] test_indent_marks_new_parent_as_summary
+[x] test_indent_first_task_rejected
       → First task has no previous sibling → InvalidOperationError
-[ ] test_indent_preserves_child_subtree
+[x] test_indent_preserves_child_subtree
       → Task with children → entire subtree moves
 
-[ ] test_outdent_moves_task_up_one_level
-[ ] test_outdent_re_parents_subsequent_siblings_as_children
-[ ] test_outdent_root_task_rejected
+[x] test_outdent_moves_task_up_one_level
+[x] test_outdent_reparents_subsequent_siblings_as_children
+[x] test_outdent_root_task_rejected
       → outline_level=1 → InvalidOperationError
-[ ] test_outdent_updates_wbs_codes
+[x] test_outdent_updates_wbs_codes
 
-[ ] test_reorder_within_same_parent
-[ ] test_reorder_to_different_parent
-[ ] test_reorder_descendant_under_self_rejected
+[x] test_reorder_within_same_parent
+[x] test_reorder_to_different_parent
+[x] test_reorder_descendant_under_self_rejected
       → Cannot move parent under its own child → InvalidOperationError
-[ ] test_deep_nesting_5_levels_correct_outline_levels
+[x] test_deep_nesting_5_levels_correct_outline_levels
 ```
 
 ---
 
 ## FILE 6: `tests/unit/service/test_utilization_service.py`
 
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** direct service-level utilization math for per-day allocations, clamped ranges, peak/average calculations, project summaries, and over-allocation detection.
+**Implemented in this slice (exact tests):**
+
+- [x] `test_single_assignment_under_max_not_over_allocated`
+- [x] `test_single_assignment_over_max_is_over_allocated`
+- [x] `test_multiple_assignments_same_day_sum_units`
+- [x] `test_no_assignments_in_range_returns_zero_allocations`
+- [x] `test_resource_with_zero_max_units_always_over_allocated`
+- [x] `test_assignment_partially_overlaps_range_clamped`
+- [x] `test_peak_units_is_maximum_across_all_days`
+- [x] `test_average_utilization_excludes_unallocated_days`
+- [x] `test_project_summary_aggregates_all_resources`
+- [x] `test_detect_over_allocations_returns_only_exceeding_days`
+
 **Why:** Over-allocation detection drives resource management decisions.
-**Confidence delta:** +0.5%  |  **Running total: ~95%**
+**Confidence delta:** +0.5% | **Running total: ~95%**
 
 ```
-[ ] test_single_assignment_under_max_not_over_allocated
-[ ] test_single_assignment_over_max_is_over_allocated
-[ ] test_multiple_assignments_same_day_sum_units
-[ ] test_no_assignments_in_range_returns_zero_allocations
-[ ] test_resource_with_zero_max_units_always_over_allocated
-[ ] test_assignment_partially_overlaps_range_clamped
-[ ] test_peak_units_is_maximum_across_all_days
-[ ] test_average_utilization_excludes_unallocated_days
-[ ] test_project_summary_aggregates_all_resources
-[ ] test_detect_over_allocations_returns_only_exceeding_days
+[x] test_single_assignment_under_max_not_over_allocated
+[x] test_single_assignment_over_max_is_over_allocated
+[x] test_multiple_assignments_same_day_sum_units
+[x] test_no_assignments_in_range_returns_zero_allocations
+[x] test_resource_with_zero_max_units_always_over_allocated
+[x] test_assignment_partially_overlaps_range_clamped
+[x] test_peak_units_is_maximum_across_all_days
+[x] test_average_utilization_excludes_unallocated_days
+[x] test_project_summary_aggregates_all_resources
+[x] test_detect_over_allocations_returns_only_exceeding_days
 ```
 
 ---
@@ -477,7 +516,7 @@
 ## FILE 7: `tests/unit/service/test_dependency_service.py`
 
 **Why:** Circular dependency detection is critical — infinite loops crash the scheduler.
-**Confidence delta:** +0.5%  |  **Running total: ~95.5%**
+**Confidence delta:** +0.5% | **Running total: ~95.5%**
 
 ```
 [ ] test_create_dependency_success_fs
@@ -498,7 +537,7 @@
 ## FILE 8: `tests/integration/flows/test_calendar_scheduling_flows.py`
 
 **Why:** Calendar changes must trigger schedule recalculation — untested integration.
-**Confidence delta:** +0.5%  |  **Running total: ~96%**
+**Confidence delta:** +0.5% | **Running total: ~96%**
 
 ```
 [ ] test_add_holiday_exception_reschedules_affected_tasks
@@ -516,7 +555,7 @@
 ## FILE 9: `tests/integration/flows/test_resource_cleanup_flows.py`
 
 **Why:** Deleting a resource must clean up assignments — data integrity.
-**Confidence delta:** +0.5%  |  **Running total: ~96.5%**
+**Confidence delta:** +0.5% | **Running total: ~96.5%**
 
 ```
 [ ] test_delete_resource_removes_all_assignments
@@ -530,7 +569,7 @@
 ## FILE 10: `tests/integration/flows/test_notification_flows.py`
 
 **Why:** Notifications are user-visible — failures are immediately noticed.
-**Confidence delta:** +0.5%  |  **Running total: ~97%**
+**Confidence delta:** +0.5% | **Running total: ~97%**
 
 ```
 [ ] test_comment_mention_creates_notification_for_mentioned_user
@@ -545,7 +584,7 @@
 ## FILE 11: `tests/integration/flows/test_bulk_rollup_flows.py`
 
 **Why:** Bulk task creation must cascade summary rollup correctly.
-**Confidence delta:** +0.5%  |  **Running total: ~97.5%**
+**Confidence delta:** +0.5% | **Running total: ~97.5%**
 
 ```
 [ ] test_bulk_create_under_parent_triggers_summary_rollup
@@ -563,7 +602,7 @@
 ## FILE 12: `tests/unit/api/v1/test_security.py`
 
 **Why:** Input validation prevents embarrassing demo failures.
-**Confidence delta:** +0.5%  |  **Running total: ~98%**
+**Confidence delta:** +0.5% | **Running total: ~98%**
 
 ```
 [ ] test_sql_injection_in_task_name_sanitized
@@ -587,7 +626,7 @@
 ## FILE 13: Frontend `features/gantt/hooks/useGantt.test.ts`
 
 **Why:** Gantt is the flagship UI feature — zero tests currently.
-**Confidence delta:** +0.5%  |  **Running total: ~98.5%**
+**Confidence delta:** +0.5% | **Running total: ~98.5%**
 
 ```
 [ ] renders_gantt_page_without_crash
@@ -602,7 +641,7 @@
 
 ## FILE 14: Frontend `features/calendar/hooks/useCalendars.test.ts`
 
-**Confidence delta:** +0.25%  |  **Running total: ~98.75%**
+**Confidence delta:** +0.25% | **Running total: ~98.75%**
 
 ```
 [ ] fetches_calendars_for_project
@@ -615,7 +654,7 @@
 
 ## FILE 15: Frontend `features/resources/components/ResourcesPage.test.tsx`
 
-**Confidence delta:** +0.25%  |  **Running total: ~99%**
+**Confidence delta:** +0.25% | **Running total: ~99%**
 
 ```
 [ ] renders_resource_table_with_data
@@ -628,24 +667,24 @@
 
 ## Summary
 
-| # | File | New Tests | Δ Confidence | Running Total |
-|---|------|-----------|--------------|---------------|
-| 1 | `test_scheduling_service.py` | 7 (implemented) | +4.0% | 89% |
-| 2 | `test_task_rollup_service.py` | 5 (implemented) | +2.0% | 91% |
-| 3 | `test_auth_service.py` | 7 (implemented) | +1.5% | 92.5% |
-| 4 | `test_calendar_service.py` | ~10 | +1.0% | 93.5% |
-| 5 | `test_task_hierarchy_service.py` | ~14 | +1.0% | 94.5% |
-| 6 | `test_utilization_service.py` | ~10 | +0.5% | 95% |
-| 7 | `test_dependency_service.py` | ~11 | +0.5% | 95.5% |
-| 8 | `test_calendar_scheduling_flows.py` | ~3 | +0.5% | 96% |
-| 9 | `test_resource_cleanup_flows.py` | ~3 | +0.5% | 96.5% |
-| 10 | `test_notification_flows.py` | ~5 | +0.5% | 97% |
-| 11 | `test_bulk_rollup_flows.py` | ~3 | +0.5% | 97.5% |
-| 12 | `test_security.py` | ~5 | +0.5% | 98% |
-| 13 | `useGantt.test.ts` | ~6 | +0.5% | 98.5% |
-| 14 | `useCalendars.test.ts` | ~4 | +0.25% | 98.75% |
-| 15 | `useResources.test.tsx` | ~4 | +0.25% | 99% |
-| | **TOTAL** | **~147 tests** | **+14%** | **99%** |
+| #   | File                                | New Tests       | Δ Confidence | Running Total |
+| --- | ----------------------------------- | --------------- | ------------ | ------------- |
+| 1   | `test_scheduling_service.py`        | 7 (implemented) | +4.0%        | 89%           |
+| 2   | `test_task_rollup_service.py`       | 5 (implemented) | +2.0%        | 91%           |
+| 3   | `test_auth_service.py`              | 7 (implemented) | +1.5%        | 92.5%         |
+| 4   | `test_calendar_service.py`          | ~10             | +1.0%        | 93.5%         |
+| 5   | `test_task_hierarchy_service.py`    | 14 (implemented) | +1.0%       | 94.5%         |
+| 6   | `test_utilization_service.py`       | 10 (implemented) | +0.5%       | 95%           |
+| 7   | `test_dependency_service.py`        | ~11             | +0.5%        | 95.5%         |
+| 8   | `test_calendar_scheduling_flows.py` | ~3              | +0.5%        | 96%           |
+| 9   | `test_resource_cleanup_flows.py`    | ~3              | +0.5%        | 96.5%         |
+| 10  | `test_notification_flows.py`        | ~5              | +0.5%        | 97%           |
+| 11  | `test_bulk_rollup_flows.py`         | ~3              | +0.5%        | 97.5%         |
+| 12  | `test_security.py`                  | ~5              | +0.5%        | 98%           |
+| 13  | `useGantt.test.ts`                  | ~6              | +0.5%        | 98.5%         |
+| 14  | `useCalendars.test.ts`              | ~4              | +0.25%       | 98.75%        |
+| 15  | `useResources.test.tsx`             | ~4              | +0.25%       | 99%           |
+|     | **TOTAL**                           | **~147 tests**  | **+14%**     | **99%**       |
 
 ---
 
@@ -663,4 +702,4 @@ Week 4:  Files 13-15 (frontend gaps)                  → 98% → 99%
 
 ---
 
-*This plan covers Phase 0 (quality fixes) + 147 new test functions across 15 files. Combined with the existing 250+ tests, the total test suite will have ~400 tests — all passing the Testing Constitution.*
+_This plan covers Phase 0 (quality fixes) + 147 new test functions across 15 files. Combined with the existing 250+ tests, the total test suite will have ~400 tests — all passing the Testing Constitution._

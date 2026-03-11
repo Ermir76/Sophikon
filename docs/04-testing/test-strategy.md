@@ -2,7 +2,16 @@
 
 > Sophikon testing plan: current coverage, identified gaps, and prioritized action items.
 >
-> Last audited: 2026-03-10
+> Last audited: 2026-03-11
+
+---
+
+## 0. Recent Traceability (2026-03-11)
+
+| Commit | Change | Evidence files | Validation (run by user) |
+| --- | --- | --- | --- |
+| `5ad6fd1` | Fixed nested-summary test determinism by setting explicit hierarchy depth in fixtures. | `backend/tests/unit/service/test_scheduling_service.py` | Targeted scheduling test passed (`test_nested_summaries_propagate_bottom_up`). |
+| `f3e0021` | Hardened auth/scheduling edge behavior and expanded service-depth coverage + doc sync. | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, `docs/04-testing/{test-implementation-plan,test-strategy}.md` | Service suite, affected API suites, and affected integration scheduling/task flow suites passed. |
 
 ---
 
@@ -85,17 +94,17 @@
 | `ws_session_service`            | `test_ws_session_service.py`         | 5     | ✅ Good                       |
 | `service_layer_architecture`    | `test_service_layer_architecture.py` | 1     | ✅ Architectural import guard |
 | `auth_service`                | `test_auth_service.py`              | 7     | ✅ Baseline added (Phase 1)  |
-| **calendar_service**            | ❌ None                              | 0     | ❌ No dedicated tests         |
+| `calendar_service`              | `test_calendar_service.py`           | 11    | ✅ Baseline added (Phase 1)  |
 | **dependency_service**          | ❌ None                              | 0     | ❌ Tested via API only        |
 | **organization_service**        | ❌ None                              | 0     | ❌ Tested via API only        |
 | **organization_member_service** | ❌ None                              | 0     | ❌ Tested via API only        |
 | **resource_service**            | ❌ None                              | 0     | ❌ Tested via API only        |
 | `scheduling_service`          | `test_scheduling_service.py`        | 7     | ✅ Baseline added (Phase 1)  |
 | **task_bulk_service**           | ❌ None                              | 0     | ❌ Tested via API only        |
-| **task_hierarchy_service**      | ❌ None                              | 0     | ❌ Tested via API only        |
+| `task_hierarchy_service`        | `test_task_hierarchy_service.py`     | 14    | ✅ Baseline added (Phase 1)  |
 | `task_rollup_service`         | `test_task_rollup_service.py`       | 5     | ✅ Baseline added (Phase 1)  |
 | **task_service**                | ⚠️ Integration only                  | 3     | ⚠️ Persistence focus          |
-| **utilization_service**         | ❌ None                              | 0     | ❌ Tested via API only        |
+| `utilization_service`           | `test_utilization_service.py`        | 10    | ✅ Baseline added (Phase 1)  |
 
 ### Backend — Integration Flows (`tests/integration/flows/`)
 
@@ -223,16 +232,18 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 ### 🟡 Important Gaps (Should-Fix for V1.0)
 
-#### G-04: Calendar Service Has No Tests
+#### G-04: Calendar Service Needs Deeper Unit Coverage
 
-**Missing tests:**
+**Risk:** Calendar service now has baseline unit tests, but overlap policy and inheritance-merge semantics are still unimplemented at runtime.
 
-- [ ] Create calendar with custom work week
-- [ ] Calendar inheritance (child inherits base calendar)
-- [ ] Exception overlap detection (two exceptions on same date)
-- [ ] Delete calendar that is referenced by a project/resource
-- [ ] Set calendar on project → scheduling uses that calendar
-- [ ] `get_effective_work_week` merges base + override
+**Missing tests (depth follow-ups):**
+
+- [x] Create calendar with custom work week
+- [x] Calendar inheritance reference handling (`base_calendar_id`)
+- [x] Delete calendar referenced by project/base relation (FK `SET NULL` behavior)
+- [ ] Exception overlap detection policy (same-date collisions)
+- [ ] Date-range exception filtering behavior
+- [ ] Effective work-week merge semantics (base + child override) when runtime API exists
 
 **Recommended file:** `tests/unit/service/test_calendar_service.py`
 
@@ -261,12 +272,14 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 #### G-06: Utilization Service Edge Cases
 
-**Missing tests:**
+**Status (2026-03-11):** Baseline implemented in `tests/unit/service/test_utilization_service.py`.
 
-- [ ] Resource with `max_units=0` — every assignment is over-allocated
+**Remaining depth gaps:**
+
+- [x] Resource with `max_units=0` — every assignment is over-allocated
 - [ ] Date range where `end_date < start_date` → error or empty result
-- [ ] Zero assignments in range → all daily allocations = 0
-- [ ] Overlapping assignments from same resource to different tasks
+- [x] Zero assignments in range → all daily allocations = 0
+- [x] Overlapping assignments from same resource to different tasks
 - [ ] Day-boundary edge: assignment start_date = range end_date
 
 **Recommended file:** `tests/unit/service/test_utilization_service.py`
@@ -399,7 +412,7 @@ class TestSummaryRollup:
 
 1. Create `tests/unit/service/test_auth_service.py` — token rotation, bcrypt DoS, password rules
 2. Create `tests/unit/service/test_task_rollup_service.py` — date/duration/progress/cost aggregation
-3. Create `tests/unit/service/test_calendar_service.py` — inheritance, exceptions
+3. ✅ Created `tests/unit/service/test_calendar_service.py` — baseline inheritance/exception/FK behavior
 
 ### Phase 3: Fill Frontend Gaps (Week 2)
 
