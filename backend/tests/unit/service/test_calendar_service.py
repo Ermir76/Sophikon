@@ -161,6 +161,46 @@ async def test_create_calendar_with_base_reference(session: AsyncSession) -> Non
 
 
 @pytest.mark.asyncio
+async def test_calendar_inheritance_reference_only_no_runtime_merge(
+    session: AsyncSession,
+) -> None:
+    """
+    Pass-now behavior: inheritance is relation-only at runtime.
+
+    TODO: if/when effective merged work-week APIs are added, replace this with
+    assertions for composed base+child schedule semantics.
+    """
+    project = await _create_project(session, suffix="inheritance-reference-only")
+    base_week = _default_work_week()
+    child_week = _custom_work_week()
+
+    base = await calendar_service.create_calendar(
+        session,
+        project,
+        {
+            "name": "Merge Base",
+            "is_base": True,
+            "work_week": base_week,
+            "base_calendar_id": None,
+        },
+    )
+    child = await calendar_service.create_calendar(
+        session,
+        project,
+        {
+            "name": "Merge Child",
+            "is_base": False,
+            "work_week": child_week,
+            "base_calendar_id": base.id,
+        },
+    )
+
+    assert str(child.base_calendar_id) == str(base.id)
+    assert child.work_week == child_week
+    assert child.work_week != base_week
+
+
+@pytest.mark.asyncio
 async def test_get_calendar_by_id_returns_global_for_project(
     session: AsyncSession,
 ) -> None:
@@ -364,6 +404,109 @@ async def test_list_exceptions_returns_sorted_for_one_calendar(
 
     assert [e.name for e in exceptions] == ["Early", "Late"]
     assert all(str(e.calendar_id) == str(calendar_a.id) for e in exceptions)
+
+
+@pytest.mark.asyncio
+async def test_create_exception_allows_overlapping_ranges_current_behavior(
+    session: AsyncSession,
+) -> None:
+    """
+    Pass-now behavior: overlapping exceptions are currently accepted.
+
+    TODO: if overlap policy becomes strict, replace this with rejection
+    assertions and expected error semantics.
+    """
+    project = await _create_project(session, suffix="overlap-policy")
+    calendar = await calendar_service.create_calendar(
+        session,
+        project,
+        {
+            "name": "Overlap Calendar",
+            "is_base": False,
+            "work_week": _default_work_week(),
+            "base_calendar_id": None,
+        },
+    )
+
+    first = await calendar_service.create_exception(
+        session,
+        calendar.id,
+        {
+            "name": "First Range",
+            "start_date": date(2026, 12, 20),
+            "end_date": date(2026, 12, 22),
+            "is_working": False,
+            "work_times": None,
+            "recurrence": None,
+        },
+    )
+    second = await calendar_service.create_exception(
+        session,
+        calendar.id,
+        {
+            "name": "Overlapping Range",
+            "start_date": date(2026, 12, 21),
+            "end_date": date(2026, 12, 23),
+            "is_working": False,
+            "work_times": None,
+            "recurrence": None,
+        },
+    )
+
+    assert first.id != second.id
+    exceptions = await calendar_service.list_exceptions(session, calendar.id)
+    assert [e.name for e in exceptions] == ["First Range", "Overlapping Range"]
+
+
+@pytest.mark.asyncio
+async def test_list_exceptions_returns_full_calendar_scope_no_date_filter(
+    session: AsyncSession,
+) -> None:
+    """
+    Pass-now behavior: list_exceptions is calendar-scoped only (no date filtering).
+
+    TODO: if a date-range filter surface is introduced, add a separate filtered
+    listing test and keep this as unfiltered baseline behavior.
+    """
+    project = await _create_project(session, suffix="exception-scope")
+    calendar = await calendar_service.create_calendar(
+        session,
+        project,
+        {
+            "name": "Exception Scope Calendar",
+            "is_base": False,
+            "work_week": _default_work_week(),
+            "base_calendar_id": None,
+        },
+    )
+
+    await calendar_service.create_exception(
+        session,
+        calendar.id,
+        {
+            "name": "Far Past",
+            "start_date": date(2020, 1, 1),
+            "end_date": date(2020, 1, 1),
+            "is_working": False,
+            "work_times": None,
+            "recurrence": None,
+        },
+    )
+    await calendar_service.create_exception(
+        session,
+        calendar.id,
+        {
+            "name": "Far Future",
+            "start_date": date(2030, 1, 1),
+            "end_date": date(2030, 1, 1),
+            "is_working": True,
+            "work_times": _work_day(start="12:00", end="14:00"),
+            "recurrence": None,
+        },
+    )
+
+    listed = await calendar_service.list_exceptions(session, calendar.id)
+    assert [e.name for e in listed] == ["Far Past", "Far Future"]
 
 
 @pytest.mark.asyncio

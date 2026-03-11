@@ -368,6 +368,68 @@ async def test_assignment_partially_overlaps_range_clamped(
 
 
 @pytest.mark.asyncio
+async def test_end_date_before_start_date_returns_empty_allocations_current_behavior(
+    session: AsyncSession,
+) -> None:
+    """
+    Pass-now behavior: invalid date range returns an empty window, not an error.
+
+    TODO: if API-level range validation is introduced, move this assertion to
+    endpoint tests and expect a 422 contract error there.
+    """
+    project = await _create_project(session, suffix="invalid-range-pass-now")
+    resource = await _create_resource(
+        session, project=project, name="Dev Invalid Range", max_units="1.00"
+    )
+
+    result = await utilization_service.get_resource_utilization(
+        session,
+        project,
+        resource,
+        start_date=date(2026, 3, 5),
+        end_date=date(2026, 3, 3),
+    )
+
+    assert result["daily_allocations"] == []
+    assert result["peak_units"] == _d("0")
+    assert result["average_utilization"] == _d("0")
+
+
+@pytest.mark.asyncio
+async def test_assignment_starting_on_range_end_date_is_included(
+    session: AsyncSession,
+) -> None:
+    """Boundary behavior: assignment on end_date is included in range totals."""
+    project = await _create_project(session, suffix="end-boundary")
+    resource = await _create_resource(
+        session, project=project, name="Dev Boundary", max_units="1.00"
+    )
+    task = await _create_task(
+        session, project=project, name="Task Boundary", order_index=1
+    )
+    await _create_assignment(
+        session,
+        task=task,
+        resource=resource,
+        units="0.70",
+        start_date=date(2026, 3, 5),
+        finish_date=date(2026, 3, 5),
+    )
+
+    result = await utilization_service.get_resource_utilization(
+        session,
+        project,
+        resource,
+        start_date=date(2026, 3, 3),
+        end_date=date(2026, 3, 5),
+    )
+
+    assert len(result["daily_allocations"]) == 3
+    assert result["daily_allocations"][2]["date"] == date(2026, 3, 5)
+    assert result["daily_allocations"][2]["allocated_units"] == _d("0.70")
+
+
+@pytest.mark.asyncio
 async def test_peak_units_is_maximum_across_all_days(session: AsyncSession) -> None:
     """Peak utilization equals the maximum single-day allocation in range."""
     project = await _create_project(session, suffix="peak-max")

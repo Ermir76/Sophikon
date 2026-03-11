@@ -161,6 +161,49 @@ def test_apply_summary_rollup_aggregates_dates_progress_costs_and_critical() -> 
     assert summary.free_slack == 0
 
 
+def test_apply_summary_rollup_preserves_earned_value_fields_current_behavior() -> None:
+    """
+    Pass-now behavior: rollup does not recompute EVM fields yet.
+
+    TODO: when EVM rollup semantics are implemented, replace this assertion
+    with explicit bcws/bcwp/acwp aggregation rules.
+    """
+    summary = _build_task(
+        name="Summary EVM",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+        bcws=12.0,
+        bcwp=34.0,
+        acwp=56.0,
+    )
+    child_a = _build_task(
+        name="Child A",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=480,  # 1 working day (8h * 60min)
+        bcws=100.0,
+        bcwp=120.0,
+        acwp=130.0,
+    )
+    child_b = _build_task(
+        name="Child B",
+        start_date=date(2024, 1, 2),
+        finish_date=date(2024, 1, 2),
+        duration=480,  # 1 working day (8h * 60min)
+        bcws=200.0,
+        bcwp=220.0,
+        acwp=230.0,
+    )
+
+    apply_summary_rollup(summary, [child_a, child_b], DEFAULT_WORK_WEEK, [])
+
+    assert summary.bcws == 12.0
+    assert summary.bcwp == 34.0
+    assert summary.acwp == 56.0
+
+
 def test_clear_summary_rollup_resets_computed_fields() -> None:
     summary = _build_task(
         name="Summary To Clear",
