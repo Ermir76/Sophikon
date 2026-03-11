@@ -9,6 +9,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,19 @@ from app.models.assignment import Assignment
 from app.models.project import Project
 from app.models.resource import Resource
 from app.repository import utilization_repo
+
+
+def _uuid_key(value: object) -> str:
+    """
+    Normalize UUID-like values to a stable string for safe equality checks.
+
+    This avoids false negatives when runtime UUID objects come from mixed
+    implementations (stdlib uuid.UUID vs uuid_utils.UUID).
+    """
+    try:
+        return str(UUID(str(value)))
+    except (TypeError, ValueError):
+        return str(value)
 
 
 def _build_daily_allocations(
@@ -34,7 +48,7 @@ def _build_daily_allocations(
     day_assignments: dict[date, list[Assignment]] = defaultdict(list)
 
     for assignment in assignments:
-        if assignment.resource_id != resource.id:
+        if _uuid_key(assignment.resource_id) != _uuid_key(resource.id):
             continue
 
         # Clamp to the requested range
