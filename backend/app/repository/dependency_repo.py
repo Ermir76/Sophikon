@@ -63,7 +63,7 @@ async def list_edges_for_project(
             Dependency.project_id == project_id
         )
     )
-    return list(result.all())
+    return list(result.tuples().all())
 
 
 async def create(

@@ -98,7 +98,7 @@ async def list_members_with_user_and_role(
         .offset(offset)
         .limit(per_page)
     )
-    return list(result.all()), total
+    return list(result.tuples().all()), total
 
 
 async def list_pending_invitations_with_inviter_and_role(
@@ -131,7 +131,7 @@ async def list_pending_invitations_with_inviter_and_role(
         .offset(offset)
         .limit(per_page)
     )
-    return list(result.all()), total
+    return list(result.tuples().all()), total
 
 
 async def get_user_by_email_case_insensitive(
@@ -229,6 +229,7 @@ async def get_invitation_with_project_and_role_by_token_hash(
         .join(Project, Project.id == ProjectInvitation.project_id)
         .join(Role, Role.id == ProjectInvitation.role_id)
         .where(ProjectInvitation.token_hash == token_hash)
+        .with_for_update(of=ProjectInvitation)
     )
     row = result.one_or_none()
     if row is None:

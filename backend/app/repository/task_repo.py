@@ -54,7 +54,7 @@ async def count_comments_for_tasks(
         )
         .group_by(Comment.entity_id)
     )
-    return {entity_id: count for entity_id, count in result.all()}
+    return {entity_id: count for entity_id, count in result.tuples().all()}
 
 
 async def get_task_with_comment_count(

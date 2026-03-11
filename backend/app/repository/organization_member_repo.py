@@ -34,7 +34,7 @@ async def list_with_user_info(
         .offset(offset)
         .limit(per_page)
     )
-    return list(result.all()), total
+    return list(result.tuples().all()), total
 
 
 async def get_user_by_email(

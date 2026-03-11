@@ -161,14 +161,19 @@ async def test_concurrent_schedule_recalculation_stays_consistent() -> None:
         )
         assert all(resp.status_code == 200 for resp in responses)
 
+        task_a_after = await owner_client.get(
+            f"/api/v1/projects/{project_id}/tasks/{task_a['id']}"
+        )
         task_b_after = await owner_client.get(
             f"/api/v1/projects/{project_id}/tasks/{task_b['id']}"
         )
         task_c_after = await owner_client.get(
             f"/api/v1/projects/{project_id}/tasks/{task_c['id']}"
         )
+        assert task_a_after.status_code == 200, task_a_after.text
         assert task_b_after.status_code == 200, task_b_after.text
         assert task_c_after.status_code == 200, task_c_after.text
+        assert task_a_after.json()["start_date"] == "2024-01-01"
         assert task_b_after.json()["start_date"] == "2024-01-02"
         assert task_c_after.json()["start_date"] == "2024-01-03"
 
@@ -253,6 +258,7 @@ async def test_concurrent_wbs_regeneration_keeps_codes_unique() -> None:
         )
         responses = await asyncio.gather(reorder_b, reorder_c)
         assert all(resp.status_code in {200, 400} for resp in responses)
+        assert any(resp.status_code == 200 for resp in responses)
 
         list_response = await owner_client.get(f"/api/v1/projects/{project_id}/tasks")
         assert list_response.status_code == 200, list_response.text
