@@ -202,8 +202,11 @@ async def test_dependency_change_triggers_reschedule(client: AsyncClient):
 
     b_after = await _get_task(client, proj_id, b["id"])
 
-    # B must have shifted later — A now takes ~4.4 days instead of 1 day
-    assert b_after["start_date"] > b_before["start_date"]
+    # B starts Tue (2024-01-02) in the 1-day baseline chain.
+    assert b_before["start_date"] == "2024-01-02"
+    # After A duration grows to 2100 min (~4.4 working days), FS pushes B to next
+    # working day after A finish, which is Mon 2024-01-08.
+    assert b_after["start_date"] == "2024-01-08"
 
 
 @pytest.mark.asyncio
