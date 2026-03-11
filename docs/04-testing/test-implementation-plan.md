@@ -75,6 +75,9 @@
 
 ## FILE 1: `tests/unit/service/test_scheduling_service.py`
 
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** topological sort ordering, FS/SS/FF/SF driver dates, forward/backward constraint helpers, empty-project scheduling, deterministic FS chain scheduling, critical-path details ordering/span.
+
 **Why:** 647-line CPM engine with zero unit tests. Most complex and business-critical code.
 **Confidence delta:** +4%  |  **Running total: ~89%**
 
@@ -227,6 +230,9 @@
 
 ## FILE 2: `tests/unit/service/test_task_rollup_service.py`
 
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** leaf progress sync/clamp, summary min/max date aggregation, weighted progress, cost aggregation, clear-summary reset, summary edit guard.
+
 **Why:** Summary task aggregation errors cascade up the entire WBS hierarchy silently.
 **Confidence delta:** +2%  |  **Running total: ~91%**
 
@@ -283,6 +289,9 @@
 ---
 
 ## FILE 3: `tests/unit/service/test_auth_service.py`
+
+**Status (2026-03-11):** Baseline implemented.
+**Implemented now:** registration hash verification, duplicate email rejection, login success/wrong-password/inactive-user paths, refresh rotation behavior, logout idempotent revoke, access token claim checks.
 
 **Why:** Token security is never "nice-to-have" — it's the gate to all data.
 **Confidence delta:** +1.5%  |  **Running total: ~92.5%**
@@ -539,9 +548,9 @@
 
 | # | File | New Tests | Δ Confidence | Running Total |
 |---|------|-----------|--------------|---------------|
-| 1 | `test_scheduling_service.py` | ~35 | +4.0% | 89% |
-| 2 | `test_task_rollup_service.py` | ~18 | +2.0% | 91% |
-| 3 | `test_auth_service.py` | ~16 | +1.5% | 92.5% |
+| 1 | `test_scheduling_service.py` | 7 (implemented) | +4.0% | 89% |
+| 2 | `test_task_rollup_service.py` | 5 (implemented) | +2.0% | 91% |
+| 3 | `test_auth_service.py` | 7 (implemented) | +1.5% | 92.5% |
 | 4 | `test_calendar_service.py` | ~10 | +1.0% | 93.5% |
 | 5 | `test_task_hierarchy_service.py` | ~14 | +1.0% | 94.5% |
 | 6 | `test_utilization_service.py` | ~10 | +0.5% | 95% |

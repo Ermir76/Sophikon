@@ -84,16 +84,16 @@
 | `ws_protocol`                   | `test_ws_protocol.py`                | 8     | ✅ Good                       |
 | `ws_session_service`            | `test_ws_session_service.py`         | 5     | ✅ Good                       |
 | `service_layer_architecture`    | `test_service_layer_architecture.py` | 1     | ✅ Architectural import guard |
-| **auth_service**                | ❌ None                              | 0     | ❌ Tested via API only        |
+| `auth_service`                | `test_auth_service.py`              | 7     | ✅ Baseline added (Phase 1)  |
 | **calendar_service**            | ❌ None                              | 0     | ❌ No dedicated tests         |
 | **dependency_service**          | ❌ None                              | 0     | ❌ Tested via API only        |
 | **organization_service**        | ❌ None                              | 0     | ❌ Tested via API only        |
 | **organization_member_service** | ❌ None                              | 0     | ❌ Tested via API only        |
 | **resource_service**            | ❌ None                              | 0     | ❌ Tested via API only        |
-| **scheduling_service**          | ❌ None                              | 0     | ❌ Critical gap               |
+| `scheduling_service`          | `test_scheduling_service.py`        | 7     | ✅ Baseline added (Phase 1)  |
 | **task_bulk_service**           | ❌ None                              | 0     | ❌ Tested via API only        |
 | **task_hierarchy_service**      | ❌ None                              | 0     | ❌ Tested via API only        |
-| **task_rollup_service**         | ❌ None                              | 0     | ❌ Via integration only       |
+| `task_rollup_service`         | `test_task_rollup_service.py`       | 5     | ✅ Baseline added (Phase 1)  |
 | **task_service**                | ⚠️ Integration only                  | 3     | ⚠️ Persistence focus          |
 | **utilization_service**         | ❌ None                              | 0     | ❌ Tested via API only        |
 
@@ -142,6 +142,15 @@
 ---
 
 ## 3. Identified Gaps
+
+### Phase 1 Update (2026-03-11)
+
+- Critical gap reduction completed for:
+  - `tests/unit/service/test_scheduling_service.py`
+  - `tests/unit/service/test_auth_service.py`
+  - `tests/unit/service/test_task_rollup_service.py`
+- Baseline service-level coverage now exists for scheduling, auth, and rollup logic.
+- Remaining items in G-01/G-02/G-03 are now depth-expansion follow-ups, not zero-coverage blockers.
 
 ### 🔴 Critical Gaps (Must-Fix for V1.0)
 
