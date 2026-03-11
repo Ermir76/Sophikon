@@ -41,7 +41,7 @@ async def test_seed_industry_portfolio_dry_run_does_not_write(
     user = await get_user_by_email(session, email)
     assert user is not None
     orgs, _ = await list_organizations(session, user)
-    assert len(orgs) >= 1
+    assert len(orgs) == 1  # exactly 1 personal org after registration
     target_org = orgs[0]
     seed_key = "dry-run-check"
 
@@ -74,6 +74,9 @@ async def test_seed_industry_portfolio_dry_run_does_not_write(
 
 
 @pytest.mark.asyncio
+@pytest.mark.filterwarnings(
+    "ignore:Identity map already had an identity for.*:sqlalchemy.exc.SAWarning"
+)
 async def test_seed_industry_portfolio_is_idempotent(
     client: AsyncClient,
     session: AsyncSession,
@@ -91,7 +94,7 @@ async def test_seed_industry_portfolio_is_idempotent(
     user = await get_user_by_email(session, email)
     assert user is not None
     orgs, _ = await list_organizations(session, user)
-    assert len(orgs) >= 1
+    assert len(orgs) == 1  # exactly 1 personal org after registration
     target_org = orgs[0]
     target_org_id = target_org.id
     seed_key = "idempotent-check"

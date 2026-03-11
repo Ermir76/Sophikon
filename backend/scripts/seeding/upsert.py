@@ -19,7 +19,6 @@ from app.models.task import Task
 from app.models.user import User
 from app.schema.assignment import AssignmentCreate, AssignmentUpdate
 from app.schema.dependency import DependencyCreate, DependencyUpdate
-from app.schema.project import ProjectCreate, ProjectUpdate
 from app.schema.resource import ResourceCreate, ResourceUpdate
 from app.schema.task import TaskCreate, TaskUpdate
 from app.service.assignment_service import create_assignment, update_assignment
@@ -126,40 +125,43 @@ async def upsert_project_for_scenario(
     )
 
     if not existing:
+        create_payload = {
+            "organization_id": organization_id,
+            "name": scenario.title,
+            "description": scenario.description,
+            "start_date": scenario.start_date,
+            "color": scenario.color,
+            "settings": settings_for_seed,
+        }
         created = await create_project(
             db,
             user,
-            ProjectCreate(
-                organization_id=organization_id,
-                name=scenario.title,
-                description=scenario.description,
-                start_date=scenario.start_date,
-                color=scenario.color,
-                settings=settings_for_seed,
-            ),
+            create_payload,
         )
+        update_patch = {
+            "status": scenario.status,
+            "settings": settings_for_seed,
+            "color": scenario.color,
+        }
         created = await update_project(
             db,
             created,
-            ProjectUpdate(
-                status=scenario.status,
-                settings=settings_for_seed,
-                color=scenario.color,
-            ),
+            update_patch,
         )
         return created, "created"
 
+    update_patch = {
+        "name": scenario.title,
+        "description": scenario.description,
+        "start_date": scenario.start_date,
+        "status": scenario.status,
+        "color": scenario.color,
+        "settings": settings_for_seed,
+    }
     updated = await update_project(
         db,
         existing,
-        ProjectUpdate(
-            name=scenario.title,
-            description=scenario.description,
-            start_date=scenario.start_date,
-            status=scenario.status,
-            color=scenario.color,
-            settings=settings_for_seed,
-        ),
+        update_patch,
     )
     return updated, "updated"
 
@@ -178,16 +180,17 @@ async def finalize_project_settings(
         scenario.state_label,
         auto_calculate=True,
     )
+    update_patch = {
+        "name": scenario.title,
+        "description": scenario.description,
+        "status": scenario.status,
+        "color": scenario.color,
+        "settings": final_settings,
+    }
     return await update_project(
         db,
         project,
-        ProjectUpdate(
-            name=scenario.title,
-            description=scenario.description,
-            status=scenario.status,
-            color=scenario.color,
-            settings=final_settings,
-        ),
+        update_patch,
     )
 
 
@@ -206,29 +209,7 @@ async def sync_resources(
     for blueprint in resources:
         existing_resource = by_code.get(blueprint.code)
         if existing_resource:
-            updated = await update_resource(
-                db,
-                existing_resource,
-                ResourceUpdate(
-                    name=blueprint.name,
-                    type=blueprint.resource_type,
-                    initials=blueprint.initials,
-                    email=blueprint.email,
-                    group_name=blueprint.group_name,
-                    code=blueprint.code,
-                    max_units=Decimal(str(blueprint.max_units)),
-                    standard_rate=Decimal(str(blueprint.standard_rate)),
-                    is_active=True,
-                ),
-            )
-            counts.updated += 1
-            synced[blueprint.code] = updated
-            continue
-
-        created = await create_resource(
-            db,
-            project,
-            ResourceCreate(
+            update_patch = ResourceUpdate(
                 name=blueprint.name,
                 type=blueprint.resource_type,
                 initials=blueprint.initials,
@@ -237,7 +218,31 @@ async def sync_resources(
                 code=blueprint.code,
                 max_units=Decimal(str(blueprint.max_units)),
                 standard_rate=Decimal(str(blueprint.standard_rate)),
-            ),
+                is_active=True,
+            ).model_dump(mode="python", exclude_unset=True)
+            updated = await update_resource(
+                db,
+                existing_resource,
+                update_patch,
+            )
+            counts.updated += 1
+            synced[blueprint.code] = updated
+            continue
+
+        create_payload = ResourceCreate(
+            name=blueprint.name,
+            type=blueprint.resource_type,
+            initials=blueprint.initials,
+            email=blueprint.email,
+            group_name=blueprint.group_name,
+            code=blueprint.code,
+            max_units=Decimal(str(blueprint.max_units)),
+            standard_rate=Decimal(str(blueprint.standard_rate)),
+        ).model_dump(mode="python")
+        created = await create_resource(
+            db,
+            project,
+            create_payload,
         )
         counts.created += 1
         synced[blueprint.code] = created
@@ -275,45 +280,48 @@ async def sync_tasks(
         parent_id = synced[blueprint.parent_code].id if blueprint.parent_code else None
 
         if existing_task:
+            update_patch = TaskUpdate(
+                name=blueprint.name,
+                start_date=blueprint.start_date,
+                duration=blueprint.duration_days * 480,
+                is_milestone=blueprint.is_milestone,
+                priority=blueprint.priority,
+                notes=blueprint.notes,
+                percent_complete=Decimal(str(blueprint.percent_complete)),
+            ).model_dump(mode="python", exclude_unset=True)
             updated = await update_task(
                 db,
                 existing_task,
-                TaskUpdate(
-                    name=blueprint.name,
-                    start_date=blueprint.start_date,
-                    duration=blueprint.duration_days * 480,
-                    is_milestone=blueprint.is_milestone,
-                    priority=blueprint.priority,
-                    notes=blueprint.notes,
-                    percent_complete=Decimal(str(blueprint.percent_complete)),
-                ),
+                update_patch,
                 project=project,
             )
             counts.updated += 1
             synced[blueprint.code] = updated
             continue
 
+        create_payload = TaskCreate(
+            name=blueprint.name,
+            parent_task_id=parent_id,
+            start_date=blueprint.start_date,
+            duration=blueprint.duration_days * 480,
+            is_milestone=blueprint.is_milestone,
+            priority=blueprint.priority,
+            notes=blueprint.notes,
+        ).model_dump(mode="python")
         created = await create_task(
             db,
             project,
-            TaskCreate(
-                name=blueprint.name,
-                parent_task_id=parent_id,
-                start_date=blueprint.start_date,
-                duration=blueprint.duration_days * 480,
-                is_milestone=blueprint.is_milestone,
-                priority=blueprint.priority,
-                notes=blueprint.notes,
-            ),
+            create_payload,
         )
         if blueprint.percent_complete > 0:
+            progress_patch = TaskUpdate(
+                percent_complete=Decimal(str(blueprint.percent_complete)),
+                notes=blueprint.notes,
+            ).model_dump(mode="python", exclude_unset=True)
             created = await update_task(
                 db,
                 created,
-                TaskUpdate(
-                    percent_complete=Decimal(str(blueprint.percent_complete)),
-                    notes=blueprint.notes,
-                ),
+                progress_patch,
                 project=project,
             )
         counts.created += 1
@@ -352,13 +360,14 @@ async def sync_dependencies(
                 existing_dep.lag != blueprint.lag_minutes
                 or existing_dep.type != blueprint.dependency_type
             ):
+                update_patch = DependencyUpdate(
+                    lag=blueprint.lag_minutes,
+                    type=blueprint.dependency_type,
+                ).model_dump(mode="python", exclude_unset=True)
                 await update_dependency(
                     db,
                     existing_dep,
-                    DependencyUpdate(
-                        lag=blueprint.lag_minutes,
-                        type=blueprint.dependency_type,
-                    ),
+                    update_patch,
                     project=project,
                 )
                 counts.updated += 1
@@ -368,15 +377,16 @@ async def sync_dependencies(
         if pair_key in seen_pairs:
             continue
 
+        create_payload = DependencyCreate(
+            predecessor_id=predecessor.id,
+            successor_id=successor.id,
+            type=blueprint.dependency_type,
+            lag=blueprint.lag_minutes,
+        ).model_dump(mode="python")
         await create_dependency(
             db,
             project,
-            DependencyCreate(
-                predecessor_id=predecessor.id,
-                successor_id=successor.id,
-                type=blueprint.dependency_type,
-                lag=blueprint.lag_minutes,
-            ),
+            create_payload,
         )
         counts.created += 1
         seen_pairs.add(pair_key)
@@ -415,30 +425,32 @@ async def sync_assignments(
         key = (task.id, resource.id)
         existing_assignment = existing_map.get(key)
         if existing_assignment:
-            await update_assignment(
-                db,
-                existing_assignment,
-                AssignmentUpdate(
-                    units=Decimal(str(blueprint.units)),
-                    start_date=blueprint.start_date,
-                    finish_date=blueprint.finish_date,
-                    work=blueprint.work_minutes,
-                    remaining_work=blueprint.work_minutes,
-                ),
-            )
-            counts.updated += 1
-            continue
-
-        await create_assignment(
-            db,
-            task,
-            AssignmentCreate(
-                resource_id=resource.id,
+            update_patch = AssignmentUpdate(
                 units=Decimal(str(blueprint.units)),
                 start_date=blueprint.start_date,
                 finish_date=blueprint.finish_date,
                 work=blueprint.work_minutes,
-            ),
+                remaining_work=blueprint.work_minutes,
+            ).model_dump(mode="python", exclude_unset=True)
+            await update_assignment(
+                db,
+                existing_assignment,
+                update_patch,
+            )
+            counts.updated += 1
+            continue
+
+        create_payload = AssignmentCreate(
+            resource_id=resource.id,
+            units=Decimal(str(blueprint.units)),
+            start_date=blueprint.start_date,
+            finish_date=blueprint.finish_date,
+            work=blueprint.work_minutes,
+        ).model_dump(mode="python")
+        await create_assignment(
+            db,
+            task,
+            create_payload,
         )
         counts.created += 1
 

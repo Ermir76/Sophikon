@@ -34,23 +34,28 @@ async def build_post_seed_summary(
 
     lines.append("")
     lines.append("Portfolio KPI snapshot (30d window):")
+    kpis = dashboard.get("kpis", {})
     lines.append(
-        f"  Active={dashboard.kpis.active_projects} "
-        f"Completed={dashboard.kpis.completed_projects} "
-        f"Completion={dashboard.kpis.task_completion_pct:.1f}% "
-        f"Overdue={dashboard.kpis.overdue_tasks} "
-        f"Critical={dashboard.kpis.critical_tasks} "
-        f"Overallocated={dashboard.kpis.overallocated_resources}"
+        f"  Active={kpis.get('active_projects', 0)} "
+        f"Completed={kpis.get('completed_projects', 0)} "
+        f"Completion={float(kpis.get('task_completion_pct', 0.0)):.1f}% "
+        f"Overdue={kpis.get('overdue_tasks', 0)} "
+        f"Critical={kpis.get('critical_tasks', 0)} "
+        f"Overallocated={kpis.get('overallocated_resources', 0)}"
     )
 
-    if dashboard.project_health:
+    project_health = dashboard.get("project_health", [])
+    if project_health:
         lines.append("  Project health:")
-        for row in dashboard.project_health:
-            state = seeded_project_state_by_id.get(row.project_id, "-")
+        for row in project_health:
+            project_id = row.get("project_id")
+            state = seeded_project_state_by_id.get(project_id, "-")
             lines.append(
-                f"    - {row.name}: risk={row.risk_level}({row.risk_score:.1f}) "
-                f"completion={row.completion_pct:.1f}% overdue={row.overdue_tasks} "
-                f"critical={row.critical_tasks} state={state}"
+                f"    - {row.get('name', '-')}: "
+                f"risk={row.get('risk_level', '-')}({float(row.get('risk_score', 0.0)):.1f}) "
+                f"completion={float(row.get('completion_pct', 0.0)):.1f}% "
+                f"overdue={row.get('overdue_tasks', 0)} "
+                f"critical={row.get('critical_tasks', 0)} state={state}"
             )
 
     return lines
