@@ -15,6 +15,7 @@ from app.core.exceptions import (
     AuthenticationError,
     PermissionDeniedError,
     ResourceConflictError,
+    ValidationError,
 )
 from app.core.security import (
     create_access_token,
@@ -76,6 +77,26 @@ async def _create_token_pair(
 # ── Public API ──
 
 
+async def _revoke_active_tokens_for_user(
+    db: AsyncSession,
+    *,
+    user_id,
+    reason: str,
+) -> None:
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.user_id == user_id,
+            RefreshToken.is_revoked == False,  # noqa: E712
+        )
+    )
+    active_tokens = list(result.scalars().all())
+    now = datetime.now(UTC)
+    for token in active_tokens:
+        token.is_revoked = True
+        token.revoked_at = now
+        token.revoked_reason = reason
+
+
 async def register_user(
     db: AsyncSession,
     email: str,
@@ -85,6 +106,11 @@ async def register_user(
     ip: str | None = None,
 ) -> tuple[User, str, str]:
     """Register a new user. Returns (user, access_token, refresh_token)."""
+    # bcrypt only uses the first 72 bytes; enforce this explicitly to avoid
+    # silent truncation and make validation behavior deterministic.
+    if len(password.encode("utf-8")) > 72:
+        raise ValidationError("Password must be at most 72 bytes")
+
     existing = await get_user_by_email(db, email)
     if existing:
         raise ResourceConflictError("Email already registered")
@@ -148,7 +174,18 @@ async def refresh_tokens(
     )
     db_token = result.scalar_one_or_none()
 
-    if not db_token or db_token.is_revoked:
+    if not db_token:
+        raise AuthenticationError("Invalid refresh token")
+    if db_token.is_revoked:
+        # Reuse detection: if a rotated refresh token is presented again,
+        # revoke remaining active tokens in that user's token family.
+        if db_token.revoked_reason == "rotated":
+            await _revoke_active_tokens_for_user(
+                db,
+                user_id=db_token.user_id,
+                reason="reuse_detected",
+            )
+            await db.commit()
         raise AuthenticationError("Invalid refresh token")
     if db_token.expires_at < datetime.now(UTC):
         raise AuthenticationError("Refresh token expired")

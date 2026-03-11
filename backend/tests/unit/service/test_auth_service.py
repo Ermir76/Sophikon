@@ -1,14 +1,24 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
+from app.api.deps.auth import authenticate_access_token
+from app.core.config import settings
 from app.core.exceptions import (
     AuthenticationError,
     PermissionDeniedError,
     ResourceConflictError,
+    ValidationError,
 )
-from app.core.security import decode_access_token, hash_token, verify_password
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    hash_token,
+    verify_password,
+)
 from app.models.enums import RoleScope
 from app.models.refresh_token import RefreshToken
 from app.models.role import Role
@@ -63,6 +73,23 @@ async def test_register_user_hashes_password_and_persists_refresh_token(
 
 
 @pytest.mark.asyncio
+async def test_register_user_rejects_password_over_72_bytes(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-register-too-long")
+    too_long_password = "a" * 73
+
+    with pytest.raises(ValidationError):
+        await auth_service.register_user(
+            session,
+            email,
+            too_long_password,
+            "Auth Too Long",
+        )
+
+
+@pytest.mark.asyncio
 async def test_register_user_rejects_duplicate_email(session: AsyncSession) -> None:
     await _ensure_system_user_role(session)
     email = _unique_email("auth-duplicate")
@@ -81,6 +108,27 @@ async def test_register_user_rejects_duplicate_email(session: AsyncSession) -> N
             "StrongPassword123!",
             "Auth Duplicate Again",
         )
+
+
+@pytest.mark.asyncio
+async def test_register_user_creates_user_with_correct_fields(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-register-fields")
+    full_name = "Auth Correct Fields"
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        email,
+        "StrongPassword123!",
+        full_name,
+    )
+
+    assert user.email == email
+    assert user.full_name == full_name
+    assert user.is_active is True
+    assert user.system_role_id is not None
 
 
 @pytest.mark.asyncio
@@ -109,6 +157,28 @@ async def test_login_user_returns_tokens_for_valid_credentials(
     assert payload["sub"] == str(user.id)
     assert payload["type"] == "access"
     assert "exp" in payload
+
+
+@pytest.mark.asyncio
+async def test_access_token_expires_after_configured_minutes(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-token-exp")
+    password = "StrongPassword123!"
+
+    _, access_token, _ = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Token Exp",
+    )
+    payload = decode_access_token(access_token)
+    iat = datetime.fromtimestamp(payload["iat"], tz=UTC)
+    exp = datetime.fromtimestamp(payload["exp"], tz=UTC)
+    ttl_seconds = int((exp - iat).total_seconds())
+
+    assert ttl_seconds == settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
 
 @pytest.mark.asyncio
@@ -198,6 +268,99 @@ async def test_refresh_tokens_rotates_and_revokes_old_token(
 
     with pytest.raises(AuthenticationError):
         await auth_service.refresh_tokens(session, old_refresh_token)
+
+
+@pytest.mark.asyncio
+async def test_refresh_tokens_rejects_expired_token(session: AsyncSession) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-refresh-expired")
+    password = "StrongPassword123!"
+
+    user, _, old_refresh_token = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Refresh Expired",
+    )
+
+    token_result = await session.execute(
+        select(RefreshToken).where(
+            RefreshToken.token_hash == hash_token(old_refresh_token)
+        )
+    )
+    token = token_result.scalar_one()
+    token.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    await session.commit()
+
+    with pytest.raises(AuthenticationError):
+        await auth_service.refresh_tokens(session, old_refresh_token)
+
+    await session.refresh(user)
+    assert user.id is not None
+
+
+@pytest.mark.asyncio
+async def test_refresh_tokens_rejects_malformed_token(session: AsyncSession) -> None:
+    await _ensure_system_user_role(session)
+
+    with pytest.raises(AuthenticationError):
+        await auth_service.refresh_tokens(session, "not-a-valid-refresh-token")
+
+
+@pytest.mark.asyncio
+async def test_refresh_reuse_detection_revokes_active_token_family(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-refresh-reuse")
+    password = "StrongPassword123!"
+
+    _, _, old_refresh_token = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Refresh Reuse",
+    )
+    _, _, rotated_refresh_token = await auth_service.refresh_tokens(
+        session,
+        old_refresh_token,
+    )
+
+    with pytest.raises(AuthenticationError):
+        await auth_service.refresh_tokens(session, old_refresh_token)
+    with pytest.raises(AuthenticationError):
+        await auth_service.refresh_tokens(session, rotated_refresh_token)
+
+    rotated_result = await session.execute(
+        select(RefreshToken).where(
+            RefreshToken.token_hash == hash_token(rotated_refresh_token)
+        )
+    )
+    rotated_token = rotated_result.scalar_one()
+    assert rotated_token.is_revoked is True
+    assert rotated_token.revoked_reason == "reuse_detected"
+
+
+@pytest.mark.asyncio
+async def test_expired_access_token_raises_authentication_error(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-access-expired")
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        email,
+        "StrongPassword123!",
+        "Auth Access Expired",
+    )
+    expired_access_token = create_access_token(
+        subject=str(user.id),
+        expires_delta=timedelta(seconds=-1),
+    )
+
+    with pytest.raises(AuthenticationError):
+        await authenticate_access_token(session, expired_access_token)
 
 
 @pytest.mark.asyncio

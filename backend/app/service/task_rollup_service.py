@@ -159,8 +159,8 @@ def clear_summary_rollup(
     exceptions: list[CalendarException],
 ) -> None:
     summary.is_summary = False
-    # TODO(2026-03-07): Decide whether ex-summary tasks should keep rolled-up snapshot
-    # dates or reset to explicit leaf defaults when the last child is removed.
+    # Ex-summary tasks reset to a single-day leaf baseline when last child is removed.
+    summary.finish_date = summary.start_date
     summary.duration = calculate_summary_duration_minutes(
         summary.start_date,
         summary.finish_date,

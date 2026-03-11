@@ -154,63 +154,68 @@
 
 ### 🔴 Critical Gaps (Must-Fix for V1.0)
 
-#### G-01: Scheduling Engine Has No Unit-Level Tests
+#### G-01: Scheduling Engine Needs Deeper Unit Coverage
 
-**Risk:** The scheduling engine (`scheduling_service.py`, 647 lines) is the most complex and business-critical code but has zero dedicated service-level unit tests. The 5 API tests and 6 integration tests only cover basic FS chains and one parallel-paths scenario.
+**Risk:** The scheduling engine (`scheduling_service.py`, 647 lines) is the most complex and business-critical code. Core Phase 1 service-level depth is now covered; future additions are incremental hardening.
 
 **Missing tests:**
 
-- [ ] Each constraint type individually: MSO, MFO, SNET, SNLT, FNET, FNLT, ALAP
-- [ ] SS, FF, SF dependency types (only FS is tested end-to-end)
-- [ ] Negative lag (lead time) producing correct early starts
-- [ ] Mixed dependency types on same successor (e.g., FS + SS from different predecessors)
-- [ ] Topological sort with disconnected subgraphs
-- [ ] Backward pass correctness (LS/LF values)
-- [ ] Slack calculation accuracy (total_slack and free_slack)
-- [ ] Summary tasks excluded from CPM but rolled up correctly
-- [ ] Empty project (0 tasks) → project_finish_date = start_date
-- [ ] Single task, no dependencies → ES=project start, total_slack=0
-- [ ] Calendar exceptions affecting scheduling (holidays)
+Current phase status (built vs pending, updated 2026-03-11):
+
+- [x] Each constraint type individually: MSO, MFO, SNET, SNLT, FNET, FNLT, ALAP
+  Status: helper-level coverage now exists across all 8 constraint types.
+- [x] SS, FF, SF dependency types (helper-level `_compute_dep_driven_date` coverage)
+- [x] Negative lag (lead time) producing correct early starts
+- [x] Mixed dependency types on same successor (e.g., FS + SS from different predecessors)
+- [x] Topological sort with disconnected subgraphs
+- [x] Backward pass correctness (LS/LF values)
+- [x] Slack calculation accuracy (total_slack and free_slack)
+- [x] Summary tasks excluded from CPM but rolled up correctly
+- [x] Empty project (0 tasks) -> project_finish_date = start_date
+- [x] Single task, no dependencies -> ES=project start, total_slack=0
+- [x] Calendar exceptions affecting scheduling (holidays)
 
 **Recommended file:** `tests/unit/service/test_scheduling_service.py`
 
 ---
 
-#### G-02: Auth Service Has No Dedicated Unit Tests
+#### G-02: Auth Service Needs Deeper Unit Coverage
 
-**Risk:** Auth logic (password hashing, token generation, refresh rotation, bcrypt DoS protection) is tested only through API-level tests which don't isolate business logic from HTTP concerns.
+**Risk:** Auth logic (password hashing, token generation, refresh rotation, bcrypt DoS protection) now has baseline service tests, but several security edge cases are still not covered.
 
 **Missing tests:**
 
-- [ ] Password hashing + verification (bcrypt rounds)
-- [ ] Password max_length enforcement (bcrypt DoS prevention)
-- [ ] Access token generation with correct claims and expiry
-- [ ] Refresh token rotation: old token invalidated after use
-- [ ] Refresh token reuse detection (stolen token scenario)
-- [ ] Expired access token → raises AuthenticationError
-- [ ] Expired refresh token → raises AuthenticationError
-- [ ] User with `is_active=False` → rejected
+- [x] Password hashing + verification (bcrypt rounds)
+- [x] Password max_length enforcement (bcrypt DoS prevention)
+- [x] Access token generation with correct claims and expiry
+- [x] Refresh token rotation: old token invalidated after use
+- [x] Refresh token reuse detection (stolen token scenario)
+- [x] Expired access token → raises AuthenticationError
+- [x] Expired refresh token → raises AuthenticationError
+- [x] User with `is_active=False` → rejected
+- [x] Wrong password login -> rejected
 
 **Recommended file:** `tests/unit/service/test_auth_service.py`
 
 ---
 
-#### G-03: Task Rollup Service Has No Dedicated Tests
+#### G-03: Task Rollup Service Needs Deeper Unit Coverage
 
-**Risk:** Summary task rollup (`task_rollup_service.py`) computes aggregated dates, duration, progress, and cost for parent tasks based on children. Errors cascade up the entire WBS tree.
+**Risk:** Summary task rollup (`task_rollup_service.py`) now has baseline unit tests, but additional edge-case depth is still required.
 
 **Missing tests:**
 
-- [ ] `apply_summary_rollup` — start=min(children.start), finish=max(children.finish)
-- [ ] Duration recalculation in working minutes using calendar
-- [ ] Progress weighted by duration: `∑(child.percent × child.duration) / ∑(child.duration)`
-- [ ] Cost aggregation: fixed_cost, total_cost, BCWS, BCWP, ACWP
-- [ ] `clear_summary_rollup` — resets to single-day leaf task
-- [ ] `sync_leaf_duration_progress` — actual_duration, remaining_duration derivation
-- [ ] `validate_summary_rollup_edit` — rejects writes to computed fields on summary tasks
-- [ ] Edge: parent with single child
-- [ ] Edge: parent with all children at 100% complete
-- [ ] Edge: parent with zero-duration milestone children
+- [x] `apply_summary_rollup` -> start=min(children.start), finish=max(children.finish)
+- [x] Duration recalculation in working minutes using calendar
+- [x] Progress weighted by duration
+- [x] Cost aggregation (actual/total/remaining)
+- [x] `clear_summary_rollup` reset behavior for computed fields
+- [x] `clear_summary_rollup` -> single-day leaf semantics
+- [x] `sync_leaf_duration_progress` -> actual_duration/remaining_duration derivation
+- [x] `validate_summary_rollup_edit` -> rejects writes to computed fields on summary tasks
+- [x] Edge: parent with single child
+- [x] Edge: parent with all children at 100% complete
+- [x] Edge: parent with zero-duration milestone children
 
 **Recommended file:** `tests/unit/service/test_task_rollup_service.py`
 
@@ -521,15 +526,15 @@ npx playwright test tests/e2e/task-flow.spec.ts
 
 ## Appendix A: Full Test Inventory
 
-### Backend Unit Tests (44 files, ~250+ tests)
+### Backend Unit Tests (47 files, ~270+ tests)
 
 **API Layer (20 files):**
 `test_activity`, `test_ai`, `test_assignments`, `test_auth`, `test_calendars`, `test_comments`, `test_dependencies`, `test_deps`, `test_email_verification`, `test_insights`, `test_notifications`, `test_organization_members`, `test_organizations`, `test_project_members`, `test_projects`, `test_resources`, `test_scheduling`, `test_task_bulk`, `test_tasks`, `test_utilization`, `test_ws`
 
-**Service Layer (15 files):**
-`test_activity_log_service`, `test_ai_service`, `test_assignment_service`, `test_calendar_utils`, `test_comment_service`, `test_email_service`, `test_insights_service`, `test_notification_service`, `test_notification_tasks`, `test_project_member_service`, `test_project_service`, `test_realtime_service`, `test_service_layer_architecture`, `test_ws_protocol`, `test_ws_session_service`
+**Service Layer (18 files):**
+`test_activity_log_service`, `test_ai_service`, `test_assignment_service`, `test_auth_service`, `test_calendar_utils`, `test_comment_service`, `test_email_service`, `test_insights_service`, `test_notification_service`, `test_notification_tasks`, `test_project_member_service`, `test_project_service`, `test_realtime_service`, `test_scheduling_service`, `test_service_layer_architecture`, `test_task_rollup_service`, `test_ws_protocol`, `test_ws_session_service`
 
-**Other (9 files):**
+**Other (8 files):**
 `test_db_connection`, `test_health`, `test_user_notification_websocket_manager`, `test_websocket_manager`, `test_repository_layer`, `test_comment_entity_type_migration`, `test_comment_thread_integrity_migration`, `test_seed_industry_portfolio`
 
 ### Backend Integration Tests (8 files, 25 tests)

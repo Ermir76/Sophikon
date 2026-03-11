@@ -77,6 +77,55 @@
 
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** topological sort ordering, FS/SS/FF/SF driver dates, forward/backward constraint helpers, empty-project scheduling, deterministic FS chain scheduling, critical-path details ordering/span.
+**Implemented in this slice (exact tests):**
+- [x] `test_topological_sort_orders_dependencies_and_keeps_disconnected_nodes`
+- [x] `test_compute_dep_driven_date_supports_fs_ss_ff_and_sf`
+- [x] `test_apply_forward_constraints_handles_mso_snet_and_fnet`
+- [x] `test_apply_backward_constraints_handles_fnlt_snlt_and_mfo`
+- [x] `test_calculate_schedule_empty_project_returns_start_date`
+- [x] `test_calculate_schedule_sets_fs_chain_dates_and_critical_flags`
+- [x] `test_get_critical_path_details_returns_ordered_chain_and_span`
+- [x] `test_single_task_no_deps_starts_at_project_start`
+- [x] `test_fs_chain_two_tasks`
+- [x] `test_ss_dependency_same_start`
+- [x] `test_ff_dependency_derives_start_from_finish`
+- [x] `test_sf_dependency_reverses_logic`
+- [x] `test_fs_with_positive_lag`
+- [x] `test_fs_with_zero_lag`
+- [x] `test_multiple_predecessors_takes_latest`
+- [x] `test_disconnected_tasks_start_at_project_start`
+- [x] `test_es_lands_on_non_working_day_shifts_forward`
+- [x] `test_terminal_task_lf_equals_project_finish`
+- [x] `test_backward_pass_propagates_lf`
+- [x] `test_multiple_successors_takes_earliest`
+- [x] `test_critical_task_has_zero_total_slack`
+- [x] `test_non_critical_task_has_positive_total_slack`
+- [x] `test_free_slack_equals_gap_to_earliest_successor`
+- [x] `test_free_slack_equals_total_slack_for_terminal_tasks`
+- [x] `test_asap_is_default_no_effect`
+- [x] `test_alap_shifts_to_late_dates`
+- [x] `test_mso_forces_exact_start_date`
+- [x] `test_mfo_derives_start_from_finish_date`
+- [x] `test_snet_takes_later_of_dep_and_constraint`
+- [x] `test_snet_ignored_when_dep_is_later`
+- [x] `test_snlt_caps_late_start`
+- [x] `test_fnet_pushes_start_if_finish_too_early`
+- [x] `test_fnet_no_effect_when_finish_already_late_enough`
+- [x] `test_fnlt_caps_late_finish`
+- [x] `test_single_chain_all_tasks_are_critical`
+- [x] `test_parallel_paths_longest_is_critical`
+- [x] `test_diamond_pattern_identifies_driving_path`
+- [x] `test_empty_project_returns_empty_critical_path`
+- [x] `test_single_task_is_critical`
+- [x] `test_fs_with_negative_lag_produces_lead_time`
+- [x] `test_mixed_dependency_types_on_same_successor`
+- [x] `test_summary_task_excluded_from_cpm_calculation`
+- [x] `test_summary_inherits_min_start_max_finish_from_children`
+- [x] `test_nested_summaries_propagate_bottom_up`
+- [x] `test_summary_is_critical_if_any_child_is_critical`
+- [x] `test_schedule_skips_weekends`
+- [x] `test_schedule_skips_holiday_exception`
+- [x] `test_schedule_with_custom_work_week`
 
 **Why:** 647-line CPM engine with zero unit tests. Most complex and business-critical code.
 **Confidence delta:** +4%  |  **Running total: ~89%**
@@ -84,145 +133,151 @@
 ### Forward Pass (ES/EF Calculation)
 
 ```
-[ ] test_single_task_no_deps_starts_at_project_start
+[x] test_single_task_no_deps_starts_at_project_start
       → 1 task, 0 deps → ES = project.start_date, EF = ES + duration
 
-[ ] test_fs_chain_two_tasks
+[x] test_fs_chain_two_tasks
       → A(2d) --FS--> B(3d) → B.ES = A.EF + 1 day
 
-[ ] test_ss_dependency_same_start
+[x] test_ss_dependency_same_start
       → A --SS--> B → B.ES = A.ES
 
-[ ] test_ff_dependency_derives_start_from_finish
+[x] test_ff_dependency_derives_start_from_finish
       → A --FF--> B(3d) → B.EF = A.EF, B.ES = B.EF - 3d
 
-[ ] test_sf_dependency_reverses_logic
+[x] test_sf_dependency_reverses_logic
       → A --SF--> B → B.EF = A.ES
 
-[ ] test_fs_with_positive_lag
+[x] test_fs_with_positive_lag
       → A --FS+2d--> B → B.ES = A.EF + 1 + 2 working days
 
-[ ] test_fs_with_zero_lag
+[x] test_fs_with_zero_lag
       → A --FS+0--> B → B.ES = A.EF + 1
 
-[ ] test_multiple_predecessors_takes_latest
+[x] test_fs_with_negative_lag_produces_lead_time
+      → A --FS-1d--> B → B.ES shifts earlier by one working day
+
+[x] test_multiple_predecessors_takes_latest
       → A --FS--> C, B --FS--> C → C.ES = max(A.EF, B.EF) + 1
 
-[ ] test_disconnected_tasks_start_at_project_start
+[x] test_mixed_dependency_types_on_same_successor
+      → A --FS--> C and B --SS--> C → C.ES = max(mixed dep-driven starts)
+
+[x] test_disconnected_tasks_start_at_project_start
       → A and B with no deps → both ES = project.start_date
 
-[ ] test_es_lands_on_non_working_day_shifts_forward
+[x] test_es_lands_on_non_working_day_shifts_forward
       → If computed ES is Saturday → shifts to Monday
 ```
 
 ### Backward Pass (LS/LF Calculation)
 
 ```
-[ ] test_terminal_task_lf_equals_project_finish
+[x] test_terminal_task_lf_equals_project_finish
       → Last task in chain → LF = max(all EF) = project finish
 
-[ ] test_backward_pass_propagates_lf
+[x] test_backward_pass_propagates_lf
       → A --FS--> B → A.LF = B.LS - 1
 
-[ ] test_multiple_successors_takes_earliest
+[x] test_multiple_successors_takes_earliest
       → A --FS--> B, A --FS--> C → A.LF = min(B.LS, C.LS) - 1
 ```
 
 ### Slack
 
 ```
-[ ] test_critical_task_has_zero_total_slack
+[x] test_critical_task_has_zero_total_slack
       → Single chain, no parallel path → all tasks have total_slack=0
 
-[ ] test_non_critical_task_has_positive_total_slack
+[x] test_non_critical_task_has_positive_total_slack
       → Parallel paths: long path (critical) + short path → short path has slack > 0
 
-[ ] test_free_slack_equals_gap_to_earliest_successor
+[x] test_free_slack_equals_gap_to_earliest_successor
       → A --FS--> C, B --FS--> C, A shorter → A.free_slack = C.ES - A.EF - 1
 
-[ ] test_free_slack_equals_total_slack_for_terminal_tasks
+[x] test_free_slack_equals_total_slack_for_terminal_tasks
       → Task with no successors → free_slack = total_slack
 ```
 
 ### Constraints (all 8)
 
 ```
-[ ] test_asap_is_default_no_effect
+[x] test_asap_is_default_no_effect
       → Task with ASAP constraint → same as no constraint
 
-[ ] test_alap_shifts_to_late_dates
+[x] test_alap_shifts_to_late_dates
       → Task with ALAP → ES = LS, EF = LF
 
-[ ] test_mso_forces_exact_start_date
+[x] test_mso_forces_exact_start_date
       → MSO with date → ES = constraint_date, ignoring deps
 
-[ ] test_mfo_derives_start_from_finish_date
+[x] test_mfo_derives_start_from_finish_date
       → MFO with date → EF = constraint_date, ES = EF - duration
 
-[ ] test_snet_takes_later_of_dep_and_constraint
+[x] test_snet_takes_later_of_dep_and_constraint
       → SNET: if dep says Jan 5, constraint says Jan 10 → ES = Jan 10
 
-[ ] test_snet_ignored_when_dep_is_later
+[x] test_snet_ignored_when_dep_is_later
       → SNET: if dep says Jan 15, constraint says Jan 10 → ES = Jan 15
 
-[ ] test_snlt_caps_late_start
+[x] test_snlt_caps_late_start
       → SNLT: LS cannot exceed constraint_date
 
-[ ] test_fnet_pushes_start_if_finish_too_early
+[x] test_fnet_pushes_start_if_finish_too_early
       → FNET: if EF < constraint → push ES forward
 
-[ ] test_fnet_no_effect_when_finish_already_late_enough
+[x] test_fnet_no_effect_when_finish_already_late_enough
       → FNET: if EF >= constraint → no change
 
-[ ] test_fnlt_caps_late_finish
+[x] test_fnlt_caps_late_finish
       → FNLT: LF = min(LF, constraint_date)
 ```
 
 ### Critical Path Identification
 
 ```
-[ ] test_single_chain_all_tasks_are_critical
+[x] test_single_chain_all_tasks_are_critical
       → A → B → C, no parallel path → all 3 critical
 
-[ ] test_parallel_paths_longest_is_critical
+[x] test_parallel_paths_longest_is_critical
       → Path1: A(5d) → B(5d), Path2: C(2d) → D(2d) → Path1 is critical
 
-[ ] test_diamond_pattern_identifies_driving_path
+[x] test_diamond_pattern_identifies_driving_path
       → A → B, A → C, B → D, C → D → longest leg is critical
 
-[ ] test_empty_project_returns_empty_critical_path
+[x] test_empty_project_returns_empty_critical_path
       → 0 tasks → critical_path_task_ids = []
 
-[ ] test_single_task_is_critical
+[x] test_single_task_is_critical
       → 1 task → it is critical (total_slack = 0)
 ```
 
 ### Summary Task Rollup in Scheduling
 
 ```
-[ ] test_summary_task_excluded_from_cpm_calculation
+[x] test_summary_task_excluded_from_cpm_calculation
       → Summary tasks not in topological sort, not in schedule_data
 
-[ ] test_summary_inherits_min_start_max_finish_from_children
+[x] test_summary_inherits_min_start_max_finish_from_children
       → Parent gets start = min(children.start), finish = max(children.finish)
 
-[ ] test_nested_summaries_propagate_bottom_up
+[x] test_nested_summaries_propagate_bottom_up
       → Grandparent → Parent → Leaf: grandparent dates = min/max of all descendants
 
-[ ] test_summary_is_critical_if_any_child_is_critical
+[x] test_summary_is_critical_if_any_child_is_critical
       → One critical child → parent.is_critical = True
 ```
 
 ### Calendar-Aware Scheduling
 
 ```
-[ ] test_schedule_skips_weekends
-      → Task starting Friday with 2d duration → finishes Tuesday (skips Sat/Sun)
+[x] test_schedule_skips_weekends
+      → Task starting Friday with 2d duration → finishes Monday (skips Sat/Sun)
 
-[ ] test_schedule_skips_holiday_exception
+[x] test_schedule_skips_holiday_exception
       → Monday is a holiday exception → task shifts to Tuesday
 
-[ ] test_schedule_with_custom_work_week
+[x] test_schedule_with_custom_work_week
       → 4-day work week (Mon-Thu) → Friday is non-working
 ```
 
@@ -232,6 +287,18 @@
 
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** leaf progress sync/clamp, summary min/max date aggregation, weighted progress, cost aggregation, clear-summary reset, summary edit guard.
+**Implemented in this slice (exact tests):**
+- [x] `test_sync_leaf_duration_progress_sets_actual_and_remaining_minutes`
+- [x] `test_sync_leaf_duration_progress_clamps_percent_out_of_bounds`
+- [x] `test_apply_summary_rollup_aggregates_dates_progress_costs_and_critical`
+- [x] `test_clear_summary_rollup_resets_computed_fields`
+- [x] `test_validate_summary_rollup_edit_blocks_computed_fields`
+- [x] `test_validate_summary_rollup_edit_blocks_start_and_percent_fields`
+- [x] `test_validate_summary_rollup_edit_allows_notes_edit_on_summary`
+- [x] `test_apply_summary_rollup_single_child_matches_child_values`
+- [x] `test_apply_summary_rollup_all_children_complete_sets_100_percent`
+- [x] `test_apply_summary_rollup_zero_duration_milestones`
+- [x] `test_apply_summary_rollup_parent_with_mix_of_milestones_and_tasks`
 
 **Why:** Summary task aggregation errors cascade up the entire WBS hierarchy silently.
 **Confidence delta:** +2%  |  **Running total: ~91%**
@@ -239,51 +306,51 @@
 ### apply_summary_rollup
 
 ```
-[ ] test_summary_start_is_min_of_children_starts
-[ ] test_summary_finish_is_max_of_children_finishes
-[ ] test_summary_duration_computed_in_working_minutes
-[ ] test_summary_progress_weighted_by_duration
+[x] test_summary_start_is_min_of_children_starts
+[x] test_summary_finish_is_max_of_children_finishes
+[x] test_summary_duration_computed_in_working_minutes
+[x] test_summary_progress_weighted_by_duration
       → 3 children: (50%, 480min), (100%, 960min), (0%, 480min)
       → weighted = (50*480 + 100*960 + 0*480) / (480+960+480)
-[ ] test_summary_cost_aggregation
+[x] test_summary_cost_aggregation
       → total_cost = sum(children.total_cost) + parent.fixed_cost
 [ ] test_summary_earned_value_bcws_bcwp_acwp
-[ ] test_summary_is_critical_if_any_child_is_critical
+[x] test_summary_is_critical_if_any_child_is_critical
 ```
 
 ### clear_summary_rollup
 
 ```
-[ ] test_clear_resets_to_single_day_leaf
+[x] test_clear_resets_to_single_day_leaf
       → When last child removed: duration=480, start=finish, progress=0
 ```
 
 ### sync_leaf_duration_progress
 
 ```
-[ ] test_actual_duration_from_percent_and_duration
+[x] test_actual_duration_from_percent_and_duration
       → 50% of 960min → actual_duration=480, remaining=480
-[ ] test_zero_percent_means_all_remaining
-[ ] test_hundred_percent_means_all_actual
+[x] test_zero_percent_means_all_remaining
+[x] test_hundred_percent_means_all_actual
 ```
 
 ### validate_summary_rollup_edit
 
 ```
-[ ] test_rejects_duration_edit_on_summary_task
-[ ] test_rejects_start_date_edit_on_summary_task
-[ ] test_rejects_percent_complete_edit_on_summary_task
-[ ] test_allows_name_edit_on_summary_task
-[ ] test_allows_notes_edit_on_summary_task
+[x] test_rejects_duration_edit_on_summary_task
+[x] test_rejects_start_date_edit_on_summary_task
+[x] test_rejects_percent_complete_edit_on_summary_task
+[x] test_allows_name_edit_on_summary_task
+[x] test_allows_notes_edit_on_summary_task
 ```
 
 ### Edge Cases
 
 ```
-[ ] test_single_child_rollup
-[ ] test_all_children_complete_100_percent
-[ ] test_all_children_zero_duration_milestones
-[ ] test_parent_with_mix_of_milestones_and_tasks
+[x] test_single_child_rollup
+[x] test_all_children_complete_100_percent
+[x] test_all_children_zero_duration_milestones
+[x] test_parent_with_mix_of_milestones_and_tasks
 ```
 
 ---
@@ -292,30 +359,45 @@
 
 **Status (2026-03-11):** Baseline implemented.
 **Implemented now:** registration hash verification, duplicate email rejection, login success/wrong-password/inactive-user paths, refresh rotation behavior, logout idempotent revoke, access token claim checks.
+**Implemented in this slice (exact tests):**
+- [x] `test_register_user_hashes_password_and_persists_refresh_token`
+- [x] `test_register_user_rejects_duplicate_email`
+- [x] `test_login_user_returns_tokens_for_valid_credentials`
+- [x] `test_login_user_rejects_wrong_password`
+- [x] `test_login_user_rejects_inactive_user`
+- [x] `test_refresh_tokens_rotates_and_revokes_old_token`
+- [x] `test_logout_user_revokes_token_and_is_idempotent`
+- [x] `test_register_user_rejects_password_over_72_bytes`
+- [x] `test_register_user_creates_user_with_correct_fields`
+- [x] `test_access_token_expires_after_configured_minutes`
+- [x] `test_refresh_tokens_rejects_expired_token`
+- [x] `test_refresh_tokens_rejects_malformed_token`
+- [x] `test_refresh_reuse_detection_revokes_active_token_family`
+- [x] `test_expired_access_token_raises_authentication_error`
 
 **Why:** Token security is never "nice-to-have" — it's the gate to all data.
 **Confidence delta:** +1.5%  |  **Running total: ~92.5%**
 
 ```
-[ ] test_register_hashes_password_with_bcrypt
-[ ] test_register_rejects_password_over_72_bytes
+[x] test_register_hashes_password_with_bcrypt
+[x] test_register_rejects_password_over_72_bytes
       → bcrypt silently truncates at 72 bytes — DoS protection
-[ ] test_register_rejects_duplicate_email
-[ ] test_register_creates_user_with_correct_fields
-[ ] test_login_verifies_password_and_returns_tokens
-[ ] test_login_rejects_wrong_password
-[ ] test_login_rejects_inactive_user
-[ ] test_access_token_contains_correct_claims
+[x] test_register_rejects_duplicate_email
+[x] test_register_creates_user_with_correct_fields
+[x] test_login_verifies_password_and_returns_tokens
+[x] test_login_rejects_wrong_password
+[x] test_login_rejects_inactive_user
+[x] test_access_token_contains_correct_claims
       → sub=user.id, exp=now+30min
-[ ] test_access_token_expires_after_configured_minutes
-[ ] test_refresh_token_stored_hashed_in_db
-[ ] test_refresh_rotation_invalidates_old_token
-[ ] test_refresh_reuse_detection_revokes_family
+[x] test_access_token_expires_after_configured_minutes
+[x] test_refresh_token_stored_hashed_in_db
+[x] test_refresh_rotation_invalidates_old_token
+[x] test_refresh_reuse_detection_revokes_family
       → If old refresh token reused after rotation → revoke ALL tokens for user
-[ ] test_logout_deletes_refresh_token_from_db
-[ ] test_expired_access_token_raises_authentication_error
-[ ] test_expired_refresh_token_raises_authentication_error
-[ ] test_malformed_jwt_raises_authentication_error
+[x] test_logout_revokes_refresh_token_from_db
+[x] test_expired_access_token_raises_authentication_error
+[x] test_expired_refresh_token_raises_authentication_error
+[x] test_malformed_refresh_token_raises_authentication_error
 ```
 
 ---

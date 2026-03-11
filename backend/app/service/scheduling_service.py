@@ -8,6 +8,7 @@ slack/float computation, constraint handling, and summary task rollup.
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import date, timedelta
+from math import trunc
 from uuid import UUID
 
 from sqlalchemy import select
@@ -136,10 +137,14 @@ def _compute_dep_driven_date(
 
     Handles all four dependency types (FS, SS, FF, SF) and lag.
     """
-    lag_days = dep.lag // max(
-        get_working_minutes_on_date(pred_data.ef, work_week, exceptions), 1
+    daily_minutes = max(
+        get_working_minutes_on_date(pred_data.ef, work_week, exceptions),
+        1,
     )
-    lag_delta = timedelta(days=lag_days) if dep.lag > 0 else timedelta(days=0)
+    # Convert lag minutes to whole working-day offsets using truncation toward zero.
+    # This supports both positive lag and negative lead consistently.
+    lag_days = trunc(dep.lag / daily_minutes)
+    lag_delta = timedelta(days=lag_days)
 
     if dep.type == DependencyType.FS:
         # Successor starts after predecessor finishes + lag
@@ -310,9 +315,10 @@ async def calculate_schedule(
                 # More precisely: reverse of forward pass logic
                 dep = dep_map.get((tid, succ_id))
                 if dep and dep.type == DependencyType.FS:
-                    lag_days = dep.lag // max(
+                    lag_daily_minutes = max(
                         get_working_minutes_on_date(sd.ef, task_ww, exceptions), 1
                     )
+                    lag_days = trunc(dep.lag / lag_daily_minutes)
                     succ_ls = succ_sd.ls if succ_sd.ls else succ_sd.es
                     lf = succ_ls - timedelta(days=1) - timedelta(days=lag_days)
                 else:

@@ -188,7 +188,9 @@ def test_clear_summary_rollup_resets_computed_fields() -> None:
     clear_summary_rollup(summary, DEFAULT_WORK_WEEK, [])
 
     assert summary.is_summary is False
-    assert summary.duration == 960
+    assert summary.start_date == date(2024, 1, 1)
+    assert summary.finish_date == date(2024, 1, 1)
+    assert summary.duration == 480
     assert summary.actual_duration == 0
     assert summary.remaining_duration == 0
     assert summary.work == 0
@@ -228,3 +230,205 @@ def test_validate_summary_rollup_edit_blocks_computed_fields() -> None:
 
     validate_summary_rollup_edit(summary, {"name": "Renamed"})
     validate_summary_rollup_edit(leaf, {"duration": 960})
+
+
+def test_validate_summary_rollup_edit_blocks_start_and_percent_fields() -> None:
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=480,
+        is_summary=True,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate_summary_rollup_edit(
+            summary,
+            {"start_date": date(2024, 1, 2), "percent_complete": 50.0},
+        )
+
+    message = str(exc_info.value)
+    assert "start_date" in message
+    assert "percent_complete" in message
+
+
+def test_validate_summary_rollup_edit_allows_notes_edit_on_summary() -> None:
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=480,
+        is_summary=True,
+        notes="Original",
+    )
+
+    validate_summary_rollup_edit(summary, {"notes": "Updated"})
+
+
+def test_apply_summary_rollup_single_child_matches_child_values() -> None:
+    summary = _build_task(
+        name="Summary Single Child",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+    )
+    child = _build_task(
+        name="Only Child",
+        start_date=date(2024, 1, 4),
+        finish_date=date(2024, 1, 5),
+        duration=960,  # 2 working days (2 * 480min)
+        work=960,
+        actual_duration=480,
+        remaining_duration=480,
+        actual_work=480,
+        remaining_work=480,
+        percent_complete=50.0,
+        actual_start=date(2024, 1, 4),
+        actual_finish=None,
+        actual_cost=150.0,
+        total_cost=220.0,
+        remaining_cost=70.0,
+        is_critical=False,
+        total_slack=480,
+    )
+
+    apply_summary_rollup(summary, [child], DEFAULT_WORK_WEEK, [])
+
+    assert summary.start_date == child.start_date
+    assert summary.finish_date == child.finish_date
+    assert summary.duration == 960
+    assert summary.percent_complete == 50.0
+    assert summary.actual_cost == 150.0
+    assert summary.total_cost == 220.0
+    assert summary.remaining_cost == 70.0
+    assert summary.total_slack == 480
+
+
+def test_apply_summary_rollup_all_children_complete_sets_100_percent() -> None:
+    summary = _build_task(
+        name="Summary Complete",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+    )
+    child_a = _build_task(
+        name="Done A",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=480,
+        work=480,
+        actual_duration=480,
+        remaining_duration=0,
+        actual_work=480,
+        remaining_work=0,
+        percent_complete=100.0,
+        percent_work_complete=100.0,
+    )
+    child_b = _build_task(
+        name="Done B",
+        start_date=date(2024, 1, 2),
+        finish_date=date(2024, 1, 2),
+        duration=480,
+        work=480,
+        actual_duration=480,
+        remaining_duration=0,
+        actual_work=480,
+        remaining_work=0,
+        percent_complete=100.0,
+        percent_work_complete=100.0,
+    )
+
+    apply_summary_rollup(summary, [child_a, child_b], DEFAULT_WORK_WEEK, [])
+
+    assert summary.percent_complete == 100.0
+    assert summary.percent_work_complete == 100.0
+    assert summary.remaining_duration == 0
+    assert summary.remaining_work == 0
+
+
+def test_apply_summary_rollup_zero_duration_milestones() -> None:
+    summary = _build_task(
+        name="Summary Milestones",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+    )
+    milestone_a = _build_task(
+        name="M1",
+        start_date=date(2024, 1, 3),
+        finish_date=date(2024, 1, 3),
+        duration=0,
+        work=0,
+        actual_duration=0,
+        remaining_duration=0,
+        actual_work=0,
+        remaining_work=0,
+        percent_complete=100.0,
+    )
+    milestone_b = _build_task(
+        name="M2",
+        start_date=date(2024, 1, 5),
+        finish_date=date(2024, 1, 5),
+        duration=0,
+        work=0,
+        actual_duration=0,
+        remaining_duration=0,
+        actual_work=0,
+        remaining_work=0,
+        percent_complete=0.0,
+    )
+
+    apply_summary_rollup(summary, [milestone_a, milestone_b], DEFAULT_WORK_WEEK, [])
+
+    assert summary.start_date == date(2024, 1, 3)
+    assert summary.finish_date == date(2024, 1, 5)
+    assert summary.duration == 1440
+    assert summary.percent_complete == 0.0
+    assert summary.percent_work_complete == 0.0
+
+
+def test_apply_summary_rollup_parent_with_mix_of_milestones_and_tasks() -> None:
+    summary = _build_task(
+        name="Summary Mixed",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+    )
+    milestone = _build_task(
+        name="Milestone",
+        start_date=date(2024, 1, 2),
+        finish_date=date(2024, 1, 2),
+        duration=0,
+        work=0,
+        actual_duration=0,
+        remaining_duration=0,
+        actual_work=0,
+        remaining_work=0,
+        percent_complete=100.0,
+        percent_work_complete=100.0,
+    )
+    task = _build_task(
+        name="Task",
+        start_date=date(2024, 1, 3),
+        finish_date=date(2024, 1, 4),
+        duration=960,  # 2 working days (2 * 480min)
+        work=960,
+        actual_duration=480,
+        remaining_duration=480,
+        actual_work=480,
+        remaining_work=480,
+        percent_complete=50.0,
+        percent_work_complete=50.0,
+    )
+
+    apply_summary_rollup(summary, [milestone, task], DEFAULT_WORK_WEEK, [])
+
+    assert summary.start_date == date(2024, 1, 2)
+    assert summary.finish_date == date(2024, 1, 4)
+    assert summary.duration == 1440
+    assert summary.percent_complete == 50.0
+    assert summary.percent_work_complete == 50.0
