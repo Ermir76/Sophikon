@@ -230,6 +230,14 @@ flowchart TB
 
 ## 1. Authentication Endpoints `[V1.0]`
 
+Auth contract (runtime):
+
+- Access/refresh tokens are delivered via HTTP-only cookies.
+- Response JSON keeps the `tokens` object for compatibility, but token values are empty strings.
+- Cookie names:
+  - `access_token` (path: `/api`)
+  - `refresh_token` (path: `/api/v1/auth`)
+
 ### POST /auth/register
 
 Register a new user account.
@@ -248,19 +256,22 @@ Register a new user account.
 
 ```json
 {
-  "data": {
-    "user": {
-      "id": "uuid",
-      "email": "user@example.com",
-      "full_name": "John Doe",
-      "avatar_url": null,
-      "system_role": "user",
-      "created_at": "2026-02-06T10:30:00Z"
-    },
-    "access_token": "eyJ...",
-    "refresh_token": "eyJ...",
-    "token_type": "bearer",
-    "expires_in": 3600
+  "tokens": {
+    "access_token": "",
+    "refresh_token": "",
+    "token_type": "bearer"
+  },
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "full_name": "John Doe",
+    "avatar_url": null,
+    "is_active": true,
+    "email_verified": false,
+    "preferences": {},
+    "timezone": "UTC",
+    "locale": "en-US",
+    "created_at": "2026-02-06T10:30:00Z"
   }
 }
 ```
@@ -286,12 +297,22 @@ Login with email and password.
 
 ```json
 {
-  "data": {
-    "user": { ... },
-    "access_token": "eyJ...",
-    "refresh_token": "eyJ...",
-    "token_type": "bearer",
-    "expires_in": 3600
+  "tokens": {
+    "access_token": "",
+    "refresh_token": "",
+    "token_type": "bearer"
+  },
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "full_name": "John Doe",
+    "avatar_url": null,
+    "is_active": true,
+    "email_verified": true,
+    "preferences": {},
+    "timezone": "UTC",
+    "locale": "en-US",
+    "created_at": "2026-02-06T10:30:00Z"
   }
 }
 ```
@@ -304,15 +325,15 @@ Login with email and password.
 
 Revoke refresh token.
 
-**Request:**
+**Request:** no body (uses `refresh_token` cookie if present)
+
+**Response:** `200 OK`
 
 ```json
 {
-  "refresh_token": "eyJ..."
+  "message": "Logged out successfully"
 }
 ```
-
-**Response:** `204 No Content`
 
 ---
 
@@ -320,22 +341,28 @@ Revoke refresh token.
 
 Get new access token.
 
-**Request:**
-
-```json
-{
-  "refresh_token": "eyJ..."
-}
-```
+**Request:** no body (uses `refresh_token` cookie)
 
 **Response:** `200 OK`
 
 ```json
 {
-  "data": {
-    "access_token": "eyJ...",
-    "token_type": "bearer",
-    "expires_in": 3600
+  "tokens": {
+    "access_token": "",
+    "refresh_token": "",
+    "token_type": "bearer"
+  },
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "full_name": "John Doe",
+    "avatar_url": null,
+    "is_active": true,
+    "email_verified": true,
+    "preferences": {},
+    "timezone": "UTC",
+    "locale": "en-US",
+    "created_at": "2026-02-06T10:30:00Z"
   }
 }
 ```
@@ -389,7 +416,7 @@ Handle Google OAuth callback.
 
 **Query Parameters:** `code`, `state`
 
-**Response:** `302 Redirect` to frontend with tokens
+**Response:** `302 Redirect` to frontend with auth cookies set (`access_token`, `refresh_token`)
 
 ---
 

@@ -691,6 +691,82 @@
 
 ---
 
+## FILE 16: Auth Expansion FR-AU-003/005/006 (Max-Safe Set)
+
+**Requirements:** `FR-AU-003`, `FR-AU-005`, `FR-AU-006`
+**Why:** Authentication and account recovery failures are high-severity product and security incidents.
+**Confidence delta:** +1.0% | **Running total: >99% hardening track**
+
+### Backend Service Unit (new/expand)
+
+```
+[ ] test_oauth_state_generation_and_validation_success
+[ ] test_oauth_state_rejects_tampered_payload
+[ ] test_oauth_state_rejects_expired_payload
+[ ] test_oauth_state_rejects_replay
+[ ] test_google_oauth_links_existing_user_by_email_when_safe
+[ ] test_google_oauth_rejects_provider_conflict
+[ ] test_google_oauth_creates_new_user_when_not_found
+[ ] test_password_reset_token_stored_hashed_only
+[ ] test_password_reset_request_invalidates_previous_unused_tokens
+[ ] test_password_reset_confirm_single_use_only
+[ ] test_password_reset_confirm_rejects_expired_token
+[ ] test_password_reset_confirm_revokes_all_refresh_tokens
+[ ] test_profile_patch_allowlist_only_updates_safe_fields
+[ ] test_profile_patch_rejects_invalid_timezone_locale_avatar
+```
+
+### Backend API Unit (new/expand)
+
+```
+[ ] test_get_auth_oauth_google_redirects_to_provider
+[ ] test_oauth_google_callback_success_sets_cookies_and_redirects
+[ ] test_oauth_google_callback_rejects_invalid_state
+[ ] test_oauth_google_callback_handles_provider_error_safely
+[ ] test_password_reset_request_returns_generic_success_for_existing_email
+[ ] test_password_reset_request_returns_same_generic_success_for_unknown_email
+[ ] test_password_reset_confirm_success
+[ ] test_password_reset_confirm_rejects_reused_token
+[ ] test_password_reset_confirm_rejects_expired_token
+[ ] test_patch_users_me_requires_auth
+[ ] test_patch_users_me_partial_update_success
+[ ] test_patch_users_me_validation_error_422
+```
+
+### Backend Integration / Concurrency (new)
+
+```
+[ ] test_password_reset_concurrent_confirm_only_one_succeeds
+[ ] test_oauth_callback_end_to_end_with_provider_stub
+[ ] test_password_reset_email_link_contains_expected_token_contract
+[ ] test_password_reset_post_confirm_login_with_old_password_fails
+[ ] test_password_reset_post_confirm_login_with_new_password_succeeds
+```
+
+### Security/Abuse Tests (new)
+
+```
+[ ] test_password_reset_endpoint_prevents_email_enumeration
+[ ] test_oauth_callback_rejects_open_redirect_attempts
+[ ] test_oauth_and_reset_endpoints_rate_limited
+[ ] test_profile_patch_rejects_oversized_payload
+[ ] test_profile_patch_unauthenticated_returns_401
+```
+
+### Frontend Unit + E2E (new)
+
+```
+[ ] test_login_page_google_button_redirects_to_backend_oauth_start
+[ ] test_password_reset_request_form_submit_and_success_message
+[ ] test_password_reset_confirm_form_handles_invalid_token_state
+[ ] test_profile_page_updates_and_persists_user_fields
+[ ] e2e_google_oauth_login_flow_with_provider_stub
+[ ] e2e_password_reset_request_to_confirm_flow
+[ ] e2e_profile_update_flow
+```
+
+---
+
 ## Summary
 
 | #   | File                                | New Tests       | Δ Confidence | Running Total |
@@ -710,7 +786,8 @@
 | 13  | `useGantt.test.ts`                  | ~6              | +0.5%        | 98.5%         |
 | 14  | `useCalendars.test.ts`              | ~4              | +0.25%       | 98.75%        |
 | 15  | `useResources.test.tsx`             | ~4              | +0.25%       | 99%           |
-|     | **TOTAL**                           | **~147 tests**  | **+14%**     | **99%**       |
+| 16  | `auth expansion (FR-AU-003/005/006)`| ~43             | +1.0%        | >99%          |
+|     | **TOTAL**                           | **~190 tests**  | **+15%**     | **>99%**      |
 
 ---
 
@@ -724,8 +801,9 @@ Week 1:  Files 1-3   (scheduling, rollup, auth)      → 85% → 92.5%
 Week 2:  Files 4-7   (calendar, hierarchy, util, deps) → 92.5% → 95.5%
 Week 3:  Files 8-12  (integration flows, security)    → 95.5% → 98%
 Week 4:  Files 13-15 (frontend gaps)                  → 98% → 99%
+Week 5:  File 16 (auth expansion max-safe set)        → 99% → >99%
 ```
 
 ---
 
-_This plan covers Phase 0 (quality fixes) + 147 new test functions across 15 files. Combined with the existing 250+ tests, the total test suite will have ~400 tests — all passing the Testing Constitution._
+_This plan covers Phase 0 (quality fixes) + ~190 new test functions across 16 files. Combined with the existing suite, this is the path to >99% risk-based confidence under the Testing Constitution._

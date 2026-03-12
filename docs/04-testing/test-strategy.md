@@ -379,6 +379,20 @@ Current phase status (built vs pending, updated 2026-03-11):
 - [x] Bulk create 50 tasks → response time <3s
   Status: implemented as opt-in perf suite (`RUN_PERF_TESTS=1`) to keep default CI stable.
 
+#### G-13: Auth Expansion Test Gap (`FR-AU-003`, `FR-AU-005`, `FR-AU-006`)
+
+**Risk:** Google OAuth, password reset, and profile update are security-critical flows and require a dedicated max-safe matrix before requirement closure.
+
+Required coverage before marking these requirements implemented:
+
+- Backend service tests for OAuth state checks, identity-link rules, and reset token lifecycle.
+- Backend API tests for OAuth redirect/callback contract, reset privacy behavior, reset confirm errors, and `/users/me` patch validation.
+- Integration/concurrency tests for single-use reset race behavior and provider callback end-to-end flow.
+- Security tests for enumeration resistance, open-redirect rejection, rate limits, and oversized payload handling.
+- Frontend unit/E2E tests for OAuth start, reset flow UX, and profile update persistence.
+
+Execution checklist source of truth: FILE 16 in `docs/04-testing/test-implementation-plan.md`.
+
 ---
 
 ## 4. Action Plan
@@ -457,6 +471,12 @@ class TestSummaryRollup:
 1. ✅ `tests/unit/api/v1/test_security.py` — injection, XSS, CORS, cookie/UUID/size guardrails
 2. ✅ `tests/integration/test_concurrency.py` — row locking and race-window checks
 3. ✅ `tests/integration/test_performance.py` — opt-in performance suite (`RUN_PERF_TESTS=1`)
+
+### Phase 6: Auth Expansion Max-Safe Set (Week 4-5)
+
+1. Execute FILE 16 in `test-implementation-plan.md` for `FR-AU-003`, `FR-AU-005`, and `FR-AU-006`.
+2. Keep requirement traceability status as not implemented/partial until FILE 16 backend coverage passes.
+3. Promote to implemented only after API + service + integration + abuse-path tests are green.
 
 ---
 
