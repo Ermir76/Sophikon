@@ -269,3 +269,57 @@ async def test_concurrent_wbs_regeneration_keeps_codes_unique() -> None:
         ]
         wbs_codes = [item["wbs_code"] for item in items]
         assert len(wbs_codes) == len(set(wbs_codes))
+
+
+@pytest.mark.asyncio
+async def test_concurrent_password_reset_confirm_allows_only_one_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Concurrent confirm on same reset token must succeed exactly once."""
+    reset_token = f"reset-race-{uuid.uuid4().hex}"
+    email = f"concurrency_reset_{uuid.uuid4().hex[:8]}@example.com"
+    old_password = "StrongPassword123!"
+    new_password = "StrongPassword456!"
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client_a:
+        await _register(client_a, email=email, full_name="Concurrency Reset")
+        monkeypatch.setattr(
+            "app.service.auth_service.create_email_action_token",
+            lambda: reset_token,
+        )
+        request_response = await client_a.post(
+            "/api/v1/auth/password-reset",
+            json={"email": email},
+        )
+        assert request_response.status_code == 200, request_response.text
+
+    async with (
+        AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client_a,
+        AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client_b,
+    ):
+        payload = {"token": reset_token, "new_password": new_password}
+        confirm_a, confirm_b = await asyncio.gather(
+            client_a.post("/api/v1/auth/password-reset/confirm", json=payload),
+            client_b.post("/api/v1/auth/password-reset/confirm", json=payload),
+        )
+
+        statuses = sorted([confirm_a.status_code, confirm_b.status_code])
+        assert statuses == [200, 400]
+
+        old_login = await client_a.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": old_password},
+        )
+        assert old_login.status_code == 401, old_login.text
+
+        new_login = await client_a.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": new_password},
+        )
+        assert new_login.status_code == 200, new_login.text

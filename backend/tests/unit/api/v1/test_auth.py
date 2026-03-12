@@ -1,5 +1,12 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import hash_token
+from app.models.password_reset import PasswordReset
+from app.service import auth_service
 
 
 @pytest.mark.asyncio
@@ -354,3 +361,248 @@ async def test_get_current_user_unauthenticated(client: AsyncClient):
     assert response.status_code == 401
     assert "error" in response.json()
     assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_google_oauth_start_redirects_and_sets_state_cookie(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    """OAuth start route redirects to provider and sets signed state cookie."""
+
+    def _fake_authorize_url(state_token: str) -> str:
+        return f"https://accounts.google.com/o/oauth2/v2/auth?state={state_token}"
+
+    monkeypatch.setattr(
+        "app.service.auth_service.build_google_oauth_authorize_url",
+        _fake_authorize_url,
+    )
+
+    response = await client.get(
+        "/api/v1/auth/oauth/google",
+        params={"next": "/projects"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"].startswith(
+        "https://accounts.google.com/o/oauth2/v2/auth"
+    )
+    assert "oauth_google_state" in response.cookies
+
+
+@pytest.mark.asyncio
+async def test_google_oauth_callback_rejects_invalid_state(client: AsyncClient):
+    """OAuth callback with invalid/missing state redirects to frontend error."""
+    response = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"code": "test-code", "state": "invalid-state"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"].endswith("/login?oauth=error")
+
+
+@pytest.mark.asyncio
+async def test_google_oauth_callback_success_sets_auth_cookies_and_redirects(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    """OAuth callback success sets auth cookies and redirects to next path."""
+
+    async def _fake_login_with_google_code(*args, **kwargs):
+        return (None, "oauth-access-token", "oauth-refresh-token")
+
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.auth.validate_oauth_state",
+        lambda expected_state, provided_state: True,
+    )
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.auth.decode_oauth_state",
+        lambda state_token: {"next": "/projects"},
+    )
+    monkeypatch.setattr(
+        "app.service.auth_service.login_with_google_code",
+        _fake_login_with_google_code,
+    )
+
+    response = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"code": "oauth-code", "state": "oauth-state"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"].endswith("/projects")
+    assert response.cookies["access_token"] == "oauth-access-token"
+    assert response.cookies["refresh_token"] == "oauth-refresh-token"
+
+
+@pytest.mark.asyncio
+async def test_password_reset_request_returns_generic_success_for_unknown_email(
+    client: AsyncClient,
+):
+    response = await client.post(
+        "/api/v1/auth/password-reset",
+        json={"email": "unknown-user@example.com"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "If the email exists, reset instructions were sent."
+    }
+
+
+@pytest.mark.asyncio
+async def test_password_reset_request_returns_generic_success_for_existing_email(
+    client: AsyncClient,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "known-reset@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Known Reset",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/password-reset",
+        json={"email": "known-reset@example.com"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "If the email exists, reset instructions were sent."
+    }
+
+
+@pytest.mark.asyncio
+async def test_password_reset_confirm_success_and_token_is_single_use(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    email = "password-reset-confirm@example.com"
+    old_password = "StrongPassword123!"
+    new_password = "StrongPassword456!"
+    raw_token = "manual-reset-token"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": old_password, "full_name": "Reset Confirm"},
+    )
+    user = await auth_service.get_user_by_email(session, email)
+    assert user is not None
+
+    session.add(
+        PasswordReset(
+            user_id=user.id,
+            token_hash=hash_token(raw_token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+    )
+    await session.commit()
+
+    confirm_response = await client.post(
+        "/api/v1/auth/password-reset/confirm",
+        json={"token": raw_token, "new_password": new_password},
+    )
+    assert confirm_response.status_code == 200
+    assert confirm_response.json()["message"] == "Password has been reset"
+
+    reused_response = await client.post(
+        "/api/v1/auth/password-reset/confirm",
+        json={"token": raw_token, "new_password": "AnotherPassword789!"},
+    )
+    assert reused_response.status_code == 400
+    assert reused_response.json()["error"]["code"] == "INVALID_OPERATION"
+
+    old_login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": old_password},
+    )
+    assert old_login_response.status_code == 401
+
+    new_login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": new_password},
+    )
+    assert new_login_response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_patch_users_me_requires_authentication(client: AsyncClient):
+    response = await client.patch("/api/v1/users/me", json={"full_name": "Updated"})
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_patch_users_me_partial_update_success(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "profile-update@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Profile User",
+        },
+    )
+
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={
+            "full_name": "Updated Name",
+            "timezone": "Europe/Stockholm",
+            "preferences": {"theme": "dark", "email_notifications": True},
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["full_name"] == "Updated Name"
+    assert data["timezone"] == "Europe/Stockholm"
+    assert data["preferences"]["theme"] == "dark"
+    assert data["preferences"]["email_notifications"] is True
+
+    me_response = await client.get("/api/v1/auth/me")
+    assert me_response.status_code == 200
+    me_data = me_response.json()
+    assert me_data["full_name"] == "Updated Name"
+    assert me_data["timezone"] == "Europe/Stockholm"
+    assert me_data["preferences"]["theme"] == "dark"
+    assert me_data["preferences"]["email_notifications"] is True
+
+
+@pytest.mark.asyncio
+async def test_patch_users_me_service_validation_error(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "profile-validation@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Profile Validation",
+        },
+    )
+
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={"timezone": ""},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_patch_users_me_rejects_unknown_fields(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "profile-unknown-field@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Profile Unknown Field",
+        },
+    )
+
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={"unknown_setting": "value"},
+    )
+    assert response.status_code == 422
