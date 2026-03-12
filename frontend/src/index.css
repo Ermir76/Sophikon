@@ -53,7 +53,7 @@
 
 /* ─── LIGHT MODE ─────────────────────────────────────────────────────────── */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.0 rem;
   --background: oklch(0.975 0.004 248);
   --foreground: oklch(0.245 0.022 246);
   --card: oklch(0.995 0.002 248);
@@ -109,19 +109,19 @@
 
 /* ─── DARK MODE ──────────────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.24 0.012 258);
+  --background: oklch(0.2313 0.012 270.86);
   --foreground: oklch(0.955 0.008 220);
-  --card: oklch(30.012% 0.01392 261.737);
+  --card: oklch(0.2925 0.0157 264.3);
   --card-foreground: oklch(0.955 0.008 220);
-  --popover: oklch(33.912% 0.01568 259.841);
+  --popover: oklch(21.256% 0.00669 258.42 / 0.965);
   --popover-foreground: oklch(0.955 0.008 220);
-  --primary: oklch(0.6883 0.1992 143.03);
+  --primary: oklch(83.452% 0.13549 193.136);
   --primary-foreground: oklch(0.302 0.0268 144.87);
-  --secondary: oklch(0.4456 0.0528 70.1);
+  --secondary: oklch(58.741% 0.12011 64.201);
   --secondary-foreground: oklch(0.9215 0.058 69.52);
   --muted: oklch(0.265 0.013 242);
   --muted-foreground: oklch(0.77 0.012 232);
-  --accent: oklch(0.41 0.0223 227.86);
+  --accent: oklch(38.218% 0.01466 264.415);
   --accent-foreground: oklch(0.8687 0.0155 228.99);
   --destructive: oklch(0.6253 0.1959 24.83);
   --destructive-foreground: oklch(0.3234 0.0235 18.44);
@@ -136,11 +136,11 @@
   --chart-6: oklch(0.74 0.13 194);
   --chart-7: oklch(0.73 0.13 112);
   --chart-8: oklch(0.73 0.16 340);
-  --sidebar: oklch(0.27 0.012 258);
+  --sidebar: oklch(0.263 0.0127 258.37);
   --sidebar-foreground: oklch(0.955 0.008 220);
   --sidebar-primary: oklch(0.6883 0.1992 143.03);
   --sidebar-primary-foreground: oklch(0.302 0.0268 144.87);
-  --sidebar-accent: oklch(0.41 0.0223 227.86);
+  --sidebar-accent: oklch(0.34 0.0189 264.28);
   --sidebar-accent-foreground: oklch(0.8687 0.0155 228.99);
   --sidebar-border: oklch(0.42 0.01 255 / 0.55);
   --sidebar-ring: oklch(0.6883 0.1992 143.03);
@@ -178,7 +178,7 @@
 /* 04 ACCESSIBILITY BASE */
 @layer base {
   :focus-visible {
-    @apply outline-none ring-2 ring-ring/40;
+    @apply outline-none ring-1 ring-ring/40;
   }
 }
 
