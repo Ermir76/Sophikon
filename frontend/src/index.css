@@ -142,7 +142,7 @@
   --sidebar-primary-foreground: oklch(0.302 0.0268 144.87);
   --sidebar-accent: oklch(0.34 0.0189 264.28);
   --sidebar-accent-foreground: oklch(0.8687 0.0155 228.99);
-  --sidebar-border: oklch(0.42 0.01 255 / 0.55);
+  --sidebar-border: oklch(0.263 0.0127 258.37);
   --sidebar-ring: oklch(0.6883 0.1992 143.03);
   /* Reserved auth accent tokens for future auth feature/icon theming. */
   --auth-feature-collab: oklch(0.74 0.12 196);
