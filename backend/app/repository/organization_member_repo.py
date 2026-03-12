@@ -42,7 +42,10 @@ async def get_user_by_email(
     *,
     email: str,
 ) -> User | None:
-    result = await db.execute(select(User).where(User.email == email))
+    normalized_email = email.strip().lower()
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == normalized_email)
+    )
     return result.scalar_one_or_none()
 
 

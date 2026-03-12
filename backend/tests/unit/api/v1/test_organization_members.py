@@ -440,6 +440,75 @@ async def test_invite_member_missing_email(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_invite_member_invalid_email_format(client: AsyncClient):
+    """Invite - invalid email format - returns 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "inv_invalid_format@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Inv Invalid Format",
+        },
+    )
+    create_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Inv Invalid Format", "slug": "org-inv-invalid-format"},
+    )
+    org_id = create_resp.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/organizations/{org_id}/members",
+        json={"email": "not-an-email", "role": "member"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_invite_member_mixed_case_email_matches_existing_user(
+    client: AsyncClient,
+):
+    """Invite - mixed-case email input still matches existing user account."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "inv_case_owner@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Inv Case Owner",
+        },
+    )
+    create_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Inv Case", "slug": "org-inv-case"},
+    )
+    org_id = create_resp.json()["id"]
+
+    target_email = "inv_case_target@example.com"
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": target_email,
+            "password": "StrongPassword123!",
+            "full_name": "Inv Case Target",
+        },
+    )
+
+    await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "inv_case_owner@example.com",
+            "password": "StrongPassword123!",
+        },
+    )
+
+    response = await client.post(
+        f"/api/v1/organizations/{org_id}/members",
+        json={"email": f"  {target_email.upper()}  ", "role": "member"},
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["user_email"] == target_email
+
+
+@pytest.mark.asyncio
 async def test_change_role_success(client: AsyncClient):
     """Change Role — success — owner can change role (200)."""
     # Register Owner & Create Org

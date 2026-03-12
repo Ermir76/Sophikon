@@ -5,7 +5,7 @@ Pydantic schemas for Organization Member endpoints.
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr
 
 from app.models.enums import OrgRole
 
@@ -15,7 +15,7 @@ from app.models.enums import OrgRole
 class OrgMemberInvite(BaseModel):
     """Invite a user to an organization."""
 
-    email: str = Field(min_length=1, max_length=255)
+    email: EmailStr
     role: OrgRole = OrgRole.MEMBER
 
 

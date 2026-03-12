@@ -70,9 +70,10 @@ async def invite_member(
     payload: OrganizationMemberInviteInput,
 ) -> dict:
     """Invite a user to an organization by email."""
+    normalized_email = payload["email"].strip().lower()
     user = await organization_member_repo.get_user_by_email(
         db,
-        email=payload["email"],
+        email=normalized_email,
     )
 
     if not user:

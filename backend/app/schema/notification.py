@@ -4,7 +4,7 @@ Pydantic schemas for notification endpoints.
 
 from datetime import datetime
 
-from pydantic import BaseModel, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, computed_field, model_validator
 
 from app.models.enums import NotificationType
 from app.schema._patch import reject_explicit_nulls_for_fields_set
@@ -53,6 +53,8 @@ class NotificationSettings(BaseModel):
 
 
 class NotificationSettingsUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email_task_assigned: bool | None = None
     email_mentioned: bool | None = None
     email_deadline_approaching: bool | None = None

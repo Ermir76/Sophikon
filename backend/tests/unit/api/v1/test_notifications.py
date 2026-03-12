@@ -259,6 +259,20 @@ async def test_notification_settings_rejects_explicit_null(
 
 
 @pytest.mark.asyncio
+async def test_notification_settings_rejects_unknown_keys(
+    client: AsyncClient,
+):
+    await _register(client, "notif-settings-unknown@example.com", "Settings Unknown")
+    await _login(client, "notif-settings-unknown@example.com")
+
+    response = await client.patch(
+        "/api/v1/notifications/settings",
+        json={"unexpected_setting": True},
+    )
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.asyncio
 async def test_assignment_create_emits_task_assigned_notification_for_linked_user(
     client: AsyncClient,
     session: AsyncSession,
