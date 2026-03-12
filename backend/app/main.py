@@ -27,6 +27,7 @@ from app.api.v1.endpoints.projects import router as projects_router
 from app.api.v1.endpoints.resources import router as resources_router
 from app.api.v1.endpoints.schedule import router as schedule_router
 from app.api.v1.endpoints.tasks import router as tasks_router
+from app.api.v1.endpoints.users import router as users_router
 from app.api.v1.endpoints.utilization import router as utilization_router
 from app.api.v1.endpoints.ws import router as ws_router
 from app.core.config import settings
@@ -126,6 +127,7 @@ app.include_router(dependencies_router, prefix="/api/v1")
 app.include_router(insights_router, prefix="/api/v1")
 app.include_router(schedule_router, prefix="/api/v1")
 app.include_router(utilization_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/api/v1")
 app.include_router(calendars_router, prefix="/api/v1")
 app.include_router(comments_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")

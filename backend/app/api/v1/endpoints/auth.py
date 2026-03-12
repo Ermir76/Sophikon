@@ -10,6 +10,13 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps.auth import get_current_active_user
+from app.core.auth_flow import (
+    PASSWORD_RESET_REQUEST_GENERIC_MESSAGE,
+    build_frontend_url,
+    create_oauth_state,
+    decode_oauth_state,
+    validate_oauth_state,
+)
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.exceptions import (
@@ -22,6 +29,8 @@ from app.models.user import User
 from app.schema.auth import (
     AuthResponse,
     MessageResponse,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
@@ -32,12 +41,25 @@ from app.service import auth_service, email_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+GOOGLE_OAUTH_STATE_COOKIE_NAME = "oauth_google_state"
 
 
 def _client_info(request: Request) -> tuple[str | None, str | None]:
     device_info = request.headers.get("User-Agent")
     ip = request.client.host if request.client else None
     return device_info, ip
+
+
+def _oauth_error_redirect() -> RedirectResponse:
+    response = RedirectResponse(
+        url=build_frontend_url("/login", params={"oauth": "error"}),
+        status_code=status.HTTP_302_FOUND,
+    )
+    response.delete_cookie(
+        GOOGLE_OAUTH_STATE_COOKIE_NAME,
+        path="/api/v1/auth/oauth/google/callback",
+    )
+    return response
 
 
 @router.post(
@@ -124,6 +146,121 @@ async def login(
         tokens=TokenResponse(access_token="", refresh_token=""),
         user=UserResponse.model_validate(user),
     )
+
+
+@router.get("/oauth/google")
+@limiter.limit("20/minute")
+async def oauth_google_start(
+    request: Request,
+    next: str | None = None,
+):
+    state_token = create_oauth_state(next_path=next)
+    authorize_url = auth_service.build_google_oauth_authorize_url(state_token)
+
+    response = RedirectResponse(url=authorize_url, status_code=status.HTTP_302_FOUND)
+    response.set_cookie(
+        key=GOOGLE_OAUTH_STATE_COOKIE_NAME,
+        value=state_token,
+        httponly=True,
+        secure=settings.ENV == "production",
+        samesite="lax",
+        path="/api/v1/auth/oauth/google/callback",
+        max_age=10 * 60,
+    )
+    return response
+
+
+@router.get("/oauth/google/callback")
+@limiter.limit("30/minute")
+async def oauth_google_callback(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+):
+    if error or not code or not state:
+        return _oauth_error_redirect()
+
+    state_cookie = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE_NAME)
+    if not validate_oauth_state(state_cookie, state):
+        return _oauth_error_redirect()
+
+    try:
+        decoded_state = decode_oauth_state(state_cookie)
+    except Exception:
+        return _oauth_error_redirect()
+
+    try:
+        device_info, ip = _client_info(request)
+        _, access, refresh = await auth_service.login_with_google_code(
+            db,
+            code=code,
+            device_info=device_info,
+            ip=ip,
+        )
+    except AppException:
+        logger.warning("Google OAuth callback failed", exc_info=True)
+        return _oauth_error_redirect()
+    except Exception:
+        logger.exception("Unexpected Google OAuth callback failure")
+        return _oauth_error_redirect()
+
+    next_path = decoded_state.get("next")
+    redirect_path = next_path if isinstance(next_path, str) else "/"
+    response = RedirectResponse(
+        url=build_frontend_url(redirect_path),
+        status_code=status.HTTP_302_FOUND,
+    )
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access,
+        httponly=True,
+        secure=settings.ENV == "production",
+        samesite="lax",
+        path="/api",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh,
+        httponly=True,
+        secure=settings.ENV == "production",
+        samesite="lax",
+        path="/api/v1/auth",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+    response.delete_cookie(
+        GOOGLE_OAUTH_STATE_COOKIE_NAME,
+        path="/api/v1/auth/oauth/google/callback",
+    )
+    return response
+
+
+@router.post("/password-reset", response_model=MessageResponse)
+@limiter.limit("5/hour")
+async def request_password_reset(
+    body: PasswordResetRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await auth_service.request_password_reset(db, body.email)
+    return MessageResponse(message=PASSWORD_RESET_REQUEST_GENERIC_MESSAGE)
+
+
+@router.post("/password-reset/confirm", response_model=MessageResponse)
+@limiter.limit("20/hour")
+async def confirm_password_reset(
+    body: PasswordResetConfirmRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await auth_service.confirm_password_reset(
+        db,
+        token=body.token,
+        new_password=body.new_password,
+    )
+    return MessageResponse(message="Password has been reset")
 
 
 @router.post("/refresh", response_model=AuthResponse)

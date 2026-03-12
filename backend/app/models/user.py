@@ -6,9 +6,18 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import TIMESTAMP, Boolean, ForeignKey, Index, String, func, text
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    String,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from uuid_utils import uuid7
 
 from app.core.database import Base
@@ -139,6 +148,7 @@ class User(Base):
 
     # Indexes
     __table_args__ = (
+        CheckConstraint("email = lower(email)", name="ck_user_email_lowercase"),
         # Unique constraint for OAuth (only when provider is not NULL)
         Index(
             "idx_user_oauth",
@@ -189,3 +199,8 @@ class User(Base):
         return (
             f"<User(id={self.id}, email='{self.email}', full_name='{self.full_name}')>"
         )
+
+    @validates("email")
+    def _normalize_email(self, key: str, value: str) -> str:
+        _ = key
+        return value.strip().lower()

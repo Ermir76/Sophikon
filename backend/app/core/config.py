@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     AI_SERVICE_SHARED_SECRET: str = "dev-ai-shared-secret"
     AI_SERVICE_TIMEOUT_SECONDS: int = 45
 
+    # OAuth (Google)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = ""
+
     # Tell pydantic to read values from a .env file
     model_config = SettingsConfigDict(
         env_file=".env",

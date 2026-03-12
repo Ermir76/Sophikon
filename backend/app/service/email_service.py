@@ -14,6 +14,7 @@ from pydantic import NameEmail, SecretStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth_flow import build_password_reset_link
 from app.core.config import settings
 from app.core.exceptions import InvalidOperationError
 from app.core.security import hash_token
@@ -134,6 +135,41 @@ async def send_project_invitation_email(
 
     message = MessageSchema(
         subject=f"Project invitation: {project_name}",
+        recipients=[NameEmail(name="", email=email)],
+        body=html,
+        subtype=MessageType.html,
+    )
+    await _get_mail_client().send_message(message)
+
+
+async def send_password_reset_email(
+    *,
+    email: str,
+    full_name: str | None,
+    token: str,
+) -> None:
+    """Send password-reset email containing frontend reset link."""
+    reset_url = build_password_reset_link(token)
+    display_name = full_name or "there"
+    html = f"""
+    <h2>Reset your password</h2>
+    <p>Hi {display_name}, we received a request to reset your password.</p>
+    <p><a href="{reset_url}" style="
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+    ">Reset Password</a></p>
+    <p>Or copy this link: {reset_url}</p>
+    <p>This link expires in 1 hour and can only be used once.</p>
+    <p>If you didn't request this, you can ignore this email.</p>
+    """
+
+    message = MessageSchema(
+        subject="Reset your password - Sophikon",
         recipients=[NameEmail(name="", email=email)],
         body=html,
         subtype=MessageType.html,

@@ -5,7 +5,10 @@ Pydantic v2 schemas for authentication endpoints.
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+type JsonPrimitive = str | int | float | bool | None
+type JsonValue = JsonPrimitive | list["JsonValue"] | dict[str, "JsonValue"]
 
 # ── Requests ──
 
@@ -19,6 +22,25 @@ class UserRegisterRequest(BaseModel):
 class UserLoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(max_length=128)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=1024)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class UpdateProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=500)
+    timezone: str | None = Field(default=None, max_length=50)
+    locale: str | None = Field(default=None, max_length=10)
+    preferences: dict[str, JsonValue] | None = Field(default=None, max_length=50)
 
 
 class TokenRefreshRequest(BaseModel):
@@ -43,6 +65,7 @@ class UserResponse(BaseModel):
     avatar_url: str | None
     is_active: bool
     email_verified: bool
+    preferences: dict[str, JsonValue]
     timezone: str
     locale: str
     created_at: datetime
