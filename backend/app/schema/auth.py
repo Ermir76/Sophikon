@@ -83,3 +83,11 @@ class AuthResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class AIPreferencesRequest(BaseModel):
+    auto_approve: dict[str, bool] = Field(default_factory=dict)
+
+
+class AIPreferencesResponse(BaseModel):
+    auto_approve: dict[str, bool]

@@ -22,8 +22,13 @@ from app.core.storage import (
     get_media_root,
 )
 from app.models.user import User
-from app.schema.auth import UpdateProfileRequest, UserResponse
-from app.service import auth_service
+from app.schema.auth import (
+    AIPreferencesRequest,
+    AIPreferencesResponse,
+    UpdateProfileRequest,
+    UserResponse,
+)
+from app.service import ai_service, auth_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -111,6 +116,33 @@ async def upload_avatar(
         patch={"avatar_url": avatar_url},
     )
     return UserResponse.model_validate(updated)
+
+
+@router.get("/me/ai-preferences", response_model=AIPreferencesResponse)
+async def get_ai_preferences(
+    user: Annotated[User, Depends(get_current_active_user)],
+):
+    prefs = (user.preferences or {}).get("ai", {})
+    merged = {**ai_service._DEFAULT_AUTO_APPROVE, **prefs.get("auto_approve", {})}
+    return AIPreferencesResponse(auto_approve=merged)
+
+
+@router.patch("/me/ai-preferences", response_model=AIPreferencesResponse)
+async def update_ai_preferences(
+    body: AIPreferencesRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+):
+    current = dict(user.preferences or {})
+    current_ai = dict(current.get("ai", {}))
+    current_auto = dict(current_ai.get("auto_approve", {}))
+    current_auto.update(body.auto_approve)
+    current_ai["auto_approve"] = current_auto
+    current["ai"] = current_ai
+    user.preferences = current
+    await db.commit()
+    merged = {**ai_service._DEFAULT_AUTO_APPROVE, **current_auto}
+    return AIPreferencesResponse(auto_approve=merged)
 
 
 @router.delete("/me/avatar", response_model=UserResponse)
