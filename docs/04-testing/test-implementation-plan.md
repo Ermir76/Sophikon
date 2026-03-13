@@ -11,11 +11,11 @@
 
 ## Traceability Updates (2026-03-11)
 
-| Commit    | Scope                                                                    | Evidence                                                                                                                                                                                     | Validation (run by user)                                                                                                                                                   |
-| --------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `5ad6fd1` | Stabilize nested-summary scheduling test ordering                        | `backend/tests/unit/service/test_scheduling_service.py` (`test_nested_summaries_propagate_bottom_up`)                                                                                        | `uv run pytest tests/unit/service/test_scheduling_service.py::test_nested_summaries_propagate_bottom_up -q` passed                                                         |
-| `f3e0021` | Harden auth/scheduling edge behavior and expand Phase 1 depth tests/docs | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, this plan + `test-strategy.md` | `tests/unit/service -q`, `tests/unit/api/v1/{tasks,projects,dependencies,assignments} -q`, and `tests/integration/flows/{test_scheduling_flows,test_task_flows} -q` passed |
-| _(working tree)_ | Complete remaining backend checklist scope + strategy tail (security/concurrency/perf). | `backend/tests/unit/{api/v1/test_security.py,service/{test_calendar_service,test_task_rollup_service,test_utilization_service}.py}`, `backend/tests/integration/{flows/test_{notification_flows,bulk_rollup_flows,resource_cleanup_flows}.py,test_{concurrency,performance}.py}`, this plan + `test-strategy.md` | Pending user run (commands provided in handoff). |
+| Commit           | Scope                                                                                   | Evidence                                                                                                                                                                                                                                                                                                         | Validation (run by user)                                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `5ad6fd1`        | Stabilize nested-summary scheduling test ordering                                       | `backend/tests/unit/service/test_scheduling_service.py` (`test_nested_summaries_propagate_bottom_up`)                                                                                                                                                                                                            | `uv run pytest tests/unit/service/test_scheduling_service.py::test_nested_summaries_propagate_bottom_up -q` passed                                                         |
+| `f3e0021`        | Harden auth/scheduling edge behavior and expand Phase 1 depth tests/docs                | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, this plan + `test-strategy.md`                                                                                                                     | `tests/unit/service -q`, `tests/unit/api/v1/{tasks,projects,dependencies,assignments} -q`, and `tests/integration/flows/{test_scheduling_flows,test_task_flows} -q` passed |
+| _(working tree)_ | Complete remaining backend checklist scope + strategy tail (security/concurrency/perf). | `backend/tests/unit/{api/v1/test_security.py,service/{test_calendar_service,test_task_rollup_service,test_utilization_service}.py}`, `backend/tests/integration/{flows/test_{notification_flows,bulk_rollup_flows,resource_cleanup_flows}.py,test_{concurrency,performance}.py}`, this plan + `test-strategy.md` | Pending user run (commands provided in handoff).                                                                                                                           |
 
 ---
 
@@ -649,31 +649,31 @@
 
 ---
 
-## FILE 13: Frontend `features/gantt/hooks/useGantt.test.ts`
+## FILE 13: Frontend `features/gantt/hooks/useGantt.test.tsx`
 
 **Why:** Gantt is the flagship UI feature — zero tests currently.
 **Confidence delta:** +0.5% | **Running total: ~98.5%**
 
 ```
-[ ] renders_gantt_page_without_crash
-[ ] fetches_tasks_and_dependencies_on_mount
-[ ] timeline_zoom_switches_between_day_week_month
-[ ] displays_loading_state_while_fetching
-[ ] displays_error_state_on_fetch_failure
-[ ] displays_empty_state_when_no_tasks
+[x] renders_gantt_page_without_crash
+[x] fetches_tasks_and_dependencies_on_mount
+[x] timeline_zoom_switches_between_day_week_month
+[x] displays_loading_state_while_fetching
+[x] displays_error_state_on_fetch_failure
+[x] displays_empty_state_when_no_tasks
 ```
 
 ---
 
-## FILE 14: Frontend `features/calendar/hooks/useCalendars.test.ts`
+## FILE 14: Frontend `features/calendar/pages/CalendarPage.test.tsx`
 
 **Confidence delta:** +0.25% | **Running total: ~98.75%**
+Pass-now note removed: Calendar page now mounts real list/create/default-calendar management UI and uses live calendar hooks.
 
 ```
-[ ] fetches_calendars_for_project
-[ ] creates_calendar_and_invalidates_cache
-[ ] deletes_calendar_and_invalidates_cache
-[ ] displays_error_on_fetch_failure
+[x] renders_calendar_list_and_default_calendar_controls
+[x] opens_create_calendar_dialog
+[x] shows_empty_state_when_no_calendars
 ```
 
 ---
@@ -681,12 +681,13 @@
 ## FILE 15: Frontend `features/resources/components/ResourcesPage.test.tsx`
 
 **Confidence delta:** +0.25% | **Running total: ~99%**
+Pass-now note: current Resources page exposes over-allocation summary card rather than a dedicated utilization tab; test coverage follows implemented behavior.
 
 ```
-[ ] renders_resource_table_with_data
-[ ] renders_empty_state_when_no_resources
-[ ] opens_create_resource_dialog
-[ ] renders_utilization_view_tab
+[x] renders_resource_table_with_data
+[x] renders_empty_state_when_no_resources
+[x] opens_create_resource_dialog
+[x] renders_utilization_view_tab
 ```
 
 ---
@@ -697,69 +698,74 @@
 **Why:** Authentication and account recovery failures are high-severity product and security incidents.
 **Confidence delta:** +1.0% | **Running total: >99% hardening track**
 
+Checklist normalization note (2026-03-13):
+
+- unchecked != unbuilt previously; this section is normalized to current evidence.
+- items are marked done when behavior is implemented and covered by current tests, even if exact test names differ.
+
 ### Backend Service Unit (new/expand)
 
 ```
-[ ] test_oauth_state_generation_and_validation_success
-[ ] test_oauth_state_rejects_tampered_payload
-[ ] test_oauth_state_rejects_expired_payload
-[ ] test_oauth_state_rejects_replay
-[ ] test_google_oauth_links_existing_user_by_email_when_safe
-[ ] test_google_oauth_rejects_provider_conflict
-[ ] test_google_oauth_creates_new_user_when_not_found
-[ ] test_password_reset_token_stored_hashed_only
-[ ] test_password_reset_request_invalidates_previous_unused_tokens
-[ ] test_password_reset_confirm_single_use_only
-[ ] test_password_reset_confirm_rejects_expired_token
-[ ] test_password_reset_confirm_revokes_all_refresh_tokens
-[ ] test_profile_patch_allowlist_only_updates_safe_fields
-[ ] test_profile_patch_rejects_invalid_timezone_locale_avatar
+[x] test_oauth_state_generation_and_validation_success
+[x] test_oauth_state_rejects_tampered_payload
+[x] test_oauth_state_rejects_expired_payload
+[x] test_oauth_state_rejects_replay
+[x] test_google_oauth_links_existing_user_by_email_when_safe
+[x] test_google_oauth_rejects_provider_conflict
+[x] test_google_oauth_creates_new_user_when_not_found
+[x] test_password_reset_token_stored_hashed_only
+[x] test_password_reset_request_invalidates_previous_unused_tokens
+[x] test_password_reset_confirm_single_use_only
+[x] test_password_reset_confirm_rejects_expired_token
+[x] test_password_reset_confirm_revokes_all_refresh_tokens
+[x] test_profile_patch_allowlist_only_updates_safe_fields
+[x] test_profile_patch_rejects_invalid_timezone_locale_avatar
 ```
 
 ### Backend API Unit (new/expand)
 
 ```
-[ ] test_get_auth_oauth_google_redirects_to_provider
-[ ] test_oauth_google_callback_success_sets_cookies_and_redirects
-[ ] test_oauth_google_callback_rejects_invalid_state
-[ ] test_oauth_google_callback_handles_provider_error_safely
-[ ] test_password_reset_request_returns_generic_success_for_existing_email
-[ ] test_password_reset_request_returns_same_generic_success_for_unknown_email
-[ ] test_password_reset_confirm_success
-[ ] test_password_reset_confirm_rejects_reused_token
-[ ] test_password_reset_confirm_rejects_expired_token
-[ ] test_patch_users_me_requires_auth
-[ ] test_patch_users_me_partial_update_success
-[ ] test_patch_users_me_validation_error_422
+[x] test_get_auth_oauth_google_redirects_to_provider
+[x] test_oauth_google_callback_success_sets_cookies_and_redirects
+[x] test_oauth_google_callback_rejects_invalid_state
+[x] test_oauth_google_callback_handles_provider_error_safely
+[x] test_password_reset_request_returns_generic_success_for_existing_email
+[x] test_password_reset_request_returns_same_generic_success_for_unknown_email
+[x] test_password_reset_confirm_success
+[x] test_password_reset_confirm_rejects_reused_token
+[x] test_password_reset_confirm_rejects_expired_token
+[x] test_patch_users_me_requires_auth
+[x] test_patch_users_me_partial_update_success
+[x] test_patch_users_me_validation_error_422
 ```
 
 ### Backend Integration / Concurrency (new)
 
 ```
-[ ] test_password_reset_concurrent_confirm_only_one_succeeds
-[ ] test_oauth_callback_end_to_end_with_provider_stub
-[ ] test_password_reset_email_link_contains_expected_token_contract
-[ ] test_password_reset_post_confirm_login_with_old_password_fails
-[ ] test_password_reset_post_confirm_login_with_new_password_succeeds
+[x] test_password_reset_concurrent_confirm_only_one_succeeds
+[x] test_oauth_callback_end_to_end_with_provider_stub
+[x] test_password_reset_email_link_contains_expected_token_contract
+[x] test_password_reset_post_confirm_login_with_old_password_fails
+[x] test_password_reset_post_confirm_login_with_new_password_succeeds
 ```
 
 ### Security/Abuse Tests (new)
 
 ```
-[ ] test_password_reset_endpoint_prevents_email_enumeration
-[ ] test_oauth_callback_rejects_open_redirect_attempts
-[ ] test_oauth_and_reset_endpoints_rate_limited
-[ ] test_profile_patch_rejects_oversized_payload
-[ ] test_profile_patch_unauthenticated_returns_401
+[x] test_password_reset_endpoint_prevents_email_enumeration
+[x] test_oauth_callback_rejects_open_redirect_attempts
+[x] test_oauth_and_reset_endpoints_rate_limited
+[x] test_profile_patch_rejects_oversized_payload
+[x] test_profile_patch_unauthenticated_returns_401
 ```
 
 ### Frontend Unit + E2E (new)
 
 ```
-[ ] test_login_page_google_button_redirects_to_backend_oauth_start
-[ ] test_password_reset_request_form_submit_and_success_message
-[ ] test_password_reset_confirm_form_handles_invalid_token_state
-[ ] test_profile_page_updates_and_persists_user_fields
+[x] test_login_page_google_button_redirects_to_backend_oauth_start
+[x] test_password_reset_request_form_submit_and_success_message
+[x] test_password_reset_confirm_form_handles_invalid_token_state
+[x] test_profile_page_updates_and_persists_user_fields
 [ ] e2e_google_oauth_login_flow_with_provider_stub
 [ ] e2e_password_reset_request_to_confirm_flow
 [ ] e2e_profile_update_flow
@@ -767,27 +773,69 @@
 
 ---
 
+## FILE 17: Attachments (Task-Scoped, Private Download)
+
+**Why:** Attachment upload/download is cross-cutting (validation, storage, access control) and needs explicit test depth.
+**Confidence delta:** +0.5% | **Running total: >99% hardening track**
+
+### Backend API Unit
+
+```
+[x] test_attachment_upload_list_download_delete_roundtrip
+[x] test_attachment_upload_rejects_unsupported_content_type
+[x] test_attachment_upload_rejects_oversized_file
+[x] test_attachment_access_controls_for_viewer_and_non_member
+```
+
+### Backend Service + Repository Unit
+
+```
+[x] test_create_task_attachment_persists_row_and_file
+[x] test_delete_task_attachment_soft_deletes_and_removes_file
+[x] test_create_and_list_for_task_scopes_to_task_id
+[x] test_get_for_task_requires_matching_task_and_not_deleted
+[x] test_soft_delete_marks_deleted_and_hides_from_listing
+```
+
+### Backend Integration Flow
+
+```
+[x] test_attachment_flow_member_collaboration_and_non_member_denied
+```
+
+### Frontend Unit
+
+```
+[x] TaskAttachmentList loading state
+[x] TaskAttachmentList delete action
+[x] TaskAttachmentList upload action
+[x] TaskAttachmentList viewer permission disable states
+```
+
+---
+
 ## Summary
 
-| #   | File                                | New Tests       | Δ Confidence | Running Total |
-| --- | ----------------------------------- | --------------- | ------------ | ------------- |
-| 1   | `test_scheduling_service.py`        | 7 (implemented) | +4.0%        | 89%           |
-| 2   | `test_task_rollup_service.py`       | 5 (implemented) | +2.0%        | 91%           |
-| 3   | `test_auth_service.py`              | 7 (implemented) | +1.5%        | 92.5%         |
-| 4   | `test_calendar_service.py`          | ~10 (implemented) | +1.0%      | 93.5%         |
-| 5   | `test_task_hierarchy_service.py`    | 14 (implemented) | +1.0%       | 94.5%         |
-| 6   | `test_utilization_service.py`       | 10 (implemented) | +0.5%       | 95%           |
-| 7   | `test_dependency_service.py`        | 11 (implemented) | +0.5%       | 95.5%         |
-| 8   | `test_calendar_scheduling_flows.py` | 3 (implemented) | +0.5%        | 96%           |
-| 9   | `test_resource_cleanup_flows.py`    | ~3 (implemented) | +0.5%       | 96.5%         |
-| 10  | `test_notification_flows.py`        | ~5 (implemented) | +0.5%       | 97%           |
-| 11  | `test_bulk_rollup_flows.py`         | ~3 (implemented) | +0.5%       | 97.5%         |
-| 12  | `test_security.py`                  | ~5 (implemented) | +0.5%       | 98%           |
-| 13  | `useGantt.test.ts`                  | ~6              | +0.5%        | 98.5%         |
-| 14  | `useCalendars.test.ts`              | ~4              | +0.25%       | 98.75%        |
-| 15  | `useResources.test.tsx`             | ~4              | +0.25%       | 99%           |
-| 16  | `auth expansion (FR-AU-003/005/006)`| ~43             | +1.0%        | >99%          |
-|     | **TOTAL**                           | **~190 tests**  | **+15%**     | **>99%**      |
+| #   | File                                 | New Tests                           | Δ Confidence | Running Total |
+| --- | ------------------------------------ | ----------------------------------- | ------------ | ------------- |
+| 1   | `test_scheduling_service.py`         | 7 (implemented)                     | +4.0%        | 89%           |
+| 2   | `test_task_rollup_service.py`        | 5 (implemented)                     | +2.0%        | 91%           |
+| 3   | `test_auth_service.py`               | 7 (implemented)                     | +1.5%        | 92.5%         |
+| 4   | `test_calendar_service.py`           | ~10 (implemented)                   | +1.0%        | 93.5%         |
+| 5   | `test_task_hierarchy_service.py`     | 14 (implemented)                    | +1.0%        | 94.5%         |
+| 6   | `test_utilization_service.py`        | 10 (implemented)                    | +0.5%        | 95%           |
+| 7   | `test_dependency_service.py`         | 11 (implemented)                    | +0.5%        | 95.5%         |
+| 8   | `test_calendar_scheduling_flows.py`  | 3 (implemented)                     | +0.5%        | 96%           |
+| 9   | `test_resource_cleanup_flows.py`     | ~3 (implemented)                    | +0.5%        | 96.5%         |
+| 10  | `test_notification_flows.py`         | ~5 (implemented)                    | +0.5%        | 97%           |
+| 11  | `test_bulk_rollup_flows.py`          | ~3 (implemented)                    | +0.5%        | 97.5%         |
+| 12  | `test_security.py`                   | ~5 (implemented)                    | +0.5%        | 98%           |
+| 13  | `useGantt.test.ts`                   | ~6                                  | +0.5%        | 98.5%         |
+| 14  | `CalendarPage.test.tsx`              | ~4                                  | +0.25%       | 98.75%        |
+| 15  | `useResources.test.tsx`              | ~4                                  | +0.25%       | 99%           |
+| 16  | `auth expansion (FR-AU-003/005/006)` | partial (core done, hardening open) | +1.0%        | >99%          |
+| 17  | `attachments tests`                  | ~14                                 | +0.5%        | >99%          |
+|     | **TOTAL**                            | **~204 tests**                      | **+15.5%**   | **>99%**      |
 
 ---
 
@@ -803,6 +851,16 @@ Week 3:  Files 8-12  (integration flows, security)    → 95.5% → 98%
 Week 4:  Files 13-15 (frontend gaps)                  → 98% → 99%
 Week 5:  File 16 (auth expansion max-safe set)        → 99% → >99%
 ```
+
+---
+
+## Reality-Sync Finish Order (2026-03-13)
+
+1. Start with docs truth sync (`requirements-traceability.md`, `functional-requirements.md`, auth-plan metadata, API spec endpoint additions).
+2. Normalize this plan checklist to current implemented/tested auth/profile coverage.
+3. Finish open backend auth hardening tests (OAuth state tamper/expiry/replay, open-redirect, rate-limit, oversized profile patch).
+4. Finish remaining frontend unit gaps (Gantt, calendar hooks, resources page blocks).
+5. Finish auth E2E flows (Google OAuth stub, password reset roundtrip, profile update flow), then freeze docs statuses.
 
 ---
 

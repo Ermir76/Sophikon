@@ -251,7 +251,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 #### G-04: Calendar Service Needs Deeper Unit Coverage
 
-**Risk:** Runtime still lacks strict overlap enforcement and merged effective-calendar API, so tests use explicit pass-now semantics.
+**Risk:** Overlap enforcement remains pass-now permissive, but effective calendar merge runtime is now implemented and covered.
 
 **Missing tests (depth follow-ups):**
 
@@ -263,7 +263,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 - [x] Date-range exception filtering behavior
   Status: pass-now coverage asserts current calendar-scoped unfiltered listing.
 - [x] Effective work-week merge semantics (base + child override) when runtime API exists
-  Status: pass-now reference-only inheritance test + TODO for future merged semantics.
+  Status: scheduler coverage now validates task-level effective base+child work-week and exception override behavior.
 
 **Recommended file:** `tests/unit/service/test_calendar_service.py`
 
@@ -344,7 +344,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 | Feature   | What to Test                                        | Priority |
 | --------- | --------------------------------------------------- | -------- |
-| Calendar  | useCalendar hook, CalendarPage render               | Medium   |
+| Calendar  | CalendarPage list/create/default flow render/assertions | Medium   |
 | Reports   | useReports hook, ReportsPage render                 | Low      |
 | Resources | ResourcesPage component, utilization view rendering | Medium   |
 | Dashboard | DashboardPage component, metric card rendering      | Low      |

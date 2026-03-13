@@ -83,13 +83,16 @@ flowchart TB
         A4[POST /refresh]
         A5[POST /password-reset]
         A6[GET /oauth/google]
+        A7[POST /change-password]
     end
 
     subgraph Users["/users"]
         U1[GET /me]
         U2[PATCH /me]
-        U3[GET /me/sessions]
-        U4[GET /me/time-entries]
+        U3[POST /me/avatar]
+        U4[DELETE /me/avatar]
+        U5[GET /me/sessions]
+        U6[GET /me/time-entries]
     end
 
     subgraph Projects["/projects"]
@@ -219,7 +222,7 @@ flowchart TB
 | Baselines     | 5     | /projects/:id/baselines/\*    |
 | Time Entries  | 6     | /time-entries/\*              |
 | Comments      | 4     | /comments/\*                  |
-| Attachments   | 4     | /attachments/\*               |
+| Attachments   | 4     | /projects/:id/tasks/:taskId/attachments/\* |
 | Notifications | 4     | /notifications/\*             |
 | Activity      | 1     | /projects/:id/activity        |
 | AI            | 3     | /projects/:id/ai/\*           |
@@ -402,6 +405,29 @@ Reset password with token.
 
 ---
 
+### POST /auth/change-password
+
+Change password for the authenticated user.
+
+**Request:**
+
+```json
+{
+  "current_password": "currentPassword123!",
+  "new_password": "newSecurePassword123!"
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "Password has been changed"
+}
+```
+
+---
+
 ### GET /auth/oauth/google
 
 Redirect to Google OAuth consent screen.
@@ -473,6 +499,28 @@ Update profile.
 ```
 
 **Response:** `200 OK`
+
+---
+
+### POST /users/me/avatar
+
+Upload avatar image for the authenticated user.
+
+**Request:** `multipart/form-data`
+
+- field: `file`
+- allowed types: `image/png`, `image/jpeg`, `image/webp`
+- max size: `2MB`
+
+**Response:** `200 OK` (updated user profile)
+
+---
+
+### DELETE /users/me/avatar
+
+Remove avatar for the authenticated user.
+
+**Response:** `200 OK` (updated user profile)
 
 ---
 
@@ -2417,62 +2465,58 @@ Delete comment.
 
 ## 15. Attachment Endpoints `[V1.1]`
 
-### GET /attachments/entity/:entityType/:entityId
+Task attachments are private files served only through authenticated API endpoints.
 
-Get attachments for entity.
+### GET /projects/{project_id}/tasks/{task_id}/attachments
+
+List attachments for one task.
 
 **Response:** `200 OK`
 
 ```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "file_name": "wireframes.pdf",
-      "file_size": 2456789,
-      "mime_type": "application/pdf",
-      "description": "Homepage wireframes",
-      "uploaded_by": {
-        "id": "uuid",
-        "full_name": "John Doe"
-      },
-      "download_url": "https://...",
-      "created_at": "2026-02-06T10:00:00Z"
-    }
-  ]
-}
+[
+  {
+    "id": "uuid",
+    "task_id": "uuid",
+    "uploaded_by_id": "uuid",
+    "file_name": "wireframes.pdf",
+    "file_size": 2456789,
+    "mime_type": "application/pdf",
+    "description": "Homepage wireframes",
+    "created_at": "2026-03-13T10:00:00Z",
+    "download_url": "/api/v1/projects/{project_id}/tasks/{task_id}/attachments/{id}/download"
+  }
+]
 ```
 
 ---
 
-### POST /attachments
+### POST /projects/{project_id}/tasks/{task_id}/attachments
 
-Upload attachment.
+Upload task attachment.
 
 **Request:** `multipart/form-data`
 
-| Field       | Type   | Description            |
-| ----------- | ------ | ---------------------- |
-| file        | file   | File to upload         |
-| entity_type | string | task, project, comment |
-| entity_id   | uuid   | Entity ID              |
-| description | string | Optional description   |
+| Field       | Type   | Description          |
+| ----------- | ------ | -------------------- |
+| file        | file   | File to upload       |
+| description | string | Optional description |
 
-**Response:** `201 Created`
+**Response:** `201 Created` (same shape as list item)
 
 ---
 
-### GET /attachments/:id/download
+### GET /projects/{project_id}/tasks/{task_id}/attachments/{attachment_id}/download
 
-Download attachment.
+Download attachment file stream (authenticated + project access required).
 
-**Response:** File stream
+**Response:** file stream
 
 ---
 
-### DELETE /attachments/:id
+### DELETE /projects/{project_id}/tasks/{task_id}/attachments/{attachment_id}
 
-Delete attachment.
+Soft-delete attachment metadata and remove local private file.
 
 **Response:** `204 No Content`
 

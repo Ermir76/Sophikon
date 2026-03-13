@@ -616,10 +616,10 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | --------- | ---------------------------- | -------- | ------------------------- | --- |
 | FR-AU-001 | Register with email/password | Must     | POST /auth/register       | ✅  |
 | FR-AU-002 | Login with email/password    | Must     | POST /auth/login          | ✅  |
-| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | ❌  |
+| FR-AU-003 | Login with Google OAuth      | Must     | GET /auth/oauth/google    | ✅  |
 | FR-AU-004 | Logout (revoke token)        | Must     | POST /auth/logout         | ✅  |
-| FR-AU-005 | Password reset via email     | Should   | POST /auth/password-reset | ❌  |
-| FR-AU-006 | Update profile               | Should   | PATCH /users/me           | ❌  |
+| FR-AU-005 | Password reset via email     | Should   | POST /auth/password-reset | ✅  |
+| FR-AU-006 | Update profile               | Should   | PATCH /users/me           | ✅  |
 | FR-AU-007 | JWT with refresh tokens      | Must     | POST /auth/refresh        | ✅  |
 | FR-AU-008 | Session management           | Should   | GET /users/me/sessions    | ❌  |
 
@@ -717,8 +717,8 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-CA-003 | Add exception (holiday)     | Must     | POST /calendars/:id/exceptions | ✅  |
 | FR-CA-004 | Delete exception            | Must     | DELETE /exceptions/:id         | ✅  |
 | FR-CA-005 | Calendar inheritance        | Should   | PATCH /calendars/:id           | 🔶  |
-| FR-CA-006 | Assign calendar to task     | Should   | PATCH /tasks/:taskId           | ❌  |
-| FR-CA-007 | Assign calendar to resource | Should   | PATCH /resources/:id           | ❌  |
+| FR-CA-006 | Assign calendar to task     | Should   | PATCH /tasks/:taskId           | 🔶  |
+| FR-CA-007 | Assign calendar to resource | Should   | PATCH /resources/:id           | 🔶  |
 
 ### 3.8 Resource Management
 
@@ -796,7 +796,7 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-CO-007 | Activity log             | Should   | GET /projects/:id/activity              | ✅  |
 | FR-CO-008 | Comments on tasks        | Should   | GET/POST/PATCH/DELETE /comments         | ✅  |
 | FR-CO-009 | @mentions                | Should   | POST /comments(ID-backed mention parse) | ✅  |
-| FR-CO-010 | File attachments         | Should   | POST /tasks/:id/attachments             | ❌  |
+| FR-CO-010 | File attachments         | Should   | POST /projects/:id/tasks/:taskId/attachments | ✅  |
 | FR-CO-011 | Notifications            | Should   | GET /notifications                      | ✅  |
 
 ### 3.14 Import/Export

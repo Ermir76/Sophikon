@@ -46,10 +46,10 @@ This document records what is evidenced by the current codebase review.
 | --------- | ------------- | -------- | ----------------------------------------------------------------------------- |
 | FR-AU-001 | Implemented   | A1       | Register flow exists in backend and frontend.                                 |
 | FR-AU-002 | Implemented   | A1       | Login flow exists in backend and frontend.                                    |
-| FR-AU-003 | Not evidenced | A1, A8   | No Google OAuth route is mounted in current auth endpoints.                   |
+| FR-AU-003 | Implemented   | A1, A8   | Google OAuth start/callback routes are mounted and covered by auth API/service tests. |
 | FR-AU-004 | Implemented   | A1       | Logout flow exists in backend and auth store.                                 |
-| FR-AU-005 | Not evidenced | A1, A8   | No password-reset routes found in current mounted auth surface.               |
-| FR-AU-006 | Not evidenced | A1, A8   | No profile update route/page found in current mounted surface.                |
+| FR-AU-005 | Implemented   | A1, A8   | Password-reset request/confirm routes are mounted and covered by API/service/concurrency tests. |
+| FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; avatar upload/remove and change-password are also mounted. |
 | FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI. |
 | FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
 
@@ -146,9 +146,9 @@ This document records what is evidenced by the current codebase review.
 | FR-CA-002 | Partial       | A5       | Calendar patch route exists; full work-week UI parity was not audited.                                  |
 | FR-CA-003 | Implemented   | A5       | Calendar-exception create route exists.                                                                 |
 | FR-CA-004 | Implemented   | A5       | Calendar-exception delete route exists.                                                                 |
-| FR-CA-005 | Partial       | A5       | Base-calendar/inheritance fields exist; end-to-end workflow not fully audited.                          |
-| FR-CA-006 | Not evidenced | A4, A5   | No current task calendar assignment workflow was evidenced in the mounted frontend/backend surface.     |
-| FR-CA-007 | Not evidenced | A5, A6   | No current resource calendar assignment workflow was evidenced in the mounted frontend/backend surface. |
+| FR-CA-005 | Partial       | A5       | Base-calendar/inheritance fields exist and scheduler now resolves effective base+child overlays; frontend assignment workflows still need broader runtime verification. |
+| FR-CA-006 | Partial       | A4, A5   | Task `calendar_id` is mounted in task create/update surfaces and used by scheduling runtime; dedicated frontend task-calendar assignment UX is not fully audited.       |
+| FR-CA-007 | Partial       | A5, A6   | Resource `calendar_id` is mounted in resource create/update surfaces; dedicated frontend resource-calendar assignment UX is not fully audited.                          |
 
 ### 3.8 Resource Management
 
@@ -226,7 +226,7 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-007 | Implemented   | A3, A8, A9 | Project activity logging is mounted at `GET /projects/{id}/activity`, mutation flows write audit entries, and the project overview page renders the dedicated activity feed from that endpoint. |
 | FR-CO-008 | Implemented   | A3, A8, A9 | Comments are mounted via `/comments` endpoints, exposed in the task detail panel, and synchronized through websocket comment events.                                                           |
 | FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
-| FR-CO-010 | Not evidenced | A8, A9     | No mounted attachment flow found.                                                                                                                                                               |
+| FR-CO-010 | Implemented   | A3, A8, A9 | Task attachment flow is mounted end-to-end (`/projects/{project_id}/tasks/{task_id}/attachments` upload/list/download/delete) with private storage and task-detail UI integration. |
 | FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline triggers create rows, and header bell UI consumes live user websocket updates. |
 
 ### 3.14 Import/Export

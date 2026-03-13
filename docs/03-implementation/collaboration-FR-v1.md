@@ -170,19 +170,19 @@ Depends on: Phase 3, Phase 4
 
 ### Attachments - Backend
 
-- [ ] Schema `schema/attachment.py` - AttachmentUpload, AttachmentResponse
-- [ ] Service `service/attachment_service.py` - `upload`, `list`, `download`, `delete` (local or S3)
-- [ ] Endpoint `api/v1/endpoints/attachments.py` - upload (multipart), list, download, delete
+- [x] Schema `schema/attachment.py` - AttachmentUpload metadata + AttachmentResponse
+- [x] Service `service/attachment_service.py` - task upload/list/download/delete (local private storage)
+- [x] Endpoint `api/v1/endpoints/attachments.py` - task-scoped upload (multipart), list, download, delete
 
 ### Attachments - Frontend
 
-- [ ] File list with upload dropzone in task detail panel
-- [ ] Hook: `useAttachments.ts`
+- [x] File list with upload control in task detail panel
+- [x] Hook: `useAttachments.ts`
 
 ### Tests
 
 - [x] Notification endpoint and trigger integration tests
-- [ ] Attachment upload/download and storage provider tests
+- [x] Attachment API/service/repository/integration tests and task-detail UI component tests
 
 ---
 

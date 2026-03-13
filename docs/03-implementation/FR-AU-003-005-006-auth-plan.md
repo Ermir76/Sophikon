@@ -1,7 +1,8 @@
 # FR-AU-003/005/006 Authentication Expansion Plan
 
 - **Created**: 2026-03-12
-- **Status**: Planned
+- **Completed**: 2026-03-13
+- **Status**: Completed
 - **Scope**: Backend + Frontend
 - **Requirements**:
   - `FR-AU-003` Login with Google OAuth (Must)
@@ -10,20 +11,22 @@
 
 ## Summary
 
-Implement missing authentication/user-account capabilities without changing existing cookie-based auth behavior:
+Delivered authentication/user-account capabilities while keeping cookie-based auth behavior:
 
-- Add Google OAuth login entry and callback flow.
-- Add password-reset request + confirm flow using existing `password_reset` table.
-- Add authenticated profile update endpoint and frontend form.
+- Google OAuth login entry and callback flow.
+- Password-reset request + confirm flow using existing `password_reset` table.
+- Authenticated profile update endpoint and frontend profile form.
+- In-session password change endpoint/form.
+- Avatar upload/remove endpoints and profile UI integration.
 
 All new flows stay under mounted API prefix `/api/v1`.
 
-## Current Baseline (Already in Code)
+## Delivered Snapshot
 
-- Auth routes exist for register/login/refresh/logout/me/verify-email in `backend/app/api/v1/endpoints/auth.py`.
-- `User` model already supports OAuth (`oauth_provider`, `oauth_id`) in `backend/app/models/user.py`.
-- `PasswordReset` model already exists in `backend/app/models/password_reset.py`.
-- Frontend auth service/pages do not yet include OAuth, password reset, or profile update actions.
+- Backend auth routes now include OAuth start/callback, password-reset request/confirm, and change-password.
+- Backend user routes include profile patch plus avatar upload/remove.
+- Frontend includes login OAuth CTA, forgot/reset password pages, and `/profile` with Profile/Security tabs.
+- Unit coverage exists for OAuth, password reset, profile patch, password change, and avatar upload/remove.
 
 ## Final Decisions
 
@@ -159,6 +162,12 @@ All new flows stay under mounted API prefix `/api/v1`.
 - Revoke existing sessions after password reset.
 - Log auth events with safe metadata (no tokens, no secrets).
 
+## Remaining Hardening Follow-up
+
+- Add dedicated tests for OAuth state tamper/expiry/replay hardening.
+- Add explicit tests for OAuth open-redirect rejection and reset endpoint rate-limit behavior.
+- Add frontend tests for forgot/reset page submit/error UX and auth E2E flows.
+
 ## Acceptance Criteria
 
 ### FR-AU-003
@@ -189,5 +198,4 @@ All new flows stay under mounted API prefix `/api/v1`.
 
 - Session management UI/API (`FR-AU-008`)
 - Email change workflow with re-verification
-- Password change while logged in (current password challenge)
 - Multi-provider OAuth (GitHub, Microsoft, etc.)

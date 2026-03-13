@@ -1,193 +1,277 @@
-# UI Integration MVP Plan (Strong-Foundation, AI-as-Brain)
+# Plan: Sophikon AI Agent — Real Claude Integration with Tool Use
 
-## Document Metadata
+## Context
 
-- Version: 1.3.0
-- Created: 2026-03-06
-- Last Updated: 2026-03-07
-- Status: Verification Complete (follow-up: ai-service unit tests)
+The AI infrastructure is already built (ai-service, backend endpoints, frontend panel, DB models)
+but runs in mock mode — keyword matching, no real LLM. The goal is to connect real Claude API
+and implement a full agentic loop where Claude can read and act on project data using tools,
+with user-controlled approval for destructive actions.
 
-## Summary
+This is a portfolio/LIA piece — it needs to be impressive: real streaming, real tool calls,
+real approval flows, real UI actions.
 
-Implement the MVP as a layered system where AI is a standalone brain layer, not a frontend patch and not backend business logic.
-Call flow will be:
+---
 
-`Frontend (embedded panel) -> Backend control plane (auth/rbac/audit) -> AI service (reasoning/orchestration) -> Backend domain services/data`
+## Architecture
 
-Scope for MVP AI UI remains: **Chat + Estimate + Suggestions** inside one embedded, docked, resizable side panel across all project subpages.
-
-Verification is now evidenced by contract tests, frontend panel tests, backend/frontend reliability tests, and a Playwright smoke pass across project subpages. The remaining explicit follow-up is adding dedicated ai-service unit tests beyond the contract suite.
-
-## Delivered Architecture Snapshot
-
-```text
-frontend/
-  src/features/ai/
-    components/AiDockedPanel.tsx
-    api/ai.service.ts
-    hooks/useAi.ts
-    store/ai-panel-store.ts
-  tests/e2e/ai-panel.spec.ts
-
-backend/
-  app/api/v1/endpoints/ai.py
-  app/service/ai_service.py
-  app/schema/ai.py
-  tests/unit/api/v1/test_ai.py
-  tests/unit/service/test_ai_service.py
-
-ai-service/
-  app/main.py
-  app/schema/contracts.py
-  app/service/brain_service.py
-  tests/test_contracts.py
+```
+Frontend (React)
+  AiDockedPanel
+  ├── ChatMessages + ToolCallIndicator (real-time: "Hämtar tasks...")
+  ├── ApprovalDialog (AlertDialog, variant=destructive)
+  └── ProfilePage → AI Settings tab (auto-approve toggles per tool)
+          │
+          │ SSE stream / POST /approvals/{id}
+          ▼
+Backend (FastAPI)  — orchestrates everything
+  POST /projects/{id}/ai/chat  → agentic_loop()
+  POST /projects/{id}/ai/approvals/{approval_id}  → resolve pending
+  ai_service.py:
+  ├── agentic_loop()     — multi-turn: send → tool_call → execute → continue
+  ├── tool_executor()    — dispatches to existing services
+  └── approval store     — asyncio.Future per pending approval (in-memory dict)
+          │
+          │ HTTP POST with project context + tool definitions
+          ▼
+AI Service (ai-service/)
+  brain_service.py:
+  ├── ClaudeProvider     — anthropic SDK, real streaming
+  ├── tool_definitions   — 21 tools defined as Claude tool specs
+  └── stream_with_tools  — yields tool_call / text / done events
 ```
 
-## Implementation Tracker (Checklist)
+---
 
-Legend: `[ ]` Not started, `[/]` Partial, `[x]` Done
+## Tools (21 total)
 
-### Phase 1: Architecture and Contracts
+### Read — always autonomous
 
-- [x] Freeze AI boundary and ownership rules (frontend -> backend control plane -> ai-service -> backend domain services).
-- [x] Define versioned shared contracts for chat, estimate, suggestions, and ui_context.
-- [x] Define SSE chat event contract (`start`, `chunk`, `done`, `error`) and error envelope.
-- [x] Add architecture tree update that includes top-level `ai-service/`.
+| Tool                  | Calls                                          |
+| --------------------- | ---------------------------------------------- |
+| `get_tasks`           | `task_service.list_tasks()`                    |
+| `get_task`            | `task_service.get_task_by_id()`                |
+| `get_dependencies`    | `dependency_service.list_dependencies()`       |
+| `get_critical_path`   | `scheduling_service.get_critical_path_tasks()` |
+| `get_project_summary` | `ai_service.build_project_context()`           |
+| `search_tasks`        | `task_repo.search()` (name/status/date filter) |
+| `get_members`         | existing member query                          |
 
-### Phase 2: AI Service (Brain Layer)
+### Write — configurable (default: autonomous)
 
-- [x] Create top-level `ai-service/` structure (app entry, config, provider, orchestrator, prompts, tests).
-- [x] Implement `POST /v1/brain/chat` with streaming output.
-- [x] Implement `POST /v1/brain/estimate`.
-- [x] Implement `POST /v1/brain/suggestions`.
-- [x] Implement deterministic fallback behavior for provider/API failures.
-- [/] Add ai-service unit and contract tests.
+| Tool                 | Calls                                     |
+| -------------------- | ----------------------------------------- |
+| `create_task`        | `task_service.create_task()`              |
+| `update_task`        | `task_service.update_task()`              |
+| `indent_task`        | `task_hierarchy_service.indent_task()`    |
+| `outdent_task`       | `task_hierarchy_service.outdent_task()`   |
+| `reorder_task`       | `task_hierarchy_service.reorder_task()`   |
+| `add_dependency`     | `dependency_service.create_dependency()`  |
+| `calculate_schedule` | `scheduling_service.calculate_schedule()` |
+| `bulk_create_tasks`  | `task_bulk_service.bulk_create_tasks()`   |
 
-### Phase 3: Backend Control Plane
+### Destructive — ALWAYS approval
 
-- [x] Add backend AI router: `/api/v1/projects/{project_id}/ai/*`.
-- [x] Implement backend -> ai-service client with service-to-service auth.
-- [x] Enforce auth + RBAC + project isolation for all AI endpoints.
-- [x] Persist AI conversation/messages/usage through existing AI models.
-- [x] Forward chat SSE stream from ai-service to frontend in stable event order.
-- [x] Add backend endpoint tests for auth, RBAC, isolation, and streaming behavior.
+| Tool                | Calls                                    |
+| ------------------- | ---------------------------------------- |
+| `delete_task`       | `task_service.soft_delete_task()`        |
+| `delete_dependency` | `dependency_service.delete_dependency()` |
 
-### Phase 4: Frontend Embedded Panel
+### UI actions — configurable (default: autonomous)
 
-- [x] Create `frontend/src/features/ai/` module (components/hooks/api/store/types/index).
-- [x] Build docked `AiDockedPanel` (tabs: Chat, Estimate, Suggestions).
-- [x] Integrate panel in `ProjectLayout` with right-side resizable split.
-- [x] Add sidebar entry `AI Assistant` to toggle panel without route change.
-- [x] Keep panel available across all `/projects/:projectId/*` pages.
-- [x] Add mobile fallback via sheet/drawer.
-- [x] Wire estimate apply flow to existing task update endpoint.
-- [x] Wire suggestion apply flow to existing task/dependency endpoints.
+| Tool              | Frontend action              |
+| ----------------- | ---------------------------- |
+| `navigate`        | `router.push(path)`          |
+| `highlight_tasks` | gantt/task list highlight    |
+| `open_task`       | open task detail panel       |
+| `filter_view`     | apply filter to current view |
 
-### Phase 5: Verification and Release Gate
+---
 
-- [x] Contract conformance tests pass (backend <-> ai-service).
-- [x] Frontend unit/integration tests pass for panel behavior and SSE rendering.
-- [x] End-to-end smoke pass across project subpages.
-- [x] Reliability tests pass (ai-service down, timeout, malformed response).
-- [x] Update docs with final architecture tree, version bump, and completion status.
+## Agentic Loop
 
-## Foundation Decisions (Locked)
+```
+User sends message
+  → Backend: save user message, load preferences, build project context
+  → Backend calls ai-service: context + conversation history + tool definitions
+  → ai-service: Claude API (streaming)
+      → text chunks → SSE "chunk" events to frontend
+      → tool_use block → SSE "tool_call" event to backend
+  → Backend receives "tool_call":
+      check user preferences:
+      ├── always_approval (delete_*): stream "approval_required" + approval_id
+      │     Frontend: ApprovalDialog appears
+      │     User: approve/deny → POST /ai/approvals/{id}
+      │     Backend: asyncio.Future resolved → continue or cancel
+      └── autonomous: execute immediately
+            stream "tool_result" to frontend ("✓ Created task 'Login UI'")
+  → Backend sends tool result back to ai-service (next turn)
+  → Claude continues → more text or more tools
+  → Claude done → backend saves assistant message, stream "done"
+```
 
-1. AI is a separate top-level service (`/ai-service`), outside `backend/` and `frontend/`.
-2. Frontend never calls AI service directly.
-3. Backend remains control plane for auth, RBAC, tenant isolation, audit, and rate-limits.
-4. AI service owns reasoning/orchestration/prompt execution; backend owns domain truth and mutations.
-5. Existing public frontend-facing AI endpoints stay project-scoped under backend:
-   `POST /api/v1/projects/{project_id}/ai/chat` (SSE), `POST /api/v1/projects/{project_id}/ai/estimate`, `GET /api/v1/projects/{project_id}/ai/suggestions`.
-6. AI mutation proposals (estimate apply / suggestion apply) execute through existing backend domain endpoints with normal role checks; no direct AI-to-DB writes.
+---
 
-## Implementation Changes
+## User AI Preferences
 
-1. Repository structure:
-   Add top-level `ai-service/` with its own app entry, config, provider layer, orchestration layer, prompt templates, and tests; add service in Docker compose for local integration.
-2. AI service (brain layer):
-   Implement internal endpoints:
+Stored in `user.preferences` JSONB (field already exists, no migration needed):
 
-- `POST /v1/brain/chat` (streaming chunks/events),
-- `POST /v1/brain/estimate`,
-- `POST /v1/brain/suggestions`.
-  Implement orchestration:
-- intent handling,
-- context assembly request contract,
-- provider abstraction,
-- prompt versioning,
-- deterministic fallback responses,
-- structured error codes.
+```json
+{
+  "ai": {
+    "auto_approve": {
+      "create_task": true,
+      "update_task": true,
+      "add_dependency": true,
+      "indent_task": true,
+      "outdent_task": true,
+      "reorder_task": true,
+      "calculate_schedule": true,
+      "bulk_create_tasks": true,
+      "navigate": true,
+      "highlight_tasks": true,
+      "open_task": true,
+      "filter_view": true
+    }
+  }
+}
+```
 
-3. Backend control plane:
-   Add AI endpoint router in backend API v1 and keep it as the only frontend-visible AI surface.
-   Backend responsibilities:
+---
 
-- authenticate user,
-- verify project membership/role,
-- resolve project context envelope,
-- call AI service with service credentials,
-- persist conversation/messages/usage via existing models,
-- stream chat SSE back to frontend unchanged in event order.
-  Add internal service-to-service auth (signed token or shared secret) for backend -> AI service calls.
+## Implementation Phases
 
-4. Contract layer (decision-complete):
-   Define versioned schemas shared by backend and AI service:
+### Phase 1 — AI Service: Real Claude (ai-service/)
 
-- `ChatRequest`, `ChatEvent(start|chunk|done|error)`,
-- `EstimateRequest`, `EstimateResponse`,
-- `Suggestion`, `SuggestionListResponse`,
-- `UiContext(current_view, selected_task_id?, selected_task_ids?)`.
-  Freeze these contracts before coding UI.
+**Files:**
 
-5. Frontend embedded AI panel:
-   Create `features/ai` module with:
+- `ai-service/pyproject.toml` — add `anthropic>=0.50.0`
+- `ai-service/app/core/config.py` — no change needed (ANTHROPIC_API_KEY already there)
+- `ai-service/app/schema/contracts.py` — add tool event types:
+  - `ToolCallEvent(type="tool_call", tool_name, tool_input, tool_use_id)`
+  - `ToolResultEvent(type="tool_result", tool_use_id, result)`
+  - `ApprovalRequiredEvent(type="approval_required", approval_id, tool_name, tool_input, description)`
+  - `UiActionEvent(type="ui_action", action, payload)`
+- `ai-service/app/service/brain_service.py` — replace mock with:
+  - `ClaudeProvider` class using `anthropic.AsyncAnthropic`
+  - `TOOL_DEFINITIONS` list (21 tools as Anthropic tool specs with JSON schemas)
+  - `stream_with_tools(request)` — real streaming with `client.messages.stream()`
+  - Fallback to mock if `AI_MODE != "live"` or no API key
 
-- `AiDockedPanel` (single hub with tabs Chat/Estimate/Suggestions),
-- data hooks/service for backend AI endpoints,
-- panel store state (open/closed, width, active tab, per-project conversation id).
-  Integrate panel into project shell using resizable split in `ProjectLayout` (main content + right dock panel).
-  Add project sidebar entry `AI Assistant` to toggle panel open/close without route change.
-  Panel is available across all `/projects/:projectId/*` pages.
-  Mobile fallback uses sheet/drawer (non-resizable).
+**System prompt structure:**
 
-6. UI behavior (locked):
+```
+You are Sophikon AI — a project management assistant for {project_name}.
+Today: {date}. Project status: {summary}.
 
-- Chat tab: project-aware streaming messages; preserves conversation per project.
-- Estimate tab: estimate selected task(s) and allow apply recommended duration via existing task update endpoint.
-- Suggestions tab: show suggestion cards; apply supported actions via existing dependency/task endpoints.
-- No separate AI route/page in MVP; panel is the canonical surface.
+You have access to tools to read and act on project data.
+- Read tools: use freely without asking
+- Write tools: execute unless user has restricted them
+- Delete tools: ALWAYS present what you'll delete and wait
 
-## Public Interfaces / Types
+Be concise. Show your work. When taking actions, confirm what you did.
+```
 
-1. Backend public APIs (frontend-facing):
-   `POST /api/v1/projects/{id}/ai/chat`, `POST /api/v1/projects/{id}/ai/estimate`, `GET /api/v1/projects/{id}/ai/suggestions`.
-2. AI service internal APIs (backend-facing):
-   `POST /v1/brain/chat`, `POST /v1/brain/estimate`, `POST /v1/brain/suggestions`.
-3. Mirrored schema set (see `issues/open_issues/04-ai-contracts.md` for contract duplication backlog):
-   `chat`, `estimate`, `suggestions`, `ui_context`, standardized error envelope, SSE event schema.
-4. Frontend feature module API:
-   `features/ai/index.ts` exports panel component, hooks, and types only (no cross-feature private imports).
+### Phase 2 — Backend: Tool Executor + Approval Flow
 
-## Test Plan and Acceptance Gates
+**Files:**
 
-1. Contract gate:
-   Schema conformance tests between backend and AI service (request/response + SSE event sequence).
-2. Security gate:
-   RBAC and tenant-isolation tests for all AI endpoints (no cross-project leakage, no unauthorized mutation apply).
-3. Integration gate:
-   Backend<->AI service integration tests (timeouts, retries, error propagation, streaming continuity).
-4. Frontend gate:
-   Unit/integration tests for panel toggle, resize behavior, cross-page persistence in project scope, SSE rendering, estimate apply flow, suggestion apply flow.
-5. E2E gate:
-   From each major project subpage (overview/tasks/gantt/resources), open sidebar AI panel, chat, estimate, apply one result, fetch suggestion, apply one action, and verify domain state updates correctly.
-6. Reliability gate:
-   Basic resilience tests (AI service unavailable, partial stream failure, malformed AI response) with graceful UI + backend fallback errors.
+- `backend/app/service/ai_service.py` — add:
+  - `_APPROVAL_STORE: dict[str, asyncio.Future]` — in-memory pending approvals
+  - `tool_executor(tool_name, tool_input, db, project, user)` — dispatcher
+  - `agentic_loop(db, project, user, body, preferences)` — multi-turn orchestration
+    - Calls ai-service, receives SSE events
+    - On `tool_call`: check approval, execute or pend
+    - Streams all events to frontend
+    - Loops until `done` event
+  - `resolve_approval(approval_id, approved)` — resolves Future
 
-## Assumptions and Defaults
+- `backend/app/api/v1/endpoints/ai.py` — add:
+  - `POST /projects/{project_id}/ai/approvals/{approval_id}` — calls resolve_approval
+  - Update chat endpoint to call `agentic_loop` instead of `stream_chat`
 
-1. MVP means fewer features, not weaker architecture: advanced planner/risk/optimizer remain out of scope.
-2. Backend remains source of truth for project/task/resource data and existing AI persistence models.
-3. AI service may keep ephemeral cache, but not authoritative domain storage.
-4. Prompt and model selection are config-driven and versioned from day one.
-5. Architecture docs are updated as part of this work: add explicit AI-layer tree and ownership rules so structure cannot be "lost" again.
+- `backend/app/schema/ai.py` — add:
+  - `AIApprovalRequest(approved: bool)`
+  - `AIToolCallEvent`, `AIToolResultEvent`, `AIApprovalRequiredEvent`, `AIUiActionEvent`
+
+### Phase 3 — Backend: User AI Preferences API
+
+**Files:**
+
+- `backend/app/api/v1/endpoints/users.py` — add:
+  - `PATCH /users/me/ai-preferences` — updates `user.preferences["ai"]`
+  - `GET /users/me/ai-preferences` — returns current AI preferences with defaults
+
+- `backend/app/schema/auth.py` — add:
+  - `AIPreferencesRequest(auto_approve: dict[str, bool])`
+  - `AIPreferencesResponse(auto_approve: dict[str, bool])`
+
+### Phase 4 — Frontend: Tool Feedback + Approval + Settings
+
+**New files:**
+
+- `features/ai/components/ApprovalDialog.tsx` — reuses `AlertDialog` (variant=destructive)
+  - Shows: tool name, what it will do, Approve/Deny buttons
+  - On approve: POST /ai/approvals/{id} with `{approved: true}`
+
+- `features/ai/components/ToolCallIndicator.tsx` — shows tool execution in chat
+  - "🔍 Hämtar tasks..." / "✓ Task skapad" / "✗ Avvisad"
+
+**Modified files:**
+
+- `features/ai/types.ts` — add all new event types (ToolCallEvent, ApprovalRequiredEvent, UiActionEvent, etc.)
+- `features/ai/api/ai.service.ts` — handle new SSE event types, add approvals endpoint
+- `features/ai/store/ai-panel-store.ts` — add `pendingApproval` state
+- `features/ai/components/AiDockedPanel.tsx` — render ToolCallIndicators, mount ApprovalDialog, handle ui_action events (router.push, highlight etc.)
+- `features/auth/pages/ProfilePage.tsx` — add "AI" tab with toggle switches per tool
+- `features/auth/api/auth.service.ts` — add `getAiPreferences()`, `updateAiPreferences()`
+- `features/auth/hooks/useAuth.ts` — add `useAiPreferences` hook
+
+**UI action handling in AiDockedPanel:**
+
+```typescript
+case "ui_action":
+  if (event.action === "navigate") router.push(event.payload.path)
+  if (event.action === "highlight_tasks") emitHighlight(event.payload.task_ids)
+  if (event.action === "open_task") setSelectedTask(event.payload.task_id)
+  if (event.action === "filter_view") applyFilter(event.payload.filter)
+```
+
+---
+
+## Critical Files (existing — must read before editing)
+
+| File                                                    | Why                                         |
+| ------------------------------------------------------- | ------------------------------------------- |
+| `ai-service/app/service/brain_service.py`               | Full rewrite — understand current structure |
+| `ai-service/app/schema/contracts.py`                    | Add tool events — must not break existing   |
+| `backend/app/service/ai_service.py`                     | Major extension — orchestration lives here  |
+| `backend/app/api/v1/endpoints/ai.py`                    | Add approval endpoint, update chat          |
+| `frontend/src/features/ai/api/ai.service.ts`            | SSE parser — add new event types            |
+| `frontend/src/features/ai/components/AiDockedPanel.tsx` | Main UI — add tool feedback                 |
+| `frontend/src/features/auth/pages/ProfilePage.tsx`      | Add AI tab                                  |
+
+## Reusable (call directly, don't rewrite)
+
+| Service                      | Functions                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `task_service.py`            | `create_task`, `update_task`, `list_tasks`, `get_task_by_id`, `soft_delete_task` |
+| `dependency_service.py`      | `create_dependency`, `delete_dependency`, `list_dependencies`                    |
+| `scheduling_service.py`      | `calculate_schedule`, `get_critical_path_tasks`                                  |
+| `task_hierarchy_service.py`  | `indent_task`, `outdent_task`, `reorder_task`                                    |
+| `task_bulk_service.py`       | `bulk_create_tasks`, `bulk_update_tasks`                                         |
+| `shared/ui/alert-dialog.tsx` | ApprovalDialog base                                                              |
+
+---
+
+## Verification
+
+1. Set `AI_MODE=live` and `ANTHROPIC_API_KEY=sk-ant-...` in `ai-service/.env`
+2. Start everything: `docker compose up -d`
+3. Open a project → AI panel
+4. Test read: "vilka tasks är försenade?" → Claude calls `get_tasks`, answers correctly
+5. Test write (autonomous): "skapa en task 'Deploy to prod'" → task appears in list without dialog
+6. Test destructive: "radera task X" → ApprovalDialog appears, user approves → task deleted
+7. Test UI action: "visa kritisk väg på gantt" → navigates to Gantt + highlights critical path
+8. Toggle off auto-approve for `create_task` in Profile → AI settings
+9. Repeat step 5 → dialog appears this time
+10. Test multi-tool: "analysera projektet och fixa schemaläggningen" → Claude calls get_tasks + get_critical_path + calculate_schedule in sequence
