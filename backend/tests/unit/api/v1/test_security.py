@@ -13,6 +13,7 @@ from slowapi.wrappers import Limit
 from starlette.requests import Request
 
 from app.core.rate_limit import rate_limit_exceeded_handler
+from app.main import app
 
 
 async def _register_and_login(client: AsyncClient, suffix: str) -> None:
@@ -272,6 +273,72 @@ async def test_oversized_request_body_rejected(client: AsyncClient) -> None:
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_profile_patch_rejects_oversized_payload(client: AsyncClient) -> None:
+    """Profile patch rejects field payloads over request schema limits."""
+    await _register_and_login(client, "oversized-profile")
+
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={
+            "full_name": "n" * 256,  # max_length=255
+            "avatar_url": "https://example.com/" + ("a" * 600),  # max_length=500
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_oauth_and_reset_endpoints_rate_limited(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Deterministic 429 contract test for auth endpoints with limiter forced on.
+    """
+    limit = Limit(
+        limit=parse("1/minute"),
+        key_func=get_remote_address,
+        scope=None,
+        per_method=False,
+        methods=None,
+        error_message=None,
+        exempt_when=None,
+        cost=1,
+        override_defaults=False,
+    )
+
+    def _force_rate_limit(request, endpoint_func, in_middleware=True):
+        _ = endpoint_func, in_middleware
+        if request.url.path in {
+            "/api/v1/auth/oauth/google",
+            "/api/v1/auth/password-reset",
+        }:
+            raise RateLimitExceeded(limit)
+        return None
+
+    monkeypatch.setattr(app.state.limiter, "enabled", True)
+    monkeypatch.setattr(
+        app.state.limiter,
+        "_check_request_limit",
+        _force_rate_limit,
+    )
+
+    oauth_response = await client.get(
+        "/api/v1/auth/oauth/google",
+        follow_redirects=False,
+    )
+    assert oauth_response.status_code == 429
+    assert oauth_response.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+
+    reset_response = await client.post(
+        "/api/v1/auth/password-reset",
+        json={"email": "rate-limit@example.com"},
+    )
+    assert reset_response.status_code == 429
+    assert reset_response.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
 
 
 @pytest.mark.asyncio

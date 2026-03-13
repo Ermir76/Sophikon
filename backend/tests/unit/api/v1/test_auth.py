@@ -405,6 +405,39 @@ async def test_google_oauth_callback_rejects_invalid_state(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_oauth_google_callback_handles_provider_error_safely(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Provider-side OAuth errors redirect safely and clear callback state cookie."""
+
+    def _fake_authorize_url(state_token: str) -> str:
+        return f"https://accounts.google.com/o/oauth2/v2/auth?state={state_token}"
+
+    monkeypatch.setattr(
+        "app.service.auth_service.build_google_oauth_authorize_url",
+        _fake_authorize_url,
+    )
+
+    start = await client.get("/api/v1/auth/oauth/google", follow_redirects=False)
+    assert start.status_code == 302
+    assert "oauth_google_state" in start.cookies
+
+    response = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"error": "access_denied"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"].endswith("/login?oauth=error")
+    assert any(
+        "oauth_google_state=" in set_cookie
+        for set_cookie in response.headers.get_list("set-cookie")
+    )
+
+
+@pytest.mark.asyncio
 async def test_google_oauth_callback_success_sets_auth_cookies_and_redirects(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ):
@@ -436,6 +469,96 @@ async def test_google_oauth_callback_success_sets_auth_cookies_and_redirects(
     assert response.headers["location"].endswith("/projects")
     assert response.cookies["access_token"] == "oauth-access-token"
     assert response.cookies["refresh_token"] == "oauth-refresh-token"
+
+
+@pytest.mark.asyncio
+async def test_oauth_state_rejects_replay(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """
+    OAuth callback is one-time in practice because callback state cookie is consumed.
+    """
+
+    def _fake_authorize_url(state_token: str) -> str:
+        return f"https://accounts.google.com/o/oauth2/v2/auth?state={state_token}"
+
+    async def _fake_login_with_google_code(*args, **kwargs):
+        _ = args, kwargs
+        return (None, "oauth-access-token", "oauth-refresh-token")
+
+    monkeypatch.setattr(
+        "app.service.auth_service.build_google_oauth_authorize_url",
+        _fake_authorize_url,
+    )
+    monkeypatch.setattr(
+        "app.service.auth_service.login_with_google_code",
+        _fake_login_with_google_code,
+    )
+
+    start = await client.get(
+        "/api/v1/auth/oauth/google",
+        params={"next": "/projects"},
+        follow_redirects=False,
+    )
+    state_token = start.cookies["oauth_google_state"]
+
+    first_callback = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"code": "oauth-code", "state": state_token},
+        follow_redirects=False,
+    )
+    assert first_callback.status_code == 302
+    assert first_callback.headers["location"].endswith("/projects")
+
+    replay_callback = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"code": "oauth-code", "state": state_token},
+        follow_redirects=False,
+    )
+    assert replay_callback.status_code == 302
+    assert replay_callback.headers["location"].endswith("/login?oauth=error")
+
+
+@pytest.mark.asyncio
+async def test_oauth_callback_rejects_open_redirect_attempts(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """External next targets are normalized to safe in-app redirect paths."""
+
+    def _fake_authorize_url(state_token: str) -> str:
+        return f"https://accounts.google.com/o/oauth2/v2/auth?state={state_token}"
+
+    async def _fake_login_with_google_code(*args, **kwargs):
+        _ = args, kwargs
+        return (None, "oauth-access-token", "oauth-refresh-token")
+
+    monkeypatch.setattr(
+        "app.service.auth_service.build_google_oauth_authorize_url",
+        _fake_authorize_url,
+    )
+    monkeypatch.setattr(
+        "app.service.auth_service.login_with_google_code",
+        _fake_login_with_google_code,
+    )
+
+    start = await client.get(
+        "/api/v1/auth/oauth/google",
+        params={"next": "https://evil.example.com/phish"},
+        follow_redirects=False,
+    )
+    state_token = start.cookies["oauth_google_state"]
+
+    callback = await client.get(
+        "/api/v1/auth/oauth/google/callback",
+        params={"code": "oauth-code", "state": state_token},
+        follow_redirects=False,
+    )
+    assert callback.status_code == 302
+    location = callback.headers["location"]
+    assert location.startswith(settings.FRONTEND_URL)
+    assert "evil.example.com" not in location
 
 
 @pytest.mark.asyncio
@@ -531,6 +654,39 @@ async def test_password_reset_confirm_success_and_token_is_single_use(
 
 
 @pytest.mark.asyncio
+async def test_password_reset_confirm_rejects_expired_token(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    email = "password-reset-expired@example.com"
+    old_password = "StrongPassword123!"
+    expired_token = "expired-reset-token"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": old_password, "full_name": "Reset Expired"},
+    )
+    user = await auth_service.get_user_by_email(session, email)
+    assert user is not None
+
+    session.add(
+        PasswordReset(
+            user_id=user.id,
+            token_hash=hash_token(expired_token),
+            expires_at=datetime.now(UTC) - timedelta(minutes=1),
+        )
+    )
+    await session.commit()
+
+    response = await client.post(
+        "/api/v1/auth/password-reset/confirm",
+        json={"token": expired_token, "new_password": "StrongPassword456!"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_OPERATION"
+
+
+@pytest.mark.asyncio
 async def test_patch_users_me_requires_authentication(client: AsyncClient):
     response = await client.patch("/api/v1/users/me", json={"full_name": "Updated"})
     assert response.status_code == 401
@@ -607,6 +763,38 @@ async def test_patch_users_me_rejects_unknown_fields(client: AsyncClient):
         json={"unknown_setting": "value"},
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_profile_patch_rejects_invalid_timezone_locale_avatar(
+    client: AsyncClient,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "profile-invalid-fields@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Profile Invalid Fields",
+        },
+    )
+
+    timezone_response = await client.patch(
+        "/api/v1/users/me",
+        json={"timezone": "t" * 51},
+    )
+    assert timezone_response.status_code == 422
+
+    locale_response = await client.patch(
+        "/api/v1/users/me",
+        json={"locale": "locale-too-long"},
+    )
+    assert locale_response.status_code == 422
+
+    avatar_response = await client.patch(
+        "/api/v1/users/me",
+        json={"avatar_url": "https://example.com/" + ("a" * 600)},
+    )
+    assert avatar_response.status_code == 422
 
 
 @pytest.mark.asyncio

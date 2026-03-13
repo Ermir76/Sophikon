@@ -298,3 +298,79 @@ async def test_parallel_paths_critical_path(client: AsyncClient):
     # C must have positive slack (shorter path than A→B)
     c_data = await _get_task(client, proj_id, c["id"])
     assert c_data["total_slack"] > 0  # not >= 0, which is always true for any task
+
+
+@pytest.mark.asyncio
+async def test_task_level_calendar_override_changes_schedule_dates(
+    client: AsyncClient,
+):
+    """
+    API flow: task.calendar_id uses its own effective calendar during scheduling.
+
+    Base/default task finishes on Monday (8h day). Override task with a 4h Monday
+    calendar spills to Tuesday for the same 480-minute duration.
+    """
+    proj_id = await _setup(client, "calendar_override")
+
+    base_calendar_response = await client.post(
+        f"/api/v1/projects/{proj_id}/calendars",
+        json={
+            "name": "Base Calendar",
+            "is_base": True,
+            "base_calendar_id": None,
+            "work_week": [
+                None,
+                {"start": "09:00", "end": "17:00", "breaks": []},
+                {"start": "09:00", "end": "17:00", "breaks": []},
+                {"start": "09:00", "end": "17:00", "breaks": []},
+                {"start": "09:00", "end": "17:00", "breaks": []},
+                {"start": "09:00", "end": "17:00", "breaks": []},
+                None,
+            ],
+        },
+    )
+    assert base_calendar_response.status_code == 201, base_calendar_response.text
+    base_calendar_id = base_calendar_response.json()["id"]
+
+    override_calendar_response = await client.post(
+        f"/api/v1/projects/{proj_id}/calendars",
+        json={
+            "name": "Override Monday",
+            "is_base": False,
+            "base_calendar_id": base_calendar_id,
+            "work_week": [
+                None,
+                {"start": "13:00", "end": "17:00", "breaks": []},
+                None,
+                None,
+                None,
+                None,
+                None,
+            ],
+        },
+    )
+    assert override_calendar_response.status_code == 201, (
+        override_calendar_response.text
+    )
+    override_calendar_id = override_calendar_response.json()["id"]
+
+    base_task = await _task(client, proj_id, "Base Task", duration=480)
+    override_task_response = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Override Task",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "calendar_id": override_calendar_id,
+        },
+    )
+    assert override_task_response.status_code == 201, override_task_response.text
+    override_task = override_task_response.json()
+
+    calc_response = await client.post(f"/api/v1/projects/{proj_id}/schedule/calculate")
+    assert calc_response.status_code == 200, calc_response.text
+
+    base_task_data = await _get_task(client, proj_id, base_task["id"])
+    override_task_data = await _get_task(client, proj_id, override_task["id"])
+    assert base_task_data["finish_date"] == "2024-01-01"
+    assert override_task_data["finish_date"] == "2024-01-02"

@@ -100,6 +100,7 @@ async def _create_task(
     constraint_type: ConstraintType = ConstraintType.ASAP,
     constraint_date: date | None = None,
     parent_task_id: uuid.UUID | None = None,
+    calendar_id: uuid.UUID | None = None,
     is_summary: bool = False,
     outline_level: int = 1,
 ) -> Task:
@@ -115,6 +116,7 @@ async def _create_task(
         constraint_type=constraint_type,
         constraint_date=constraint_date,
         parent_task_id=parent_task_id,
+        calendar_id=calendar_id,
         is_summary=is_summary,
     )
     session.add(task)
@@ -1894,3 +1896,137 @@ async def test_schedule_with_custom_work_week(session: AsyncSession) -> None:
 
     assert task.start_date == date(2024, 1, 4)
     assert task.finish_date == date(2024, 1, 8)
+
+
+@pytest.mark.asyncio
+async def test_task_specific_calendar_overrides_project_default(
+    session: AsyncSession,
+) -> None:
+    """
+    Calendar runtime: task.calendar_id uses its own effective calendar.
+
+    Project default uses 8h/day, but override calendar sets Monday to 4h/day,
+    so a 480-minute task spans two days only for the override task.
+    """
+    project = await _create_project(
+        session,
+        suffix="task-calendar-override",
+        start_date=date(2024, 1, 1),  # Monday
+    )
+    await _attach_project_calendar(
+        session,
+        project=project,
+        work_week=DEFAULT_WORK_WEEK,
+    )
+    override_calendar = Calendar(
+        project_id=project.id,
+        name=f"Override Calendar {uuid7()}",
+        base_calendar_id=project.default_calendar_id,
+        is_base=False,
+        work_week=[
+            None,
+            {"start": "13:00", "end": "17:00", "breaks": []},  # Monday = 4h/day
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+    )
+    session.add(override_calendar)
+    await session.flush()
+
+    base_task = await _create_task(
+        session,
+        project=project,
+        name="Base Calendar Task",
+        order_index=1,
+        start_date=date(2024, 1, 1),
+        duration=480,  # 1 standard working day (8h * 60min)
+    )
+    override_task = await _create_task(
+        session,
+        project=project,
+        name="Override Calendar Task",
+        order_index=2,
+        start_date=date(2024, 1, 1),
+        duration=480,  # On 4h Monday calendar this spills to Tuesday
+        calendar_id=override_calendar.id,
+    )
+
+    await calculate_schedule(session, project)
+    await session.refresh(base_task)
+    await session.refresh(override_task)
+
+    assert base_task.finish_date == date(2024, 1, 1)
+    assert override_task.finish_date == date(2024, 1, 2)
+
+
+@pytest.mark.asyncio
+async def test_task_calendar_exception_override_beats_base_holiday(
+    session: AsyncSession,
+) -> None:
+    """
+    Calendar runtime: child exception overrides base exception on same date.
+
+    Base calendar marks Monday as holiday (non-working). Child calendar marks the
+    same Monday as working, so a 1-day task with child calendar still finishes Monday.
+    """
+    project = await _create_project(
+        session,
+        suffix="task-calendar-exception-override",
+        start_date=date(2024, 1, 1),  # Monday
+    )
+    base_calendar = await _attach_project_calendar(
+        session,
+        project=project,
+        work_week=DEFAULT_WORK_WEEK,
+    )
+    await _add_calendar_exception(
+        session,
+        calendar=base_calendar,
+        start_date=date(2024, 1, 1),
+        is_working=False,
+    )
+
+    child_calendar = Calendar(
+        project_id=project.id,
+        name=f"Child Calendar {uuid7()}",
+        base_calendar_id=base_calendar.id,
+        is_base=False,
+        # None entries inherit all weekdays from base calendar
+        work_week=[None, None, None, None, None, None, None],
+    )
+    session.add(child_calendar)
+    await session.flush()
+    await _add_calendar_exception(
+        session,
+        calendar=child_calendar,
+        start_date=date(2024, 1, 1),
+        is_working=True,
+    )
+
+    base_task = await _create_task(
+        session,
+        project=project,
+        name="Base Holiday Task",
+        order_index=1,
+        start_date=date(2024, 1, 1),
+        duration=480,  # 1 working day (8h * 60min)
+    )
+    child_task = await _create_task(
+        session,
+        project=project,
+        name="Child Override Task",
+        order_index=2,
+        start_date=date(2024, 1, 1),
+        duration=480,  # 1 working day (8h * 60min)
+        calendar_id=child_calendar.id,
+    )
+
+    await calculate_schedule(session, project)
+    await session.refresh(base_task)
+    await session.refresh(child_task)
+
+    assert base_task.finish_date == date(2024, 1, 2)
+    assert child_task.finish_date == date(2024, 1, 1)

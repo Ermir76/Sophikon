@@ -1,11 +1,17 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
 from app.api.deps.auth import authenticate_access_token
+from app.core.auth_flow import (
+    create_oauth_state,
+    decode_oauth_state,
+    validate_oauth_state,
+)
 from app.core.config import settings
 from app.core.exceptions import (
     AuthenticationError,
@@ -26,6 +32,35 @@ from app.models.refresh_token import RefreshToken
 from app.models.role import Role
 from app.models.user import User
 from app.service import auth_service
+
+
+def test_oauth_state_generation_and_validation_success() -> None:
+    state_token = create_oauth_state(next_path="/projects")
+    payload = decode_oauth_state(state_token)
+
+    assert payload["type"] == "oauth_state"
+    assert payload["next"] == "/projects"
+    assert isinstance(payload["nonce"], str)
+    assert payload["nonce"]
+    assert validate_oauth_state(state_token, state_token) is True
+
+
+def test_oauth_state_rejects_tampered_payload() -> None:
+    state_token = create_oauth_state(next_path="/")
+    tampered = f"{state_token[:-1]}{'a' if state_token[-1] != 'a' else 'b'}"
+
+    with pytest.raises(JWTError):
+        decode_oauth_state(tampered)
+
+
+def test_oauth_state_rejects_expired_payload() -> None:
+    expired_state_token = create_oauth_state(
+        next_path="/",
+        expires_delta=timedelta(seconds=-1),
+    )
+
+    with pytest.raises(JWTError):
+        decode_oauth_state(expired_state_token)
 
 
 async def _ensure_system_user_role(session: AsyncSession) -> None:
