@@ -36,17 +36,24 @@ class ProjectContext(BaseModel):
 
 
 class ChatHistoryItem(BaseModel):
-    role: Literal["user", "assistant", "system"]
+    role: Literal["user", "assistant"]
+    content: str | list[dict]
+
+
+class ToolResultInput(BaseModel):
+    tool_use_id: str
     content: str
+    is_error: bool = False
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
+    message: str | None = Field(default=None, max_length=4000)
     project_context: ProjectContext
     conversation_id: UUID | None = None
     user_id: UUID
     ui_context: UiContext | None = None
     history: list[ChatHistoryItem] = Field(default_factory=list)
+    tool_results: list[ToolResultInput] = Field(default_factory=list)
 
 
 class AIUsageMeta(BaseModel):
@@ -56,13 +63,16 @@ class AIUsageMeta(BaseModel):
 
 
 class ChatEvent(BaseModel):
-    type: Literal["start", "chunk", "done", "error"]
+    type: Literal["start", "chunk", "done", "error", "tool_call"]
     conversation_id: UUID | None = None
     message_id: UUID | None = None
     content: str | None = None
     usage: AIUsageMeta | None = None
     error: str | None = None
     model: str | None = None
+    tool_use_id: str | None = None
+    tool_name: str | None = None
+    tool_input: dict | None = None
 
 
 class EstimateTaskInput(BaseModel):

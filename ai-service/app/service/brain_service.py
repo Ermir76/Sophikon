@@ -1,4 +1,12 @@
+"""Brain service — routes to Claude API (live) or deterministic mock (fallback).
+
+Live mode:  AI_MODE=live + ANTHROPIC_API_KEY set in environment.
+Mock mode:  all other cases — rule-based, no external calls, safe for testing.
+"""
+
 import asyncio
+import json
+import logging
 from datetime import date
 from uuid import uuid4
 
@@ -15,6 +23,492 @@ from app.schema.contracts import (
     SuggestionsRequest,
     SuggestionsResponse,
 )
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Tool definitions — passed to Claude as its action space
+# ---------------------------------------------------------------------------
+
+TOOL_DEFINITIONS: list[dict] = [
+    # --- Read tools (always autonomous) ---
+    {
+        "name": "get_tasks",
+        "description": (
+            "Get all tasks for the project. Returns tasks with WBS codes, dates, "
+            "progress percentage, priority, and hierarchy. Use this to understand "
+            "the project state before answering questions or taking actions."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "filter_status": {
+                    "type": "string",
+                    "enum": ["all", "overdue", "in_progress", "completed", "not_started"],
+                    "description": "Filter tasks by status. Omit for all tasks.",
+                },
+            },
+        },
+    },
+    {
+        "name": "get_task",
+        "description": "Get detailed information about a single task by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "search_tasks",
+        "description": "Search tasks by name or filter by condition.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Text to search in task name and notes.",
+                },
+                "overdue_only": {"type": "boolean"},
+                "in_progress_only": {"type": "boolean"},
+            },
+        },
+    },
+    {
+        "name": "get_dependencies",
+        "description": "Get all task dependencies in the project (predecessor → successor relationships).",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_critical_path",
+        "description": (
+            "Get the critical path — the sequence of tasks that determines the "
+            "minimum project duration. Delays to critical path tasks delay the whole project."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_project_summary",
+        "description": (
+            "Get a high-level project health summary: completion %, overdue count, "
+            "in-progress count, upcoming milestones, and schedule status."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_members",
+        "description": "Get all project members with their roles (owner, manager, member, viewer).",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    # --- Write tools (configurable, default autonomous) ---
+    {
+        "name": "create_task",
+        "description": "Create a new task in the project.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "maxLength": 500},
+                "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Start date in YYYY-MM-DD format.",
+                },
+                "duration": {
+                    "type": "integer",
+                    "description": "Duration in minutes. 480 = 1 working day, 960 = 2 days.",
+                    "minimum": 60,
+                },
+                "parent_task_id": {
+                    "type": "string",
+                    "description": "Parent task UUID for creating a subtask. Omit for root task.",
+                },
+                "notes": {"type": "string", "description": "Task description or notes."},
+            },
+            "required": ["name", "start_date", "duration"],
+        },
+    },
+    {
+        "name": "update_task",
+        "description": "Update fields on an existing task (name, dates, progress, notes, etc.).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID to update"},
+                "name": {"type": "string"},
+                "percent_complete": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Progress percentage.",
+                },
+                "start_date": {"type": "string", "format": "date"},
+                "duration": {
+                    "type": "integer",
+                    "description": "Duration in minutes.",
+                    "minimum": 60,
+                },
+                "notes": {"type": "string"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "bulk_create_tasks",
+        "description": (
+            "Create multiple tasks at once. Use this when generating a project plan "
+            "or when the user asks to create many tasks — don't create them one by one."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "start_date": {"type": "string", "format": "date"},
+                            "duration": {"type": "integer", "minimum": 60},
+                            "notes": {"type": "string"},
+                        },
+                        "required": ["name", "start_date", "duration"],
+                    },
+                },
+            },
+            "required": ["tasks"],
+        },
+    },
+    {
+        "name": "add_dependency",
+        "description": "Add a dependency: predecessor must finish before successor can start.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "predecessor_id": {
+                    "type": "string",
+                    "description": "UUID of the task that must finish first.",
+                },
+                "successor_id": {
+                    "type": "string",
+                    "description": "UUID of the task that starts after.",
+                },
+                "type": {
+                    "type": "string",
+                    "enum": ["FS", "FF", "SS", "SF"],
+                    "description": "Dependency type. FS (Finish-to-Start) is most common.",
+                },
+            },
+            "required": ["predecessor_id", "successor_id", "type"],
+        },
+    },
+    {
+        "name": "indent_task",
+        "description": "Make a task a child of its previous sibling (indent in WBS hierarchy).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID to indent"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "outdent_task",
+        "description": "Move a task one level up in the WBS hierarchy (outdent/promote).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID to outdent"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "reorder_task",
+        "description": "Change a task's position in the list, optionally under a different parent.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string"},
+                "after_task_id": {
+                    "type": "string",
+                    "description": "Place task after this task. Null = move to beginning of group.",
+                },
+                "before_task_id": {
+                    "type": "string",
+                    "description": "Place task before this task. Null = move to end of group.",
+                },
+                "new_parent_id": {
+                    "type": "string",
+                    "description": "Move under this parent task. Null = keep current parent.",
+                },
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "calculate_schedule",
+        "description": (
+            "Run the scheduling engine: recalculates all task dates based on "
+            "dependencies, constraints, and critical path. Call this after making "
+            "structural changes to keep dates accurate."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    # --- Destructive tools (always require user approval) ---
+    {
+        "name": "delete_task",
+        "description": (
+            "Delete a task (soft delete — recoverable). "
+            "IMPORTANT: This always requires user approval. "
+            "Always include a clear reason so the user can make an informed decision."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID to delete"},
+                "reason": {
+                    "type": "string",
+                    "description": "Why this task should be deleted. Shown to user for approval.",
+                },
+            },
+            "required": ["task_id", "reason"],
+        },
+    },
+    {
+        "name": "delete_dependency",
+        "description": (
+            "Remove a dependency between tasks. "
+            "IMPORTANT: This always requires user approval."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "dependency_id": {"type": "string", "description": "Dependency UUID to remove"},
+                "reason": {"type": "string", "description": "Why this dependency should be removed."},
+            },
+            "required": ["dependency_id", "reason"],
+        },
+    },
+    # --- UI action tools (configurable, default autonomous) ---
+    {
+        "name": "navigate",
+        "description": "Navigate the user to a different view in the application.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "view": {
+                    "type": "string",
+                    "enum": ["overview", "tasks", "gantt", "calendar", "resources", "reports"],
+                },
+            },
+            "required": ["view"],
+        },
+    },
+    {
+        "name": "highlight_tasks",
+        "description": "Highlight specific tasks in the current view to draw the user's attention.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of task UUIDs to highlight.",
+                },
+            },
+            "required": ["task_ids"],
+        },
+    },
+    {
+        "name": "open_task",
+        "description": "Open a task's detail panel so the user can view or edit it.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "Task UUID to open"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "filter_view",
+        "description": "Apply a filter to the current task list or Gantt view.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "filter": {
+                    "type": "string",
+                    "enum": ["all", "overdue", "in_progress", "completed", "critical_path"],
+                },
+            },
+            "required": ["filter"],
+        },
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _use_live_mode() -> bool:
+    return settings.AI_MODE == "live" and bool(settings.ANTHROPIC_API_KEY)
+
+
+def _estimate_tokens(value: str) -> int:
+    return max(1, len(value) // 4)
+
+
+def _build_system_prompt(request: ChatRequest) -> str:
+    ctx = request.project_context
+    today = date.today()
+    total = len(ctx.tasks)
+    overdue = sum(
+        1 for t in ctx.tasks if t.percent_complete < 100 and t.finish_date < today
+    )
+    in_progress = sum(1 for t in ctx.tasks if 0 < t.percent_complete < 100)
+    completed = sum(1 for t in ctx.tasks if t.percent_complete >= 100)
+
+    return (
+        f'You are Sophikon AI — a project management assistant for "{ctx.name}".\n'
+        f"Today: {today}\n"
+        f"Project status: {ctx.status} | "
+        f"{total} tasks | {completed} completed | {in_progress} in progress | {overdue} overdue\n\n"
+        "You have tools to read and act on project data:\n"
+        "- Read tools (get_tasks, get_dependencies, etc.): use freely, no approval needed.\n"
+        "- Write tools (create_task, update_task, etc.): execute directly unless user restricted them.\n"
+        "- Delete tools: ALWAYS require user approval — describe clearly what will be deleted.\n"
+        "- UI tools (navigate, highlight_tasks, etc.): execute directly to guide the user.\n\n"
+        "Be concise and action-oriented. Show your reasoning. Confirm actions you take.\n"
+        "When creating multiple tasks at once, use bulk_create_tasks — not one-by-one.\n"
+        "After structural changes (create, delete, reorder), call calculate_schedule to keep dates accurate."
+    )
+
+
+def _build_messages(request: ChatRequest) -> list[dict]:
+    messages: list[dict] = []
+
+    for item in request.history:
+        messages.append({"role": item.role, "content": item.content})
+
+    if request.tool_results:
+        messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tr.tool_use_id,
+                    "content": tr.content,
+                    **({"is_error": True} if tr.is_error else {}),
+                }
+                for tr in request.tool_results
+            ],
+        })
+    elif request.message:
+        messages.append({"role": "user", "content": request.message})
+
+    return messages
+
+
+# ---------------------------------------------------------------------------
+# Live mode — real Claude API
+# ---------------------------------------------------------------------------
+
+
+async def _stream_claude(request: ChatRequest):
+    from anthropic import AsyncAnthropic
+
+    client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+    messages = _build_messages(request)
+    system = _build_system_prompt(request)
+
+    yield ChatEvent(
+        type="start",
+        conversation_id=request.conversation_id,
+        model=settings.AI_MODEL_NAME,
+    ).model_dump(mode="json", exclude_none=True)
+
+    current_tool_id: str | None = None
+    current_tool_name: str | None = None
+    tool_input_json = ""
+    final_message = None
+
+    try:
+        async with client.messages.stream(
+            model=settings.AI_MODEL_NAME,
+            max_tokens=4096,
+            system=system,
+            messages=messages,
+            tools=TOOL_DEFINITIONS,
+        ) as stream:
+            async for event in stream:
+                event_type = getattr(event, "type", None)
+
+                if event_type == "content_block_start":
+                    block = event.content_block
+                    if block.type == "tool_use":
+                        current_tool_id = block.id
+                        current_tool_name = block.name
+                        tool_input_json = ""
+
+                elif event_type == "content_block_delta":
+                    delta = event.delta
+                    if getattr(delta, "type", None) == "text_delta":
+                        yield ChatEvent(
+                            type="chunk", content=delta.text
+                        ).model_dump(mode="json", exclude_none=True)
+                    elif getattr(delta, "type", None) == "input_json_delta":
+                        tool_input_json += delta.partial_json
+
+                elif event_type == "content_block_stop":
+                    if current_tool_id is not None:
+                        try:
+                            tool_input = json.loads(tool_input_json) if tool_input_json else {}
+                        except json.JSONDecodeError:
+                            tool_input = {}
+
+                        yield ChatEvent(
+                            type="tool_call",
+                            tool_use_id=current_tool_id,
+                            tool_name=current_tool_name,
+                            tool_input=tool_input,
+                        ).model_dump(mode="json", exclude_none=True)
+
+                        current_tool_id = None
+                        current_tool_name = None
+                        tool_input_json = ""
+
+            final_message = await stream.get_final_message()
+
+    except Exception:
+        logger.exception("Claude streaming failed")
+        yield ChatEvent(
+            type="error", error="Claude API call failed"
+        ).model_dump(mode="json", exclude_none=True)
+        return
+
+    usage = AIUsageMeta(
+        tokens_in=final_message.usage.input_tokens if final_message else 0,
+        tokens_out=final_message.usage.output_tokens if final_message else 0,
+        model=settings.AI_MODEL_NAME,
+    )
+    yield ChatEvent(
+        type="done",
+        message_id=uuid4(),
+        usage=usage,
+        model=settings.AI_MODEL_NAME,
+    ).model_dump(mode="json", exclude_none=True)
+
+
+# ---------------------------------------------------------------------------
+# Mock mode — deterministic, no external calls
+# ---------------------------------------------------------------------------
 
 
 _KEYWORD_DAY_HINTS: dict[str, float] = {
@@ -33,76 +527,53 @@ _KEYWORD_DAY_HINTS: dict[str, float] = {
 }
 
 
-def _estimate_tokens(value: str) -> int:
-    return max(1, len(value) // 4)
-
-
 def _chunk_text(value: str, chunk_size: int = 48) -> list[str]:
     return [value[i : i + chunk_size] for i in range(0, len(value), chunk_size)]
 
 
-def _summarize_status(request: ChatRequest) -> tuple[int, int, int]:
+def _compose_mock_answer(request: ChatRequest) -> str:
     tasks = request.project_context.tasks
-    overdue = 0
-    in_progress = 0
-    completed = 0
     today = date.today()
-
-    for task in tasks:
-        if task.percent_complete >= 100:
-            completed += 1
-            continue
-        if task.percent_complete > 0:
-            in_progress += 1
-        if task.finish_date < today:
-            overdue += 1
-
-    return overdue, in_progress, completed
-
-
-def _compose_chat_answer(request: ChatRequest) -> str:
-    overdue, in_progress, completed = _summarize_status(request)
-    total = len(request.project_context.tasks)
-    question = request.message.lower()
-    project_name = request.project_context.name
+    overdue = sum(1 for t in tasks if t.percent_complete < 100 and t.finish_date < today)
+    in_progress = sum(1 for t in tasks if 0 < t.percent_complete < 100)
+    completed = sum(1 for t in tasks if t.percent_complete >= 100)
+    total = len(tasks)
+    name = request.project_context.name
+    question = (request.message or "").lower()
 
     if "overdue" in question:
         return (
-            f"{project_name} has {overdue} overdue tasks out of {total}. "
+            f"{name} has {overdue} overdue tasks out of {total}. "
             "Prioritize tasks with past finish dates and low completion."
         )
-
     if "progress" in question or "status" in question:
         return (
-            f"{project_name} currently has {completed} completed tasks, "
-            f"{in_progress} in progress, and {overdue} overdue."
+            f"{name}: {completed} completed, {in_progress} in progress, {overdue} overdue "
+            f"out of {total} total tasks."
         )
-
     if "suggest" in question or "next" in question:
         return (
-            f"Recommended next step: resolve {overdue} overdue tasks first, then focus "
-            f"on the {in_progress} active tasks to improve schedule confidence."
+            f"Recommended: resolve {overdue} overdue tasks first, then focus on "
+            f"{in_progress} active tasks to improve schedule confidence."
         )
-
     return (
-        f"I reviewed {project_name}: {completed}/{total} tasks are complete, "
-        f"{in_progress} are in progress, and {overdue} are overdue. "
-        "Ask for overdue details, progress, or schedule suggestions."
+        f"I reviewed {name}: {completed}/{total} tasks complete, "
+        f"{in_progress} in progress, {overdue} overdue. "
+        "Ask about overdue tasks, progress, or schedule suggestions."
     )
 
 
-async def stream_chat_events(request: ChatRequest):
-    answer = _compose_chat_answer(request)
-    conversation_id = request.conversation_id
+async def _stream_mock(request: ChatRequest):
+    answer = _compose_mock_answer(request)
     usage = AIUsageMeta(
-        tokens_in=_estimate_tokens(request.message),
+        tokens_in=_estimate_tokens(request.message or ""),
         tokens_out=_estimate_tokens(answer),
         model=settings.AI_MODEL_NAME,
     )
 
     yield ChatEvent(
         type="start",
-        conversation_id=conversation_id,
+        conversation_id=request.conversation_id,
         model=settings.AI_MODEL_NAME,
     ).model_dump(mode="json", exclude_none=True)
 
@@ -120,15 +591,27 @@ async def stream_chat_events(request: ChatRequest):
     ).model_dump(mode="json", exclude_none=True)
 
 
+# ---------------------------------------------------------------------------
+# Public entry points
+# ---------------------------------------------------------------------------
+
+
+async def stream_chat_events(request: ChatRequest):
+    if _use_live_mode():
+        async for event in _stream_claude(request):
+            yield event
+    else:
+        async for event in _stream_mock(request):
+            yield event
+
+
 def _base_minutes_from_task_name(task_name: str, original_duration: int | None) -> int:
     if original_duration and original_duration > 0:
         return max(240, original_duration)
-
     lower_name = task_name.lower()
     matched_days = [days for key, days in _KEYWORD_DAY_HINTS.items() if key in lower_name]
     if matched_days:
         return int(max(matched_days) * 480)
-
     return 2 * 480
 
 
@@ -161,7 +644,8 @@ def build_estimates(request: EstimateRequest) -> EstimateResponse:
 
     usage = AIUsageMeta(
         tokens_in=_estimate_tokens(
-            request.project_context.name + " ".join(task.task_name for task in request.task_inputs)
+            request.project_context.name
+            + " ".join(task.task_name for task in request.task_inputs)
         ),
         tokens_out=_estimate_tokens(str(len(estimates))),
         model=settings.AI_MODEL_NAME,
@@ -176,7 +660,6 @@ def build_suggestions(request: SuggestionsRequest) -> SuggestionsResponse:
     for task in request.project_context.tasks:
         if len(suggestions) >= request.limit:
             break
-
         if task.percent_complete < 100 and task.finish_date < today:
             suggestions.append(
                 SuggestionItem(
@@ -198,19 +681,11 @@ def build_suggestions(request: SuggestionsRequest) -> SuggestionsResponse:
     has_deploy = any("deploy" in name or "release" in name for name in lower_names)
     if len(suggestions) < request.limit and has_qa and has_deploy:
         qa_task = next(
-            (
-                task
-                for task in request.project_context.tasks
-                if "qa" in task.name.lower() or "test" in task.name.lower()
-            ),
+            (t for t in request.project_context.tasks if "qa" in t.name.lower() or "test" in t.name.lower()),
             None,
         )
         deploy_task = next(
-            (
-                task
-                for task in request.project_context.tasks
-                if "deploy" in task.name.lower() or "release" in task.name.lower()
-            ),
+            (t for t in request.project_context.tasks if "deploy" in t.name.lower() or "release" in t.name.lower()),
             None,
         )
         if qa_task and deploy_task:
@@ -249,7 +724,9 @@ def build_suggestions(request: SuggestionsRequest) -> SuggestionsResponse:
         )
 
     usage = AIUsageMeta(
-        tokens_in=_estimate_tokens(request.project_context.name + str(len(request.project_context.tasks))),
+        tokens_in=_estimate_tokens(
+            request.project_context.name + str(len(request.project_context.tasks))
+        ),
         tokens_out=_estimate_tokens(str(len(suggestions))),
         model=settings.AI_MODEL_NAME,
     )
