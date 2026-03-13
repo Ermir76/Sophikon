@@ -45,12 +45,13 @@ const baseTask: Task = {
   updated_at: "2024-01-02T00:00:00Z",
 };
 
-function renderFields(task: Task) {
+function renderFields(task: Task, overrides?: Partial<Parameters<typeof TaskDetailCoreFields>[0]>) {
   const localData: Partial<TaskUpdate> = {
     percent_complete: task.percent_complete,
     start_date: task.start_date,
     duration: task.duration,
     notes: task.notes,
+    calendar_id: task.calendar_id ?? null,
   };
 
   return render(
@@ -59,7 +60,9 @@ function renderFields(task: Task) {
       localData={localData}
       setLocalData={vi.fn()}
       handleBlur={vi.fn()}
+      calendarOptions={[{ id: "cal-1", name: "Team Calendar" }]}
       onColorChange={vi.fn()}
+      {...overrides}
     />,
   );
 }
@@ -85,5 +88,11 @@ describe("TaskDetailCoreFields", () => {
     expect(screen.getByLabelText("% Complete")).not.toBeDisabled();
     expect(screen.getByLabelText("Start Date")).not.toBeDisabled();
     expect(screen.getByRole("spinbutton", { name: /Duration/i })).not.toBeDisabled();
+  });
+
+  it("renders a labeled calendar selector", () => {
+    renderFields({ ...baseTask, is_summary: false, color: null });
+
+    expect(screen.getByRole("combobox", { name: /Calendar/i })).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useCalendars } from "@/features/calendar";
 import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
@@ -24,6 +25,10 @@ vi.mock("@/features/auth/store/auth-store", () => ({
     useAuthStore: vi.fn(),
 }));
 
+vi.mock("@/features/calendar", () => ({
+    useCalendars: vi.fn(),
+}));
+
 vi.mock("@/features/tasks/components/task-detail/TaskDependencyList", () => ({
     TaskDependencyList: () => <div />,
 }));
@@ -34,6 +39,10 @@ vi.mock("@/features/tasks/components/task-detail/TaskAssignmentList", () => ({
 
 vi.mock("@/features/tasks/components/task-detail/TaskDetailCoreFields", () => ({
     TaskDetailCoreFields: () => <div />,
+}));
+
+vi.mock("@/features/tasks/components/task-detail/TaskAttachmentList", () => ({
+    TaskAttachmentList: () => <div />,
 }));
 
 vi.mock("@/features/tasks/components/task-detail/CommentThread", () => ({
@@ -109,6 +118,11 @@ describe("TaskDetailPanel", () => {
         vi.mocked(useUpdateTask).mockReturnValue({
             mutateAsync: vi.fn().mockResolvedValue(undefined),
             isPending: false,
+        } as never);
+        vi.mocked(useCalendars).mockReturnValue({
+            data: [],
+            isLoading: false,
+            isError: false,
         } as never);
         vi.mocked(useAuthStore).mockImplementation((selector: (state: any) => any) =>
             selector({ user: { id: "user-1" } }));
