@@ -10,9 +10,17 @@ interface ResourceDetailsSectionProps {
     handleBlur: (field: keyof ResourceUpdate) => void;
     updateResource: UseMutationResult<Resource, Error, { resourceId: string; data: ResourceUpdate }>;
     resourceId: string;
+    calendarOptions: Array<{ id: string; name: string }>;
 }
 
-export function ResourceDetailsSection({ localData, setLocalData, handleBlur, updateResource, resourceId }: ResourceDetailsSectionProps) {
+export function ResourceDetailsSection({
+    localData,
+    setLocalData,
+    handleBlur,
+    updateResource,
+    resourceId,
+    calendarOptions,
+}: ResourceDetailsSectionProps) {
     return (
         <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h3>
@@ -37,6 +45,35 @@ export function ResourceDetailsSection({ localData, setLocalData, handleBlur, up
                             <SelectItem value="WORK">Work</SelectItem>
                             <SelectItem value="MATERIAL">Material</SelectItem>
                             <SelectItem value="COST">Cost</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Calendar</label>
+                    <Select
+                        value={localData.calendar_id ?? "none"}
+                        onValueChange={async (value) => {
+                            const nextCalendarId = value === "none" ? null : value;
+                            setLocalData({ ...localData, calendar_id: nextCalendarId });
+                            try {
+                                await updateResource.mutateAsync({
+                                    resourceId,
+                                    data: { calendar_id: nextCalendarId },
+                                });
+                            } catch (error) {
+                                toast.error("Failed to update calendar");
+                            }
+                        }}
+                    >
+                        <SelectTrigger><SelectValue placeholder="Project default" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Project default</SelectItem>
+                            {calendarOptions.map((calendar) => (
+                                <SelectItem key={calendar.id} value={calendar.id}>
+                                    {calendar.name}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>

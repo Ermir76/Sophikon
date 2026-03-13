@@ -11,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { useCreateResource } from "@/features/resources/hooks/useResources";
+import { useCalendars } from "@/features/calendar";
 import { toast } from "sonner";
 import type { ResourceType } from "@/features/resources/types";
 
@@ -25,14 +26,18 @@ export function CreateResourceDialog({ projectId, isOpen, onClose }: CreateResou
     const [type, setType] = useState<ResourceType>("WORK");
     const [initials, setInitials] = useState("");
     const [email, setEmail] = useState("");
+    const [calendarId, setCalendarId] = useState<string | null>(null);
 
     const createResource = useCreateResource(projectId);
+    const calendarsQuery = useCalendars(projectId);
+    const calendars = calendarsQuery.data ?? [];
 
     const resetForm = () => {
         setName("");
         setType("WORK");
         setInitials("");
         setEmail("");
+        setCalendarId(null);
     };
 
     const handleSubmit = () => {
@@ -47,6 +52,7 @@ export function CreateResourceDialog({ projectId, isOpen, onClose }: CreateResou
                 type,
                 initials: initials.trim() || undefined,
                 email: email.trim() || undefined,
+                calendar_id: calendarId,
             },
             {
                 onSuccess: () => {
@@ -94,6 +100,27 @@ export function CreateResourceDialog({ projectId, isOpen, onClose }: CreateResou
                                 <SelectItem value="WORK">Work (People)</SelectItem>
                                 <SelectItem value="MATERIAL">Material (Consumables)</SelectItem>
                                 <SelectItem value="COST">Cost (Fixed)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label htmlFor="res-calendar" className="text-sm font-medium">Calendar</label>
+                        <Select
+                            value={calendarId ?? "none"}
+                            onValueChange={(value) => setCalendarId(value === "none" ? null : value)}
+                            disabled={calendarsQuery.isLoading}
+                        >
+                            <SelectTrigger id="res-calendar">
+                                <SelectValue placeholder="Project default" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Project default</SelectItem>
+                                {calendars.map((calendar) => (
+                                    <SelectItem key={calendar.id} value={calendar.id}>
+                                        {calendar.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

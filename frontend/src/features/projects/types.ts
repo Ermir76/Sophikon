@@ -7,11 +7,13 @@ export interface ProjectSettings {
 
 export interface Project {
   id: string;
+  owner_id?: string;
   organization_id: string;
   name: string;
   description?: string;
   start_date: string;
   finish_date?: string | null;
+  default_calendar_id?: string | null;
   schedule_from: "start" | "finish";
   status: "active" | "archived" | "completed";
   settings: ProjectSettings;
@@ -29,6 +31,7 @@ export interface ProjectCreate {
   currency?: string;
   budget?: number;
   settings?: Partial<ProjectSettings>;
+  default_calendar_id?: string | null;
   color?: string | null;
 }
 
@@ -37,6 +40,7 @@ export interface ProjectUpdate {
   description?: string;
   status?: "active" | "archived" | "completed";
   settings?: Partial<ProjectSettings>;
+  default_calendar_id?: string | null;
   color?: string | null;
 }
 

@@ -25,8 +25,10 @@ import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { TaskDependencyList } from "@/features/tasks/components/task-detail/TaskDependencyList";
 import { TaskAssignmentList } from "@/features/tasks/components/task-detail/TaskAssignmentList";
+import { TaskAttachmentList } from "@/features/tasks/components/task-detail/TaskAttachmentList";
 import { TaskDetailCoreFields } from "@/features/tasks/components/task-detail/TaskDetailCoreFields";
 import { CommentThread } from "@/features/tasks/components/task-detail/CommentThread";
+import { useCalendars } from "@/features/calendar";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { toast } from "sonner";
 import type { TaskUpdate } from "@/features/tasks/types";
@@ -43,6 +45,7 @@ interface TaskDetailPanelProps {
 export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, isDeletePending }: TaskDetailPanelProps) {
     const { data: task, isLoading } = useTask(projectId, taskId ?? undefined);
     const updateTask = useUpdateTask(projectId);
+    const calendarsQuery = useCalendars(projectId);
     const membersQuery = useProjectMembers(projectId);
     const currentUserId = useAuthStore((state) => state.user?.id ?? null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,6 +61,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                 percent_complete: task.percent_complete,
                 start_date: task.start_date ? task.start_date.split("T")[0] : "",
                 duration: task.duration,
+                calendar_id: task.calendar_id ?? null,
                 notes: task.notes || "",
             });
         }
@@ -88,6 +92,7 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
     };
     const currentMember = membersQuery.data?.items.find((member) => member.user_id === currentUserId);
     const canModerateComments = currentMember?.role === "owner" || currentMember?.role === "manager";
+    const canManageAttachments = currentMember?.role !== "viewer";
 
     return (<>
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -139,6 +144,20 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 localData={localData}
                                 setLocalData={setLocalData}
                                 handleBlur={handleBlur}
+                                calendarOptions={(calendarsQuery.data ?? []).map((calendar) => ({
+                                    id: calendar.id,
+                                    name: calendar.name,
+                                }))}
+                                onCalendarChange={async (calendarId) => {
+                                    try {
+                                        await updateTask.mutateAsync({
+                                            taskId: task.id,
+                                            data: { calendar_id: calendarId },
+                                        });
+                                    } catch {
+                                        toast.error("Failed to update calendar");
+                                    }
+                                }}
                                 onColorChange={async (color) => {
                                     try {
                                         await updateTask.mutateAsync({ taskId: task.id, data: { color } });
@@ -163,6 +182,19 @@ export function TaskDetailPanel({ projectId, taskId, isOpen, onClose, onDelete, 
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Assignments</h3>
                                 <div className="overflow-hidden rounded-xl border bg-card">
                                     <TaskAssignmentList projectId={projectId} taskId={task.id} />
+                                </div>
+                            </div>
+
+                            <div className="h-px w-full rounded-full bg-border/80" />
+
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Attachments</h3>
+                                <div className="overflow-hidden rounded-xl border bg-card">
+                                    <TaskAttachmentList
+                                        projectId={projectId}
+                                        taskId={task.id}
+                                        canManage={canManageAttachments}
+                                    />
                                 </div>
                             </div>
 

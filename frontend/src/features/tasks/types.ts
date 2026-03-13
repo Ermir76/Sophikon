@@ -19,6 +19,7 @@ export interface Task {
     is_summary: boolean;
     is_milestone: boolean;
     is_critical: boolean;
+    calendar_id?: string | null;
     effort_driven: boolean;
     priority: number;
     constraint_type: string;
@@ -48,6 +49,7 @@ export interface TaskCreate {
     task_type?: "FIXED_UNITS" | "FIXED_DURATION" | "FIXED_WORK";
     effort_driven?: boolean;
     fixed_cost?: number;
+    calendar_id?: string | null;
     constraint_type?: string;
     constraint_date?: string;
     deadline?: string;
@@ -67,6 +69,7 @@ export interface TaskUpdate {
     task_type?: "FIXED_UNITS" | "FIXED_DURATION" | "FIXED_WORK";
     effort_driven?: boolean;
     fixed_cost?: number;
+    calendar_id?: string | null;
     priority?: number;
     constraint_type?: string;
     constraint_date?: string | null;
@@ -242,4 +245,16 @@ export interface TaskCommentCreate {
 
 export interface TaskCommentUpdate {
     content: string;
+}
+
+export interface TaskAttachment {
+    id: string;
+    task_id: string;
+    uploaded_by_id: string;
+    file_name: string;
+    file_size: number;
+    mime_type: string;
+    description?: string | null;
+    created_at: string;
+    download_url: string;
 }

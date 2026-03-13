@@ -1,4 +1,11 @@
 import { Input } from "@/shared/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
 import { ColorPicker } from "@/shared/components/ColorPicker";
 import type { Task, TaskUpdate } from "@/features/tasks/types";
@@ -8,6 +15,8 @@ interface TaskDetailCoreFieldsProps {
     localData: Partial<TaskUpdate>;
     setLocalData: (data: Partial<TaskUpdate>) => void;
     handleBlur: (field: keyof TaskUpdate) => void;
+    calendarOptions?: Array<{ id: string; name: string }>;
+    onCalendarChange?: (calendarId: string | null) => void;
     onColorChange?: (color: string | null) => void;
 }
 
@@ -16,6 +25,8 @@ export function TaskDetailCoreFields({
     localData,
     setLocalData,
     handleBlur,
+    calendarOptions = [],
+    onCalendarChange,
     onColorChange,
 }: TaskDetailCoreFieldsProps) {
     const isSummary = task.is_summary;
@@ -79,6 +90,35 @@ export function TaskDetailCoreFields({
                         onBlur={() => handleBlur("duration")}
                         disabled={isSummary}
                     />
+                </div>
+
+                <div className="space-y-2">
+                    <label
+                        htmlFor="task-calendar"
+                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                        Calendar
+                    </label>
+                    <Select
+                        value={localData.calendar_id ?? task.calendar_id ?? "none"}
+                        onValueChange={(value) => {
+                            const nextCalendarId = value === "none" ? null : value;
+                            setLocalData({ ...localData, calendar_id: nextCalendarId });
+                            onCalendarChange?.(nextCalendarId);
+                        }}
+                    >
+                        <SelectTrigger id="task-calendar">
+                            <SelectValue placeholder="Default calendar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Project default</SelectItem>
+                            {calendarOptions.map((calendar) => (
+                                <SelectItem key={calendar.id} value={calendar.id}>
+                                    {calendar.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Color (summary tasks only) */}

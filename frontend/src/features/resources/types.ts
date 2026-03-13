@@ -15,6 +15,7 @@ export interface Resource {
     type: ResourceType;
     material_label: string | null;
     max_units: number;
+    calendar_id: string | null;
     group_name: string | null;
     code: string | null;
     is_generic: boolean;
@@ -37,6 +38,7 @@ export interface ResourceCreate {
     email?: string | null;
     material_label?: string | null;
     max_units?: number;
+    calendar_id?: string | null;
     group_name?: string | null;
     code?: string | null;
     is_generic?: boolean;
@@ -53,6 +55,7 @@ export interface ResourceUpdate {
     email?: string | null;
     material_label?: string | null;
     max_units?: number;
+    calendar_id?: string | null;
     group_name?: string | null;
     code?: string | null;
     is_generic?: boolean;

@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { ResourceDetailsSection } from "./ResourceDetailsSection";
 import { ResourceRatesSection } from "./ResourceRatesSection";
 import { ResourceStatusSection } from "./ResourceStatusSection";
+import { useCalendars } from "@/features/calendar";
 import type { ResourceUpdate } from "@/features/resources/types";
 
 interface ResourceDetailPanelProps {
@@ -42,6 +43,7 @@ const NULLABLE_FIELDS: (keyof ResourceUpdate)[] = ["initials", "email", "group_n
 export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, onDelete, isDeletePending }: ResourceDetailPanelProps) {
     const { data: resource, isLoading } = useResource(projectId, resourceId ?? undefined);
     const updateResource = useUpdateResource(projectId);
+    const calendarsQuery = useCalendars(projectId);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [localData, setLocalData] = useState<Partial<ResourceUpdate>>({});
 
@@ -54,6 +56,7 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
                 initials: resource.initials || "",
                 email: resource.email || "",
                 max_units: resource.max_units,
+                calendar_id: resource.calendar_id ?? null,
                 group_name: resource.group_name || "",
                 code: resource.code || "",
                 material_label: resource.material_label || "",
@@ -93,6 +96,10 @@ export function ResourceDetailPanel({ projectId, resourceId, isOpen, onClose, on
         handleBlur,
         updateResource,
         resourceId: resourceId ?? "",
+        calendarOptions: (calendarsQuery.data ?? []).map((calendar) => ({
+            id: calendar.id,
+            name: calendar.name,
+        })),
     };
 
     return (<>
