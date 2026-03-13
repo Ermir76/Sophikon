@@ -15,7 +15,12 @@ from app.models.enums import AuditAction, ConstraintType, TaskType
 from app.models.project import Project
 from app.models.task import Task
 from app.repository import task_repo
-from app.service import activity_log_service, realtime_service, scheduling_service
+from app.service import (
+    activity_log_service,
+    calendar_service,
+    realtime_service,
+    scheduling_service,
+)
 from app.service.activity_log_service import ActivityContext
 from app.service.task_rollup_service import (
     apply_summary_rollup,
@@ -33,6 +38,7 @@ _SCHEDULE_FIELDS = {
     "constraint_type",
     "constraint_date",
     "is_milestone",
+    "calendar_id",
 }
 
 
@@ -130,6 +136,13 @@ async def create_task(
     activity_context: ActivityContext | None = None,
 ) -> Task:
     """Create a new task in the project."""
+    calendar_id = payload.get("calendar_id")
+    if calendar_id is not None:
+        await calendar_service.ensure_project_or_global_calendar(
+            db,
+            calendar_id=calendar_id,
+            project_id=project.id,
+        )
 
     # Lock the project row — serializes concurrent task creates for this project
     await task_repo.lock_project_row(db, project_id=project.id)
@@ -194,6 +207,7 @@ async def create_task(
         actual_duration=0,
         remaining_duration=payload["duration"],
         is_milestone=payload.get("is_milestone", False),
+        calendar_id=calendar_id,
         task_type=payload.get("task_type", TaskType.FIXED_UNITS),
         effort_driven=payload.get("effort_driven", True),
         constraint_type=payload.get("constraint_type", ConstraintType.ASAP),
@@ -265,6 +279,13 @@ async def update_task(
     activity_context: ActivityContext | None = None,
 ) -> Task:
     """Update a task with partial data."""
+    if "calendar_id" in patch and patch["calendar_id"] is not None:
+        await calendar_service.ensure_project_or_global_calendar(
+            db,
+            calendar_id=patch["calendar_id"],
+            project_id=task.project_id,
+        )
+
     before = {field: getattr(task, field) for field in patch}
     validate_summary_rollup_edit(task, patch)
 

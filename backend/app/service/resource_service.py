@@ -13,7 +13,7 @@ from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.resource import Resource
 from app.repository import resource_repo
-from app.service import activity_log_service, realtime_service
+from app.service import activity_log_service, calendar_service, realtime_service
 from app.service.activity_log_service import ActivityContext
 from app.service.contracts.resource import ResourceCreateInput, ResourcePatchInput
 
@@ -49,6 +49,14 @@ async def create_resource(
     activity_context: ActivityContext | None = None,
 ) -> Resource:
     """Create a new resource in the project."""
+    calendar_id = payload.get("calendar_id")
+    if calendar_id is not None:
+        await calendar_service.ensure_project_or_global_calendar(
+            db,
+            calendar_id=calendar_id,
+            project_id=project.id,
+        )
+
     resource = await resource_repo.create(
         db,
         project_id=project.id,
@@ -97,6 +105,13 @@ async def update_resource(
     activity_context: ActivityContext | None = None,
 ) -> Resource:
     """Update a resource with partial data."""
+    if "calendar_id" in patch and patch["calendar_id"] is not None:
+        await calendar_service.ensure_project_or_global_calendar(
+            db,
+            calendar_id=patch["calendar_id"],
+            project_id=resource.project_id,
+        )
+
     before = {field: getattr(resource, field) for field in patch}
     for field, value in patch.items():
         setattr(resource, field, value)

@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     MEDIA_URL_PREFIX: str = "/media"
     AVATAR_UPLOAD_SUBDIR: str = "avatars"
     MAX_AVATAR_UPLOAD_BYTES: int = 2 * 1024 * 1024
+    ATTACHMENT_STORAGE_ROOT: str = "private_uploads"
+    ATTACHMENT_UPLOAD_SUBDIR: str = "attachments"
+    MAX_ATTACHMENT_UPLOAD_BYTES: int = 10 * 1024 * 1024
 
     # Tell pydantic to read values from a .env file
     model_config = SettingsConfigDict(

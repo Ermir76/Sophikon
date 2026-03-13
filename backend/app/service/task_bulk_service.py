@@ -14,7 +14,12 @@ from app.core.exceptions import InvalidOperationError
 from app.models.enums import AuditAction
 from app.models.project import Project
 from app.models.task import Task
-from app.service import activity_log_service, realtime_service, scheduling_service
+from app.service import (
+    activity_log_service,
+    calendar_service,
+    realtime_service,
+    scheduling_service,
+)
 from app.service.activity_log_service import ActivityContext
 from app.service.contracts.task_bulk import TaskBulkUpdateInputItem, TaskCreateInput
 from app.service.task_rollup_service import (
@@ -89,7 +94,15 @@ async def bulk_create_tasks(
                         raise InvalidOperationError(
                             f"Parent task {task_data['parent_task_id']} not found"
                         )
-                    parent_ids_to_recalc.add(parent.id)
+                        parent_ids_to_recalc.add(parent.id)
+
+                calendar_id = task_data.get("calendar_id")
+                if calendar_id is not None:
+                    await calendar_service.ensure_project_or_global_calendar(
+                        db,
+                        calendar_id=calendar_id,
+                        project_id=project.id,
+                    )
 
                 order_index = await get_next_order(task_data["parent_task_id"])
                 duration_days = (
@@ -115,6 +128,7 @@ async def bulk_create_tasks(
                     actual_duration=0,
                     remaining_duration=task_data["duration"],
                     is_milestone=task_data["is_milestone"],
+                    calendar_id=calendar_id,
                     task_type=task_data["task_type"],
                     effort_driven=task_data["effort_driven"],
                     constraint_type=task_data["constraint_type"],
@@ -234,6 +248,16 @@ async def bulk_update_tasks(
                                 f"New parent task {new_p_id} not found"
                             )
                         parent_ids_to_recalc.add(new_p_id)
+
+                if (
+                    "calendar_id" in update_data
+                    and update_data["calendar_id"] is not None
+                ):
+                    await calendar_service.ensure_project_or_global_calendar(
+                        db,
+                        calendar_id=update_data["calendar_id"],
+                        project_id=project.id,
+                    )
 
                 if update_data.keys() & _SCHEDULE_FIELDS:
                     needs_schedule_recalc = True

@@ -54,6 +54,7 @@ async def create(
         email=payload.get("email"),
         material_label=payload.get("material_label"),
         max_units=payload["max_units"],
+        calendar_id=payload.get("calendar_id"),
         group_name=payload.get("group_name"),
         code=payload.get("code"),
         is_generic=payload["is_generic"],

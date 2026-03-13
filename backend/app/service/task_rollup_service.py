@@ -1,4 +1,6 @@
+from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +21,128 @@ SUMMARY_ROLLUP_EDIT_FIELDS = frozenset(
         "percent_complete",
     }
 )
+
+
+def _normalize_work_week(work_week: object) -> list[dict | None]:
+    """
+    Return a deterministic 7-day work-week structure.
+
+    Legacy/invalid payloads fall back to DEFAULT_WORK_WEEK so scheduling does not
+    break on malformed historical rows.
+    """
+    if not isinstance(work_week, list) or len(work_week) != 7:
+        return deepcopy(DEFAULT_WORK_WEEK)
+    return deepcopy(work_week)
+
+
+def _merge_work_weeks(
+    base_work_week: list[dict | None],
+    child_work_week: list[dict | None],
+) -> list[dict | None]:
+    """
+    Merge calendar inheritance by day index.
+
+    Child day entries override base day entries when non-null.
+    """
+    merged: list[dict | None] = []
+    for idx in range(7):
+        child_day = child_work_week[idx]
+        base_day = base_work_week[idx]
+        merged.append(deepcopy(child_day if child_day is not None else base_day))
+    return merged
+
+
+def _merge_exceptions(
+    base_exceptions: list[CalendarException],
+    child_exceptions: list[CalendarException],
+) -> list[CalendarException]:
+    """
+    Merge exceptions with child precedence for identical date ranges.
+    """
+    by_range: dict[tuple, CalendarException] = {}
+    for exc in base_exceptions:
+        by_range[(exc.start_date, exc.end_date)] = exc
+    for exc in child_exceptions:
+        by_range[(exc.start_date, exc.end_date)] = exc
+    return sorted(
+        by_range.values(),
+        key=lambda exc: (exc.start_date, exc.end_date),
+    )
+
+
+async def _resolve_effective_calendar(
+    db: AsyncSession,
+    calendar_id: UUID,
+    cache: dict[UUID, tuple[list[dict | None], list[CalendarException]]],
+    in_progress: set[UUID],
+) -> tuple[list[dict | None], list[CalendarException]]:
+    if calendar_id in cache:
+        return cache[calendar_id]
+
+    # Cycle-safe fallback: deterministic project default semantics.
+    if calendar_id in in_progress:
+        fallback = (deepcopy(DEFAULT_WORK_WEEK), [])
+        cache[calendar_id] = fallback
+        return fallback
+
+    in_progress.add(calendar_id)
+    try:
+        result = await db.execute(
+            select(Calendar)
+            .options(selectinload(Calendar.exceptions))
+            .where(Calendar.id == calendar_id)
+        )
+        calendar = result.scalar_one_or_none()
+        if calendar is None:
+            resolved = (deepcopy(DEFAULT_WORK_WEEK), [])
+            cache[calendar_id] = resolved
+            return resolved
+
+        own_work_week = _normalize_work_week(calendar.work_week)
+        own_exceptions = list(calendar.exceptions)
+
+        if calendar.base_calendar_id is None:
+            resolved = (
+                own_work_week,
+                sorted(own_exceptions, key=lambda exc: (exc.start_date, exc.end_date)),
+            )
+            cache[calendar_id] = resolved
+            return resolved
+
+        base_work_week, base_exceptions = await _resolve_effective_calendar(
+            db,
+            calendar.base_calendar_id,
+            cache,
+            in_progress,
+        )
+        resolved = (
+            _merge_work_weeks(base_work_week, own_work_week),
+            _merge_exceptions(base_exceptions, own_exceptions),
+        )
+        cache[calendar_id] = resolved
+        return resolved
+    finally:
+        in_progress.discard(calendar_id)
+
+
+async def load_effective_calendar(
+    db: AsyncSession,
+    calendar_id: UUID | None,
+) -> tuple[list[dict | None], list[CalendarException]]:
+    if calendar_id is None:
+        return deepcopy(DEFAULT_WORK_WEEK), []
+    return await _resolve_effective_calendar(db, calendar_id, {}, set())
+
+
+async def load_effective_calendars(
+    db: AsyncSession,
+    calendar_ids: set[UUID],
+) -> dict[UUID, tuple[list[dict | None], list[CalendarException]]]:
+    cache: dict[UUID, tuple[list[dict | None], list[CalendarException]]] = {}
+    in_progress: set[UUID] = set()
+    for calendar_id in calendar_ids:
+        await _resolve_effective_calendar(db, calendar_id, cache, in_progress)
+    return cache
 
 
 def _to_decimal(value: Decimal | float | int | None) -> Decimal:
@@ -51,19 +175,7 @@ async def load_project_rollup_calendar(
     db: AsyncSession,
     project: Project,
 ) -> tuple[list[dict | None], list[CalendarException]]:
-    if not project.default_calendar_id:
-        return DEFAULT_WORK_WEEK, []
-
-    result = await db.execute(
-        select(Calendar)
-        .options(selectinload(Calendar.exceptions))
-        .where(Calendar.id == project.default_calendar_id)
-    )
-    calendar = result.scalar_one_or_none()
-    if not calendar:
-        return DEFAULT_WORK_WEEK, []
-
-    return calendar.work_week, list(calendar.exceptions)
+    return await load_effective_calendar(db, project.default_calendar_id)
 
 
 def calculate_summary_duration_minutes(

@@ -24,6 +24,7 @@ class ResourceCreate(BaseModel):
     email: EmailStr | None = None
     material_label: str | None = Field(default=None, max_length=50)
     max_units: Decimal = Field(default=Decimal("1.0"), ge=0)
+    calendar_id: uuid.UUID | None = None
     group_name: str | None = Field(default=None, max_length=100)
     code: str | None = Field(default=None, max_length=50)
     is_generic: bool = False
@@ -46,6 +47,7 @@ class ResourceUpdate(ModelPatchSchema):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     type: ResourceType | None = Field(default=None)
     max_units: Decimal | None = Field(default=None, ge=0)
+    calendar_id: uuid.UUID | None = None
     is_generic: bool | None = Field(default=None)
     is_active: bool | None = Field(default=None)
     standard_rate: Decimal | None = Field(default=None)
@@ -76,6 +78,7 @@ class ResourceResponse(BaseModel):
     type: ResourceType
     material_label: str | None
     max_units: Decimal
+    calendar_id: uuid.UUID | None
     group_name: str | None
     code: str | None
     is_generic: bool

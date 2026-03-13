@@ -28,6 +28,7 @@ from app.service.calendar_utils import (
 )
 from app.service.task_rollup_service import (
     apply_summary_rollup,
+    load_effective_calendars,
     load_project_rollup_calendar,
 )
 
@@ -71,19 +72,25 @@ class _TaskScheduleData:
 # ── Calendar Resolution ──
 
 
-def _get_task_work_week(
+def _get_task_calendar(
     task: Task,
     project_work_week: list[dict | None],
-) -> list[dict | None]:
+    project_exceptions: list[CalendarException],
+    effective_task_calendars: dict[
+        UUID, tuple[list[dict | None], list[CalendarException]]
+    ],
+) -> tuple[list[dict | None], list[CalendarException]]:
     """
-    Resolve the effective work week for a task.
+    Resolve the effective calendar for a task.
 
-    Task calendar overrides project default, but for the scheduling engine
-    we use the project calendar for all tasks (task-specific calendar support
-    would require loading each task's calendar — deferred to a later iteration).
+    Precedence:
+    1) Task-level calendar override
+    2) Project default calendar
+    3) System default work week (provided by calendar loader fallback)
     """
-    # TODO: Support per-task calendars when calendar CRUD is fully implemented
-    return project_work_week
+    if task.calendar_id and task.calendar_id in effective_task_calendars:
+        return effective_task_calendars[task.calendar_id]
+    return project_work_week, project_exceptions
 
 
 # ── Topological Sort ──
@@ -218,6 +225,10 @@ async def calculate_schedule(
     all_deps = list(deps_result.scalars().all())
 
     work_week, exceptions = await load_project_rollup_calendar(db, project)
+    effective_task_calendars = await load_effective_calendars(
+        db,
+        {task.calendar_id for task in all_tasks if task.calendar_id is not None},
+    )
 
     # Separate summary and leaf tasks
     task_map: dict[UUID, Task] = {t.id: t for t in all_tasks}
@@ -257,7 +268,12 @@ async def calculate_schedule(
 
     for tid in sorted_ids:
         task = task_map[tid]
-        task_ww = _get_task_work_week(task, work_week)
+        task_ww, task_exceptions = _get_task_calendar(
+            task,
+            work_week,
+            exceptions,
+            effective_task_calendars,
+        )
 
         # Determine Early Start from predecessors
         preds = predecessors_map.get(tid, [])
@@ -274,7 +290,7 @@ async def calculate_schedule(
                     schedule_data[pred_id],
                     task.duration,
                     task_ww,
-                    exceptions,
+                    task_exceptions,
                 )
                 es_candidates.append(driven)
             es = max(es_candidates) if es_candidates else project_start
@@ -282,13 +298,13 @@ async def calculate_schedule(
             es = project_start
 
         # Ensure ES is a working day
-        es = next_working_day(es, task_ww, exceptions)
+        es = next_working_day(es, task_ww, task_exceptions)
 
         # Apply forward-pass constraints
-        es = _apply_forward_constraints(task, es, task_ww, exceptions)
+        es = _apply_forward_constraints(task, es, task_ww, task_exceptions)
 
         # Compute Early Finish
-        ef = add_working_duration(es, task.duration, task_ww, exceptions)
+        ef = add_working_duration(es, task.duration, task_ww, task_exceptions)
 
         schedule_data[tid] = _TaskScheduleData(task=task, es=es, ef=ef)
 
@@ -301,7 +317,12 @@ async def calculate_schedule(
     for tid in reversed(sorted_ids):
         sd = schedule_data[tid]
         task = sd.task
-        task_ww = _get_task_work_week(task, work_week)
+        task_ww, task_exceptions = _get_task_calendar(
+            task,
+            work_week,
+            exceptions,
+            effective_task_calendars,
+        )
 
         # Determine Late Finish from successors
         succs = successors_map.get(tid, [])
@@ -316,7 +337,7 @@ async def calculate_schedule(
                 dep = dep_map.get((tid, succ_id))
                 if dep and dep.type == DependencyType.FS:
                     lag_daily_minutes = max(
-                        get_working_minutes_on_date(sd.ef, task_ww, exceptions), 1
+                        get_working_minutes_on_date(sd.ef, task_ww, task_exceptions), 1
                     )
                     lag_days = trunc(dep.lag / lag_daily_minutes)
                     succ_ls = succ_sd.ls if succ_sd.ls else succ_sd.es
@@ -332,7 +353,7 @@ async def calculate_schedule(
         # Apply backward-pass constraints
         lf = _apply_backward_constraints(task, lf)
 
-        ls = subtract_working_duration(lf, task.duration, task_ww, exceptions)
+        ls = subtract_working_duration(lf, task.duration, task_ww, task_exceptions)
 
         sd.lf = lf
         sd.ls = ls
@@ -349,7 +370,12 @@ async def calculate_schedule(
 
     for tid in sorted_ids:
         sd = schedule_data[tid]
-        task_ww = _get_task_work_week(sd.task, work_week)
+        task_ww, task_exceptions = _get_task_calendar(
+            sd.task,
+            work_week,
+            exceptions,
+            effective_task_calendars,
+        )
 
         # Total slack = LS - ES in working minutes
         if sd.ls is not None:
@@ -358,7 +384,7 @@ async def calculate_schedule(
                     sd.es,
                     sd.ls - timedelta(days=1),
                     task_ww,
-                    exceptions,
+                    task_exceptions,
                 )
             else:
                 sd.total_slack = 0
@@ -376,7 +402,7 @@ async def calculate_schedule(
                         sd.ef + timedelta(days=1),
                         min_succ_es - timedelta(days=1),
                         task_ww,
-                        exceptions,
+                        task_exceptions,
                     )
                 else:
                     sd.free_slack = 0
@@ -558,6 +584,14 @@ async def get_critical_path_details(
     )
     all_deps = list(deps_result.scalars().all())
     work_week, exceptions = await load_project_rollup_calendar(db, project)
+    effective_task_calendars = await load_effective_calendars(
+        db,
+        {
+            task.calendar_id
+            for task in critical_leaf_tasks
+            if task.calendar_id is not None
+        },
+    )
 
     task_map = {task.id: task for task in critical_leaf_tasks}
     critical_leaf_ids = set(task_map)
@@ -591,7 +625,12 @@ async def get_critical_path_details(
 
     for task_id in sorted_ids:
         task = task_map[task_id]
-        task_ww = _get_task_work_week(task, work_week)
+        task_ww, task_exceptions = _get_task_calendar(
+            task,
+            work_week,
+            exceptions,
+            effective_task_calendars,
+        )
         driving_predecessors: list[UUID] = []
 
         for predecessor_id in predecessors_map.get(task_id, []):
@@ -605,7 +644,7 @@ async def get_critical_path_details(
                 predecessor_data,
                 task.duration,
                 task_ww,
-                exceptions,
+                task_exceptions,
             )
             if driven_start == task.start_date:
                 driving_predecessors.append(predecessor_id)

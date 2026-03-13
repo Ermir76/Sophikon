@@ -9,6 +9,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import InvalidOperationError
 from app.models.calendar import Calendar
 from app.models.calendar_exception import CalendarException
 from app.models.project import Project
@@ -19,6 +20,29 @@ from app.service.contracts.calendar import (
     CalendarExceptionPatchInput,
     CalendarPatchInput,
 )
+
+
+async def ensure_project_or_global_calendar(
+    db: AsyncSession,
+    *,
+    calendar_id: UUID,
+    project_id: UUID,
+) -> Calendar:
+    """
+    Ensure a calendar is assignable inside a project context.
+
+    Allowed:
+    - Project-owned calendars
+    - Global calendars (project_id is NULL)
+    """
+    calendar = await calendar_repo.get_by_id_for_project_or_global(
+        db,
+        calendar_id=calendar_id,
+        project_id=project_id,
+    )
+    if calendar is None:
+        raise InvalidOperationError("Calendar not found in this project scope")
+    return calendar
 
 
 async def list_calendars(

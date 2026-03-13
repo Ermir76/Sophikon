@@ -31,6 +31,7 @@ class TaskCreate(BaseModel):
     deadline: date | None = None
     priority: int = Field(default=500, ge=0, le=1000)
     fixed_cost: Decimal = Decimal("0")
+    calendar_id: uuid.UUID | None = None
     color: str | None = Field(default=None, max_length=32)
 
 
@@ -57,6 +58,7 @@ class TaskUpdate(ModelPatchSchema):
     fixed_cost: Decimal | None = Field(default=None)
 
     parent_task_id: uuid.UUID | None = None
+    calendar_id: uuid.UUID | None = None
     notes: str | None = Field(default=None, max_length=5000)
     constraint_date: date | None = None
     deadline: date | None = None
@@ -125,6 +127,7 @@ class TaskResponse(BaseModel):
     is_milestone: bool
     is_summary: bool
     is_critical: bool
+    calendar_id: uuid.UUID | None
     duration: int
     actual_duration: int
     remaining_duration: int

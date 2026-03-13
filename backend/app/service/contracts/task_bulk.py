@@ -24,6 +24,7 @@ class TaskCreateInput(TypedDict):
     deadline: date | None
     priority: int
     fixed_cost: Decimal
+    calendar_id: UUID | None
     color: str | None
 
 
@@ -43,6 +44,7 @@ class TaskBulkUpdatePatchInput(TypedDict, total=False):
     priority: int
     percent_complete: Decimal
     fixed_cost: Decimal
+    calendar_id: UUID | None
     color: str | None
 
 

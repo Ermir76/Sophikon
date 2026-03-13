@@ -4,6 +4,7 @@ Service contracts for resource use-cases.
 
 from decimal import Decimal
 from typing import TypedDict
+from uuid import UUID
 
 from app.models.enums import CostAccrual, ResourceType
 
@@ -15,6 +16,7 @@ class ResourceCreateInput(TypedDict):
     email: str | None
     material_label: str | None
     max_units: Decimal
+    calendar_id: UUID | None
     group_name: str | None
     code: str | None
     is_generic: bool
@@ -31,6 +33,7 @@ class ResourcePatchInput(TypedDict, total=False):
     email: str | None
     material_label: str | None
     max_units: Decimal
+    calendar_id: UUID | None
     group_name: str | None
     code: str | None
     is_generic: bool
