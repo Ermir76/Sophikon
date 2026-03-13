@@ -70,6 +70,7 @@ export type AiChatEvent =
   | {
       type: "approval_required";
       approval_id: string;
+      tool_use_id: string;
       tool_name: string;
       tool_input?: Record<string, unknown>;
     }

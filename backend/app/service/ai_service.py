@@ -238,7 +238,7 @@ async def _dispatch_tool(
                     "id": str(d.id),
                     "predecessor_id": str(d.predecessor_id),
                     "successor_id": str(d.successor_id),
-                    "type": d.dependency_type,
+                    "type": d.type,
                 }
                 for d in deps
             ]
@@ -307,7 +307,6 @@ async def _dispatch_tool(
             "color": None,
         }
         task = await task_service.create_task(db, project, payload)
-        await db.commit()
         return {
             "created": {
                 "id": str(task.id),
@@ -356,7 +355,6 @@ async def _dispatch_tool(
                 }
             )
         created, _ = await task_bulk_service.bulk_create_tasks(db, project, items)
-        await db.commit()
         return {
             "created_count": len(created),
             "tasks": [{"id": str(t.id), "name": t.name} for t in created],
@@ -456,7 +454,6 @@ async def _dispatch_tool(
         if not dep:
             return {"error": "Dependency not found"}
         await dependency_service.delete_dependency(db, dep, project=project)
-        await db.commit()
         return {"deleted": {"id": str(dep_id)}}
 
     # --- UI tools (no-op on backend — frontend handles the action via SSE event) ---
@@ -804,6 +801,7 @@ async def prepare_chat_stream(
                             AIChatEvent(
                                 type="approval_required",
                                 approval_id=approval_id,
+                                tool_use_id=tc.tool_use_id,
                                 tool_name=tool_name,
                                 tool_input=tc.tool_input,
                             )

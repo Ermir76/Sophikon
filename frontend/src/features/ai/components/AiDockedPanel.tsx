@@ -211,7 +211,7 @@ export function AiDockedPanel({
               tool_name: event.tool_name,
               tool_input: event.tool_input,
             });
-            const toolMsgId = toolMessageIds.get(event.approval_id) ?? crypto.randomUUID();
+            const toolMsgId = toolMessageIds.get(event.tool_use_id) ?? crypto.randomUUID();
             appendMessage(projectId, {
               id: toolMsgId,
               role: "assistant",
@@ -233,6 +233,10 @@ export function AiDockedPanel({
       replaceMessageContent(projectId, assistantMessageId, "Unable to generate a response.");
       toast.error(getErrorMessage(error));
     } finally {
+      const activeApproval = useAiPanelStore.getState().projects[projectId]?.pendingApproval;
+      if (activeApproval) {
+        aiService.resolveApproval(projectId, activeApproval.approval_id, false).catch(() => {});
+      }
       setPendingApproval(projectId, null);
       if (!hadChunk) {
         replaceMessageContent(
