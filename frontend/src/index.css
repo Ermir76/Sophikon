@@ -109,11 +109,11 @@
 
 /* ─── DARK MODE ──────────────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.2313 0.012 270.86);
+  --background: oklch(25.048% 0.01285 258.408);
   --foreground: oklch(0.955 0.008 220);
-  --card: oklch(0.2925 0.0157 264.3);
+  --card: oklch(28.502% 0.0127 258.37);
   --card-foreground: oklch(0.955 0.008 220);
-  --popover: oklch(21.256% 0.00669 258.42 / 0.965);
+  --popover: oklch(23.418% 0.00653 258.422);
   --popover-foreground: oklch(0.955 0.008 220);
   --primary: oklch(83.452% 0.13549 193.136);
   --primary-foreground: oklch(0.302 0.0268 144.87);
@@ -125,8 +125,8 @@
   --accent-foreground: oklch(0.8687 0.0155 228.99);
   --destructive: oklch(0.6253 0.1959 24.83);
   --destructive-foreground: oklch(0.3234 0.0235 18.44);
-  --border: oklch(42.942% 0.00979 254.027);
-  --input: oklch(0.4 0.01 255 / 0.45);
+  --border: oklch(35.942% 0.01285 258.408);
+  --input: oklch(20.942% 0.01285 258.408);
   --ring: oklch(0.72 0.145 198);
   --chart-1: oklch(0.72 0.145 198);
   --chart-2: oklch(0.72 0.14 162);
@@ -137,10 +137,10 @@
   --chart-7: oklch(0.73 0.13 112);
   --chart-8: oklch(0.73 0.16 340);
   --sidebar: oklch(0.263 0.0127 258.37);
-  --sidebar-foreground: oklch(0.955 0.008 220);
+  --sidebar-foreground: oklch(0.576 0.015 267.254);
   --sidebar-primary: oklch(0.6883 0.1992 143.03);
   --sidebar-primary-foreground: oklch(0.302 0.0268 144.87);
-  --sidebar-accent: oklch(0.34 0.0189 264.28);
+  --sidebar-accent: oklch(33.999% 0.0189 264.306);
   --sidebar-accent-foreground: oklch(0.8687 0.0155 228.99);
   --sidebar-border: oklch(0.263 0.0127 258.37);
   --sidebar-ring: oklch(0.6883 0.1992 143.03);
@@ -201,13 +201,11 @@
   border-radius: inherit;
   padding: 2px;
   pointer-events: none;
-  background: conic-gradient(
-    from var(--ui-border-angle),
-    color-mix(in oklch, var(--border) 0%, transparent) 0deg,
-    color-mix(in oklch, var(--border) 0%, transparent) 300deg,
-    color-mix(in oklch, var(--border) 78%, transparent) 330deg,
-    color-mix(in oklch, var(--border) 0%, transparent) 360deg
-  );
+  background: conic-gradient(from var(--ui-border-angle),
+      color-mix(in oklch, var(--border) 0%, transparent) 0deg,
+      color-mix(in oklch, var(--border) 0%, transparent) 300deg,
+      color-mix(in oklch, var(--border) 78%, transparent) 330deg,
+      color-mix(in oklch, var(--border) 0%, transparent) 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -227,13 +225,11 @@
   border-radius: inherit;
   padding: 2px;
   pointer-events: none;
-  background: conic-gradient(
-    from var(--ui-border-angle),
-    color-mix(in oklch, var(--destructive) 0%, transparent) 0deg,
-    color-mix(in oklch, var(--destructive) 0%, transparent) 300deg,
-    color-mix(in oklch, var(--destructive) 78%, transparent) 330deg,
-    color-mix(in oklch, var(--destructive) 0%, transparent) 360deg
-  );
+  background: conic-gradient(from var(--ui-border-angle),
+      color-mix(in oklch, var(--destructive) 0%, transparent) 0deg,
+      color-mix(in oklch, var(--destructive) 0%, transparent) 300deg,
+      color-mix(in oklch, var(--destructive) 78%, transparent) 330deg,
+      color-mix(in oklch, var(--destructive) 0%, transparent) 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -248,6 +244,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .ui-border-anim-primary::after,
   .ui-border-anim-destructive::after {
     animation: none;

@@ -42,7 +42,7 @@ function DropdownMenuContent({
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md opacity-0 transition-opacity duration-180 ease-out data-[state=open]:opacity-100 data-[state=closed]:opacity-0 motion-reduce:transition-none",
+          "z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border-1 border-stone-900 bg-popover p-1 text-popover-foreground shadow-[0px_0px_20px_var(--tw-shadow-color)] shadow-black/90 opacity-0 transition-opacity duration-180 ease-out data-[state=open]:opacity-100 data-[state=closed]:opacity-0 motion-reduce:transition-none",
           className
         )}
         {...props}
