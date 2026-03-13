@@ -1,9 +1,10 @@
 """
 AI endpoints.
 
-POST /projects/{project_id}/ai/chat         - Stream AI chat responses
-POST /projects/{project_id}/ai/estimate     - Generate AI task estimates
-GET  /projects/{project_id}/ai/suggestions  - Get AI project suggestions
+POST /projects/{project_id}/ai/chat                          - Stream AI chat responses (agentic loop)
+POST /projects/{project_id}/ai/approvals/{approval_id}       - Resolve a pending tool approval
+POST /projects/{project_id}/ai/estimate                      - Generate AI task estimates
+GET  /projects/{project_id}/ai/suggestions                   - Get AI project suggestions
 """
 
 from typing import Annotated
@@ -21,6 +22,7 @@ from app.api.deps.project import (
 from app.core.database import get_db
 from app.models.user import User
 from app.schema.ai import (
+    AIApprovalRequest,
     AIChatRequest,
     AIEstimateRequest,
     AIEstimateResponse,
@@ -33,12 +35,10 @@ router = APIRouter(prefix="/projects/{project_id}/ai", tags=["ai"])
 
 
 def _to_chat_input(body: AIChatRequest) -> AIChatInput:
-    # API schema has already validated the request body.
     return AIChatInput.model_construct(**body.model_dump(mode="python"))
 
 
 def _to_estimate_input(body: AIEstimateRequest) -> AIEstimateInput:
-    # API schema has already validated the request body.
     return AIEstimateInput.model_construct(**body.model_dump(mode="python"))
 
 
@@ -54,7 +54,7 @@ async def chat_with_ai(
     stream = await ai_service.prepare_chat_stream(
         db,
         project=access.project,
-        user_id=user.id,
+        user=user,
         body=service_body,
     )
 
@@ -67,6 +67,18 @@ async def chat_with_ai(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.post("/approvals/{approval_id}", status_code=200)
+async def resolve_approval(
+    approval_id: str,
+    body: AIApprovalRequest,
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    user: Annotated[User, Depends(get_current_active_user)],
+):
+    check_role(access, "owner", "manager", "member")
+    await ai_service.resolve_approval(approval_id, body.approved)
+    return {"ok": True}
 
 
 @router.post("/estimate", response_model=AIEstimateResponse)

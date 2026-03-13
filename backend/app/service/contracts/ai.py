@@ -18,7 +18,13 @@ class UiContext(BaseModel):
 
 class ChatHistoryItem(BaseModel):
     role: Literal["user", "assistant", "system"]
-    content: str = Field(max_length=32768)
+    content: str | list[dict] = Field(default="")
+
+
+class ToolResultInput(BaseModel):
+    tool_use_id: str
+    content: str
+    is_error: bool = False
 
 
 class AIChatInput(BaseModel):
@@ -37,13 +43,27 @@ class AIUsageMeta(BaseModel):
 class AIChatEvent(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
-    type: Literal["start", "chunk", "done", "error"]
+    type: Literal[
+        "start",
+        "chunk",
+        "done",
+        "error",
+        "tool_call",
+        "tool_result",
+        "approval_required",
+        "ui_action",
+    ]
     conversation_id: ContractUUID | None = None
     message_id: ContractUUID | None = None
     content: str | None = None
     usage: AIUsageMeta | None = None
     error: str | None = None
     model: str | None = None
+    tool_use_id: str | None = None
+    tool_name: str | None = None
+    tool_input: dict | None = None
+    approval_id: str | None = None
+    action: str | None = None
 
 
 class AIEstimateInput(BaseModel):
@@ -128,12 +148,13 @@ class AIProviderEstimateTaskInput(BaseModel):
 
 
 class AIProviderChatRequest(BaseModel):
-    message: str
+    message: str | None = None
     project_context: ProjectContext
     conversation_id: ContractUUID | None = None
     user_id: ContractUUID
     ui_context: UiContext | None = None
     history: list[ChatHistoryItem] = Field(default_factory=list)
+    tool_results: list[ToolResultInput] = Field(default_factory=list)
 
 
 class AIProviderEstimateRequest(BaseModel):

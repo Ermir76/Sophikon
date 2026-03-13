@@ -33,13 +33,31 @@ class AIUsageMeta(BaseModel):
 class AIChatEvent(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
-    type: Literal["start", "chunk", "done", "error"]
+    type: Literal[
+        "start",
+        "chunk",
+        "done",
+        "error",
+        "tool_call",
+        "tool_result",
+        "approval_required",
+        "ui_action",
+    ]
     conversation_id: SchemaUUID | None = None
     message_id: SchemaUUID | None = None
     content: str | None = None
     usage: AIUsageMeta | None = None
     error: str | None = None
     model: str | None = None
+    tool_use_id: str | None = None
+    tool_name: str | None = None
+    tool_input: dict | None = None
+    approval_id: str | None = None
+    action: str | None = None
+
+
+class AIApprovalRequest(BaseModel):
+    approved: bool
 
 
 class AIEstimateRequest(BaseModel):
