@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.security import hash_token
 from app.models.password_reset import PasswordReset
 from app.service import auth_service
@@ -606,3 +607,171 @@ async def test_patch_users_me_rejects_unknown_fields(client: AsyncClient):
         json={"unknown_setting": "value"},
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_change_password_requires_authentication(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": "old", "new_password": "StrongPassword123!"},
+    )
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_change_password_success_rotates_credentials(client: AsyncClient):
+    email = "change-password-success@example.com"
+    old_password = "StrongPassword123!"
+    new_password = "StrongPassword456!"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": old_password,
+            "full_name": "Change Password Success",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/change-password",
+        json={
+            "current_password": old_password,
+            "new_password": new_password,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Password has been changed"
+
+    await client.post("/api/v1/auth/logout")
+
+    old_login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": old_password},
+    )
+    assert old_login.status_code == 401
+
+    new_login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": new_password},
+    )
+    assert new_login.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_password_rejects_wrong_current_password(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "change-password-wrong-current@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Change Password Wrong Current",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/change-password",
+        json={
+            "current_password": "WrongPassword!",
+            "new_password": "StrongPassword456!",
+        },
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_OPERATION"
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar_requires_authentication(
+    client: AsyncClient,
+):
+    response = await client.post(
+        "/api/v1/users/me/avatar",
+        files={"file": ("avatar.png", b"png", "image/png")},
+    )
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar_rejects_invalid_content_type(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+):
+    monkeypatch.setattr(settings, "MEDIA_ROOT", str(tmp_path / "media"))
+    monkeypatch.setattr(settings, "AVATAR_UPLOAD_SUBDIR", "avatars")
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "avatar-invalid-type@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Avatar Invalid Type",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/users/me/avatar",
+        files={"file": ("avatar.gif", b"gif", "image/gif")},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar_rejects_oversized_file(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+):
+    monkeypatch.setattr(settings, "MEDIA_ROOT", str(tmp_path / "media"))
+    monkeypatch.setattr(settings, "AVATAR_UPLOAD_SUBDIR", "avatars")
+    monkeypatch.setattr(settings, "MAX_AVATAR_UPLOAD_BYTES", 10)
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "avatar-too-large@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Avatar Too Large",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/users/me/avatar",
+        files={"file": ("avatar.png", b"01234567890", "image/png")},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_upload_and_delete_avatar_success(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+):
+    monkeypatch.setattr(settings, "MEDIA_ROOT", str(tmp_path / "media"))
+    monkeypatch.setattr(settings, "AVATAR_UPLOAD_SUBDIR", "avatars")
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "avatar-success@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Avatar Success",
+        },
+    )
+
+    upload_response = await client.post(
+        "/api/v1/users/me/avatar",
+        files={"file": ("avatar.png", b"\x89PNG\r\n", "image/png")},
+    )
+    assert upload_response.status_code == 200
+    upload_data = upload_response.json()
+    assert upload_data["avatar_url"].startswith("/media/avatars/")
+
+    delete_response = await client.delete("/api/v1/users/me/avatar")
+    assert delete_response.status_code == 200
+    assert delete_response.json()["avatar_url"] is None

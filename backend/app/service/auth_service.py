@@ -450,6 +450,38 @@ async def confirm_password_reset(
     await db.commit()
 
 
+async def change_password(
+    db: AsyncSession,
+    *,
+    user: User,
+    current_password: str,
+    new_password: str,
+) -> None:
+    """
+    Change password for an authenticated user.
+
+    Revokes all active refresh tokens after success.
+    """
+    if len(new_password.encode("utf-8")) > 72:
+        raise ValidationError("Password must be at most 72 bytes")
+
+    if not user.password_hash or not verify_password(
+        current_password, user.password_hash
+    ):
+        raise InvalidOperationError("Current password is incorrect")
+
+    if verify_password(new_password, user.password_hash):
+        raise ValidationError("New password must be different from current password")
+
+    user.password_hash = hash_password(new_password)
+    await _revoke_active_tokens_for_user(
+        db,
+        user_id=user.id,
+        reason="password_change",
+    )
+    await db.commit()
+
+
 async def update_user_profile(
     db: AsyncSession,
     *,

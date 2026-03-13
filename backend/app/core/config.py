@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = ""
 
+    # Local media storage
+    MEDIA_ROOT: str = "media"
+    MEDIA_URL_PREFIX: str = "/media"
+    AVATAR_UPLOAD_SUBDIR: str = "avatars"
+    MAX_AVATAR_UPLOAD_BYTES: int = 2 * 1024 * 1024
+
     # Tell pydantic to read values from a .env file
     model_config = SettingsConfigDict(
         env_file=".env",

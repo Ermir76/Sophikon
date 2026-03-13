@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -34,6 +35,7 @@ from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import AppException
 from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from app.core.storage import ensure_media_directories, get_media_root
 from app.core.user_notification_websocket_manager import (
     user_notification_websocket_manager,
 )
@@ -111,6 +113,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Serve locally uploaded media files (avatars).
+ensure_media_directories()
+media_root = get_media_root()
+app.mount(
+    settings.MEDIA_URL_PREFIX,
+    StaticFiles(directory=str(media_root)),
+    name="media",
 )
 
 

@@ -33,6 +33,11 @@ class PasswordResetConfirmRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class UpdateProfileRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -40,7 +45,7 @@ class UpdateProfileRequest(BaseModel):
     avatar_url: str | None = Field(default=None, max_length=500)
     timezone: str | None = Field(default=None, max_length=50)
     locale: str | None = Field(default=None, max_length=10)
-    preferences: dict[str, JsonValue] | None = Field(default=None, max_length=50)
+    preferences: dict[str, JsonValue] | None = Field(default=None)
 
 
 class TokenRefreshRequest(BaseModel):

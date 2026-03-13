@@ -28,6 +28,7 @@ from app.core.rate_limit import limiter
 from app.models.user import User
 from app.schema.auth import (
     AuthResponse,
+    ChangePasswordRequest,
     MessageResponse,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
@@ -183,7 +184,7 @@ async def oauth_google_callback(
         return _oauth_error_redirect()
 
     state_cookie = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE_NAME)
-    if not validate_oauth_state(state_cookie, state):
+    if state_cookie is None or not validate_oauth_state(state_cookie, state):
         return _oauth_error_redirect()
 
     try:
@@ -261,6 +262,23 @@ async def confirm_password_reset(
         new_password=body.new_password,
     )
     return MessageResponse(message="Password has been reset")
+
+
+@router.post("/change-password", response_model=MessageResponse)
+@limiter.limit("20/hour")
+async def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_active_user)],
+):
+    await auth_service.change_password(
+        db,
+        user=user,
+        current_password=body.current_password,
+        new_password=body.new_password,
+    )
+    return MessageResponse(message="Password has been changed")
 
 
 @router.post("/refresh", response_model=AuthResponse)

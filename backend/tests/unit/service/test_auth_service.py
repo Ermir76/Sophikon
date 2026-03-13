@@ -747,6 +747,66 @@ async def test_update_user_profile_merges_preferences_patch(
 
 
 @pytest.mark.asyncio
+async def test_update_user_profile_can_clear_avatar_url(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    user, _, _ = await auth_service.register_user(
+        session,
+        _unique_email("auth-profile-clear-avatar"),
+        "StrongPassword123!",
+        "Profile Clear Avatar",
+    )
+
+    user.avatar_url = "https://example.com/old-avatar.png"
+    await session.commit()
+
+    updated = await auth_service.update_user_profile(
+        session,
+        user=user,
+        patch={"avatar_url": None},
+    )
+    assert updated.avatar_url is None
+
+
+@pytest.mark.asyncio
+async def test_change_password_revokes_refresh_tokens_and_rotates_login_credentials(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-change-password")
+    current_password = "StrongPassword123!"
+    new_password = "StrongPassword456!"
+
+    user, _, refresh_token = await auth_service.register_user(
+        session,
+        email,
+        current_password,
+        "Change Password User",
+    )
+
+    await auth_service.change_password(
+        session,
+        user=user,
+        current_password=current_password,
+        new_password=new_password,
+    )
+
+    with pytest.raises(AuthenticationError):
+        await auth_service.login_user(session, email, current_password)
+
+    logged_user, _, _ = await auth_service.login_user(session, email, new_password)
+    assert logged_user.id == user.id
+
+    refresh_result = await session.execute(
+        select(RefreshToken).where(RefreshToken.token_hash == hash_token(refresh_token))
+    )
+    old_refresh = refresh_result.scalar_one()
+    assert old_refresh.is_revoked is True
+    assert old_refresh.revoked_reason == "password_change"
+
+
+@pytest.mark.asyncio
 async def test_login_with_google_code_creates_user_and_persists_refresh_token(
     session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
