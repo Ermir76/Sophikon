@@ -120,4 +120,8 @@ export const aiService = {
     );
     return response.data;
   },
+
+  async resolveApproval(projectId: string, approvalId: string, approved: boolean): Promise<void> {
+    await api.post(`/projects/${projectId}/ai/approvals/${approvalId}`, { approved });
+  },
 };

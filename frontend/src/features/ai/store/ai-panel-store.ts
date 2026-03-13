@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import type { AiChatMessage, AiTab } from "@/features/ai/types";
+import type { AiChatMessage, AiTab, PendingApproval, ToolCallStatus } from "@/features/ai/types";
 
 interface ProjectAiPanelState {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface ProjectAiPanelState {
   panelSize: number;
   conversationId: string | null;
   messages: AiChatMessage[];
+  pendingApproval: PendingApproval | null;
 }
 
 interface AiPanelStore {
@@ -25,6 +26,8 @@ interface AiPanelStore {
     content: string,
   ) => void;
   clearConversation: (projectId: string) => void;
+  setPendingApproval: (projectId: string, approval: PendingApproval | null) => void;
+  updateToolStatus: (projectId: string, messageId: string, status: ToolCallStatus) => void;
 }
 
 const DEFAULT_PROJECT_STATE: ProjectAiPanelState = {
@@ -33,6 +36,7 @@ const DEFAULT_PROJECT_STATE: ProjectAiPanelState = {
   panelSize: 34,
   conversationId: null,
   messages: [],
+  pendingApproval: null,
 };
 
 function getProjectState(
@@ -177,6 +181,37 @@ export const useAiPanelStore = create<AiPanelStore>((set) => ({
             ...current,
             conversationId: null,
             messages: [],
+            pendingApproval: null,
+          },
+        },
+      };
+    }),
+
+  setPendingApproval: (projectId, approval) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: {
+            ...current,
+            pendingApproval: approval,
+          },
+        },
+      };
+    }),
+
+  updateToolStatus: (projectId, messageId, status) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: {
+            ...current,
+            messages: current.messages.map((message) =>
+              message.id === messageId ? { ...message, toolStatus: status } : message,
+            ),
           },
         },
       };

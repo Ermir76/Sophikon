@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { authService } from "@/features/auth/api/auth.service";
 import type {
@@ -96,5 +96,19 @@ export function useDeleteAvatar() {
     onSuccess: (updatedUser) => {
       login(updatedUser);
     },
+  });
+}
+
+export function useAiPreferences() {
+  return useQuery({
+    queryKey: ["ai-preferences"],
+    queryFn: () => authService.getAiPreferences(),
+  });
+}
+
+export function useUpdateAiPreferences() {
+  return useMutation({
+    mutationFn: (data: { auto_approve: Record<string, boolean> }) =>
+      authService.updateAiPreferences(data),
   });
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import {
   Bot,
   Lightbulb,
@@ -11,6 +11,8 @@ import {
 import { toast } from "sonner";
 
 import { aiService } from "@/features/ai/api/ai.service";
+import { ApprovalDialog } from "@/features/ai/components/ApprovalDialog";
+import { ToolCallIndicator } from "@/features/ai/components/ToolCallIndicator";
 import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
 import type { AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
@@ -63,6 +65,7 @@ export function AiDockedPanel({
   onClose,
 }: AiDockedPanelProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentView = location.pathname.split("/")[3] ?? "overview";
 
   const projectPanel = useAiPanelStore((state) => state.projects[projectId]);
@@ -78,6 +81,11 @@ export function AiDockedPanel({
     (state) => state.replaceMessageContent,
   );
   const clearConversation = useAiPanelStore((state) => state.clearConversation);
+  const setPendingApproval = useAiPanelStore((state) => state.setPendingApproval);
+  const updateToolStatus = useAiPanelStore((state) => state.updateToolStatus);
+  const pendingApproval = useAiPanelStore(
+    (state) => state.projects[projectId]?.pendingApproval ?? null,
+  );
 
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -97,6 +105,34 @@ export function AiDockedPanel({
   const createDependencyMutation = useCreateDependency(projectId);
 
   const taskOptions = useMemo(() => (tasksData?.items ?? []).slice(0, 20), [tasksData]);
+
+  const VIEW_PATHS: Record<string, string> = {
+    overview: `/projects/${projectId}`,
+    tasks: `/projects/${projectId}/tasks`,
+    gantt: `/projects/${projectId}/gantt`,
+    calendar: `/projects/${projectId}/calendar`,
+    resources: `/projects/${projectId}/resources`,
+    reports: `/projects/${projectId}/reports`,
+  };
+
+  const handleUiAction = (action: string, payload: Record<string, unknown>) => {
+    if (action === "navigate") {
+      const view = payload.view as string | undefined;
+      const path = view ? (VIEW_PATHS[view] ?? `/projects/${projectId}`) : `/projects/${projectId}`;
+      void navigate(path);
+    }
+  };
+
+  const handleApproval = async (approved: boolean) => {
+    if (!pendingApproval) return;
+    const { approval_id } = pendingApproval;
+    setPendingApproval(projectId, null);
+    try {
+      await aiService.resolveApproval(projectId, approval_id, approved);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   const sendMessage = async () => {
     const trimmed = chatInput.trim();
@@ -120,6 +156,9 @@ export function AiDockedPanel({
     setChatInput("");
     setIsStreaming(true);
 
+    // Map tool_use_id -> message id for updating status later
+    const toolMessageIds = new Map<string, string>();
+
     let hadChunk = false;
     try {
       await aiService.streamChat(
@@ -131,10 +170,14 @@ export function AiDockedPanel({
             current_view: currentView,
             selected_task_ids: selectedTaskIds,
           },
-          history: messages.slice(-8).map((message) => ({
-            role: message.role,
-            content: message.content,
-          })),
+          history: messages
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .filter((m) => !m.toolName)
+            .slice(-8)
+            .map((message) => ({
+              role: message.role,
+              content: message.content,
+            })),
         },
         (event) => {
           if (event.type === "start" && event.conversation_id) {
@@ -143,6 +186,43 @@ export function AiDockedPanel({
           if (event.type === "chunk") {
             hadChunk = true;
             appendToMessage(projectId, assistantMessageId, event.content);
+          }
+          if (event.type === "tool_call") {
+            const toolMsgId = crypto.randomUUID();
+            toolMessageIds.set(event.tool_use_id, toolMsgId);
+            appendMessage(projectId, {
+              id: toolMsgId,
+              role: "assistant",
+              content: "",
+              createdAt: Date.now(),
+              toolName: event.tool_name,
+              toolStatus: "running",
+            });
+          }
+          if (event.type === "tool_result") {
+            const toolMsgId = toolMessageIds.get(event.tool_use_id);
+            if (toolMsgId) {
+              updateToolStatus(projectId, toolMsgId, "done");
+            }
+          }
+          if (event.type === "approval_required") {
+            setPendingApproval(projectId, {
+              approval_id: event.approval_id,
+              tool_name: event.tool_name,
+              tool_input: event.tool_input,
+            });
+            const toolMsgId = toolMessageIds.get(event.approval_id) ?? crypto.randomUUID();
+            appendMessage(projectId, {
+              id: toolMsgId,
+              role: "assistant",
+              content: "",
+              createdAt: Date.now(),
+              toolName: event.tool_name,
+              toolStatus: "running",
+            });
+          }
+          if (event.type === "ui_action") {
+            handleUiAction(event.action, event.tool_input ?? {});
           }
           if (event.type === "error") {
             toast.error(event.error || "AI chat failed");
@@ -153,6 +233,7 @@ export function AiDockedPanel({
       replaceMessageContent(projectId, assistantMessageId, "Unable to generate a response.");
       toast.error(getErrorMessage(error));
     } finally {
+      setPendingApproval(projectId, null);
       if (!hadChunk) {
         replaceMessageContent(
           projectId,
@@ -280,6 +361,13 @@ export function AiDockedPanel({
         mode === "docked" ? "border-l" : "",
       )}
     >
+      {pendingApproval ? (
+        <ApprovalDialog
+          approval={pendingApproval}
+          onApprove={() => void handleApproval(true)}
+          onDeny={() => void handleApproval(false)}
+        />
+      ) : null}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <Bot className="size-4 text-primary" />
@@ -333,22 +421,30 @@ export function AiDockedPanel({
                   Ask about schedule status, overdue tasks, or what to do next.
                 </div>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "rounded-lg px-3 py-2 text-sm",
-                      message.role === "user"
-                        ? "ml-6 bg-primary/10 text-foreground"
-                        : "mr-6 border bg-card/70 text-foreground",
-                    )}
-                  >
-                    <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {message.role}
-                    </p>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                ))
+                messages.map((message) =>
+                  message.toolName ? (
+                    <ToolCallIndicator
+                      key={message.id}
+                      toolName={message.toolName}
+                      status={message.toolStatus ?? "running"}
+                    />
+                  ) : (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "rounded-lg px-3 py-2 text-sm",
+                        message.role === "user"
+                          ? "ml-6 bg-primary/10 text-foreground"
+                          : "mr-6 border bg-card/70 text-foreground",
+                      )}
+                    >
+                      <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {message.role}
+                      </p>
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  ),
+                )
               )}
             </div>
           </ScrollArea>

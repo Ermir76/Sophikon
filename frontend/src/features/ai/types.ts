@@ -8,11 +8,15 @@ export interface UiContext {
 
 export type AiMessageRole = "user" | "assistant" | "system";
 
+export type ToolCallStatus = "running" | "done" | "error" | "denied";
+
 export interface AiChatMessage {
   id: string;
   role: AiMessageRole;
   content: string;
   createdAt: number;
+  toolName?: string;
+  toolStatus?: ToolCallStatus;
 }
 
 export interface AiChatRequest {
@@ -50,7 +54,40 @@ export type AiChatEvent =
   | {
       type: "error";
       error: string;
+    }
+  | {
+      type: "tool_call";
+      tool_use_id: string;
+      tool_name: string;
+      tool_input?: Record<string, unknown>;
+    }
+  | {
+      type: "tool_result";
+      tool_use_id: string;
+      tool_name: string;
+      content: string;
+    }
+  | {
+      type: "approval_required";
+      approval_id: string;
+      tool_name: string;
+      tool_input?: Record<string, unknown>;
+    }
+  | {
+      type: "ui_action";
+      action: string;
+      tool_input?: Record<string, unknown>;
     };
+
+export interface PendingApproval {
+  approval_id: string;
+  tool_name: string;
+  tool_input?: Record<string, unknown>;
+}
+
+export interface AiPreferences {
+  auto_approve: Record<string, boolean>;
+}
 
 export interface AiEstimateRequest {
   task_ids?: string[];

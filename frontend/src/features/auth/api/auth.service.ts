@@ -148,6 +148,16 @@ export const authService = {
     return response.data;
   },
 
+  async getAiPreferences(): Promise<{ auto_approve: Record<string, boolean> }> {
+    const response = await api.get<{ auto_approve: Record<string, boolean> }>("/users/me/ai-preferences");
+    return response.data;
+  },
+
+  async updateAiPreferences(data: { auto_approve: Record<string, boolean> }): Promise<{ auto_approve: Record<string, boolean> }> {
+    const response = await api.patch<{ auto_approve: Record<string, boolean> }>("/users/me/ai-preferences", data);
+    return response.data;
+  },
+
   startGoogleOAuth(nextPath?: string | null) {
     const oauthUrl = new URL(
       `${API_BASE.replace(/\/$/, "")}/auth/oauth/google`,

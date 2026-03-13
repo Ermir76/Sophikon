@@ -1,13 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save, ShieldCheck, Upload, UserRound, X } from "lucide-react";
+import { Bot, Loader2, Save, ShieldCheck, Upload, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { z } from "zod";
+import { toast } from "sonner";
 
 import {
+  useAiPreferences,
   useChangePassword,
   useDeleteAvatar,
+  useUpdateAiPreferences,
   useUpdateProfile,
   useUploadAvatar,
 } from "@/features/auth/hooks/useAuth";
@@ -19,6 +22,8 @@ import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Switch } from "@/shared/ui/switch";
+import { Label } from "@/shared/ui/label";
 import {
   Form,
   FormControl,
@@ -95,14 +100,43 @@ function getInitials(name: string): string {
     .join("");
 }
 
+const AI_TOOL_LABELS: Record<string, string> = {
+  create_task: "Create task",
+  update_task: "Update task",
+  bulk_create_tasks: "Bulk create tasks",
+  add_dependency: "Add dependency",
+  indent_task: "Indent task",
+  outdent_task: "Outdent task",
+  reorder_task: "Reorder task",
+  calculate_schedule: "Calculate schedule",
+  navigate: "Navigate view",
+  highlight_tasks: "Highlight tasks",
+  open_task: "Open task panel",
+  filter_view: "Filter view",
+};
+
 export default function ProfilePage() {
   const user = useAuthStore((state) => state.user);
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
   const uploadAvatarMutation = useUploadAvatar();
   const deleteAvatarMutation = useDeleteAvatar();
+  const aiPreferencesQuery = useAiPreferences();
+  const updateAiPreferencesMutation = useUpdateAiPreferences();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+
+  const aiAutoApprove = aiPreferencesQuery.data?.auto_approve ?? {};
+
+  const handleAiToggle = (toolName: string, value: boolean) => {
+    updateAiPreferencesMutation.mutate(
+      { auto_approve: { [toolName]: value } },
+      {
+        onSuccess: () => aiPreferencesQuery.refetch(),
+        onError: (error) => toast.error(getErrorMessage(error)),
+      },
+    );
+  };
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -150,6 +184,10 @@ export default function ProfilePage() {
           <TabsTrigger value="security">
             <ShieldCheck className="mr-2 h-4 w-4" />
             Security
+          </TabsTrigger>
+          <TabsTrigger value="ai">
+            <Bot className="mr-2 h-4 w-4" />
+            AI Settings
           </TabsTrigger>
         </TabsList>
 
@@ -495,6 +533,39 @@ export default function ProfilePage() {
               <Button asChild variant="outline">
                 <Link to="/forgot-password">Go to password reset</Link>
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Tool Permissions</CardTitle>
+              <CardDescription>
+                Control which actions the AI can take autonomously. Disabled tools always require your approval.
+                Delete actions always require approval regardless of these settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {aiPreferencesQuery.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading preferences...</p>
+              ) : (
+                <div className="space-y-3">
+                  {Object.entries(AI_TOOL_LABELS).map(([toolName, label]) => (
+                    <div key={toolName} className="flex items-center justify-between">
+                      <Label htmlFor={`ai-tool-${toolName}`} className="text-sm font-normal">
+                        {label}
+                      </Label>
+                      <Switch
+                        id={`ai-tool-${toolName}`}
+                        checked={aiAutoApprove[toolName] ?? true}
+                        onCheckedChange={(checked) => handleAiToggle(toolName, checked)}
+                        disabled={updateAiPreferencesMutation.isPending}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
