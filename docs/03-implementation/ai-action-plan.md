@@ -144,14 +144,14 @@ Stored in `user.preferences` JSONB (field already exists, no migration needed):
 
 **Files:**
 
-- `ai-service/pyproject.toml` — add `anthropic>=0.50.0`
-- `ai-service/app/core/config.py` — no change needed (ANTHROPIC_API_KEY already there)
-- `ai-service/app/schema/contracts.py` — add tool event types:
+- [x] `ai-service/pyproject.toml` — add `anthropic>=0.50.0`
+- [x] `ai-service/app/core/config.py` — no change needed (ANTHROPIC_API_KEY already there)
+- [x] `ai-service/app/schema/contracts.py` — add tool event types:
   - `ToolCallEvent(type="tool_call", tool_name, tool_input, tool_use_id)`
   - `ToolResultEvent(type="tool_result", tool_use_id, result)`
   - `ApprovalRequiredEvent(type="approval_required", approval_id, tool_name, tool_input, description)`
   - `UiActionEvent(type="ui_action", action, payload)`
-- `ai-service/app/service/brain_service.py` — replace mock with:
+- [x] `ai-service/app/service/brain_service.py` — replace mock with:
   - `ClaudeProvider` class using `anthropic.AsyncAnthropic`
   - `TOOL_DEFINITIONS` list (21 tools as Anthropic tool specs with JSON schemas)
   - `stream_with_tools(request)` — real streaming with `client.messages.stream()`
@@ -175,7 +175,7 @@ Be concise. Show your work. When taking actions, confirm what you did.
 
 **Files:**
 
-- `backend/app/service/ai_service.py` — add:
+- [x] `backend/app/service/ai_service.py` — add:
   - `_APPROVAL_STORE: dict[str, asyncio.Future]` — in-memory pending approvals
   - `tool_executor(tool_name, tool_input, db, project, user)` — dispatcher
   - `agentic_loop(db, project, user, body, preferences)` — multi-turn orchestration
@@ -185,11 +185,11 @@ Be concise. Show your work. When taking actions, confirm what you did.
     - Loops until `done` event
   - `resolve_approval(approval_id, approved)` — resolves Future
 
-- `backend/app/api/v1/endpoints/ai.py` — add:
+- [x] `backend/app/api/v1/endpoints/ai.py` — add:
   - `POST /projects/{project_id}/ai/approvals/{approval_id}` — calls resolve_approval
   - Update chat endpoint to call `agentic_loop` instead of `stream_chat`
 
-- `backend/app/schema/ai.py` — add:
+- [x] `backend/app/schema/ai.py` — add:
   - `AIApprovalRequest(approved: bool)`
   - `AIToolCallEvent`, `AIToolResultEvent`, `AIApprovalRequiredEvent`, `AIUiActionEvent`
 
@@ -197,11 +197,11 @@ Be concise. Show your work. When taking actions, confirm what you did.
 
 **Files:**
 
-- `backend/app/api/v1/endpoints/users.py` — add:
+- [x] `backend/app/api/v1/endpoints/users.py` — add:
   - `PATCH /users/me/ai-preferences` — updates `user.preferences["ai"]`
   - `GET /users/me/ai-preferences` — returns current AI preferences with defaults
 
-- `backend/app/schema/auth.py` — add:
+- [x] `backend/app/schema/auth.py` — add:
   - `AIPreferencesRequest(auto_approve: dict[str, bool])`
   - `AIPreferencesResponse(auto_approve: dict[str, bool])`
 
@@ -209,22 +209,22 @@ Be concise. Show your work. When taking actions, confirm what you did.
 
 **New files:**
 
-- `features/ai/components/ApprovalDialog.tsx` — reuses `AlertDialog` (variant=destructive)
+- [x] `features/ai/components/ApprovalDialog.tsx` — reuses `AlertDialog` (variant=destructive)
   - Shows: tool name, what it will do, Approve/Deny buttons
   - On approve: POST /ai/approvals/{id} with `{approved: true}`
 
-- `features/ai/components/ToolCallIndicator.tsx` — shows tool execution in chat
+- [x] `features/ai/components/ToolCallIndicator.tsx` — shows tool execution in chat
   - "🔍 Hämtar tasks..." / "✓ Task skapad" / "✗ Avvisad"
 
 **Modified files:**
 
-- `features/ai/types.ts` — add all new event types (ToolCallEvent, ApprovalRequiredEvent, UiActionEvent, etc.)
-- `features/ai/api/ai.service.ts` — handle new SSE event types, add approvals endpoint
-- `features/ai/store/ai-panel-store.ts` — add `pendingApproval` state
-- `features/ai/components/AiDockedPanel.tsx` — render ToolCallIndicators, mount ApprovalDialog, handle ui_action events (router.push, highlight etc.)
-- `features/auth/pages/ProfilePage.tsx` — add "AI" tab with toggle switches per tool
-- `features/auth/api/auth.service.ts` — add `getAiPreferences()`, `updateAiPreferences()`
-- `features/auth/hooks/useAuth.ts` — add `useAiPreferences` hook
+- [x] `features/ai/types.ts` — add all new event types (ToolCallEvent, ApprovalRequiredEvent, UiActionEvent, etc.)
+- [x] `features/ai/api/ai.service.ts` — handle new SSE event types, add approvals endpoint
+- [x] `features/ai/store/ai-panel-store.ts` — add `pendingApproval` state
+- [x] `features/ai/components/AiDockedPanel.tsx` — render ToolCallIndicators, mount ApprovalDialog, handle ui_action events (router.push, highlight etc.)
+- [x] `features/auth/pages/ProfilePage.tsx` — add "AI" tab with toggle switches per tool
+- [x] `features/auth/api/auth.service.ts` — add `getAiPreferences()`, `updateAiPreferences()`
+- [x] `features/auth/hooks/useAuth.ts` — add `useAiPreferences` hook
 
 **UI action handling in AiDockedPanel:**
 
