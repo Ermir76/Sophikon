@@ -11,6 +11,13 @@ import { PageLoader } from "@/shared/components/PageLoader";
 // Lazy imports
 const LoginPage = lazy(() => import("@/features/auth").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("@/features/auth").then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(
+  () => import("@/features/auth").then(m => ({ default: m.ForgotPasswordPage }))
+);
+const ResetPasswordPage = lazy(
+  () => import("@/features/auth").then(m => ({ default: m.ResetPasswordPage }))
+);
+const ProfilePage = lazy(() => import("@/features/auth").then(m => ({ default: m.ProfilePage })));
 const AuthLayout = lazy(() => import("@/shared/layout/AuthLayout"));
 const DashboardPage = lazy(
   () => import("@/features/dashboard").then(m => ({ default: m.DashboardPage }))
@@ -85,6 +92,8 @@ function App() {
         */}
         <Route element={<AuthLayout />}>
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/*
@@ -98,6 +107,7 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
 
             <Route element={<OrgGuard />}>
               <Route

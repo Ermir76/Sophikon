@@ -8,6 +8,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router";
 import { useAuthStore } from "@/features/auth";
 
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
@@ -29,6 +30,7 @@ import {
 
 export function NavUser() {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { setTheme } = useTheme();
@@ -88,11 +90,11 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
                 <User className="mr-2 size-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="mr-2 size-4" />
                 Settings
               </DropdownMenuItem>

@@ -1,7 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { authService } from "@/features/auth/api/auth.service";
-import type { LoginRequest, RegisterRequest } from "@/features/auth/api/auth.service";
+import type {
+  ChangePasswordRequest,
+  LoginRequest,
+  PasswordResetConfirmRequest,
+  PasswordResetRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+} from "@/features/auth/api/auth.service";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 
 function resolveRedirectDestination(redirectTo?: string | null): string {
@@ -38,5 +45,56 @@ export function useRegister(redirectTo?: string | null) {
 export function useSendVerificationEmail() {
   return useMutation({
     mutationFn: () => authService.sendVerificationEmail(),
+  });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: (data: PasswordResetRequest) => authService.requestPasswordReset(data),
+  });
+}
+
+export function useConfirmPasswordReset() {
+  return useMutation({
+    mutationFn: (data: PasswordResetConfirmRequest) => authService.confirmPasswordReset(data),
+  });
+}
+
+export function useUpdateProfile() {
+  const login = useAuthStore((state) => state.login);
+
+  return useMutation({
+    mutationFn: (patch: UpdateProfileRequest) => authService.updateProfile(patch),
+    onSuccess: (updatedUser) => {
+      login(updatedUser);
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (data: ChangePasswordRequest) => authService.changePassword(data),
+  });
+}
+
+export function useUploadAvatar() {
+  const login = useAuthStore((state) => state.login);
+
+  return useMutation({
+    mutationFn: (file: File) => authService.uploadAvatar(file),
+    onSuccess: (updatedUser) => {
+      login(updatedUser);
+    },
+  });
+}
+
+export function useDeleteAvatar() {
+  const login = useAuthStore((state) => state.login);
+
+  return useMutation({
+    mutationFn: () => authService.deleteAvatar(),
+    onSuccess: (updatedUser) => {
+      login(updatedUser);
+    },
   });
 }

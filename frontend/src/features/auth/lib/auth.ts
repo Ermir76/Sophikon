@@ -29,6 +29,12 @@ export interface AuthUser {
   email: string;
   full_name: string;
   email_verified: boolean;
+  avatar_url?: string | null;
+  is_active?: boolean;
+  preferences?: Record<string, unknown>;
+  timezone?: string;
+  locale?: string;
+  created_at?: string;
 }
 
 /**
@@ -54,6 +60,12 @@ const userSchema = z.object({
   email: z.string().email(),
   full_name: z.string(),
   email_verified: z.boolean(),
+  avatar_url: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
+  preferences: z.record(z.string(), z.unknown()).optional(),
+  timezone: z.string().optional(),
+  locale: z.string().optional(),
+  created_at: z.string().optional(),
 });
 
 export function getUser(): AuthUser | null {

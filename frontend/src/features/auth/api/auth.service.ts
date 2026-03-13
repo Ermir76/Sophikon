@@ -1,4 +1,4 @@
-import { api } from "@/shared/api/api";
+import { api, API_BASE } from "@/shared/api/api";
 import type { AuthUser } from "@/features/auth/lib/auth";
 
 // ----------------------------------------------------------------------
@@ -50,6 +50,31 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  token: string;
+  new_password: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
+export interface UpdateProfileRequest {
+  full_name?: string;
+  avatar_url?: string | null;
+  timezone?: string;
+  locale?: string;
+  preferences?: Record<string, JsonValue>;
+}
+
 export const authService = {
   /**
    * LOG IN
@@ -89,5 +114,48 @@ export const authService = {
   async sendVerificationEmail() {
     const response = await api.post<MessageResponse>("/auth/send-verification-email");
     return response.data;
+  },
+
+  async requestPasswordReset(data: PasswordResetRequest) {
+    const response = await api.post<MessageResponse>("/auth/password-reset", data);
+    return response.data;
+  },
+
+  async confirmPasswordReset(data: PasswordResetConfirmRequest) {
+    const response = await api.post<MessageResponse>("/auth/password-reset/confirm", data);
+    return response.data;
+  },
+
+  async updateProfile(data: UpdateProfileRequest) {
+    const response = await api.patch<AuthUser>("/users/me", data);
+    return response.data;
+  },
+
+  async changePassword(data: ChangePasswordRequest) {
+    const response = await api.post<MessageResponse>("/auth/change-password", data);
+    return response.data;
+  },
+
+  async uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<AuthUser>("/users/me/avatar", formData);
+    return response.data;
+  },
+
+  async deleteAvatar() {
+    const response = await api.delete<AuthUser>("/users/me/avatar");
+    return response.data;
+  },
+
+  startGoogleOAuth(nextPath?: string | null) {
+    const oauthUrl = new URL(
+      `${API_BASE.replace(/\/$/, "")}/auth/oauth/google`,
+      window.location.origin,
+    );
+    if (nextPath && nextPath.startsWith("/")) {
+      oauthUrl.searchParams.set("next", nextPath);
+    }
+    window.location.assign(oauthUrl.toString());
   },
 };
