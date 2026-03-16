@@ -4,7 +4,6 @@ Task bulk operations logic.
 Handles creating, updating, and soft-deleting tasks in batch.
 """
 
-from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -28,6 +27,8 @@ from app.service.task_rollup_service import (
 )
 from app.service.task_service import (
     _SCHEDULE_FIELDS,
+    _compute_initial_finish_date,
+    _resolve_hours_per_day,
     recalculate_summary,
     regenerate_wbs_codes,
     soft_delete_task,
@@ -68,7 +69,7 @@ async def bulk_create_tasks(
         max_order_per_parent[parent_id] += 1
         return max_order_per_parent[parent_id]
 
-    hours_per_day = project.settings.get("hours_per_day", 8)
+    hours_per_day = _resolve_hours_per_day(project.settings)
     minutes_per_day = hours_per_day * 60
 
     created_tasks = []
@@ -105,14 +106,12 @@ async def bulk_create_tasks(
                     )
 
                 order_index = await get_next_order(task_data["parent_task_id"])
-                duration_days = (
-                    max(1, task_data["duration"] // minutes_per_day)
-                    if not task_data["is_milestone"]
-                    else 0
+                finish_date = _compute_initial_finish_date(
+                    start_date=task_data["start_date"],
+                    duration_minutes=task_data["duration"],
+                    is_milestone=task_data["is_milestone"],
+                    minutes_per_day=minutes_per_day,
                 )
-                # TODO(2026-03-07): Align finish_date convention with
-                # scheduling/calendar math (inclusive vs exclusive end date).
-                finish_date = task_data["start_date"] + timedelta(days=duration_days)
 
                 task = Task(
                     project_id=project.id,

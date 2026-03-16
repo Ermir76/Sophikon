@@ -710,23 +710,18 @@ async def test_patch_users_me_partial_update_success(client: AsyncClient):
         json={
             "full_name": "Updated Name",
             "timezone": "Europe/Stockholm",
-            "preferences": {"theme": "dark", "email_notifications": True},
         },
     )
     assert response.status_code == 200
     data = response.json()
     assert data["full_name"] == "Updated Name"
     assert data["timezone"] == "Europe/Stockholm"
-    assert data["preferences"]["theme"] == "dark"
-    assert data["preferences"]["email_notifications"] is True
 
     me_response = await client.get("/api/v1/auth/me")
     assert me_response.status_code == 200
     me_data = me_response.json()
     assert me_data["full_name"] == "Updated Name"
     assert me_data["timezone"] == "Europe/Stockholm"
-    assert me_data["preferences"]["theme"] == "dark"
-    assert me_data["preferences"]["email_notifications"] is True
 
 
 @pytest.mark.asyncio
@@ -762,6 +757,24 @@ async def test_patch_users_me_rejects_unknown_fields(client: AsyncClient):
     response = await client.patch(
         "/api/v1/users/me",
         json={"unknown_setting": "value"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_users_me_rejects_preferences_payload(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "profile-reject-preferences@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Profile Reject Preferences",
+        },
+    )
+
+    response = await client.patch(
+        "/api/v1/users/me",
+        json={"preferences": {"theme": "dark"}},
     )
     assert response.status_code == 422
 
@@ -1182,3 +1195,73 @@ async def test_patch_ai_preferences_rejects_unavailable_provider(
     )
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_patch_ai_preferences_rejects_unknown_auto_approve_key(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-unknown-key@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Unknown Key",
+        },
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return {
+            "providers": [
+                {
+                    "provider_id": "openai",
+                    "display_name": "OpenAI",
+                    "requires_env_key": "OPENAI_API_KEY",
+                    "available": True,
+                    "models": [
+                        {
+                            "model_id": "gpt-5-mini",
+                            "label": "GPT-5 mini",
+                            "recommended": True,
+                        }
+                    ],
+                }
+            ],
+            "defaults": {
+                "provider": "openai",
+                "model": "gpt-5-mini",
+                "mode": "live",
+            },
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+
+    response = await client.patch(
+        "/api/v1/users/me/ai-preferences",
+        json={"auto_approve": {"unexpected_tool": True}},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_patch_ai_preferences_rejects_oversized_auto_approve_map(
+    client: AsyncClient,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-oversized-map@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Oversized Map",
+        },
+    )
+
+    oversized_auto_approve = {f"tool_{index}": True for index in range(33)}
+    response = await client.patch(
+        "/api/v1/users/me/ai-preferences",
+        json={"auto_approve": oversized_auto_approve},
+    )
+    assert response.status_code == 422

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils import uuid7
 
-from app.core.exceptions import InvalidOperationError, NotFoundError
+from app.core.exceptions import InvalidOperationError, NotFoundError, ValidationError
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
 from app.models.ai_usage import AIUsage
@@ -614,3 +614,51 @@ async def test_request_suggestions_rejects_malformed_ai_response(
                 limit=5,
             )
         )
+
+
+@pytest.mark.asyncio
+async def test_apply_ai_preferences_patch_rejects_unknown_auto_approve_keys(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    user, _, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-auto-approve-unknown-key@example.com",
+        slug="org-ai-auto-approve-unknown-key",
+    )
+
+    with pytest.raises(ValidationError, match="Unsupported auto_approve keys"):
+        ai_service.apply_ai_preferences_patch(
+            user=user,
+            catalog=_service_model_catalog_payload(),
+            auto_approve_patch={"unexpected_tool": True},
+            provider_patch=None,
+            model_patch=None,
+        )
+
+
+@pytest.mark.asyncio
+async def test_apply_ai_preferences_patch_accepts_allowlisted_auto_approve_keys(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    user, _, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-auto-approve-valid-key@example.com",
+        slug="org-ai-auto-approve-valid-key",
+    )
+    user.preferences = {"ai": {"auto_approve": {"create_task": True}}}
+    await session.commit()
+
+    updated = ai_service.apply_ai_preferences_patch(
+        user=user,
+        catalog=_service_model_catalog_payload(),
+        auto_approve_patch={"calculate_schedule": False},
+        provider_patch=None,
+        model_patch=None,
+    )
+
+    assert updated["ai"]["auto_approve"]["create_task"] is True
+    assert updated["ai"]["auto_approve"]["calculate_schedule"] is False

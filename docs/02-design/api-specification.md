@@ -484,6 +484,12 @@ Get current user profile.
 
 Update profile.
 
+Notes:
+- Profile endpoint is profile-only (`full_name`, `avatar_url`, `timezone`, `locale`).
+- Settings payloads are managed through dedicated typed endpoints:
+  - AI settings: `GET/PATCH /users/me/ai-preferences`
+  - Notification settings: `GET/PATCH /notifications/settings`
+
 **Request:**
 
 ```json
@@ -491,10 +497,7 @@ Update profile.
   "full_name": "John Smith",
   "avatar_url": "https://...",
   "timezone": "Europe/London",
-  "preferences": {
-    "email_notifications": true,
-    "theme": "dark"
-  }
+  "locale": "en-US"
 }
 ```
 

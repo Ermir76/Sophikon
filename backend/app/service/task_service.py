@@ -59,6 +59,23 @@ def _resolve_hours_per_day(settings: object) -> int:
     return 8
 
 
+def _compute_initial_finish_date(
+    *,
+    start_date,
+    duration_minutes: int,
+    is_milestone: bool,
+    minutes_per_day: int,
+):
+    """
+    Compute initial finish date using inclusive day semantics.
+    1 working day (minutes_per_day) => finish_date == start_date.
+    """
+    if is_milestone:
+        return start_date
+    duration_days = max(1, -(-duration_minutes // minutes_per_day))
+    return start_date + timedelta(days=duration_days - 1)
+
+
 async def list_tasks(
     db: AsyncSession,
     project: Project,
@@ -184,14 +201,12 @@ async def create_task(
     # Calculate finish_date based on duration (simple: 1 day = 480 minutes)
     hours_per_day = _resolve_hours_per_day(project.settings)
     minutes_per_day = hours_per_day * 60
-    duration_days = (
-        max(1, payload["duration"] // minutes_per_day)
-        if not payload.get("is_milestone", False)
-        else 0
+    finish_date = _compute_initial_finish_date(
+        start_date=payload["start_date"],
+        duration_minutes=payload["duration"],
+        is_milestone=payload.get("is_milestone", False),
+        minutes_per_day=minutes_per_day,
     )
-    # TODO(2026-03-07): Align finish_date convention with scheduling/calendar math
-    # (inclusive vs exclusive end date) across create, rollup, and scheduler flows.
-    finish_date = payload["start_date"] + timedelta(days=duration_days)
 
     task = Task(
         project_id=project.id,

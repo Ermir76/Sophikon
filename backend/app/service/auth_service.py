@@ -514,13 +514,9 @@ async def update_user_profile(
         user.locale = locale.strip()
 
     if "preferences" in patch:
-        preferences = patch["preferences"]
-        if not isinstance(preferences, dict):
-            raise ValidationError("Preferences must be an object")
-        # PATCH semantics: merge provided keys into existing preferences.
-        merged_preferences = dict(user.preferences or {})
-        merged_preferences.update(preferences)
-        user.preferences = merged_preferences
+        raise ValidationError(
+            "Profile preferences are not supported on /users/me; use dedicated settings endpoints"
+        )
 
     await db.commit()
     await db.refresh(user)

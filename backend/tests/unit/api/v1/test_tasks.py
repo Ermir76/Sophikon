@@ -52,6 +52,44 @@ async def test_list_tasks_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_task_inclusive_finish_date_when_auto_calculate_disabled(
+    client: AsyncClient,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "create-inclusive-finish@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Create Inclusive Finish",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Inclusive", "slug": "org-inclusive-finish"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Inclusive",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+            "settings": {"auto_calculate": False},
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "One Day Task", "start_date": "2024-01-01", "duration": 480},
+    )
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["start_date"] == "2024-01-01"
+    assert payload["finish_date"] == "2024-01-01"
+
+
+@pytest.mark.asyncio
 async def test_list_tasks_excludes_deleted(client: AsyncClient):
     """List — excludes soft-deleted by default."""
     await client.post(

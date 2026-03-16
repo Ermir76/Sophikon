@@ -113,6 +113,7 @@ _DEFAULT_AUTO_APPROVE: dict[str, bool] = {
     "open_task": True,
     "filter_view": True,
 }
+_ALLOWED_AUTO_APPROVE_TOOLS = set(_DEFAULT_AUTO_APPROVE.keys())
 
 _MODEL_CATALOG_CACHE_TTL = timedelta(seconds=30)
 _MODEL_CATALOG_CACHE: dict | None = None
@@ -209,6 +210,13 @@ def apply_ai_preferences_patch(
     provider_patch: str | None,
     model_patch: str | None,
 ) -> dict:
+    unknown_auto_approve_keys = sorted(
+        set(auto_approve_patch.keys()) - _ALLOWED_AUTO_APPROVE_TOOLS
+    )
+    if unknown_auto_approve_keys:
+        quoted = ", ".join(f"'{key}'" for key in unknown_auto_approve_keys)
+        raise ValidationError(f"Unsupported auto_approve keys: {quoted}")
+
     root = dict(user.preferences or {})
     ai = dict(root.get("ai", {}))
     auto_current = dict(ai.get("auto_approve", {}))

@@ -716,7 +716,6 @@ async def test_update_user_profile_updates_allowed_fields_only(
             "timezone": "Europe/Stockholm",
             "locale": "sv-SE",
             "avatar_url": "https://example.com/avatar.png",
-            "preferences": {"theme": "dark", "email_notifications": True},
             "email": "should-not-change@example.com",
         },
     )
@@ -725,8 +724,6 @@ async def test_update_user_profile_updates_allowed_fields_only(
     assert updated.timezone == "Europe/Stockholm"
     assert updated.locale == "sv-SE"
     assert updated.avatar_url == "https://example.com/avatar.png"
-    assert updated.preferences["theme"] == "dark"
-    assert updated.preferences["email_notifications"] is True
     assert updated.email == email
 
 
@@ -758,7 +755,7 @@ async def test_update_user_profile_rejects_blank_timezone_and_locale(
 
 
 @pytest.mark.asyncio
-async def test_update_user_profile_merges_preferences_patch(
+async def test_update_user_profile_rejects_preferences_patch(
     session: AsyncSession,
 ) -> None:
     await _ensure_system_user_role(session)
@@ -768,17 +765,12 @@ async def test_update_user_profile_merges_preferences_patch(
         "StrongPassword123!",
         "Profile Preferences",
     )
-    user.preferences = {"theme": "light", "email_notifications": False}
-    await session.commit()
-
-    updated = await auth_service.update_user_profile(
-        session,
-        user=user,
-        patch={"preferences": {"theme": "dark"}},
-    )
-
-    assert updated.preferences["theme"] == "dark"
-    assert updated.preferences["email_notifications"] is False
+    with pytest.raises(ValidationError):
+        await auth_service.update_user_profile(
+            session,
+            user=user,
+            patch={"preferences": {"theme": "dark"}},
+        )
 
 
 @pytest.mark.asyncio

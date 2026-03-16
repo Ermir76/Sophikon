@@ -45,7 +45,6 @@ class UpdateProfileRequest(BaseModel):
     avatar_url: str | None = Field(default=None, max_length=500)
     timezone: str | None = Field(default=None, max_length=50)
     locale: str | None = Field(default=None, max_length=10)
-    preferences: dict[str, JsonValue] | None = Field(default=None)
 
 
 class TokenRefreshRequest(BaseModel):
@@ -86,7 +85,7 @@ class MessageResponse(BaseModel):
 
 
 class AIPreferencesRequest(BaseModel):
-    auto_approve: dict[str, bool] = Field(default_factory=dict)
+    auto_approve: dict[str, bool] = Field(default_factory=dict, max_length=32)
     provider: str | None = Field(default=None, max_length=32)
     model: str | None = Field(default=None, max_length=128)
 

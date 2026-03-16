@@ -64,15 +64,11 @@ export interface ChangePasswordRequest {
   new_password: string;
 }
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-
 export interface UpdateProfileRequest {
   full_name?: string;
   avatar_url?: string | null;
   timezone?: string;
   locale?: string;
-  preferences?: Record<string, JsonValue>;
 }
 
 export interface AiModelOption {
