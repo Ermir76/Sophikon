@@ -30,23 +30,51 @@ def _request_payload() -> dict:
 def test_stream_openai_emits_chunk_function_tool_call_and_done(monkeypatch):
     captured: dict = {}
 
+    class FakeStream:
+        def __aiter__(self):
+            async def _iter():
+                # Text chunk
+                yield SimpleNamespace(
+                    usage=None,
+                    choices=[
+                        SimpleNamespace(
+                            delta=SimpleNamespace(content="hello ", tool_calls=None)
+                        )
+                    ],
+                )
+                # Tool call chunk with function payload
+                yield SimpleNamespace(
+                    usage=None,
+                    choices=[
+                        SimpleNamespace(
+                            delta=SimpleNamespace(
+                                content="from openai",
+                                tool_calls=[
+                                    SimpleNamespace(
+                                        type="function",
+                                        index=0,
+                                        id="tool-call-1",
+                                        function=SimpleNamespace(
+                                            name="get_tasks", arguments='{"limit": 5}'
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                    ],
+                )
+                # Usage chunk
+                yield SimpleNamespace(
+                    usage=SimpleNamespace(prompt_tokens=12, completion_tokens=8),
+                    choices=[],
+                )
+
+            return _iter()
+
     class FakeCompletions:
         async def create(self, **kwargs):
             captured.update(kwargs)
-            function_tool_call = SimpleNamespace(
-                type="function",
-                id="tool-call-1",
-                function=SimpleNamespace(name="get_tasks", arguments='{"limit": 5}'),
-            )
-            custom_tool_call = SimpleNamespace(type="custom", id="custom-1")
-            message = SimpleNamespace(
-                content="hello from openai",
-                tool_calls=[function_tool_call, custom_tool_call],
-            )
-            return SimpleNamespace(
-                choices=[SimpleNamespace(message=message)],
-                usage=SimpleNamespace(prompt_tokens=12, completion_tokens=8),
-            )
+            return FakeStream()
 
     class FakeAsyncOpenAI:
         def __init__(self, api_key):
@@ -74,3 +102,5 @@ def test_stream_openai_emits_chunk_function_tool_call_and_done(monkeypatch):
     assert any(event["type"] == "tool_call" and event["tool_name"] == "get_tasks" for event in events)
     assert events[-1]["type"] == "done"
     assert captured["tools"][0]["type"] == "function"
+    assert captured["stream"] is True
+    assert captured["stream_options"]["include_usage"] is True
