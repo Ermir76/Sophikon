@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { authService } from "@/features/auth/api/auth.service";
+import type { AiPreferencesPatchRequest } from "@/features/auth/api/auth.service";
 import type {
   ChangePasswordRequest,
   LoginRequest,
@@ -109,7 +110,7 @@ export function useAiPreferences() {
 export function useUpdateAiPreferences() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { auto_approve: Record<string, boolean> }) =>
+    mutationFn: (data: AiPreferencesPatchRequest) =>
       authService.updateAiPreferences(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ai-preferences"] });

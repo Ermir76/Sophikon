@@ -75,6 +75,40 @@ export interface UpdateProfileRequest {
   preferences?: Record<string, JsonValue>;
 }
 
+export interface AiModelOption {
+  model_id: string;
+  label: string;
+  recommended: boolean;
+}
+
+export interface AiProviderOption {
+  provider_id: string;
+  display_name: string;
+  requires_env_key: string;
+  available: boolean;
+  models: AiModelOption[];
+}
+
+export interface AiModelDefaults {
+  provider: string;
+  model: string;
+  mode: string;
+}
+
+export interface AiPreferencesResponse {
+  auto_approve: Record<string, boolean>;
+  provider: string | null;
+  model: string | null;
+  providers: AiProviderOption[];
+  defaults: AiModelDefaults | null;
+}
+
+export interface AiPreferencesPatchRequest {
+  auto_approve?: Record<string, boolean>;
+  provider?: string | null;
+  model?: string | null;
+}
+
 export const authService = {
   /**
    * LOG IN
@@ -148,13 +182,13 @@ export const authService = {
     return response.data;
   },
 
-  async getAiPreferences(): Promise<{ auto_approve: Record<string, boolean> }> {
-    const response = await api.get<{ auto_approve: Record<string, boolean> }>("/users/me/ai-preferences");
+  async getAiPreferences(): Promise<AiPreferencesResponse> {
+    const response = await api.get<AiPreferencesResponse>("/users/me/ai-preferences");
     return response.data;
   },
 
-  async updateAiPreferences(data: { auto_approve: Record<string, boolean> }): Promise<{ auto_approve: Record<string, boolean> }> {
-    const response = await api.patch<{ auto_approve: Record<string, boolean> }>("/users/me/ai-preferences", data);
+  async updateAiPreferences(data: AiPreferencesPatchRequest): Promise<AiPreferencesResponse> {
+    const response = await api.patch<AiPreferencesResponse>("/users/me/ai-preferences", data);
     return response.data;
   },
 

@@ -16,14 +16,17 @@ import { ToolCallIndicator } from "@/features/ai/components/ToolCallIndicator";
 import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
 import type { AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
+import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
 import { useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { cn } from "@/shared/lib/utils";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { ScrollArea } from "@/shared/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Separator } from "@/shared/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Textarea } from "@/shared/ui/textarea";
@@ -103,8 +106,34 @@ export function AiDockedPanel({
   );
   const updateTaskMutation = useUpdateTask(projectId);
   const createDependencyMutation = useCreateDependency(projectId);
+  const aiPreferencesQuery = useAiPreferences();
+  const updateAiPreferencesMutation = useUpdateAiPreferences();
 
   const taskOptions = useMemo(() => (tasksData?.items ?? []).slice(0, 20), [tasksData]);
+  const aiProviders = aiPreferencesQuery.data?.providers ?? [];
+  const selectedProvider =
+    aiPreferencesQuery.data?.provider ?? aiPreferencesQuery.data?.defaults?.provider ?? "";
+  const selectedModel = aiPreferencesQuery.data?.model ?? aiPreferencesQuery.data?.defaults?.model ?? "";
+  const providerRecord = aiProviders.find((provider) => provider.provider_id === selectedProvider);
+  const providerModels = providerRecord?.models ?? [];
+  const modelSelectDisabled = !selectedProvider || providerModels.length === 0;
+
+  const applyAiPreferencePatch = (patch: {
+    provider?: string | null;
+    model?: string | null;
+  }) => {
+    updateAiPreferencesMutation.mutate(
+      patch,
+      {
+        onSuccess: () => {
+          void aiPreferencesQuery.refetch();
+        },
+        onError: (error) => {
+          toast.error(getErrorMessage(error));
+        },
+      },
+    );
+  };
 
   const VIEW_PATHS: Record<string, string> = {
     overview: `/projects/${projectId}`,
@@ -453,6 +482,68 @@ export function AiDockedPanel({
             </div>
           </ScrollArea>
           <div className="border-t p-3">
+            {(aiPreferencesQuery.isError || updateAiPreferencesMutation.isError) ? (
+              <Alert variant="destructive" className="mb-3">
+                <AlertDescription>
+                  {getErrorMessage(aiPreferencesQuery.error ?? updateAiPreferencesMutation.error)}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <Select
+                value={selectedProvider}
+                onValueChange={(providerId) => {
+                  const provider = aiProviders.find((item) => item.provider_id === providerId);
+                  const recommendedModel =
+                    provider?.models.find((item) => item.recommended)?.model_id ??
+                    provider?.models[0]?.model_id ??
+                    null;
+                  applyAiPreferencePatch({
+                    provider: providerId,
+                    model: recommendedModel,
+                  });
+                }}
+                disabled={aiPreferencesQuery.isLoading || updateAiPreferencesMutation.isPending}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiProviders.map((provider) => (
+                    <SelectItem
+                      key={provider.provider_id}
+                      value={provider.provider_id}
+                      disabled={!provider.available}
+                    >
+                      {provider.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedModel}
+                onValueChange={(modelId) => {
+                  applyAiPreferencePatch({ model: modelId });
+                }}
+                disabled={
+                  aiPreferencesQuery.isLoading ||
+                  updateAiPreferencesMutation.isPending ||
+                  modelSelectDisabled
+                }
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {providerModels.map((model) => (
+                    <SelectItem key={model.model_id} value={model.model_id}>
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Textarea
               value={chatInput}
               onChange={(event) => setChatInput(event.target.value)}

@@ -12,6 +12,7 @@ const mockEstimateMutateAsync = vi.fn();
 const mockSuggestionsRefetch = vi.fn();
 const mockUpdateTaskMutateAsync = vi.fn();
 const mockCreateDependencyMutateAsync = vi.fn();
+const mockUpdateAiPreferencesMutate = vi.fn();
 const mockToastError = vi.fn();
 const mockToastSuccess = vi.fn();
 const mockToastMessage = vi.fn();
@@ -36,11 +37,100 @@ vi.mock("@/features/tasks/hooks/useDependencies", () => ({
   useCreateDependency: vi.fn(),
 }));
 
+vi.mock("@/features/auth/hooks/useAuth", () => ({
+  useAiPreferences: vi.fn(),
+  useUpdateAiPreferences: vi.fn(),
+}));
+
 vi.mock("@/shared/ui/scroll-area", () => ({
   ScrollArea: ({ children, className }: { children: ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
 }));
+
+vi.mock("@/shared/ui/select", async () => {
+  const React = await import("react");
+  const ctx = React.createContext<{
+    value?: string;
+    onValueChange?: (value: string) => void;
+    disabled?: boolean;
+  }>({});
+
+  const Select = ({
+    value,
+    onValueChange,
+    disabled,
+    children,
+  }: {
+    value?: string;
+    onValueChange?: (value: string) => void;
+    disabled?: boolean;
+    children: ReactNode;
+  }) => (
+    <ctx.Provider value={{ value, onValueChange, disabled }}>{children}</ctx.Provider>
+  );
+
+  const SelectTrigger = ({
+    children,
+    className,
+  }: {
+    children: ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>;
+
+  const SelectValue = ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>;
+
+  const SelectContent = ({ children }: { children: ReactNode }) => {
+    const context = React.useContext(ctx);
+    const options: Array<{ value: string; label: string; disabled?: boolean }> = [];
+
+    React.Children.forEach(children, (child) => {
+      if (!React.isValidElement(child)) return;
+      options.push({
+        value: String(child.props.value),
+        label: typeof child.props.children === "string" ? child.props.children : String(child.props.children),
+        disabled: Boolean(child.props.disabled),
+      });
+    });
+
+    return (
+      <select
+        aria-label="mock-select"
+        value={context.value ?? ""}
+        disabled={context.disabled}
+        onChange={(event) => context.onValueChange?.(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
+  const SelectItem = ({
+    value,
+    children,
+    disabled,
+  }: {
+    value: string;
+    children: ReactNode;
+    disabled?: boolean;
+  }) => (
+    <option value={value} disabled={disabled}>
+      {children}
+    </option>
+  );
+
+  return {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+  };
+});
 
 vi.mock("sonner", () => ({
   toast: {
@@ -51,6 +141,7 @@ vi.mock("sonner", () => ({
 }));
 
 import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
 import { useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 
@@ -100,6 +191,49 @@ describe("AiDockedPanel", () => {
     vi.mocked(useCreateDependency).mockReturnValue({
       mutateAsync: mockCreateDependencyMutateAsync,
       isPending: false,
+    } as never);
+
+    vi.mocked(useAiPreferences).mockReturnValue({
+      data: {
+        provider: "openai",
+        model: "gpt-5-mini",
+        defaults: {
+          provider: "openai",
+          model: "gpt-5-mini",
+          mode: "live",
+        },
+        providers: [
+          {
+            provider_id: "openai",
+            display_name: "OpenAI",
+            requires_env_key: "OPENAI_API_KEY",
+            available: true,
+            models: [
+              { model_id: "gpt-5-mini", label: "GPT-5 mini", recommended: true },
+              { model_id: "gpt-5", label: "GPT-5", recommended: false },
+            ],
+          },
+          {
+            provider_id: "gemini",
+            display_name: "Google Gemini",
+            requires_env_key: "GEMINI_API_KEY",
+            available: false,
+            models: [{ model_id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", recommended: true }],
+          },
+        ],
+        auto_approve: {},
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as never);
+
+    vi.mocked(useUpdateAiPreferences).mockReturnValue({
+      mutate: mockUpdateAiPreferencesMutate,
+      isPending: false,
+      isError: false,
+      error: null,
     } as never);
   });
 
@@ -261,5 +395,18 @@ describe("AiDockedPanel", () => {
     });
     expect(mockToastSuccess).toHaveBeenCalledWith("Suggestion applied");
     expect(mockSuggestionsRefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("patches AI preferences when model selection changes", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const selects = screen.getAllByLabelText("mock-select");
+    await user.selectOptions(selects[1], "gpt-5");
+
+    expect(mockUpdateAiPreferencesMutate).toHaveBeenCalledWith(
+      { model: "gpt-5" },
+      expect.any(Object),
+    );
   });
 });

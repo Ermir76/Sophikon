@@ -56,6 +56,14 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
     isError: false,
     error: null,
   })),
+  useAiPreferences: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+  })),
+  useUpdateAiPreferences: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 describe("ProfilePage", () => {
