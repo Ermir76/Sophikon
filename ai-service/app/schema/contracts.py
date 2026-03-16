@@ -48,6 +48,8 @@ class ToolResultInput(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str | None = Field(default=None, max_length=4000)
+    provider: str | None = Field(default=None, max_length=32)
+    model: str | None = Field(default=None, max_length=128)
     project_context: ProjectContext
     conversation_id: UUID | None = None
     user_id: UUID

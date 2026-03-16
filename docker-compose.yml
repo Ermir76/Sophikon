@@ -69,6 +69,11 @@ services:
       - "8010:8010"
     environment:
       AI_MODE: ${AI_MODE:-mock}
+      AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+      AI_MODEL_NAME: ${AI_MODEL_NAME:-sophikon-mock-v1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       AI_SERVICE_SHARED_SECRET: ${AI_SERVICE_SHARED_SECRET:-dev-ai-shared-secret}
 
   mailpit:

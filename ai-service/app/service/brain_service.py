@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 from datetime import date
+from typing import Any
 from uuid import uuid4
 
 from app.core.config import settings
@@ -23,6 +24,7 @@ from app.schema.contracts import (
     SuggestionsRequest,
     SuggestionsResponse,
 )
+from app.service.model_catalog import validate_provider_and_model
 
 logger = logging.getLogger(__name__)
 
@@ -357,8 +359,13 @@ TOOL_DEFINITIONS: list[dict] = [
 # ---------------------------------------------------------------------------
 
 
-def _use_live_mode() -> bool:
-    return settings.AI_MODE == "live" and bool(settings.ANTHROPIC_API_KEY)
+def _resolve_runtime_provider_and_model(
+    request: ChatRequest,
+) -> tuple[str | None, str, str | None]:
+    provider, model, error = validate_provider_and_model(request.provider, request.model)
+    if settings.AI_MODE != "live":
+        return None, model, None
+    return provider, model, error
 
 
 def _estimate_tokens(value: str) -> int:
@@ -416,12 +423,108 @@ def _build_messages(request: ChatRequest) -> list[dict]:
     return messages
 
 
+def _stringify_content(value: str | list[dict]) -> str:
+    if isinstance(value, str):
+        return value
+    try:
+        return json.dumps(value, ensure_ascii=False)
+    except Exception:
+        return str(value)
+
+
+def _build_openai_messages(request: ChatRequest) -> list[dict[str, str]]:
+    messages: list[dict[str, str]] = []
+    for item in request.history:
+        role = item.role if item.role in {"user", "assistant", "system"} else "user"
+        messages.append({"role": role, "content": _stringify_content(item.content)})
+
+    if request.tool_results:
+        tool_results_payload = [
+            {
+                "tool_use_id": tr.tool_use_id,
+                "content": tr.content,
+                **({"is_error": True} if tr.is_error else {}),
+            }
+            for tr in request.tool_results
+        ]
+        messages.append(
+            {
+                "role": "user",
+                "content": f"Tool results: {json.dumps(tool_results_payload, ensure_ascii=False)}",
+            }
+        )
+    elif request.message:
+        messages.append({"role": "user", "content": request.message})
+
+    return messages
+
+
+def _build_gemini_contents(request: ChatRequest) -> list[dict[str, Any]]:
+    contents: list[dict[str, Any]] = []
+    for item in request.history:
+        role = "model" if item.role == "assistant" else "user"
+        contents.append({"role": role, "parts": [{"text": _stringify_content(item.content)}]})
+
+    if request.tool_results:
+        tool_results_payload = [
+            {
+                "tool_use_id": tr.tool_use_id,
+                "content": tr.content,
+                **({"is_error": True} if tr.is_error else {}),
+            }
+            for tr in request.tool_results
+        ]
+        contents.append(
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "text": f"Tool results: {json.dumps(tool_results_payload, ensure_ascii=False)}"
+                    }
+                ],
+            }
+        )
+    elif request.message:
+        contents.append({"role": "user", "parts": [{"text": request.message}]})
+
+    return contents
+
+
+def _as_openai_tools() -> list[dict[str, Any]]:
+    tools: list[dict[str, Any]] = []
+    for tool in TOOL_DEFINITIONS:
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool.get("description", ""),
+                    "parameters": tool.get("input_schema", {"type": "object", "properties": {}}),
+                },
+            }
+        )
+    return tools
+
+
+def _as_gemini_tools() -> list[dict[str, Any]]:
+    declarations: list[dict[str, Any]] = []
+    for tool in TOOL_DEFINITIONS:
+        declarations.append(
+            {
+                "name": tool["name"],
+                "description": tool.get("description", ""),
+                "parameters": tool.get("input_schema", {"type": "object", "properties": {}}),
+            }
+        )
+    return [{"functionDeclarations": declarations}]
+
+
 # ---------------------------------------------------------------------------
 # Live mode — real Claude API
 # ---------------------------------------------------------------------------
 
 
-async def _stream_claude(request: ChatRequest):
+async def _stream_claude(request: ChatRequest, *, model_id: str):
     from anthropic import AsyncAnthropic
 
     client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -431,7 +534,7 @@ async def _stream_claude(request: ChatRequest):
     yield ChatEvent(
         type="start",
         conversation_id=request.conversation_id,
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
     current_tool_id: str | None = None
@@ -441,7 +544,7 @@ async def _stream_claude(request: ChatRequest):
 
     try:
         async with client.messages.stream(
-            model=settings.AI_MODEL_NAME,
+            model=model_id,
             max_tokens=4096,
             system=system,
             messages=messages,
@@ -496,13 +599,162 @@ async def _stream_claude(request: ChatRequest):
     usage = AIUsageMeta(
         tokens_in=final_message.usage.input_tokens if final_message else 0,
         tokens_out=final_message.usage.output_tokens if final_message else 0,
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
     )
     yield ChatEvent(
         type="done",
         message_id=uuid4(),
         usage=usage,
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
+    ).model_dump(mode="json", exclude_none=True)
+
+
+async def _stream_openai(request: ChatRequest, *, model_id: str):
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    messages = _build_openai_messages(request)
+    system = _build_system_prompt(request)
+    tools = _as_openai_tools()
+
+    yield ChatEvent(
+        type="start",
+        conversation_id=request.conversation_id,
+        model=model_id,
+    ).model_dump(mode="json", exclude_none=True)
+
+    try:
+        response = await client.chat.completions.create(
+            model=model_id,
+            messages=[
+                {"role": "system", "content": system},
+                *messages,
+            ],
+            tools=tools,
+            tool_choice="auto",
+        )
+    except Exception:
+        logger.exception("OpenAI chat request failed")
+        yield ChatEvent(
+            type="error", error="OpenAI API call failed"
+        ).model_dump(mode="json", exclude_none=True)
+        return
+
+    choice = response.choices[0] if response.choices else None
+    message = choice.message if choice else None
+
+    if message and message.content:
+        yield ChatEvent(type="chunk", content=message.content).model_dump(
+            mode="json", exclude_none=True
+        )
+
+    if message and message.tool_calls:
+        for call in message.tool_calls:
+            raw_args = call.function.arguments or "{}"
+            try:
+                parsed_input = json.loads(raw_args)
+            except json.JSONDecodeError:
+                parsed_input = {}
+            yield ChatEvent(
+                type="tool_call",
+                tool_use_id=call.id,
+                tool_name=call.function.name,
+                tool_input=parsed_input,
+            ).model_dump(mode="json", exclude_none=True)
+
+    usage = AIUsageMeta(
+        tokens_in=response.usage.prompt_tokens if response.usage else 0,
+        tokens_out=response.usage.completion_tokens if response.usage else 0,
+        model=model_id,
+    )
+    yield ChatEvent(
+        type="done",
+        message_id=uuid4(),
+        usage=usage,
+        model=model_id,
+    ).model_dump(mode="json", exclude_none=True)
+
+
+async def _stream_gemini(request: ChatRequest, *, model_id: str):
+    import httpx
+
+    system = _build_system_prompt(request)
+    contents = _build_gemini_contents(request)
+    tools = _as_gemini_tools()
+
+    yield ChatEvent(
+        type="start",
+        conversation_id=request.conversation_id,
+        model=model_id,
+    ).model_dump(mode="json", exclude_none=True)
+
+    endpoint = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{model_id}:generateContent"
+    )
+    payload = {
+        "system_instruction": {"parts": [{"text": system}]},
+        "contents": contents,
+        "tools": tools,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                endpoint,
+                params={"key": settings.GEMINI_API_KEY},
+                json=payload,
+            )
+    except Exception:
+        logger.exception("Gemini chat request failed")
+        yield ChatEvent(
+            type="error", error="Gemini API call failed"
+        ).model_dump(mode="json", exclude_none=True)
+        return
+
+    if response.status_code >= 400:
+        logger.error("Gemini API error status=%s body=%s", response.status_code, response.text)
+        yield ChatEvent(
+            type="error", error="Gemini API call failed"
+        ).model_dump(mode="json", exclude_none=True)
+        return
+
+    try:
+        data = response.json()
+    except ValueError:
+        yield ChatEvent(
+            type="error", error="Malformed Gemini response"
+        ).model_dump(mode="json", exclude_none=True)
+        return
+
+    candidate = (data.get("candidates") or [{}])[0]
+    parts = ((candidate.get("content") or {}).get("parts")) or []
+
+    for part in parts:
+        if isinstance(part, dict) and isinstance(part.get("text"), str):
+            yield ChatEvent(type="chunk", content=part["text"]).model_dump(
+                mode="json", exclude_none=True
+            )
+        function_call = part.get("functionCall") if isinstance(part, dict) else None
+        if function_call:
+            yield ChatEvent(
+                type="tool_call",
+                tool_use_id=str(uuid4()),
+                tool_name=function_call.get("name"),
+                tool_input=function_call.get("args") or {},
+            ).model_dump(mode="json", exclude_none=True)
+
+    usage_meta = data.get("usageMetadata") or {}
+    usage = AIUsageMeta(
+        tokens_in=int(usage_meta.get("promptTokenCount", 0) or 0),
+        tokens_out=int(usage_meta.get("candidatesTokenCount", 0) or 0),
+        model=model_id,
+    )
+    yield ChatEvent(
+        type="done",
+        message_id=uuid4(),
+        usage=usage,
+        model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
 
@@ -563,18 +815,18 @@ def _compose_mock_answer(request: ChatRequest) -> str:
     )
 
 
-async def _stream_mock(request: ChatRequest):
+async def _stream_mock(request: ChatRequest, *, model_id: str):
     answer = _compose_mock_answer(request)
     usage = AIUsageMeta(
         tokens_in=_estimate_tokens(request.message or ""),
         tokens_out=_estimate_tokens(answer),
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
     )
 
     yield ChatEvent(
         type="start",
         conversation_id=request.conversation_id,
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
     for chunk in _chunk_text(answer):
@@ -587,7 +839,7 @@ async def _stream_mock(request: ChatRequest):
         type="done",
         message_id=uuid4(),
         usage=usage,
-        model=settings.AI_MODEL_NAME,
+        model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
 
@@ -597,11 +849,24 @@ async def _stream_mock(request: ChatRequest):
 
 
 async def stream_chat_events(request: ChatRequest):
-    if _use_live_mode():
-        async for event in _stream_claude(request):
+    provider, model_id, error = _resolve_runtime_provider_and_model(request)
+    if error:
+        yield ChatEvent(type="error", error=error, model=model_id).model_dump(
+            mode="json", exclude_none=True
+        )
+        return
+
+    if provider == "anthropic":
+        async for event in _stream_claude(request, model_id=model_id):
+            yield event
+    elif provider == "openai":
+        async for event in _stream_openai(request, model_id=model_id):
+            yield event
+    elif provider == "gemini":
+        async for event in _stream_gemini(request, model_id=model_id):
             yield event
     else:
-        async for event in _stream_mock(request):
+        async for event in _stream_mock(request, model_id=model_id):
             yield event
 
 

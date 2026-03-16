@@ -44,11 +44,19 @@ Coverage is enabled through pytest config, matching the backend test workflow.
 
 - `AI_SERVICE_SHARED_SECRET` (required for backend calls)
 - `AI_MODE` (`mock` by default)
+- `AI_PROVIDER` (`anthropic` by default; values: `anthropic`, `openai`, `gemini`)
 - `AI_MODEL_NAME` (default `sophikon-mock-v1`)
 - `ENV` (`development` by default)
 - `ANTHROPIC_API_KEY` (optional, live mode)
 - `OPENAI_API_KEY` (optional, live mode)
 - `GEMINI_API_KEY` (optional, live mode)
+
+When `AI_MODE=live`, provider selection is:
+- `AI_PROVIDER=anthropic` -> requires `ANTHROPIC_API_KEY`
+- `AI_PROVIDER=openai` -> requires `OPENAI_API_KEY`
+- `AI_PROVIDER=gemini` -> requires `GEMINI_API_KEY`
+
+If provider/key is missing, service falls back to `mock` mode.
 
 ## API Endpoints
 

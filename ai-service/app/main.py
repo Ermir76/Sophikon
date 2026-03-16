@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from app.core.config import settings
 from app.schema.contracts import ChatRequest, EstimateRequest, SuggestionsRequest
 from app.service.brain_service import build_estimates, build_suggestions, stream_chat_events
+from app.service.model_catalog import get_catalog_payload
 
 # Intentional small-service exception: keep routing and endpoint definitions in a
 # single module while the AI service surface remains tiny and easy to scan.
@@ -32,6 +33,13 @@ def verify_service_secret(
 @app.get("/health")
 async def health():
     return {"status": "ok", "mode": settings.AI_MODE}
+
+
+@app.get("/v1/brain/models")
+async def list_models(
+    _: Annotated[None, Depends(verify_service_secret)],
+):
+    return get_catalog_payload()
 
 
 @app.post("/v1/brain/chat")
