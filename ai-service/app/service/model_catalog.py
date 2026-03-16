@@ -28,9 +28,9 @@ MODEL_CATALOG: dict[str, ProviderOption] = {
         display_name="Anthropic",
         requires_env_key="ANTHROPIC_API_KEY",
         models=(
-            ModelOption("claude-3-7-sonnet-latest", "Claude 3.7 Sonnet", recommended=True),
-            ModelOption("claude-3-5-sonnet-latest", "Claude 3.5 Sonnet"),
-            ModelOption("claude-3-5-haiku-latest", "Claude 3.5 Haiku"),
+            ModelOption("claude-haiku-4-5-20251001", "Claude Haiku 4.5", recommended=True),
+            ModelOption("claude-sonnet-4-6", "Claude Sonnet 4.6"),
+            ModelOption("claude-opus-4-6", "Claude Opus 4.6"),
         ),
     ),
     "openai": ProviderOption(
@@ -40,7 +40,7 @@ MODEL_CATALOG: dict[str, ProviderOption] = {
         models=(
             ModelOption("gpt-5-mini", "GPT-5 mini", recommended=True),
             ModelOption("gpt-5", "GPT-5"),
-            ModelOption("gpt-4.1-mini", "GPT-4.1 mini"),
+            ModelOption("gpt-5-nano", "GPT-5 nano"),
         ),
     ),
     "gemini": ProviderOption(
@@ -48,17 +48,18 @@ MODEL_CATALOG: dict[str, ProviderOption] = {
         display_name="Google Gemini",
         requires_env_key="GEMINI_API_KEY",
         models=(
-            ModelOption("gemini-2.5-flash", "Gemini 2.5 Flash", recommended=True),
-            ModelOption("gemini-2.5-pro", "Gemini 2.5 Pro"),
+            ModelOption("gemini-2.5-pro", "Gemini 2.5 Pro", recommended=True),
+            ModelOption("gemini-2.5-flash", "Gemini 2.5 Flash"),
+            ModelOption("gemini-3-flash-preview", "Gemini 3 Flash Preview"),
         ),
     ),
 }
 
 DEFAULT_PROVIDER = "gemini"
 DEFAULT_MODELS: dict[str, str] = {
-    "anthropic": "claude-3-7-sonnet-latest",
+    "anthropic": "claude-haiku-4-5-20251001",
     "openai": "gpt-5-mini",
-    "gemini": "gemini-2.5-flash",
+    "gemini": "gemini-2.5-pro",
 }
 
 

@@ -43,6 +43,10 @@ async def stream_openai(
                     maybe_text = item.get("text")
                     if isinstance(maybe_text, str):
                         parts.append(maybe_text)
+                    continue
+                maybe_text = getattr(item, "text", None)
+                if isinstance(maybe_text, str):
+                    parts.append(maybe_text)
             return "".join(parts) if parts else None
         return None
 

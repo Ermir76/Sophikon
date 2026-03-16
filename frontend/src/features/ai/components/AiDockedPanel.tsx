@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router";
 import {
   Bot,
@@ -17,7 +18,7 @@ import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
 import type { AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
 import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
-import { useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
+import { taskKeys, useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { cn } from "@/shared/lib/utils";
@@ -69,6 +70,7 @@ export function AiDockedPanel({
 }: AiDockedPanelProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentView = location.pathname.split("/")[3] ?? "overview";
 
   const projectPanel = useAiPanelStore((state) => state.projects[projectId]);
@@ -189,6 +191,8 @@ export function AiDockedPanel({
     const toolMessageIds = new Map<string, string>();
 
     let hadChunk = false;
+    let hadToolOrUiEvent = false;
+    let streamErrorMessage: string | null = null;
     try {
       await aiService.streamChat(
         projectId,
@@ -217,6 +221,7 @@ export function AiDockedPanel({
             appendToMessage(projectId, assistantMessageId, event.content);
           }
           if (event.type === "tool_call") {
+            hadToolOrUiEvent = true;
             const toolMsgId = crypto.randomUUID();
             toolMessageIds.set(event.tool_use_id, toolMsgId);
             appendMessage(projectId, {
@@ -229,12 +234,22 @@ export function AiDockedPanel({
             });
           }
           if (event.type === "tool_result") {
+            hadToolOrUiEvent = true;
             const toolMsgId = toolMessageIds.get(event.tool_use_id);
             if (toolMsgId) {
               updateToolStatus(projectId, toolMsgId, "done");
             }
+            const writeTool = [
+              "create_task", "update_task", "delete_task",
+              "bulk_create_tasks", "indent_task", "outdent_task",
+              "reorder_task", "calculate_schedule",
+            ];
+            if (event.tool_name && writeTool.includes(event.tool_name)) {
+              queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+            }
           }
           if (event.type === "approval_required") {
+            hadToolOrUiEvent = true;
             setPendingApproval(projectId, {
               approval_id: event.approval_id,
               tool_name: event.tool_name,
@@ -251,10 +266,12 @@ export function AiDockedPanel({
             });
           }
           if (event.type === "ui_action") {
+            hadToolOrUiEvent = true;
             handleUiAction(event.action, event.tool_input ?? {});
           }
           if (event.type === "error") {
-            toast.error(event.error || "AI chat failed");
+            streamErrorMessage = event.error || "AI chat failed";
+            toast.error(streamErrorMessage);
           }
         },
       );
@@ -262,12 +279,24 @@ export function AiDockedPanel({
       replaceMessageContent(projectId, assistantMessageId, "Unable to generate a response.");
       toast.error(getErrorMessage(error));
     } finally {
-      const activeApproval = useAiPanelStore.getState().projects[projectId]?.pendingApproval;
-      if (activeApproval) {
-        aiService.resolveApproval(projectId, activeApproval.approval_id, false).catch(() => {});
+      try {
+        const activeApproval = useAiPanelStore.getState().projects[projectId]?.pendingApproval;
+        if (activeApproval) {
+          void aiService.resolveApproval(projectId, activeApproval.approval_id, false).catch(() => {});
+        }
+      } catch {
+        // ignore — approval may have already been resolved or timed out
       }
       setPendingApproval(projectId, null);
-      if (!hadChunk) {
+      if (streamErrorMessage && !hadChunk) {
+        replaceMessageContent(projectId, assistantMessageId, streamErrorMessage);
+      } else if (!hadChunk && hadToolOrUiEvent) {
+        replaceMessageContent(
+          projectId,
+          assistantMessageId,
+          "Action processed. See tool activity below.",
+        );
+      } else if (!hadChunk && !hadToolOrUiEvent) {
         replaceMessageContent(
           projectId,
           assistantMessageId,

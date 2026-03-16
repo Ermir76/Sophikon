@@ -38,7 +38,13 @@ def test_stream_openai_emits_chunk_function_tool_call_and_done(monkeypatch):
                     usage=None,
                     choices=[
                         SimpleNamespace(
-                            delta=SimpleNamespace(content="hello ", tool_calls=None)
+                            delta=SimpleNamespace(
+                                content=[
+                                    SimpleNamespace(text="hello "),
+                                    SimpleNamespace(text="from openai"),
+                                ],
+                                tool_calls=None,
+                            )
                         )
                     ],
                 )
@@ -48,7 +54,7 @@ def test_stream_openai_emits_chunk_function_tool_call_and_done(monkeypatch):
                     choices=[
                         SimpleNamespace(
                             delta=SimpleNamespace(
-                                content="from openai",
+                                content=None,
                                 tool_calls=[
                                     SimpleNamespace(
                                         type="function",

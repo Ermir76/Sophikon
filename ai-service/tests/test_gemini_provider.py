@@ -97,3 +97,53 @@ def test_stream_gemini_emits_chunk_tool_call_and_done(monkeypatch):
     assert captured["configured_key"] == "test-key"
     assert captured["model_name"] == "gemini-2.5-flash"
     assert captured["stream"] is True
+
+
+def test_stream_gemini_emits_chunk_from_candidate_parts_when_chunk_text_is_empty(monkeypatch):
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
+
+    class FakeChunk:
+        def __init__(self):
+            self.text = None
+            self.usage_metadata = None
+            self.candidates = [
+                SimpleNamespace(
+                    content=SimpleNamespace(parts=[SimpleNamespace(text="hello from candidate parts")])
+                )
+            ]
+
+    class FakeGenerativeModel:
+        def __init__(self, *, model_name, system_instruction, tools):
+            self.model_name = model_name
+            self.system_instruction = system_instruction
+            self.tools = tools
+
+        def generate_content(self, contents, stream):
+            return iter([FakeChunk()])
+
+    monkeypatch.setitem(
+        sys.modules,
+        "google.generativeai",
+        SimpleNamespace(
+            configure=lambda **_: None,
+            GenerativeModel=FakeGenerativeModel,
+        ),
+    )
+
+    request = ChatRequest.model_validate(_request_payload())
+
+    async def _collect():
+        return [
+            event
+            async for event in gemini_provider.stream_gemini(
+                request,
+                model_id="gemini-2.5-flash",
+                tool_definitions=[],
+            )
+        ]
+
+    events = asyncio.run(_collect())
+    assert any(
+        event["type"] == "chunk" and event["content"] == "hello from candidate parts"
+        for event in events
+    )

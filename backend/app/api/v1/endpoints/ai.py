@@ -35,7 +35,7 @@ router = APIRouter(prefix="/projects/{project_id}/ai", tags=["ai"])
 
 
 def _to_chat_input(body: AIChatRequest) -> AIChatInput:
-    return AIChatInput.model_construct(**body.model_dump(mode="python"))
+    return AIChatInput.model_validate(body.model_dump(mode="python"))
 
 
 def _to_estimate_input(body: AIEstimateRequest) -> AIEstimateInput:

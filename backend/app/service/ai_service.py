@@ -302,7 +302,7 @@ async def _execute_tool(
         raise
     except Exception as exc:
         logger.exception("Tool execution error: %s", tool_name)
-        raise InvalidOperationError(f"Tool '{tool_name}' failed: {exc}") from exc
+        return json.dumps({"error": f"Tool '{tool_name}' failed: {exc}"})
 
 
 async def _dispatch_tool(
@@ -888,6 +888,7 @@ async def prepare_chat_stream(
         current_message: str | None = body.message
         current_tool_results: list[ToolResultInput] = []
         accumulated_text: list[str] = []
+        _pending_approval_id: str | None = None
         total_usage = AIUsageMeta()
         model: str | None = None
 
@@ -983,7 +984,9 @@ async def prepare_chat_stream(
                                 tool_input=tc.tool_input,
                             )
                         )
+                        _pending_approval_id = approval_id
                         approved = await _wait_for_approval(approval_id)
+                        _pending_approval_id = None
                         if not approved:
                             next_tool_results.append(
                                 ToolResultInput(
@@ -1014,10 +1017,18 @@ async def prepare_chat_stream(
                                     tool_input=tc.tool_input,
                                 )
                             )
+                        is_error = False
+                        try:
+                            _parsed = json.loads(result_content)
+                            if isinstance(_parsed, dict) and "error" in _parsed:
+                                is_error = True
+                        except Exception:
+                            pass
                         next_tool_results.append(
                             ToolResultInput(
                                 tool_use_id=tc.tool_use_id or "",
                                 content=result_content,
+                                is_error=is_error,
                             )
                         )
                     except AppException as exc:
@@ -1080,6 +1091,11 @@ async def prepare_chat_stream(
                 AIChatEvent(type="error", error="AI chat is temporarily unavailable")
             )
         finally:
+            if _pending_approval_id:
+                try:
+                    await resolve_approval(_pending_approval_id, False)
+                except Exception:
+                    pass
             assistant_text = "".join(accumulated_text).strip()
             try:
                 await asyncio.shield(
