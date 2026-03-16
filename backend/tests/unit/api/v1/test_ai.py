@@ -107,8 +107,9 @@ async def test_chat_streams_for_viewer(
         role_name="viewer",
     )
 
-    async def fake_prepare_chat_stream(db, project, user_id, body):
+    async def fake_prepare_chat_stream(db, project, user, body):
         assert str(project.id) == project_id
+        assert user.email == "ai-viewer@example.com"
         assert body.message == "Status?"
 
         async def _stream():

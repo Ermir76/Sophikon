@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import hash_token
 from app.models.password_reset import PasswordReset
-from app.service import auth_service
+from app.service import ai_service, auth_service
 
 
 @pytest.mark.asyncio
@@ -458,6 +458,7 @@ async def test_google_oauth_callback_success_sets_auth_cookies_and_redirects(
         "app.service.auth_service.login_with_google_code",
         _fake_login_with_google_code,
     )
+    client.cookies.set("oauth_google_state", "oauth-state")
 
     response = await client.get(
         "/api/v1/auth/oauth/google/callback",
@@ -963,3 +964,221 @@ async def test_upload_and_delete_avatar_success(
     delete_response = await client.delete("/api/v1/users/me/avatar")
     assert delete_response.status_code == 200
     assert delete_response.json()["avatar_url"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_ai_preferences_includes_catalog_and_defaults(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-get@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Get",
+        },
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return {
+            "providers": [
+                {
+                    "provider_id": "anthropic",
+                    "display_name": "Anthropic",
+                    "requires_env_key": "ANTHROPIC_API_KEY",
+                    "available": True,
+                    "models": [
+                        {
+                            "model_id": "claude-3-7-sonnet-latest",
+                            "label": "Claude 3.7 Sonnet",
+                            "recommended": True,
+                        }
+                    ],
+                }
+            ],
+            "defaults": {
+                "provider": "anthropic",
+                "model": "claude-3-7-sonnet-latest",
+                "mode": "live",
+            },
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+
+    response = await client.get("/api/v1/users/me/ai-preferences")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["provider"] == "anthropic"
+    assert data["model"] == "claude-3-7-sonnet-latest"
+    assert len(data["providers"]) == 1
+    assert data["defaults"]["provider"] == "anthropic"
+
+
+@pytest.mark.asyncio
+async def test_patch_ai_preferences_stores_provider_and_model(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-patch@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Patch",
+        },
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return {
+            "providers": [
+                {
+                    "provider_id": "anthropic",
+                    "display_name": "Anthropic",
+                    "requires_env_key": "ANTHROPIC_API_KEY",
+                    "available": True,
+                    "models": [
+                        {
+                            "model_id": "claude-3-7-sonnet-latest",
+                            "label": "Claude 3.7 Sonnet",
+                            "recommended": True,
+                        }
+                    ],
+                },
+                {
+                    "provider_id": "openai",
+                    "display_name": "OpenAI",
+                    "requires_env_key": "OPENAI_API_KEY",
+                    "available": True,
+                    "models": [
+                        {
+                            "model_id": "gpt-5-mini",
+                            "label": "GPT-5 mini",
+                            "recommended": True,
+                        }
+                    ],
+                },
+            ],
+            "defaults": {
+                "provider": "anthropic",
+                "model": "claude-3-7-sonnet-latest",
+                "mode": "live",
+            },
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+
+    response = await client.patch(
+        "/api/v1/users/me/ai-preferences",
+        json={"provider": "openai", "model": "gpt-5-mini"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["provider"] == "openai"
+    assert data["model"] == "gpt-5-mini"
+
+    me_response = await client.get("/api/v1/auth/me")
+    assert me_response.status_code == 200
+    me_data = me_response.json()
+    assert me_data["preferences"]["ai"]["provider"] == "openai"
+    assert me_data["preferences"]["ai"]["model"] == "gpt-5-mini"
+
+
+@pytest.mark.asyncio
+async def test_patch_ai_preferences_rejects_invalid_provider_model_pair(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-invalid@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Invalid",
+        },
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return {
+            "providers": [
+                {
+                    "provider_id": "openai",
+                    "display_name": "OpenAI",
+                    "requires_env_key": "OPENAI_API_KEY",
+                    "available": True,
+                    "models": [
+                        {
+                            "model_id": "gpt-5-mini",
+                            "label": "GPT-5 mini",
+                            "recommended": True,
+                        }
+                    ],
+                }
+            ],
+            "defaults": {
+                "provider": "openai",
+                "model": "gpt-5-mini",
+                "mode": "live",
+            },
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+
+    response = await client.patch(
+        "/api/v1/users/me/ai-preferences",
+        json={"provider": "openai", "model": "gemini-2.5-flash"},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_patch_ai_preferences_rejects_unavailable_provider(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "ai-preferences-provider-unavailable@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "AI Preferences Unavailable Provider",
+        },
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return {
+            "providers": [
+                {
+                    "provider_id": "gemini",
+                    "display_name": "Google Gemini",
+                    "requires_env_key": "GEMINI_API_KEY",
+                    "available": False,
+                    "models": [
+                        {
+                            "model_id": "gemini-2.5-flash",
+                            "label": "Gemini 2.5 Flash",
+                            "recommended": True,
+                        }
+                    ],
+                }
+            ],
+            "defaults": {
+                "provider": "gemini",
+                "model": "gemini-2.5-flash",
+                "mode": "live",
+            },
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+
+    response = await client.patch(
+        "/api/v1/users/me/ai-preferences",
+        json={"provider": "gemini", "model": "gemini-2.5-flash"},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"

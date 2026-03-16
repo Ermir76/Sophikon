@@ -100,6 +100,57 @@ def _service_project_context_payload() -> dict:
     }
 
 
+def _service_model_catalog_payload() -> dict:
+    return {
+        "providers": [
+            {
+                "provider_id": "anthropic",
+                "display_name": "Anthropic",
+                "requires_env_key": "ANTHROPIC_API_KEY",
+                "available": True,
+                "models": [
+                    {
+                        "model_id": "claude-3-7-sonnet-latest",
+                        "label": "Claude 3.7 Sonnet",
+                        "recommended": True,
+                    }
+                ],
+            },
+            {
+                "provider_id": "openai",
+                "display_name": "OpenAI",
+                "requires_env_key": "OPENAI_API_KEY",
+                "available": True,
+                "models": [
+                    {
+                        "model_id": "gpt-5-mini",
+                        "label": "GPT-5 mini",
+                        "recommended": True,
+                    }
+                ],
+            },
+            {
+                "provider_id": "gemini",
+                "display_name": "Google Gemini",
+                "requires_env_key": "GEMINI_API_KEY",
+                "available": False,
+                "models": [
+                    {
+                        "model_id": "gemini-2.5-flash",
+                        "label": "Gemini 2.5 Flash",
+                        "recommended": True,
+                    }
+                ],
+            },
+        ],
+        "defaults": {
+            "provider": "anthropic",
+            "model": "claude-3-7-sonnet-latest",
+            "mode": "live",
+        },
+    }
+
+
 @pytest.mark.asyncio
 async def test_build_project_context_includes_project_status_and_tasks(
     client: AsyncClient,
@@ -138,7 +189,7 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
         slug="org-ai-chat-stream",
     )
 
-    async def fake_stream_chat(body):
+    async def fake_stream_from_service(body):
         assert body.project_context.project_id == project.id
         yield AIChatEvent(type="start")
         yield AIChatEvent(type="chunk", content="All clear.")
@@ -151,13 +202,18 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
     async def fake_finalize_chat(**kwargs):
         return None
 
-    monkeypatch.setattr(ai_service, "stream_chat", fake_stream_chat)
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return _service_model_catalog_payload()
+
+    monkeypatch.setattr(ai_service, "_stream_from_service", fake_stream_from_service)
     monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
 
     stream = await ai_service.prepare_chat_stream(
         session,
         project=project,
-        user_id=user.id,
+        user=user,
         body=AIChatInput(message="How are we doing?"),
     )
     payloads = [chunk async for chunk in stream]
@@ -194,6 +250,91 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
     assert len(messages) == 1
     assert messages[0].role == AIMessageRole.USER
     assert messages[0].content == "How are we doing?"
+
+
+@pytest.mark.asyncio
+async def test_prepare_chat_stream_uses_user_selected_provider_and_model(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-provider-selection@example.com",
+        slug="org-ai-provider-selection",
+    )
+    user.preferences = {
+        "ai": {
+            "provider": "openai",
+            "model": "gpt-5-mini",
+        }
+    }
+    await session.commit()
+    await session.refresh(user)
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        return _service_model_catalog_payload()
+
+    async def fake_stream_from_service(body):
+        assert body.provider == "openai"
+        assert body.model == "gpt-5-mini"
+        yield AIChatEvent(type="start")
+        yield AIChatEvent(type="done")
+
+    async def fake_finalize_chat(**kwargs):
+        return None
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+    monkeypatch.setattr(ai_service, "_stream_from_service", fake_stream_from_service)
+    monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
+
+    stream = await ai_service.prepare_chat_stream(
+        session,
+        project=project,
+        user=user,
+        body=AIChatInput(message="Use selected model"),
+    )
+    payloads = [chunk async for chunk in stream]
+    assert any('"type": "done"' in chunk for chunk in payloads)
+
+
+@pytest.mark.asyncio
+async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailable(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-catalog-down@example.com",
+        slug="org-ai-catalog-down",
+    )
+
+    async def fake_get_model_catalog(*, force_refresh=False):
+        _ = force_refresh
+        raise InvalidOperationError("AI service is unavailable")
+
+    async def fake_finalize_chat(**kwargs):
+        return None
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
+    monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
+
+    stream = await ai_service.prepare_chat_stream(
+        session,
+        project=project,
+        user=user,
+        body=AIChatInput(message="Hello?"),
+    )
+    payloads = [chunk async for chunk in stream]
+
+    assert len(payloads) == 1
+    parsed = json.loads(payloads[0].removeprefix("data: ").strip())
+    assert parsed["type"] == "error"
+    assert parsed["error"] == "AI service is unavailable"
 
 
 def test_ai_schema_accepts_uuid_utils_uuid_values():
@@ -347,7 +488,7 @@ async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
 
     events = [
         event
-        async for event in ai_service.stream_chat(
+        async for event in ai_service._stream_from_service(
             AIProviderChatRequest(
                 message="Status?",
                 project_context=_service_project_context_payload(),
@@ -384,7 +525,7 @@ async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailab
     monkeypatch.setattr(ai_service.httpx, "AsyncClient", FailingAsyncClient)
 
     with pytest.raises(InvalidOperationError, match="AI service is unavailable"):
-        events = ai_service.stream_chat(
+        events = ai_service._stream_from_service(
             AIProviderChatRequest(
                 message="Status?",
                 project_context=_service_project_context_payload(),

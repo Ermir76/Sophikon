@@ -149,6 +149,8 @@ class AIProviderEstimateTaskInput(BaseModel):
 
 class AIProviderChatRequest(BaseModel):
     message: str | None = None
+    provider: str | None = Field(default=None, max_length=32)
+    model: str | None = Field(default=None, max_length=128)
     project_context: ProjectContext
     conversation_id: ContractUUID | None = None
     user_id: ContractUUID

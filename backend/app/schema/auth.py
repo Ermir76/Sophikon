@@ -87,7 +87,33 @@ class MessageResponse(BaseModel):
 
 class AIPreferencesRequest(BaseModel):
     auto_approve: dict[str, bool] = Field(default_factory=dict)
+    provider: str | None = Field(default=None, max_length=32)
+    model: str | None = Field(default=None, max_length=128)
+
+
+class AIModelOption(BaseModel):
+    model_id: str
+    label: str
+    recommended: bool = False
+
+
+class AIProviderOption(BaseModel):
+    provider_id: str
+    display_name: str
+    requires_env_key: str
+    available: bool
+    models: list[AIModelOption]
+
+
+class AIModelDefaults(BaseModel):
+    provider: str
+    model: str
+    mode: str
 
 
 class AIPreferencesResponse(BaseModel):
     auto_approve: dict[str, bool]
+    provider: str | None = None
+    model: str | None = None
+    providers: list[AIProviderOption] = Field(default_factory=list)
+    defaults: AIModelDefaults | None = None

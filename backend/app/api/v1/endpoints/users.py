@@ -122,9 +122,9 @@ async def upload_avatar(
 async def get_ai_preferences(
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    prefs = (user.preferences or {}).get("ai", {})
-    merged = {**ai_service._DEFAULT_AUTO_APPROVE, **prefs.get("auto_approve", {})}
-    return AIPreferencesResponse(auto_approve=merged)
+    catalog = await ai_service.get_model_catalog()
+    payload = ai_service.build_ai_preferences_response(user, catalog)
+    return AIPreferencesResponse(**payload)
 
 
 @router.patch("/me/ai-preferences", response_model=AIPreferencesResponse)
@@ -133,16 +133,18 @@ async def update_ai_preferences(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    current = dict(user.preferences or {})
-    current_ai = dict(current.get("ai", {}))
-    current_auto = dict(current_ai.get("auto_approve", {}))
-    current_auto.update(body.auto_approve)
-    current_ai["auto_approve"] = current_auto
-    current["ai"] = current_ai
-    user.preferences = current
+    catalog = await ai_service.get_model_catalog()
+    user.preferences = ai_service.apply_ai_preferences_patch(
+        user=user,
+        catalog=catalog,
+        auto_approve_patch=body.auto_approve,
+        provider_patch=body.provider,
+        model_patch=body.model,
+    )
     await db.commit()
-    merged = {**ai_service._DEFAULT_AUTO_APPROVE, **current_auto}
-    return AIPreferencesResponse(auto_approve=merged)
+    await db.refresh(user)
+    payload = ai_service.build_ai_preferences_response(user, catalog)
+    return AIPreferencesResponse(**payload)
 
 
 @router.delete("/me/avatar", response_model=UserResponse)

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
-from app.core.exceptions import AppException, InvalidOperationError, NotFoundError
+from app.core.exceptions import (
+    AppException,
+    InvalidOperationError,
+    NotFoundError,
+    ValidationError,
+)
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
 from app.models.ai_usage import AIUsage
@@ -109,10 +114,165 @@ _DEFAULT_AUTO_APPROVE: dict[str, bool] = {
     "filter_view": True,
 }
 
+_MODEL_CATALOG_CACHE_TTL = timedelta(seconds=30)
+_MODEL_CATALOG_CACHE: dict | None = None
+_MODEL_CATALOG_CACHE_EXPIRES_AT: datetime | None = None
+
 
 def _get_auto_approve(user: User, tool_name: str) -> bool:
     prefs = (user.preferences or {}).get("ai", {}).get("auto_approve", {})
     return prefs.get(tool_name, _DEFAULT_AUTO_APPROVE.get(tool_name, True))
+
+
+def _get_catalog_provider(catalog: dict, provider_id: str | None) -> dict | None:
+    if provider_id is None:
+        return None
+    for provider in catalog.get("providers", []):
+        if provider.get("provider_id") == provider_id:
+            return provider
+    return None
+
+
+def _recommended_model_id(provider: dict) -> str | None:
+    models = provider.get("models", [])
+    for model in models:
+        if model.get("recommended"):
+            return model.get("model_id")
+    if models:
+        return models[0].get("model_id")
+    return None
+
+
+def _is_valid_model_for_provider(
+    catalog: dict, provider_id: str, model_id: str
+) -> bool:
+    provider = _get_catalog_provider(catalog, provider_id)
+    if provider is None:
+        return False
+    return any(m.get("model_id") == model_id for m in provider.get("models", []))
+
+
+def _is_provider_available(catalog: dict, provider_id: str) -> bool:
+    provider = _get_catalog_provider(catalog, provider_id)
+    if provider is None:
+        return False
+    return bool(provider.get("available", False))
+
+
+def _read_user_ai_preferences(user: User) -> dict:
+    prefs = dict(user.preferences or {})
+    return dict(prefs.get("ai", {}))
+
+
+def _resolve_effective_provider_model(
+    user: User, catalog: dict
+) -> tuple[str | None, str | None]:
+    ai_prefs = _read_user_ai_preferences(user)
+    defaults = catalog.get("defaults", {})
+    provider = ai_prefs.get("provider") or defaults.get("provider")
+    model = ai_prefs.get("model") or defaults.get("model")
+
+    if provider and model and _is_valid_model_for_provider(catalog, provider, model):
+        return provider, model
+    default_provider = defaults.get("provider")
+    if default_provider:
+        provider_obj = _get_catalog_provider(catalog, default_provider)
+        if provider_obj is not None:
+            return default_provider, _recommended_model_id(provider_obj)
+
+    providers = catalog.get("providers", [])
+    if providers:
+        first_provider = providers[0]
+        return first_provider.get("provider_id"), _recommended_model_id(first_provider)
+    return None, None
+
+
+def build_ai_preferences_response(user: User, catalog: dict) -> dict:
+    ai_prefs = _read_user_ai_preferences(user)
+    auto = dict(ai_prefs.get("auto_approve", {}))
+    merged_auto = {**_DEFAULT_AUTO_APPROVE, **auto}
+    provider, model = _resolve_effective_provider_model(user, catalog)
+    return {
+        "auto_approve": merged_auto,
+        "provider": provider,
+        "model": model,
+        "providers": catalog.get("providers", []),
+        "defaults": catalog.get("defaults"),
+    }
+
+
+def apply_ai_preferences_patch(
+    *,
+    user: User,
+    catalog: dict,
+    auto_approve_patch: dict[str, bool],
+    provider_patch: str | None,
+    model_patch: str | None,
+) -> dict:
+    root = dict(user.preferences or {})
+    ai = dict(root.get("ai", {}))
+    auto_current = dict(ai.get("auto_approve", {}))
+    auto_current.update(auto_approve_patch)
+    ai["auto_approve"] = auto_current
+
+    defaults = catalog.get("defaults", {})
+    provider = provider_patch if provider_patch is not None else ai.get("provider")
+    model = model_patch if model_patch is not None else ai.get("model")
+    if provider is None:
+        provider = defaults.get("provider")
+    if provider:
+        provider_obj = _get_catalog_provider(catalog, provider)
+        if provider_obj is None:
+            raise ValidationError(f"Unsupported AI provider '{provider}'")
+        if not _is_provider_available(catalog, provider):
+            raise ValidationError(f"Provider '{provider}' is not configured on server")
+        if model is None or not _is_valid_model_for_provider(catalog, provider, model):
+            if model_patch is not None:
+                raise ValidationError(
+                    f"Model '{model_patch}' is not valid for provider '{provider}'"
+                )
+            model = _recommended_model_id(provider_obj)
+
+        if model is None:
+            raise ValidationError(f"No models configured for provider '{provider}'")
+        if not _is_valid_model_for_provider(catalog, provider, model):
+            raise ValidationError(
+                f"Model '{model}' is not valid for provider '{provider}'"
+            )
+
+    ai["provider"] = provider
+    ai["model"] = model
+    root["ai"] = ai
+    return root
+
+
+async def get_model_catalog(*, force_refresh: bool = False) -> dict:
+    global _MODEL_CATALOG_CACHE, _MODEL_CATALOG_CACHE_EXPIRES_AT
+    now = datetime.now(UTC)
+    if (
+        not force_refresh
+        and _MODEL_CATALOG_CACHE is not None
+        and _MODEL_CATALOG_CACHE_EXPIRES_AT is not None
+        and now < _MODEL_CATALOG_CACHE_EXPIRES_AT
+    ):
+        return _MODEL_CATALOG_CACHE
+
+    try:
+        async with httpx.AsyncClient(timeout=_request_timeout()) as client:
+            response = await client.get(
+                _service_url("/v1/brain/models"),
+                headers=_service_headers(),
+            )
+    except httpx.RequestError as exc:
+        raise InvalidOperationError("AI service is unavailable") from exc
+
+    if response.status_code >= 400:
+        raise InvalidOperationError(await _extract_error_message(response))
+
+    data = response.json()
+    _MODEL_CATALOG_CACHE = data
+    _MODEL_CATALOG_CACHE_EXPIRES_AT = now + _MODEL_CATALOG_CACHE_TTL
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -709,9 +869,10 @@ async def prepare_chat_stream(
     )
     await db.commit()
 
-    context = await build_project_context(db, project)
-
     async def _stream():
+        selected_provider: str | None = None
+        selected_model: str | None = None
+        context: ProjectContext | None = None
         history: list[ChatHistoryItem] = [
             ChatHistoryItem(role=item.role, content=item.content)
             for item in body.history
@@ -723,9 +884,17 @@ async def prepare_chat_stream(
         model: str | None = None
 
         try:
+            context = await build_project_context(db, project)
+            catalog = await get_model_catalog()
+            selected_provider, selected_model = _resolve_effective_provider_model(
+                user, catalog
+            )
+
             for iteration in range(_MAX_AGENTIC_ITERATIONS):
                 service_request = AIProviderChatRequest(
                     message=current_message,
+                    provider=selected_provider,
+                    model=selected_model,
                     project_context=context,
                     conversation_id=conversation.id,
                     user_id=user.id,

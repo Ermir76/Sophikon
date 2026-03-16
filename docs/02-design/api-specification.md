@@ -524,6 +524,71 @@ Remove avatar for the authenticated user.
 
 ---
 
+### GET /users/me/ai-preferences
+
+Get current-user AI assistant preferences and available provider/model catalog.
+
+**Response:** `200 OK`
+
+```json
+{
+  "auto_approve": {
+    "create_task": true,
+    "update_task": true
+  },
+  "provider": "openai",
+  "model": "gpt-5-mini",
+  "providers": [
+    {
+      "provider_id": "openai",
+      "display_name": "OpenAI",
+      "requires_env_key": "OPENAI_API_KEY",
+      "available": true,
+      "models": [
+        {
+          "model_id": "gpt-5-mini",
+          "label": "GPT-5 mini",
+          "recommended": true
+        }
+      ]
+    }
+  ],
+  "defaults": {
+    "provider": "anthropic",
+    "model": "claude-3-7-sonnet-latest",
+    "mode": "live"
+  }
+}
+```
+
+---
+
+### PATCH /users/me/ai-preferences
+
+Update current-user AI assistant preferences.
+
+**Request (partial):**
+
+```json
+{
+  "provider": "openai",
+  "model": "gpt-5-mini",
+  "auto_approve": {
+    "calculate_schedule": false
+  }
+}
+```
+
+**Response:** `200 OK` (same shape as `GET /users/me/ai-preferences`)
+
+Validation rules:
+
+- `provider` must be one of the configured providers in the AI catalog.
+- `model` must belong to the selected provider.
+- unavailable providers (missing server key) are rejected (422).
+
+---
+
 ### DELETE /users/me
 
 Deactivate account.
@@ -2696,6 +2761,12 @@ Get activity log.
 ---
 
 ## 18. AI Endpoints `[V1.0]`
+
+Internal AI service note:
+
+- Backend resolves provider/model options through an internal service-to-service endpoint:
+  - `GET /v1/brain/models` (ai-service, authenticated by `X-AI-Service-Secret`)
+- This endpoint is internal (not exposed under public `/api/v1`), and powers `/users/me/ai-preferences` defaults and validation.
 
 ### POST /projects/:id/ai/chat
 
