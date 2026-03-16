@@ -904,7 +904,7 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 - Database: PostgreSQL 18+
 - Cache: Redis 7+
 - Deployment: AWS (ECS or EC2), EU-hosted (GDPR)
-- AI: Claude API (primary), OpenAI (fallback), Ollama (local)
+- AI: Gemini (default), Anthropic, OpenAI (provider selectable)
 
 ### 6.2 Timeline Constraints
 

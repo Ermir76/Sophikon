@@ -54,7 +54,7 @@ MODEL_CATALOG: dict[str, ProviderOption] = {
     ),
 }
 
-DEFAULT_PROVIDER = "anthropic"
+DEFAULT_PROVIDER = "gemini"
 DEFAULT_MODELS: dict[str, str] = {
     "anthropic": "claude-3-7-sonnet-latest",
     "openai": "gpt-5-mini",

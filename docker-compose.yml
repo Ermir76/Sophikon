@@ -69,7 +69,7 @@ services:
       - "8010:8010"
     environment:
       AI_MODE: ${AI_MODE:-mock}
-      AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
       AI_MODEL_NAME: ${AI_MODEL_NAME:-sophikon-mock-v1}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}

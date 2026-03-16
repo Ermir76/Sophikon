@@ -557,8 +557,8 @@ Get current-user AI assistant preferences and available provider/model catalog.
     }
   ],
   "defaults": {
-    "provider": "anthropic",
-    "model": "claude-3-7-sonnet-latest",
+    "provider": "gemini",
+    "model": "gemini-2.5-flash",
     "mode": "live"
   }
 }

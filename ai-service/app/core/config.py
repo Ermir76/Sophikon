@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
 
     AI_MODE: str = "mock"
-    AI_PROVIDER: str = "anthropic"
+    AI_PROVIDER: str = "gemini"
     AI_MODEL_NAME: str = "sophikon-mock-v1"
 
     AI_SERVICE_SHARED_SECRET: str = "dev-ai-shared-secret"
