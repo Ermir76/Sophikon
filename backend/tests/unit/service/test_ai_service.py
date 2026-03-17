@@ -21,11 +21,12 @@ from app.service import ai_service
 from app.service.contracts.ai import (
     AIChatEvent,
     AIChatInput,
+    AICompleteRequest,
     AIEstimateInput,
-    AIProviderChatRequest,
     AIProviderEstimateRequest,
     AIProviderSuggestionsRequest,
-    AIUsageMeta,
+    ConversationMessage,
+    ConversationSummary,
 )
 
 
@@ -189,25 +190,25 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
         slug="org-ai-chat-stream",
     )
 
-    async def fake_stream_from_service(body):
-        assert body.project_context.project_id == project.id
-        yield AIChatEvent(type="start")
-        yield AIChatEvent(type="chunk", content="All clear.")
-        yield AIChatEvent(
-            type="done",
-            usage=AIUsageMeta(tokens_in=4, tokens_out=6, model="mock-brain"),
-            model="mock-brain",
-        )
+    from app.service.agent import loop as agent_loop
 
-    async def fake_finalize_chat(**kwargs):
-        return None
+    async def fake_run_agent(ctx, message):
+        import json
+
+        assert ctx.project_id == project.id
+
+        async def _gen():
+            yield f"data: {json.dumps({'type': 'start', 'conversation_id': str(ctx.conversation_id), 'model': 'mock'})}\n\n"
+            yield f"data: {json.dumps({'type': 'chunk', 'content': 'All clear.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'usage': {'tokens_in': 4, 'tokens_out': 6, 'model': 'mock-brain'}})}\n\n"
+
+        return _gen()
 
     async def fake_get_model_catalog(*, force_refresh=False):
         _ = force_refresh
         return _service_model_catalog_payload()
 
-    monkeypatch.setattr(ai_service, "_stream_from_service", fake_stream_from_service)
-    monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
+    monkeypatch.setattr(agent_loop, "run_agent", fake_run_agent)
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
 
     stream = await ai_service.prepare_chat_stream(
@@ -273,22 +274,25 @@ async def test_prepare_chat_stream_uses_user_selected_provider_and_model(
     await session.commit()
     await session.refresh(user)
 
+    from app.service.agent import loop as agent_loop
+
     async def fake_get_model_catalog(*, force_refresh=False):
         _ = force_refresh
         return _service_model_catalog_payload()
 
-    async def fake_stream_from_service(body):
-        assert body.provider == "openai"
-        assert body.model == "gpt-5-mini"
-        yield AIChatEvent(type="start")
-        yield AIChatEvent(type="done")
+    async def fake_run_agent(ctx, message):
+        assert ctx.provider == "openai"
+        assert ctx.model == "gpt-5-mini"
 
-    async def fake_finalize_chat(**kwargs):
-        return None
+        import json
+
+        async def _gen():
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+        return _gen()
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
-    monkeypatch.setattr(ai_service, "_stream_from_service", fake_stream_from_service)
-    monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
+    monkeypatch.setattr(agent_loop, "run_agent", fake_run_agent)
 
     stream = await ai_service.prepare_chat_stream(
         session,
@@ -340,22 +344,14 @@ async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailabl
 def test_ai_schema_accepts_uuid_utils_uuid_values():
     conversation_id = uuid7()
     message_id = uuid7()
-    user_id = uuid7()
-    project_id = uuid7()
 
-    request = AIProviderChatRequest(
-        message="Hello",
-        project_context={
-            "project_id": project_id,
-            "name": "AI Project",
-            "status": "ACTIVE",
-            "start_date": "2026-01-01",
-            "finish_date": None,
-            "updated_at": "2026-01-02T00:00:00Z",
-            "tasks": [],
-        },
+    request = AICompleteRequest(
+        messages=[{"role": "user", "content": "Hello"}],
+        tools=[],
+        system_prompt="You are a PM assistant.",
+        provider="mock",
+        model="mock",
         conversation_id=conversation_id,
-        user_id=user_id,
     )
     event = AIChatEvent(
         type="start",
@@ -364,7 +360,6 @@ def test_ai_schema_accepts_uuid_utils_uuid_values():
     )
 
     assert request.conversation_id == UUID(str(conversation_id))
-    assert request.user_id == UUID(str(user_id))
     assert event.model_dump(mode="json", exclude_none=True) == {
         "type": "start",
         "conversation_id": str(conversation_id),
@@ -488,12 +483,14 @@ async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
 
     events = [
         event
-        async for event in ai_service._stream_from_service(
-            AIProviderChatRequest(
-                message="Status?",
-                project_context=_service_project_context_payload(),
+        async for event in ai_service._complete_from_service(
+            AICompleteRequest(
+                messages=[{"role": "user", "content": "Status?"}],
+                tools=[],
+                system_prompt="You are a PM assistant.",
+                provider="mock",
+                model="mock",
                 conversation_id=uuid.uuid4(),
-                user_id=uuid.uuid4(),
             )
         )
     ]
@@ -525,12 +522,14 @@ async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailab
     monkeypatch.setattr(ai_service.httpx, "AsyncClient", FailingAsyncClient)
 
     with pytest.raises(InvalidOperationError, match="AI service is unavailable"):
-        events = ai_service._stream_from_service(
-            AIProviderChatRequest(
-                message="Status?",
-                project_context=_service_project_context_payload(),
+        events = ai_service._complete_from_service(
+            AICompleteRequest(
+                messages=[{"role": "user", "content": "Status?"}],
+                tools=[],
+                system_prompt="You are a PM assistant.",
+                provider="mock",
+                model="mock",
                 conversation_id=uuid.uuid4(),
-                user_id=uuid.uuid4(),
             )
         )
         async for _ in events:
@@ -636,6 +635,94 @@ async def test_apply_ai_preferences_patch_rejects_unknown_auto_approve_keys(
             provider_patch=None,
             model_patch=None,
         )
+
+
+@pytest.mark.asyncio
+async def test_list_conversations_returns_conversation_summaries(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-list-conv@example.com",
+        slug="org-ai-list-conv",
+    )
+    from uuid_utils import uuid7
+
+    conv = AIConversation(
+        id=uuid7(),
+        project_id=project.id,
+        user_id=user.id,
+        title="Test conversation",
+        status="idle",
+        mode="chat",
+    )
+    session.add(conv)
+    await session.commit()
+
+    result = await ai_service.list_conversations(
+        session, project_id=project.id, user_id=user.id
+    )
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], ConversationSummary)
+    assert result[0].id == conv.id
+    assert result[0].title == "Test conversation"
+    assert result[0].status == "idle"
+    assert result[0].mode == "chat"
+
+
+@pytest.mark.asyncio
+async def test_get_conversation_messages_returns_summary_and_messages(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-get-conv-msg@example.com",
+        slug="org-ai-get-conv-msg",
+    )
+    from uuid_utils import uuid7
+
+    conv = AIConversation(
+        id=uuid7(),
+        project_id=project.id,
+        user_id=user.id,
+        title="Msg conversation",
+        status="idle",
+        mode="chat",
+    )
+    session.add(conv)
+    await session.flush()
+
+    msg = AIMessage(
+        id=uuid7(),
+        conversation_id=conv.id,
+        role=AIMessageRole.USER,
+        content="Hello agent",
+    )
+    session.add(msg)
+    await session.commit()
+
+    summary, messages = await ai_service.get_conversation_messages(
+        session,
+        conversation_id=conv.id,
+        project_id=project.id,
+        user_id=user.id,
+    )
+
+    assert isinstance(summary, ConversationSummary)
+    assert summary.id == conv.id
+    assert summary.title == "Msg conversation"
+
+    assert isinstance(messages, list)
+    assert len(messages) == 1
+    assert isinstance(messages[0], ConversationMessage)
+    assert messages[0].content == "Hello agent"
+    assert messages[0].role == "user"
 
 
 @pytest.mark.asyncio
