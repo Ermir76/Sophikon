@@ -7,6 +7,8 @@ import type {
   AiEstimateRequest,
   AiEstimateResponse,
   AiSuggestionsResponse,
+  ConversationDetail,
+  ConversationSummary,
 } from "@/features/ai/types";
 
 const API_PREFIX = "/api/v1";
@@ -123,5 +125,31 @@ export const aiService = {
 
   async resolveApproval(projectId: string, approvalId: string, approved: boolean): Promise<void> {
     await api.post(`/projects/${projectId}/ai/approvals/${approvalId}`, { approved });
+  },
+
+  async resolvePlanApproval(
+    projectId: string,
+    conversationId: string,
+    approved: boolean,
+    feedback?: string,
+  ): Promise<void> {
+    await api.post(`/projects/${projectId}/ai/plan-approval/${conversationId}`, {
+      approved,
+      feedback: feedback ?? null,
+    });
+  },
+
+  async getConversations(projectId: string): Promise<ConversationSummary[]> {
+    const response = await api.get<{ conversations: ConversationSummary[] }>(
+      `/projects/${projectId}/ai/conversations`,
+    );
+    return response.data.conversations;
+  },
+
+  async getConversation(projectId: string, conversationId: string): Promise<ConversationDetail> {
+    const response = await api.get<ConversationDetail>(
+      `/projects/${projectId}/ai/conversations/${conversationId}`,
+    );
+    return response.data;
   },
 };

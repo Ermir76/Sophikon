@@ -17,6 +17,29 @@ export interface AiChatMessage {
   createdAt: number;
   toolName?: string;
   toolStatus?: ToolCallStatus;
+  toolResult?: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string | null;
+  status: string;
+  mode: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationDetail {
+  id: string;
+  title: string | null;
+  status: string;
+  mode: string;
+  messages: Array<{
+    id: string;
+    role: string;
+    content: string;
+    created_at: string;
+  }>;
 }
 
 export interface AiChatRequest {

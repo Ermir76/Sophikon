@@ -7,8 +7,12 @@ interface ProjectAiPanelState {
   activeTab: AiTab;
   panelSize: number;
   conversationId: string | null;
+  conversationStatus: string | null;
   messages: AiChatMessage[];
   pendingApproval: PendingApproval | null;
+  pendingPlan: Array<{ action: string; reason: string }> | null;
+  isThinking: boolean;
+  reasoningText: string;
 }
 
 interface AiPanelStore {
@@ -18,16 +22,19 @@ interface AiPanelStore {
   setActiveTab: (projectId: string, tab: AiTab) => void;
   setPanelSize: (projectId: string, panelSize: number) => void;
   setConversationId: (projectId: string, conversationId: string | null) => void;
+  setConversationStatus: (projectId: string, status: string | null) => void;
   appendMessage: (projectId: string, message: AiChatMessage) => void;
   appendToMessage: (projectId: string, messageId: string, delta: string) => void;
-  replaceMessageContent: (
-    projectId: string,
-    messageId: string,
-    content: string,
-  ) => void;
+  replaceMessageContent: (projectId: string, messageId: string, content: string) => void;
   clearConversation: (projectId: string) => void;
+  loadConversationMessages: (projectId: string, conversationId: string, messages: AiChatMessage[]) => void;
   setPendingApproval: (projectId: string, approval: PendingApproval | null) => void;
   updateToolStatus: (projectId: string, messageId: string, status: ToolCallStatus) => void;
+  setToolResult: (projectId: string, messageId: string, result: string) => void;
+  setPendingPlan: (projectId: string, steps: Array<{ action: string; reason: string }> | null) => void;
+  setThinking: (projectId: string, value: boolean) => void;
+  appendReasoningText: (projectId: string, text: string) => void;
+  clearReasoningText: (projectId: string) => void;
 }
 
 const DEFAULT_PROJECT_STATE: ProjectAiPanelState = {
@@ -35,8 +42,12 @@ const DEFAULT_PROJECT_STATE: ProjectAiPanelState = {
   activeTab: "chat",
   panelSize: 34,
   conversationId: null,
+  conversationStatus: null,
   messages: [],
   pendingApproval: null,
+  pendingPlan: null,
+  isThinking: false,
+  reasoningText: "",
 };
 
 function getProjectState(
@@ -115,10 +126,18 @@ export const useAiPanelStore = create<AiPanelStore>((set) => ({
       return {
         projects: {
           ...state.projects,
-          [projectId]: {
-            ...current,
-            conversationId,
-          },
+          [projectId]: { ...current, conversationId },
+        },
+      };
+    }),
+
+  setConversationStatus: (projectId, status) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: { ...current, conversationStatus: status },
         },
       };
     }),
@@ -180,8 +199,31 @@ export const useAiPanelStore = create<AiPanelStore>((set) => ({
           [projectId]: {
             ...current,
             conversationId: null,
+            conversationStatus: null,
             messages: [],
             pendingApproval: null,
+            pendingPlan: null,
+            isThinking: false,
+            reasoningText: "",
+          },
+        },
+      };
+    }),
+
+  loadConversationMessages: (projectId, conversationId, messages) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: {
+            ...current,
+            conversationId,
+            messages,
+            pendingApproval: null,
+            pendingPlan: null,
+            isThinking: false,
+            reasoningText: "",
           },
         },
       };
@@ -193,10 +235,7 @@ export const useAiPanelStore = create<AiPanelStore>((set) => ({
       return {
         projects: {
           ...state.projects,
-          [projectId]: {
-            ...current,
-            pendingApproval: approval,
-          },
+          [projectId]: { ...current, pendingApproval: approval },
         },
       };
     }),
@@ -209,10 +248,70 @@ export const useAiPanelStore = create<AiPanelStore>((set) => ({
           ...state.projects,
           [projectId]: {
             ...current,
-            messages: current.messages.map((message) =>
-              message.id === messageId ? { ...message, toolStatus: status } : message,
+            messages: current.messages.map((m) =>
+              m.id === messageId ? { ...m, toolStatus: status } : m,
             ),
           },
+        },
+      };
+    }),
+
+  setToolResult: (projectId, messageId, result) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: {
+            ...current,
+            messages: current.messages.map((m) =>
+              m.id === messageId ? { ...m, toolResult: result } : m,
+            ),
+          },
+        },
+      };
+    }),
+
+  setPendingPlan: (projectId, steps) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: { ...current, pendingPlan: steps },
+        },
+      };
+    }),
+
+  setThinking: (projectId, value) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: { ...current, isThinking: value },
+        },
+      };
+    }),
+
+  appendReasoningText: (projectId, text) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: { ...current, reasoningText: current.reasoningText + text },
+        },
+      };
+    }),
+
+  clearReasoningText: (projectId) =>
+    set((state) => {
+      const current = getProjectState(state.projects, projectId);
+      return {
+        projects: {
+          ...state.projects,
+          [projectId]: { ...current, reasoningText: "" },
         },
       };
     }),
