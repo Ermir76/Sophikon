@@ -563,7 +563,10 @@ async def prepare_chat_stream(
 
 
 # ---------------------------------------------------------------------------
-# Estimate and suggestions (unchanged)
+# Estimate and suggestions
+# TODO: Phase 6 — /v1/brain/estimate on ai-service was deleted in Phase 3.
+# These functions call a deleted endpoint and will return a 404 at runtime.
+# Replace with real LLM calls via the agent loop (executor + get_tasks tool).
 # ---------------------------------------------------------------------------
 
 
@@ -585,6 +588,8 @@ async def request_estimate(body: AIProviderEstimateRequest) -> dict:
         raise InvalidOperationError("AI estimation service is unavailable")
 
 
+# TODO: Phase 6 — /v1/brain/suggestions on ai-service was deleted in Phase 3.
+# Same as request_estimate — will 404 at runtime until replaced by agent calls.
 async def request_suggestions(body: AIProviderSuggestionsRequest) -> dict:
     try:
         async with httpx.AsyncClient(timeout=_request_timeout()) as client:
