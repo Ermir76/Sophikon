@@ -1,54 +1,53 @@
 import asyncio
-from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from app.schema.contracts import AIUsageMeta, ChatEvent, ChatRequest
+from app.schema.contracts import AIUsageMeta, ChatEvent
 from app.service.providers.common import chunk_text, estimate_tokens
 
 
-def compose_mock_answer(request: ChatRequest) -> str:
-    tasks = request.project_context.tasks
-    today = date.today()
-    overdue = sum(1 for t in tasks if t.percent_complete < 100 and t.finish_date < today)
-    in_progress = sum(1 for t in tasks if 0 < t.percent_complete < 100)
-    completed = sum(1 for t in tasks if t.percent_complete >= 100)
-    total = len(tasks)
-    name = request.project_context.name
-    question = (request.message or "").lower()
-
-    if "overdue" in question:
-        return (
-            f"{name} has {overdue} overdue tasks out of {total}. "
-            "Prioritize tasks with past finish dates and low completion."
-        )
-    if "progress" in question or "status" in question:
-        return (
-            f"{name}: {completed} completed, {in_progress} in progress, {overdue} overdue "
-            f"out of {total} total tasks."
-        )
-    if "suggest" in question or "next" in question:
-        return (
-            f"Recommended: resolve {overdue} overdue tasks first, then focus on "
-            f"{in_progress} active tasks to improve schedule confidence."
-        )
-    return (
-        f"I reviewed {name}: {completed}/{total} tasks complete, "
-        f"{in_progress} in progress, {overdue} overdue. "
-        "Ask about overdue tasks, progress, or schedule suggestions."
+def _compose_mock_answer(messages: list[dict]) -> str:
+    last_user = next(
+        (m for m in reversed(messages) if m.get("role") == "user"), None
     )
+    if last_user is None:
+        return "No user message received."
+    content = last_user.get("content", "")
+    if isinstance(content, list):
+        text = " ".join(
+            b.get("text", b.get("content", ""))
+            for b in content
+            if isinstance(b, dict)
+        )
+    else:
+        text = str(content)
+
+    question = text.lower()
+    if "overdue" in question:
+        return "I checked the project. Several tasks appear overdue. I recommend prioritising tasks past their finish date."
+    if "progress" in question or "status" in question:
+        return "The project is currently in progress. Some tasks are complete, some are still active."
+    if "suggest" in question or "next" in question:
+        return "Recommended: resolve overdue tasks first, then focus on in-progress items to improve schedule confidence."
+    return f"I reviewed your request: '{text[:100]}'. Let me know how you'd like to proceed."
 
 
-async def stream_mock(request: ChatRequest, *, model_id: str):
-    answer = compose_mock_answer(request)
+async def stream_mock(
+    messages: list[dict],
+    system_prompt: str,
+    *,
+    model_id: str,
+    conversation_id: UUID | None = None,
+):
+    answer = _compose_mock_answer(messages)
     usage = AIUsageMeta(
-        tokens_in=estimate_tokens(request.message or ""),
+        tokens_in=estimate_tokens(system_prompt),
         tokens_out=estimate_tokens(answer),
         model=model_id,
     )
 
     yield ChatEvent(
         type="start",
-        conversation_id=request.conversation_id,
+        conversation_id=conversation_id,
         model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 

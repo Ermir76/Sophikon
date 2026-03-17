@@ -114,9 +114,14 @@ def get_catalog_payload() -> dict:
 def validate_provider_and_model(
     provider: str | None,
     model: str | None,
+    *,
+    has_user_key: bool = False,
 ) -> tuple[str, str, str | None]:
     """
     Returns: (provider_id, model_id, error_message)
+
+    Pass has_user_key=True when the caller supplies their own API key so that
+    the missing-server-key check is skipped.
     """
     provider_id = (provider or settings.AI_PROVIDER or DEFAULT_PROVIDER).lower().strip()
     provider_option = MODEL_CATALOG.get(provider_id)
@@ -129,7 +134,7 @@ def validate_provider_and_model(
     if model_id not in allowed_model_ids:
         return provider_id, model_id, f"Model '{model_id}' is not allowed for provider '{provider_id}'"
 
-    if settings.AI_MODE == "live" and not _provider_key_present(provider_id):
+    if settings.AI_MODE == "live" and not has_user_key and not _provider_key_present(provider_id):
         return provider_id, model_id, f"Provider '{provider_id}' is not configured on server"
 
     return provider_id, model_id, None

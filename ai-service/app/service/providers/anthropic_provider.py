@@ -1,30 +1,31 @@
 import json
 import logging
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
 from app.core.config import settings
-from app.schema.contracts import AIUsageMeta, ChatEvent, ChatRequest
-from app.service.providers.common import build_system_prompt
-from app.service.providers.message_builders import build_claude_messages
+from app.schema.contracts import AIUsageMeta, ChatEvent
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_claude(
-    request: ChatRequest,
+    messages: list[dict],
+    system_prompt: str,
+    tools: list[dict],
     *,
     model_id: str,
-    tool_definitions: list[dict],
+    api_key: str | None = None,
+    conversation_id: UUID | None = None,
 ):
     from anthropic import AsyncAnthropic
 
-    client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-    messages = build_claude_messages(request)
-    system = build_system_prompt(request)
+    effective_key = api_key or settings.ANTHROPIC_API_KEY
+    client = AsyncAnthropic(api_key=effective_key)
 
     yield ChatEvent(
         type="start",
-        conversation_id=request.conversation_id,
+        conversation_id=conversation_id,
         model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
@@ -33,14 +34,17 @@ async def stream_claude(
     tool_input_json = ""
     final_message = None
 
+    stream_kwargs: dict[str, Any] = {
+        "model": model_id,
+        "max_tokens": 8096,
+        "system": system_prompt,
+        "messages": messages,
+    }
+    if tools:
+        stream_kwargs["tools"] = tools
+
     try:
-        async with client.messages.stream(
-            model=model_id,
-            max_tokens=4096,
-            system=system,
-            messages=messages,
-            tools=tool_definitions,
-        ) as stream:
+        async with client.messages.stream(**stream_kwargs) as stream:
             async for event in stream:
                 event_type = getattr(event, "type", None)
 
@@ -62,6 +66,12 @@ async def stream_claude(
 
                 elif event_type == "content_block_stop":
                     if current_tool_id is not None:
+                        if not current_tool_name:
+                            logger.warning("Anthropic returned a tool call with no name — skipping")
+                            current_tool_id = None
+                            current_tool_name = None
+                            tool_input_json = ""
+                            continue
                         try:
                             tool_input = json.loads(tool_input_json) if tool_input_json else {}
                         except json.JSONDecodeError:

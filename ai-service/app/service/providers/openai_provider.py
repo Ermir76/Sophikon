@@ -1,35 +1,36 @@
-import json
 import logging
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.core.config import settings
-from app.schema.contracts import AIUsageMeta, ChatEvent, ChatRequest
-from app.service.providers.common import build_system_prompt
-from app.service.providers.message_builders import build_openai_messages
+from app.schema.contracts import AIUsageMeta, ChatEvent
+from app.service.providers.message_builders import to_openai_messages
 from app.service.providers.tool_adapters import as_openai_tools
-from openai.types.chat import ChatCompletionSystemMessageParam
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_openai(
-    request: ChatRequest,
+    messages: list[dict],
+    system_prompt: str,
+    tools: list[dict[str, Any]],
     *,
     model_id: str,
-    tool_definitions: list[dict[str, Any]],
+    api_key: str | None = None,
+    conversation_id: UUID | None = None,
 ):
     from openai import AsyncOpenAI
 
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-    messages = build_openai_messages(request)
-    system = build_system_prompt(request)
-    tools = as_openai_tools(tool_definitions)
-    system_message: ChatCompletionSystemMessageParam = {"role": "system", "content": system}
+    effective_key = api_key or settings.OPENAI_API_KEY
+    client = AsyncOpenAI(api_key=effective_key)
+    openai_messages = to_openai_messages(messages)
+    openai_tools = as_openai_tools(tools) if tools else []
+
+    system_msg = {"role": "system", "content": system_prompt}
 
     yield ChatEvent(
         type="start",
-        conversation_id=request.conversation_id,
+        conversation_id=conversation_id,
         model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
@@ -54,15 +55,18 @@ async def stream_openai(
     prompt_tokens = 0
     completion_tokens = 0
 
+    create_kwargs: dict[str, Any] = {
+        "model": model_id,
+        "messages": [system_msg, *openai_messages],
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    if openai_tools:
+        create_kwargs["tools"] = openai_tools
+        create_kwargs["tool_choice"] = "auto"
+
     try:
-        stream = await client.chat.completions.create(
-            model=model_id,
-            messages=[system_message, *messages],
-            tools=tools,
-            tool_choice="auto",
-            stream=True,
-            stream_options={"include_usage": True},
-        )
+        stream = await client.chat.completions.create(**create_kwargs)
 
         async for chunk in stream:
             if getattr(chunk, "usage", None):
@@ -105,8 +109,14 @@ async def stream_openai(
         )
         return
 
+    import json
+
     for index in sorted(pending_tool_calls):
         pending = pending_tool_calls[index]
+        tool_name = pending["name"] or None
+        if not tool_name:
+            logger.warning("OpenAI returned a tool call with no name — skipping")
+            continue
         raw_args = pending["arguments"] or "{}"
         try:
             parsed_input = json.loads(raw_args)
@@ -115,7 +125,7 @@ async def stream_openai(
         yield ChatEvent(
             type="tool_call",
             tool_use_id=pending["id"],
-            tool_name=pending["name"] or None,
+            tool_name=tool_name,
             tool_input=parsed_input if isinstance(parsed_input, dict) else {},
         ).model_dump(mode="json", exclude_none=True)
 

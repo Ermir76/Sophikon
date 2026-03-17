@@ -6,8 +6,8 @@ from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
-from app.schema.contracts import ChatRequest, EstimateRequest, SuggestionsRequest
-from app.service.brain_service import build_estimates, build_suggestions, stream_chat_events
+from app.schema.contracts import CompleteRequest
+from app.service.brain_service import complete_stream
 from app.service.model_catalog import get_catalog_payload
 
 # Intentional small-service exception: keep routing and endpoint definitions in a
@@ -42,18 +42,18 @@ async def list_models(
     return get_catalog_payload()
 
 
-@app.post("/v1/brain/chat")
-async def chat(
-    body: ChatRequest,
+@app.post("/v1/complete")
+async def complete(
+    body: CompleteRequest,
     _: Annotated[None, Depends(verify_service_secret)],
 ):
     async def event_stream():
         try:
-            async for event in stream_chat_events(body):
+            async for event in complete_stream(body):
                 yield f"data: {json.dumps(event)}\n\n"
         except Exception:
-            logger.exception("AI chat pipeline failed")
-            payload = {"type": "error", "error": "AI chat pipeline failed"}
+            logger.exception("AI complete pipeline failed")
+            payload = {"type": "error", "error": "AI complete pipeline failed"}
             yield f"data: {json.dumps(payload)}\n\n"
 
     return StreamingResponse(
@@ -65,21 +65,3 @@ async def chat(
             "X-Accel-Buffering": "no",
         },
     )
-
-
-@app.post("/v1/brain/estimate")
-async def estimate(
-    body: EstimateRequest,
-    _: Annotated[None, Depends(verify_service_secret)],
-):
-    # This helper is intentionally synchronous: it does in-process computation only.
-    return build_estimates(body)
-
-
-@app.post("/v1/brain/suggestions")
-async def suggestions(
-    body: SuggestionsRequest,
-    _: Annotated[None, Depends(verify_service_secret)],
-):
-    # This helper is intentionally synchronous: it does in-process computation only.
-    return build_suggestions(body)

@@ -1,27 +1,29 @@
 import logging
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.core.config import settings
-from app.schema.contracts import AIUsageMeta, ChatEvent, ChatRequest
-from app.service.providers.common import build_system_prompt
-from app.service.providers.message_builders import build_gemini_contents
+from app.schema.contracts import AIUsageMeta, ChatEvent
+from app.service.providers.message_builders import to_gemini_contents
 
 logger = logging.getLogger(__name__)
 
 
 async def stream_gemini(
-    request: ChatRequest,
+    messages: list[dict],
+    system_prompt: str,
+    tools: list[dict[str, Any]],
     *,
     model_id: str,
-    tool_definitions: list[dict[str, Any]],
+    api_key: str | None = None,
+    conversation_id: UUID | None = None,
 ):
     from google import genai
     from google.genai import types
 
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    system = build_system_prompt(request)
-    contents = build_gemini_contents(request)
+    effective_key = api_key or settings.GEMINI_API_KEY
+    client = genai.Client(api_key=effective_key)
+    contents = to_gemini_contents(messages)
 
     declarations = [
         types.FunctionDeclaration(
@@ -29,18 +31,18 @@ async def stream_gemini(
             description=tool.get("description", ""),
             parameters=tool.get("input_schema", {"type": "object", "properties": {}}),
         )
-        for tool in tool_definitions
+        for tool in tools
     ]
-    tools = [types.Tool(function_declarations=declarations)] if declarations else []
+    gemini_tools = [types.Tool(function_declarations=declarations)] if declarations else []
 
     config = types.GenerateContentConfig(
-        system_instruction=system,
-        tools=tools,
+        system_instruction=system_prompt,
+        tools=gemini_tools,
     )
 
     yield ChatEvent(
         type="start",
-        conversation_id=request.conversation_id,
+        conversation_id=conversation_id,
         model=model_id,
     ).model_dump(mode="json", exclude_none=True)
 
@@ -95,10 +97,14 @@ async def stream_gemini(
         return
 
     for tc in pending_tool_calls:
+        tool_name = tc["name"] or None
+        if not tool_name:
+            logger.warning("Gemini returned a tool call with no name — skipping")
+            continue
         yield ChatEvent(
             type="tool_call",
             tool_use_id=tc["id"],
-            tool_name=tc["name"] or None,
+            tool_name=tool_name,
             tool_input=tc["args"],
         ).model_dump(mode="json", exclude_none=True)
 
