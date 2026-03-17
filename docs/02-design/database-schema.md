@@ -26,7 +26,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_uuidv7";      -- For UUIDv7 generation
 
 ## Schema Overview
 
-### V1.0 MVP Tables (28 tables)
+### V1.0 MVP Tables (29 tables)
 
 | Category          | Tables                                                        |
 | ----------------- | ------------------------------------------------------------- |
@@ -42,7 +42,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_uuidv7";      -- For UUIDv7 generation
 | **Assignments**   | assignment, assignment_baseline                               | Active (assignment_baseline schema-only) |
 | **Time Tracking** | time_entry                                                    | Schema-only    |
 | **Collaboration** | comment, attachment, notification                             | Schema-only    |
-| **AI**            | ai_conversation, ai_message, ai_usage                         | Active         |
+| **AI**            | ai_conversation, ai_message, ai_usage, agent_project_memory   | Active         |
 | **Audit**         | activity_log                                                  | Schema-only    |
 
 ---
@@ -871,26 +871,30 @@ User notifications for events.
 
 ### 11. AI (Active)
 
-All three AI tables are actively used by the chat, estimation, and suggestion flows.
+All four AI tables are actively used by the chat, estimation, suggestion, and agent flows.
 
 #### AI_CONVERSATION
 
 AI chat conversations scoped to projects.
 
-| Column               | Type         | Constraints                   | Default            | Description                           |
-| -------------------- | ------------ | ----------------------------- | ------------------ | ------------------------------------- |
-| **id**               | UUID         | PK                            | uuid_generate_v7() | Primary key                           |
-| **project_id**       | UUID         | NOT NULL, FK→project, CASCADE | -                  | Project context                       |
-| **user_id**          | UUID         | NOT NULL, FK→user, CASCADE    | -                  | Conversation owner                    |
-| **title**            | VARCHAR(255) | NULL                          | -                  | Conversation title (auto or user-set) |
-| **context_snapshot** | JSONB        | NULL                          | -                  | Cached context (optional)             |
-| **created_at**       | TIMESTAMPTZ  | NOT NULL                      | NOW()              | Creation timestamp                    |
-| **updated_at**       | TIMESTAMPTZ  | NOT NULL                      | NOW()              | Last update timestamp                 |
+| Column                    | Type         | Constraints                   | Default            | Description                                                                   |
+| ------------------------- | ------------ | ----------------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| **id**                    | UUID         | PK                            | uuid_generate_v7() | Primary key                                                                   |
+| **project_id**            | UUID         | NOT NULL, FK→project, CASCADE | -                  | Project context                                                               |
+| **user_id**               | UUID         | NOT NULL, FK→user, CASCADE    | -                  | Conversation owner                                                            |
+| **title**                 | VARCHAR(255) | NULL                          | -                  | Conversation title (auto or user-set)                                         |
+| **context_snapshot**      | JSONB        | NULL                          | -                  | Cached context (optional)                                                     |
+| **summary**               | TEXT         | NULL                          | -                  | Rolling intra-session summary of older messages (agent history compression)   |
+| **status**                | VARCHAR(30)  | NOT NULL                      | idle               | idle \| awaiting_plan_approval \| executing \| awaiting_approval \| interrupted |
+| **mode**                  | VARCHAR(20)  | NOT NULL                      | chat               | chat \| proactive                                                             |
+| **created_at**            | TIMESTAMPTZ  | NOT NULL                      | NOW()              | Creation timestamp                                                            |
+| **updated_at**            | TIMESTAMPTZ  | NOT NULL                      | NOW()              | Last update timestamp                                                         |
 
 **Indexes:**
 
 - `idx_ai_conversation_project` - (project_id)
 - `idx_ai_conversation_user` - (user_id)
+- `idx_ai_conversation_status` - (status)
 
 ---
 
@@ -939,6 +943,24 @@ AI usage tracking for cost management and rate limiting.
 
 - `idx_ai_usage_user_date` - (user_id, usage_date)
 - `idx_ai_usage_date` - (usage_date)
+
+---
+
+#### AGENT_PROJECT_MEMORY
+
+Cross-session persistent memory for the PM agent, scoped to a project. One row per project. The agent reads this at the start of every conversation and updates it when a conversation ends.
+
+| Column                          | Type        | Constraints                              | Default            | Description                                           |
+| ------------------------------- | ----------- | ---------------------------------------- | ------------------ | ----------------------------------------------------- |
+| **id**                          | UUID        | PK                                       | uuid_generate_v7() | Primary key                                           |
+| **project_id**                  | UUID        | NOT NULL, FK→project, CASCADE, UNIQUE    | -                  | One memory record per project                         |
+| **content**                     | TEXT        | NULL                                     | -                  | Agent-curated key decisions, patterns, preferences (~600 tokens max) |
+| **updated_at**                  | TIMESTAMPTZ | NOT NULL                                 | NOW()              | Last update timestamp                                 |
+| **updated_by_conversation_id**  | UUID        | NULL, FK→ai_conversation, SET NULL       | -                  | Last conversation that updated this memory            |
+
+**Indexes:**
+
+- `UNIQUE (project_id)` - enforced via unique constraint
 
 ---
 
@@ -1011,7 +1033,8 @@ Audit trail of all project changes.
 | 25  | ai_conversation       | AI            | 1-10 per project    |
 | 26  | ai_message            | AI            | 10-100 per convo    |
 | 27  | ai_usage              | AI            | 1 per AI call       |
-| 28  | activity_log          | Audit         | High volume         |
+| 28  | agent_project_memory  | AI            | 1 per project       |
+| 29  | activity_log          | Audit         | High volume         |
 
 ---
 

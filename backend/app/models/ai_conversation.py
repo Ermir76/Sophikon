@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     String,
+    Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -72,6 +73,25 @@ class AIConversation(Base):
         comment="Cached context (optional)",
     )
 
+    # Agent State
+    summary: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Rolling intra-session summary of older messages",
+    )
+    status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        server_default="idle",
+        comment="idle | awaiting_plan_approval | executing | awaiting_approval | interrupted",
+    )
+    mode: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default="chat",
+        comment="chat | proactive",
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
@@ -89,6 +109,7 @@ class AIConversation(Base):
     __table_args__ = (
         Index("idx_ai_conversation_project", project_id),
         Index("idx_ai_conversation_user", user_id),
+        Index("idx_ai_conversation_status", status),
     )
 
     # Relationships

@@ -28,6 +28,7 @@ from app.models.enums import ProjectStatus, ScheduleFrom
 
 if TYPE_CHECKING:
     from app.models.activity_log import ActivityLog
+    from app.models.agent_project_memory import AgentProjectMemory
     from app.models.ai_conversation import AIConversation
     from app.models.calendar import Calendar
     from app.models.organization import Organization
@@ -218,6 +219,9 @@ class Project(Base):
     )
     ai_conversations: Mapped[list["AIConversation"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
+    )
+    agent_memory: Mapped["AgentProjectMemory | None"] = relationship(
+        back_populates="project", cascade="all, delete-orphan", uselist=False
     )
     activity_logs: Mapped[list["ActivityLog"]] = relationship(back_populates="project")
 

@@ -3,6 +3,7 @@ SQLAlchemy models for the Sophikon project.
 """
 
 from app.models.activity_log import ActivityLog
+from app.models.agent_project_memory import AgentProjectMemory
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
 from app.models.ai_usage import AIUsage
@@ -56,6 +57,7 @@ __all__ = [
     "Comment",
     "Attachment",
     "Notification",
+    "AgentProjectMemory",
     "AIConversation",
     "AIMessage",
     "AIUsage",
