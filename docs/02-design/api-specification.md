@@ -198,6 +198,9 @@ flowchart TB
         AI1[POST /chat]
         AI2[POST /estimate]
         AI3[GET /suggestions]
+        AI4[POST /plan-approval/:conversationId]
+        AI5[GET /conversations]
+        AI6[GET /conversations/:conversationId]
     end
 ```
 
@@ -225,7 +228,7 @@ flowchart TB
 | Attachments   | 4     | /projects/:id/tasks/:taskId/attachments/\* |
 | Notifications | 4     | /notifications/\*             |
 | Activity      | 1     | /projects/:id/activity        |
-| AI            | 3     | /projects/:id/ai/\*           |
+| AI            | 6     | /projects/:id/ai/\*           |
 | Export/Import | 4     | /projects/:id/export/\*       |
 | WebSocket     | 1     | /api/v1/ws/projects/:id       |
 
@@ -2867,6 +2870,78 @@ Get AI suggestions.
           "predecessor_id": "uuid",
           "successor_id": "uuid"
         }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### POST /projects/:id/ai/plan-approval/:conversationId
+
+Submit user approval or rejection of an agent plan.
+
+**Request:**
+
+```json
+{
+  "approved": true,
+  "feedback": "Looks good"
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "status": "approved"
+  }
+}
+```
+
+---
+
+### GET /projects/:id/ai/conversations
+
+List AI conversations for the project.
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "conversations": [
+      {
+        "id": "uuid",
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z",
+        "message_count": 4
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /projects/:id/ai/conversations/:conversationId
+
+Get messages for a specific AI conversation.
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "conversation_id": "uuid",
+    "messages": [
+      {
+        "id": "uuid",
+        "role": "user",
+        "content": "Add a task for code review",
+        "created_at": "2026-01-01T00:00:00Z"
       }
     ]
   }

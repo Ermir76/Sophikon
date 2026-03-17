@@ -1,155 +1,277 @@
-# Action Items — Deploy-First Approach
+# Action Items — Agent Platform
 
-**Date:** February 15, 2026
-**Source:** All 6 corrected review documents
-**Strategy:** Make what exists production-ready FIRST, then add features on a live app.
-
----
-
-## Phase 1: Make It Deployable (This Week)
-
-### Security (must fix before deploy)
-
-- [x] **Fix org membership check on project create** — authorization bypass — 15 min
-  - File: `backend/app/api/v1/endpoints/projects.py:67-74`
-  - Add `get_org_membership_or_404(db, body.organization_id, user)` before creating
-
-- [x] **Fix `org_id: str` → `org_id: UUID`** in organization endpoints — 10 min
-  - File: `backend/app/api/deps.py:68` and related endpoints
-
-- [x] **Add global exception handler** — prevents stack trace leaks in production — 15 min
-  - File: `backend/app/main.py`
-
-### Production Quality (deploy won't embarrass you)
-
-- [x] **Fix DashboardPage** — add `isLoading` / `isError` checks — 5 min
-  - File: `frontend/src/pages/DashboardPage.tsx`
-
-- [x] **Fix generic toast errors** — use `getErrorMessage(error)` — 10 min
-  - Files: `CreateProjectDialog.tsx:78`, `OrgSettingsPage.tsx:80`, `OrgMembersPage.tsx:58,73,89`
-
-- [x] **Fix `@ts-expect-error` in api.ts** — add `RetryableRequest` interface — 5 min
-  - File: `frontend/src/lib/api.ts:28`
-
-- [x] **Replace TODO placeholder routes** with proper stub components — 5 min
-  - File: `frontend/src/App.tsx` (lines 65, 83)
-
-### Cleanup (2 minutes)
-
-### Tooling (clean CI, clean commits)
-
-- [x] **Fix ESLint errors** — 30 min
-- [x] **Add Ruff config** to `backend/pyproject.toml` — 5 min
-- [x] **Add Prettier config** — create `frontend/.prettierrc.json` — 5 min
-- [x] **Fix pre-commit hooks** — install + scope + local hooks — 30 min
-- [x] **Create `frontend/.env.example`** — 1 min
-
-### Email Verification
-
-1. **Choose SMTP provider** — Gmail (free, 500/day), Resend (free, 100/day), or Mailgun
-2. **Add SMTP config to `config.py`** — MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM
-3. **Create `EmailVerification` model** — copy pattern from `PasswordReset` model (token_hash, expires_at, user_id)
-4. **Create Alembic migration** — `alembic revision --autogenerate -m "add email_verification table"`
-5. **Create `email_service.py`** — FastMail setup, `send_verification_email()` with HTML template
-6. **Add endpoints to `auth.py`:**
-   - `POST /api/v1/auth/send-verification-email` — generate token, send email
-   - `GET /api/v1/auth/verify-email?token=...` — validate token, set `email_verified=True`
-7. **Update `register` endpoint** — auto-send verification email on registration
-8. **Frontend: verification page** — `VerifyEmailPage.tsx` that reads token from URL and calls the endpoint
-9. **Frontend: resend button** — on dashboard or settings, show "Verify your email" banner with resend link
-10. **Update `.env.example`** — document SMTP settings
-
-- [x] SMTP provider chosen
-- [x] Backend: model + migration + service + endpoints
-- [x] Frontend: verify page + resend UI
-- [ ] Tested end-to-end locally
-
-### Deploy
-
-The steps before deploy are:
-
-1. Move landing page out of docs/ into its own landing/ folder —
-   it becomes a deployable artifact ✅
-2. Decide the URL structure: sophikon.org → landing,
-   app.sophikon.org → React app, api.sophikon.org → FastAPI (needs a
-   domain — get one soon) ✅
-3. Production Docker for backend only ✅
-4. Nginx only for the backend (reverse proxy in front of FastAPI) ✅
-5. S3 bucket + CloudFront for landing, separate bucket +
-   CloudFront for app
-6. RDS for PostgreSQL, EC2 or ECS for backend
-7. GitHub Actions CI/CD — push to main → auto deploy frontend to
-   S3, auto deploy backend to EC2/ECS
-
-- [x] **Production Docker setup** — Dockerfile for backend, multi-stage build, auto migrations
-- [x] **Nginx config** — reverse proxy, security headers, SSL config ready
-- [x] **Environment config** — production .env, CORS origins, secret keys (CORS done)
-- [x] **Deploy to hosting** (Railway / Render / VPS / university server)
-
-**Phase 1 total: ~1 day**
+**Updated:** 2026-03-17
+**Reference:** `docs/03-implementation/agent-platform-plan.md`
+**Architecture:** `docs/02-design/agent-platform-architecture.md`
 
 ---
 
-## Phase 2: Core Features (build on live app)
+## Before You Start Any Phase
 
-Each week: build feature → deploy it → teacher sees progress.
+Read these first — every time:
 
-### Week 3: Task Management
+- `docs/02-design/agent-platform-architecture.md` — the constitution, all decisions
+- `docs/03-implementation/agent-platform-plan.md` — detailed implementation spec
+- `CONVENTIONS.md` — layer rules, canonical examples
+- `CLAUDE.md` — hard rules, project structure
 
-- [x] Task table view (the core of a PM app)
-- [x] Task CRUD with hierarchy
-- [x] Inline editing, drag-drop reordering
-- [ ] Add project-level RBAC to sidebar as pages get content
+Skills that auto-apply (no need to call manually):
 
-### Week 4: Gantt Chart
+- `backend-code-style` — triggers on any Python code
+- `pydantic-style` — triggers on any Pydantic model
 
-- [x] Gantt chart component (visual wow factor)
-- [x] Dependency arrows
-- [/] Timeline with zoom
+Skills to run manually at key moments:
 
-### Week 5: Scheduling Engine
-
-- [x] Auto date calculation from dependencies
-- [x] Critical path highlighting
-- [x] Add domain exceptions before this (complex logic needs clean errors)
-- [ ] Add structured logging before this (need to debug scheduling)
-
-### Week 6+: If Time Permits
-
-- [x] Resource management
-- [ ] AI integration MVP
-- [ ] Import/export
-- [ ] Pagination on assignments list
+- `/review` — before every commit
+- `/cc` — to commit
+- `/phase-reviewer` — after finishing a full phase
 
 ---
 
-## Nice-to-Have (only if time)
+## Phase 1 — Database Foundation
 
-These improve quality but don't affect the grade:
+**Goal:** Add the 3 missing DB pieces. Everything else in Phase 2 depends on this.
 
-- [ ] Rate limiting (auth endpoints)
-- [ ] Request ID middleware
-- [ ] Mypy type checking
-- [ ] pytest coverage threshold (`--cov-fail-under=80`)
-- [ ] Dependency security scanning
-- [ ] Accessibility audit (axe DevTools)
-- [ ] E2E tests
+### 1.1 — Migrate `AIConversation`
+
+Read before starting:
+
+- `backend/app/models/ai_conversation.py` — current fields
+- `backend/alembic/versions/` — latest migration for context
+
+- [x] Add `summary: Mapped[str | None]` — rolling intra-session summary text
+- [x] Add `status: Mapped[str]` — `idle | awaiting_plan_approval | executing | awaiting_approval | interrupted`, server_default `"idle"`
+- [x] Add `mode: Mapped[str]` — `chat | proactive`, server_default `"chat"`
+- [x] Add index on `status` in `__table_args__`
+
+### 1.2 — New model `AgentProjectMemory`
+
+Read before starting:
+
+- `backend/app/models/ai_conversation.py` — follow same model pattern
+- `backend/app/models/__init__.py` — register new model here
+
+- [x] Create `backend/app/models/agent_project_memory.py`
+- [x] Fields: `id (UUID pk)`, `project_id (FK project CASCADE, unique)`, `content (Text)`, `updated_at (TIMESTAMP)`, `updated_by_conversation_id (FK ai_conversation nullable)`
+- [x] Add to `backend/app/models/__init__.py`
+- [x] Add relationship on `Project` model → `agent_memory`
+
+### 1.3 — Alembic migration
+
+Read before starting:
+
+- `backend/alembic/env.py` — understand async→sync URL conversion
+- `backend/alembic/versions/` — latest migration file
+
+- [x] `alembic revision --autogenerate -m "add agent platform columns and memory table"`
+- [x] Review generated migration — verify columns and table are correct
+- [x] Check no unintended changes were autogenerated
+- [x] `alembic upgrade head`
+- [x] Verify migration applied cleanly
+
+**Run `/review` before committing Phase 1.**
 
 ---
 
-## What You Already Have (deployable now)
+## Phase 2 — Backend Agent Loop
 
-Your teacher will see a real deployed app with:
+**Goal:** The real agent. This is the core of everything.
 
-- User registration & login (JWT + httpOnly cookies)
-- Multi-tenancy (organizations)
-- RBAC (org-level admin/member/viewer)
-- Project CRUD scoped to organizations
-- Org switcher, responsive sidebar
-- Clean API with proper validation
+Read before starting:
 
-That's already solid for a degree. Everything after Phase 1 is bonus points.
+- `docs/03-implementation/agent-platform-plan.md` sections 2.1–2.10 — full spec
+- `backend/app/service/task_service.py` — service function pattern to follow
+- `backend/app/repository/task_repo.py` — repository pattern to follow
+- `backend/app/service/contracts/ai.py` — existing AI contracts to extend
+- `backend/app/service/ai_service.py` — what gets gutted
+- `ai-service/app/service/providers/tool_catalog.py` — existing tool schemas (moving to backend)
+
+### 2.1 — `context.py`
+
+- [ ] Create `backend/app/service/agent/context.py`
+- [ ] `AgentContext` dataclass: `project_id`, `user_id`, `conversation_id`, `db`, `provider`, `model`, `api_key`
+- [ ] No global state — every run gets its own context instance
+
+### 2.2 — `streaming.py`
+
+- [ ] Create `backend/app/service/agent/streaming.py`
+- [ ] One builder function per SSE event type: `event_start`, `event_plan`, `event_plan_approved`, `event_reasoning`, `event_tool_call`, `event_tool_result`, `event_approval_required`, `event_chunk`, `event_ui_action`, `event_done`, `event_error`
+- [ ] Each returns `dict` ready for SSE encoding
+
+### 2.3 — `history.py`
+
+Read before starting:
+
+- `backend/app/models/ai_conversation.py` — `summary` field (added in Phase 1)
+- `backend/app/models/ai_message.py` — message fields
+
+- [ ] Create `backend/app/service/agent/history.py`
+- [ ] `load(ctx)` — fetch messages from DB, build `[summary_msg, ...last_20_msgs]`
+- [ ] `save_turn(ctx, new_messages)` — persist new messages to `AIMessage`
+- [ ] `maybe_summarize(ctx)` — if messages > 20, LLM-compress oldest 10, update `AIConversation.summary`
+- [ ] `load_project_memory(ctx)` — fetch `AgentProjectMemory` for project
+- [ ] `save_project_memory(ctx, content)` — upsert `AgentProjectMemory`
+
+### 2.4 — `tool_registry.py`
+
+Read before starting:
+
+- `ai-service/app/service/providers/tool_catalog.py` — existing schemas to port
+- `backend/app/service/task_service.py`, `resource_service.py`, `comment_service.py` etc. — service functions to call
+- `backend/app/repository/` — all repo files to understand what data is available
+- `docs/03-implementation/agent-platform-plan.md` section 2.4 — full tool list and dispatch spec
+
+Apply `pydantic-style` when defining `ToolResult`.
+
+- [ ] Create `backend/app/service/agent/tool_registry.py`
+- [ ] Define `ToolResult` dataclass: `success`, `data`, `message`, `is_ui_action`
+- [ ] Define `TOOL_SCHEMAS: list[dict]` — all 28 tool JSON schemas for LLM
+- [ ] Define `DESTRUCTIVE_TOOLS = {"delete_task", "delete_dependency"}`
+- [ ] Implement `execute_tool(tool_name, tool_input, ctx)` — dispatch to service functions
+- [ ] **14 read tools:** `get_project_summary`, `get_tasks`, `get_task`, `search_tasks`, `get_dependencies`, `get_critical_path`, `get_members`, `get_resources`, `get_utilization`, `get_assignments`, `get_activity_log`, `get_comments`, `get_calendar`, `get_insights`
+- [ ] **12 write tools:** `create_task`, `bulk_create_tasks`, `update_task`, `add_dependency`, `indent_task`, `outdent_task`, `reorder_task`, `calculate_schedule`, `assign_resource`, `unassign_resource`, `post_comment`, `send_notification`
+- [ ] **2 destructive tools:** `delete_task`, `delete_dependency`
+- [ ] **4 UI tools:** `navigate`, `highlight_tasks`, `open_task`, `filter_view`
+- [ ] Each tool result returns full rich data — all fields (color, wbs_code, parent, assignees, etc.)
+
+### 2.5 — `planner.py`
+
+- [ ] Create `backend/app/service/agent/planner.py`
+- [ ] `plan(ctx, messages)` — single LLM call (via ai-service), returns `PlanResponse`
+- [ ] `PlanResponse`: `steps: list[PlanStep]`, `needs_execution: bool`
+- [ ] `PlanStep`: `action: str`, `reason: str`
+- [ ] System instruction: produce a plan, do NOT execute anything
+- [ ] Pre-fetch `get_project_summary` before calling LLM for minimal context
+- [ ] If user's message is a pure read/question → `needs_execution: False` → skip plan approval gate
+
+### 2.6 — `executor.py`
+
+Read before starting:
+
+- `backend/app/service/ai_service.py` — existing approval store pattern (`_APPROVAL_STORE`)
+- `docs/03-implementation/agent-platform-plan.md` section 2.7 — full loop pseudocode
+
+- [ ] Create `backend/app/service/agent/executor.py`
+- [ ] `execute(ctx, messages, plan)` — async generator, yields SSE event dicts
+- [ ] While loop: call ai-service → stream reasoning → if stop emit chunks + done + break
+- [ ] For each tool_call: emit `tool_call` → check destructive → execute or gate → emit `tool_result`
+- [ ] Append assistant turn + tool_result turn to messages after each tool
+- [ ] Call `history.save_turn` after each LLM turn
+- [ ] Destructive tools wait on `_APPROVAL_STORE` future (same pattern as existing)
+
+### 2.7 — `loop.py`
+
+- [ ] Create `backend/app/service/agent/loop.py`
+- [ ] `run_agent(ctx, user_message)` — async generator, orchestrates plan + execute phases
+- [ ] Update `AIConversation.status` at each phase transition
+- [ ] Plan phase: call planner → emit `plan` event → wait for plan approval → emit `plan_approved`
+- [ ] If user redirects: append feedback to messages → re-plan → repeat
+- [ ] Execute phase: delegate to `executor.execute()`
+- [ ] On completion: call `history.maybe_summarize()` + `memory.save_project_memory()`
+- [ ] Add `_PLAN_APPROVAL_STORE: dict[str, asyncio.Future]` — same pattern as existing approval store
+- [ ] `resolve_plan_approval(conversation_id, approved, feedback)` — resolves the future
+
+### 2.8 — Update `ai_service.py`
+
+Read before starting:
+
+- `backend/app/service/ai_service.py` — full file, understand what to keep vs gut
+
+- [ ] Replace `prepare_chat_stream()` body — now calls `loop.run_agent(ctx, user_message)`
+- [ ] Keep `resolve_approval()` — unchanged
+- [ ] Add `resolve_plan_approval()` — delegates to `loop.resolve_plan_approval()`
+- [ ] Remove all old context-building, tool dispatch, and provider call logic
+- [ ] Remove heuristic estimate and suggestion functions — replaced by real LLM calls
+
+### 2.9 — Update `endpoints/ai.py`
+
+Read before starting:
+
+- `backend/app/api/v1/endpoints/ai.py` — current endpoints
+
+- [ ] Add `POST /projects/{project_id}/ai/plan-approval/{conversation_id}` — approve or redirect plan
+- [ ] Add `GET /projects/{project_id}/ai/conversations` — list conversations for resume
+- [ ] Add `GET /projects/{project_id}/ai/conversations/{conversation_id}` — load full history
+- [ ] All new endpoints require auth via existing deps
+
+### 2.10 — Update contracts
+
+Read before starting:
+
+- `backend/app/service/contracts/ai.py` — existing contracts
+
+Apply `pydantic-style` throughout.
+
+- [ ] Add `PlanStep`, `PlanResponse` dataclasses
+- [ ] Add `AgentContext` (or keep as dataclass in `context.py`)
+- [ ] Add new event types: `PlanEvent`, `PlanApprovedEvent`, `ReasoningEvent`, `ToolCallEvent`, `ToolResultEvent`
+- [ ] Update `AIChatEvent` union with new types
+
+**Run `/phase-reviewer` after completing Phase 2.**
 
 ---
 
-**All items sourced from corrected reviews. Original Kiro AI false positives excluded.**
+## Phase 3 — ai-service Simplification
+
+> See `docs/03-implementation/agent-platform-plan.md` Phase 3 for full spec.
+
+- [ ] New endpoint `POST /v1/complete` — single-turn completion, streaming
+- [ ] Gut `brain_service.py` — thin router to providers only
+- [ ] Delete `tool_catalog.py` — now lives in backend
+- [ ] Simplify `contracts.py` — completion contract only
+- [ ] Add empty `mcp/__init__.py` and `a2a/__init__.py` stubs
+
+---
+
+## Phase 4 — Frontend
+
+> See `docs/03-implementation/agent-platform-plan.md` Phase 4 for full spec.
+
+Read before starting:
+
+- `frontend/src/features/ai/types.ts`
+- `frontend/src/features/ai/store/ai-panel-store.ts`
+- `frontend/src/features/ai/components/AiDockedPanel.tsx`
+- `docs/02-design/frontend-architecture.md` — ai feature structure
+
+- [ ] `types.ts` — add `plan`, `plan_approved`, `reasoning`, `tool_call`, `tool_result` event types
+- [ ] New `PlanApprovalCard.tsx` — plan steps list, approve/redirect buttons, blocks chat input
+- [ ] New `ReasoningStep.tsx` — collapsible streaming reasoning bubble
+- [ ] New `ToolCallRow.tsx` — live tool call + collapsible result (replaces `ToolCallIndicator`)
+- [ ] `ai-panel-store.ts` — add `conversationStatus`, `pendingPlan`, `isThinking`, `reasoningText`
+- [ ] `AiDockedPanel.tsx` — handle new event types, render new components
+- [ ] `useAi.ts` — add `approvePlan(approved, feedback?)`
+- [ ] New `useConversations.ts` — load/resume past conversations
+- [ ] `ai.service.ts` — add `resolvePlanApproval()`, `getConversations()`, `getConversation(id)`
+- [ ] Conversation selector in panel — resume interrupted sessions, show status banner
+
+---
+
+## Phase 5 — Proactive Agent
+
+> See `docs/03-implementation/agent-platform-plan.md` Phase 5 for full spec.
+
+- [ ] Create `backend/app/tasks/agent_monitor.py` — Celery task for daily health check
+- [ ] Proactive analysis: `get_project_summary` + `get_tasks(overdue)` + `get_critical_path`
+- [ ] On issues found: post project comment + notify project manager
+- [ ] Add Celery beat schedule — 8am daily
+- [ ] Manager approval via notification action URL triggers execution
+
+---
+
+## Definition of Done (full agent)
+
+Run `/done` when you think a phase is complete.
+
+- [ ] Agent runs real while loop — LLM sees every tool result
+- [ ] Plan phase: agent proposes → user approves → agent executes
+- [ ] Reasoning streams live to frontend
+- [ ] Tool calls and results visible in real time
+- [ ] Conversation persists and resumes correctly across sessions
+- [ ] Conversation status transitions work correctly
+- [ ] Cross-session memory accumulates and injects into new sessions
+- [ ] All 28 tools dispatch to real service functions
+- [ ] Gemini free tier works end-to-end
+- [ ] Proactive Celery agent posts findings and notifies manager
+- [ ] ai-service is single-turn adapter only
+- [ ] MCP/A2A stubs in place
