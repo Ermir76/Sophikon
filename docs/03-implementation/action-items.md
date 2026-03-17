@@ -91,15 +91,15 @@ Read before starting:
 
 ### 2.1 — `context.py`
 
-- [ ] Create `backend/app/service/agent/context.py`
-- [ ] `AgentContext` dataclass: `project_id`, `user_id`, `conversation_id`, `db`, `provider`, `model`, `api_key`
-- [ ] No global state — every run gets its own context instance
+- [x] Create `backend/app/service/agent/context.py`
+- [x] `AgentContext` dataclass: `project_id`, `user_id`, `conversation_id`, `db`, `provider`, `model`, `api_key`
+- [x] No global state — every run gets its own context instance
 
 ### 2.2 — `streaming.py`
 
-- [ ] Create `backend/app/service/agent/streaming.py`
-- [ ] One builder function per SSE event type: `event_start`, `event_plan`, `event_plan_approved`, `event_reasoning`, `event_tool_call`, `event_tool_result`, `event_approval_required`, `event_chunk`, `event_ui_action`, `event_done`, `event_error`
-- [ ] Each returns `dict` ready for SSE encoding
+- [x] Create `backend/app/service/agent/streaming.py`
+- [x] One builder function per SSE event type: `event_start`, `event_plan`, `event_plan_approved`, `event_reasoning`, `event_tool_call`, `event_tool_result`, `event_approval_required`, `event_chunk`, `event_ui_action`, `event_done`, `event_error`
+- [x] Each returns `dict` ready for SSE encoding
 
 ### 2.3 — `history.py`
 
@@ -108,12 +108,12 @@ Read before starting:
 - `backend/app/models/ai_conversation.py` — `summary` field (added in Phase 1)
 - `backend/app/models/ai_message.py` — message fields
 
-- [ ] Create `backend/app/service/agent/history.py`
-- [ ] `load(ctx)` — fetch messages from DB, build `[summary_msg, ...last_20_msgs]`
-- [ ] `save_turn(ctx, new_messages)` — persist new messages to `AIMessage`
-- [ ] `maybe_summarize(ctx)` — if messages > 20, LLM-compress oldest 10, update `AIConversation.summary`
-- [ ] `load_project_memory(ctx)` — fetch `AgentProjectMemory` for project
-- [ ] `save_project_memory(ctx, content)` — upsert `AgentProjectMemory`
+- [x] Create `backend/app/service/agent/history.py`
+- [x] `load(ctx)` — fetch messages from DB, build `[summary_msg, ...last_20_msgs]`
+- [x] `save_turn(ctx, new_messages)` — persist new messages to `AIMessage`
+- [x] `maybe_summarize(ctx)` — if messages > 20, LLM-compress oldest 10, update `AIConversation.summary`
+- [x] `load_project_memory(ctx)` — fetch `AgentProjectMemory` for project
+- [x] `save_project_memory(ctx, content)` — upsert `AgentProjectMemory`
 
 ### 2.4 — `tool_registry.py`
 
@@ -126,26 +126,26 @@ Read before starting:
 
 Apply `pydantic-style` when defining `ToolResult`.
 
-- [ ] Create `backend/app/service/agent/tool_registry.py`
-- [ ] Define `ToolResult` dataclass: `success`, `data`, `message`, `is_ui_action`
-- [ ] Define `TOOL_SCHEMAS: list[dict]` — all 28 tool JSON schemas for LLM
-- [ ] Define `DESTRUCTIVE_TOOLS = {"delete_task", "delete_dependency"}`
-- [ ] Implement `execute_tool(tool_name, tool_input, ctx)` — dispatch to service functions
-- [ ] **14 read tools:** `get_project_summary`, `get_tasks`, `get_task`, `search_tasks`, `get_dependencies`, `get_critical_path`, `get_members`, `get_resources`, `get_utilization`, `get_assignments`, `get_activity_log`, `get_comments`, `get_calendar`, `get_insights`
-- [ ] **12 write tools:** `create_task`, `bulk_create_tasks`, `update_task`, `add_dependency`, `indent_task`, `outdent_task`, `reorder_task`, `calculate_schedule`, `assign_resource`, `unassign_resource`, `post_comment`, `send_notification`
-- [ ] **2 destructive tools:** `delete_task`, `delete_dependency`
-- [ ] **4 UI tools:** `navigate`, `highlight_tasks`, `open_task`, `filter_view`
-- [ ] Each tool result returns full rich data — all fields (color, wbs_code, parent, assignees, etc.)
+- [x] Create `backend/app/service/agent/tool_registry.py`
+- [x] Define `ToolResult` dataclass: `success`, `data`, `message`, `is_ui_action`
+- [x] Define `TOOL_SCHEMAS: list[dict]` — all 28 tool JSON schemas for LLM
+- [x] Define `DESTRUCTIVE_TOOLS = {"delete_task", "delete_dependency"}`
+- [x] Implement `execute_tool(tool_name, tool_input, ctx)` — dispatch to service functions
+- [x] **14 read tools:** `get_project_summary`, `get_tasks`, `get_task`, `search_tasks`, `get_dependencies`, `get_critical_path`, `get_members`, `get_resources`, `get_utilization`, `get_assignments`, `get_activity_log`, `get_comments`, `get_calendar`, `get_insights`
+- [x] **12 write tools:** `create_task`, `bulk_create_tasks`, `update_task`, `add_dependency`, `indent_task`, `outdent_task`, `reorder_task`, `calculate_schedule`, `assign_resource`, `unassign_resource`, `post_comment`, `send_notification`
+- [x] **2 destructive tools:** `delete_task`, `delete_dependency`
+- [x] **4 UI tools:** `navigate`, `highlight_tasks`, `open_task`, `filter_view`
+- [x] Each tool result returns full rich data — all fields (color, wbs_code, parent, assignees, etc.)
 
 ### 2.5 — `planner.py`
 
-- [ ] Create `backend/app/service/agent/planner.py`
-- [ ] `plan(ctx, messages)` — single LLM call (via ai-service), returns `PlanResponse`
-- [ ] `PlanResponse`: `steps: list[PlanStep]`, `needs_execution: bool`
-- [ ] `PlanStep`: `action: str`, `reason: str`
-- [ ] System instruction: produce a plan, do NOT execute anything
-- [ ] Pre-fetch `get_project_summary` before calling LLM for minimal context
-- [ ] If user's message is a pure read/question → `needs_execution: False` → skip plan approval gate
+- [x] Create `backend/app/service/agent/planner.py`
+- [x] `plan(ctx, messages)` — single LLM call (via ai-service), returns `PlanResponse`
+- [x] `PlanResponse`: `steps: list[PlanStep]`, `needs_execution: bool`
+- [x] `PlanStep`: `action: str`, `reason: str`
+- [x] System instruction: produce a plan, do NOT execute anything
+- [x] Pre-fetch `get_project_summary` before calling LLM for minimal context
+- [x] If user's message is a pure read/question → `needs_execution: False` → skip plan approval gate
 
 ### 2.6 — `executor.py`
 
@@ -154,25 +154,25 @@ Read before starting:
 - `backend/app/service/ai_service.py` — existing approval store pattern (`_APPROVAL_STORE`)
 - `docs/03-implementation/agent-platform-plan.md` section 2.7 — full loop pseudocode
 
-- [ ] Create `backend/app/service/agent/executor.py`
-- [ ] `execute(ctx, messages, plan)` — async generator, yields SSE event dicts
-- [ ] While loop: call ai-service → stream reasoning → if stop emit chunks + done + break
-- [ ] For each tool_call: emit `tool_call` → check destructive → execute or gate → emit `tool_result`
-- [ ] Append assistant turn + tool_result turn to messages after each tool
-- [ ] Call `history.save_turn` after each LLM turn
-- [ ] Destructive tools wait on `_APPROVAL_STORE` future (same pattern as existing)
+- [x] Create `backend/app/service/agent/executor.py`
+- [x] `execute(ctx, messages, plan)` — async generator, yields SSE event dicts
+- [x] While loop: call ai-service → stream reasoning → if stop emit chunks + done + break
+- [x] For each tool_call: emit `tool_call` → check destructive → execute or gate → emit `tool_result`
+- [x] Append assistant turn + tool_result turn to messages after each tool
+- [x] Call `history.save_turn` after each LLM turn
+- [x] Destructive tools wait on `_APPROVAL_STORE` future (same pattern as existing)
 
 ### 2.7 — `loop.py`
 
-- [ ] Create `backend/app/service/agent/loop.py`
-- [ ] `run_agent(ctx, user_message)` — async generator, orchestrates plan + execute phases
-- [ ] Update `AIConversation.status` at each phase transition
-- [ ] Plan phase: call planner → emit `plan` event → wait for plan approval → emit `plan_approved`
-- [ ] If user redirects: append feedback to messages → re-plan → repeat
-- [ ] Execute phase: delegate to `executor.execute()`
-- [ ] On completion: call `history.maybe_summarize()` + `memory.save_project_memory()`
-- [ ] Add `_PLAN_APPROVAL_STORE: dict[str, asyncio.Future]` — same pattern as existing approval store
-- [ ] `resolve_plan_approval(conversation_id, approved, feedback)` — resolves the future
+- [x] Create `backend/app/service/agent/loop.py`
+- [x] `run_agent(ctx, user_message)` — async generator, orchestrates plan + execute phases
+- [x] Update `AIConversation.status` at each phase transition
+- [x] Plan phase: call planner → emit `plan` event → wait for plan approval → emit `plan_approved`
+- [x] If user redirects: append feedback to messages → re-plan → repeat
+- [x] Execute phase: delegate to `executor.execute()`
+- [x] On completion: call `history.maybe_summarize()` + `memory.save_project_memory()`
+- [x] Add `_PLAN_APPROVAL_STORE: dict[str, asyncio.Future]` — same pattern as existing approval store
+- [x] `resolve_plan_approval(conversation_id, approved, feedback)` — resolves the future
 
 ### 2.8 — Update `ai_service.py`
 
@@ -180,11 +180,11 @@ Read before starting:
 
 - `backend/app/service/ai_service.py` — full file, understand what to keep vs gut
 
-- [ ] Replace `prepare_chat_stream()` body — now calls `loop.run_agent(ctx, user_message)`
-- [ ] Keep `resolve_approval()` — unchanged
-- [ ] Add `resolve_plan_approval()` — delegates to `loop.resolve_plan_approval()`
-- [ ] Remove all old context-building, tool dispatch, and provider call logic
-- [ ] Remove heuristic estimate and suggestion functions — replaced by real LLM calls
+- [x] Replace `prepare_chat_stream()` body — now calls `loop.run_agent(ctx, user_message)`
+- [x] Keep `resolve_approval()` — unchanged
+- [x] Add `resolve_plan_approval()` — delegates to `loop.resolve_plan_approval()`
+- [x] Remove all old context-building, tool dispatch, and provider call logic
+- [x] Remove heuristic estimate and suggestion functions — replaced by real LLM calls
 
 ### 2.9 — Update `endpoints/ai.py`
 
@@ -192,10 +192,10 @@ Read before starting:
 
 - `backend/app/api/v1/endpoints/ai.py` — current endpoints
 
-- [ ] Add `POST /projects/{project_id}/ai/plan-approval/{conversation_id}` — approve or redirect plan
-- [ ] Add `GET /projects/{project_id}/ai/conversations` — list conversations for resume
-- [ ] Add `GET /projects/{project_id}/ai/conversations/{conversation_id}` — load full history
-- [ ] All new endpoints require auth via existing deps
+- [x] Add `POST /projects/{project_id}/ai/plan-approval/{conversation_id}` — approve or redirect plan
+- [x] Add `GET /projects/{project_id}/ai/conversations` — list conversations for resume
+- [x] Add `GET /projects/{project_id}/ai/conversations/{conversation_id}` — load full history
+- [x] All new endpoints require auth via existing deps
 
 ### 2.10 — Update contracts
 
@@ -205,10 +205,10 @@ Read before starting:
 
 Apply `pydantic-style` throughout.
 
-- [ ] Add `PlanStep`, `PlanResponse` dataclasses
-- [ ] Add `AgentContext` (or keep as dataclass in `context.py`)
-- [ ] Add new event types: `PlanEvent`, `PlanApprovedEvent`, `ReasoningEvent`, `ToolCallEvent`, `ToolResultEvent`
-- [ ] Update `AIChatEvent` union with new types
+- [x] Add `PlanStep`, `PlanResponse` dataclasses
+- [x] Add `AgentContext` (or keep as dataclass in `context.py`)
+- [x] Add new event types: `PlanEvent`, `PlanApprovedEvent`, `ReasoningEvent`, `ToolCallEvent`, `ToolResultEvent`
+- [x] Update `AIChatEvent` union with new types
 
 **Run `/phase-reviewer` after completing Phase 2.**
 
@@ -275,16 +275,99 @@ Read before starting:
 - `frontend/src/features/ai/components/AiDockedPanel.tsx`
 - `docs/02-design/frontend-architecture.md` — ai feature structure
 
-- [ ] `types.ts` — add `plan`, `plan_approved`, `reasoning`, `tool_call`, `tool_result` event types
-- [ ] New `PlanApprovalCard.tsx` — plan steps list, approve/redirect buttons, blocks chat input
-- [ ] New `ReasoningStep.tsx` — collapsible streaming reasoning bubble
-- [ ] New `ToolCallRow.tsx` — live tool call + collapsible result (replaces `ToolCallIndicator`)
-- [ ] `ai-panel-store.ts` — add `conversationStatus`, `pendingPlan`, `isThinking`, `reasoningText`
-- [ ] `AiDockedPanel.tsx` — handle new event types, render new components
-- [ ] `useAi.ts` — add `approvePlan(approved, feedback?)`
-- [ ] New `useConversations.ts` — load/resume past conversations
-- [ ] `ai.service.ts` — add `resolvePlanApproval()`, `getConversations()`, `getConversation(id)`
-- [ ] Conversation selector in panel — resume interrupted sessions, show status banner
+### 4.1 — `types.ts`
+
+- [x] Add `plan`, `plan_approved`, `reasoning`, `tool_call`, `tool_result` event types — already present
+
+### 4.2 — `ai-panel-store.ts`
+
+Read before starting:
+- `frontend/src/features/ai/store/ai-panel-store.ts` — current state shape
+
+- [x] Add `conversationStatus: string | null` — mirrors `AIConversation.status` from backend (`idle | awaiting_plan_approval | executing | awaiting_approval | interrupted`)
+- [x] Add `pendingPlan: PlanStep[] | null` — plan steps waiting for user approval
+- [x] Add `isThinking: boolean` — true while agent is in reasoning phase
+- [x] Add `reasoningText: string` — accumulates streaming reasoning tokens
+- [x] Add `setConversationStatus(projectId, status)` action
+- [x] Add `setPendingPlan(projectId, steps)` action
+- [x] Add `setThinking(projectId, value)` action
+- [x] Add `appendReasoningText(projectId, text)` action
+- [x] Add `clearReasoningText(projectId)` action
+
+### 4.3 — `ai.service.ts`
+
+Read before starting:
+- `frontend/src/features/ai/api/ai.service.ts` — existing service functions
+- `docs/02-design/api-specification.md` — plan-approval, conversations endpoints
+
+- [x] Add `resolvePlanApproval(projectId, conversationId, approved, feedback?)` — POST `/projects/:id/ai/plan-approval/:conversationId`
+- [x] Add `getConversations(projectId)` — GET `/projects/:id/ai/conversations`
+- [x] Add `getConversation(projectId, conversationId)` — GET `/projects/:id/ai/conversations/:conversationId`
+
+### 4.4 — `useAi.ts`
+
+Read before starting:
+- `frontend/src/features/ai/hooks/useAi.ts` — current hook
+
+- [x] Add `approvePlan(approved: boolean, feedback?: string)` — calls `ai.service.resolvePlanApproval` with current `conversationId`
+
+### 4.5 — New `useConversations.ts`
+
+- [x] Create `frontend/src/features/ai/hooks/useConversations.ts`
+- [x] `useConversations(projectId)` — React Query hook, calls `getConversations(projectId)`
+- [x] `useConversation(projectId, conversationId)` — React Query hook, calls `getConversation(projectId, conversationId)`
+
+### 4.6 — New `PlanApprovalCard.tsx`
+
+Read before starting:
+- `frontend/src/features/ai/components/ApprovalDialog.tsx` — existing approval pattern
+
+- [x] Create `frontend/src/features/ai/components/PlanApprovalCard.tsx`
+- [x] Renders list of `PlanStep` items (`action` + `reason` per step)
+- [x] Approve button — calls `approvePlan(true)`
+- [x] Redirect input + submit — calls `approvePlan(false, feedbackText)`
+- [x] While visible, chat input is disabled (blocks new messages during plan approval)
+
+### 4.7 — New `ReasoningStep.tsx`
+
+- [x] Create `frontend/src/features/ai/components/ReasoningStep.tsx`
+- [x] Collapsible bubble — collapsed by default, expandable to show full reasoning text
+- [x] Streams live as `reasoningText` accumulates in store
+- [x] Shows spinner while `isThinking` is true
+
+### 4.8 — New `ToolCallRow.tsx`
+
+Read before starting:
+- `frontend/src/features/ai/components/ToolCallIndicator.tsx` — existing component to replace
+
+- [x] Create `frontend/src/features/ai/components/ToolCallRow.tsx`
+- [x] Shows tool name + status (calling → result)
+- [x] Collapsible result — shows `tool_result` payload when expanded
+- [x] Replaces `ToolCallIndicator` — remove `ToolCallIndicator.tsx` after migration
+
+### 4.9 — `AiDockedPanel.tsx`
+
+Read before starting:
+- `frontend/src/features/ai/components/AiDockedPanel.tsx` — current event handling
+- `frontend/src/features/ai/store/ai-panel-store.ts` — after 4.2 changes
+
+- [x] Handle `plan` event — call `setPendingPlan`, `setConversationStatus("awaiting_plan_approval")`, render `PlanApprovalCard`
+- [x] Handle `plan_approved` event — call `setPendingPlan(null)`, `setConversationStatus("executing")`
+- [x] Handle `reasoning` event — call `setThinking(true)`, `appendReasoningText(content)`, render `ReasoningStep`
+- [x] Handle `tool_call` event — render `ToolCallRow` with pending state
+- [x] Handle `tool_result` event — update matching `ToolCallRow` with result
+- [x] Handle `done` event — call `setThinking(false)`, `clearReasoningText`, `setConversationStatus("idle")`
+- [x] Handle `error` event — call `setThinking(false)`, `setConversationStatus("idle")`
+
+### 4.10 — Conversation selector
+
+Read before starting:
+- `frontend/src/features/ai/hooks/useConversations.ts` — after 4.5
+- `frontend/src/features/ai/store/ai-panel-store.ts` — after 4.2
+
+- [x] Add conversation list dropdown/list in panel header — uses `useConversations(projectId)`
+- [x] Selecting a conversation loads its history via `useConversation` and sets `conversationId` in store
+- [x] Show status banner when `conversationStatus` is `interrupted` or `awaiting_plan_approval`
 
 ---
 

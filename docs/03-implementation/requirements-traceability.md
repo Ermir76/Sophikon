@@ -206,7 +206,7 @@ This document records what is evidenced by the current codebase review.
 | FR-AI-001 | Implemented   | A7       | Project-scoped chat flow exists.                                                                                 |
 | FR-AI-002 | Implemented   | A7       | Chat feature exists with project/task context surface.                                                           |
 | FR-AI-003 | Partial       | A7       | Status-style project questions are supported by current AI surface, but broad coverage was not formally audited. |
-| FR-AI-004 | Partial       | A7, A9   | Plan approval and tool approval wired in backend agent loop (Phase 2); frontend confirmation UI pending (Phase 4). |
+| FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector all wired in Phase 4 frontend; backend agent loop wired in Phase 2. |
 | FR-AI-005 | Partial       | A7       | Estimate backend functions exist but call deleted ai-service endpoints (TODO Phase 6 — replace with real LLM agent calls). |
 | FR-AI-006 | Partial       | A7       | Estimate reasoning backend exists but ai-service endpoint deleted (TODO Phase 6).                                |
 | FR-AI-007 | Partial       | A7       | Multi-task estimation frontend exists but backend calls deleted ai-service endpoint (TODO Phase 6).              |
@@ -268,7 +268,7 @@ This document records what is evidenced by the current codebase review.
 | US-4.3 Interactive Gantt Editing   | Not evidenced | A5, A9     | Drag editing and context-menu behavior were not evidenced.                                                              |
 | US-4.4 Critical Path Highlighting  | Partial       | A5         | Critical-path toggle/rendering exists; end-to-end parity was not runtime-verified.                                      |
 | US-5.1 Chat with Project           | Partial       | A7         | Project-aware chat exists, but click-through entity navigation and some specific query types were not fully evidenced.  |
-| US-5.2 AI Actions via Chat         | Partial       | A7, A9     | Plan approval and tool approval wired in backend agent loop (Phase 2); frontend action UI pending (Phase 4).            |
+| US-5.2 AI Actions via Chat         | Implemented   | A7, A9     | Plan approval card, tool call rows, and reasoning stream complete in Phase 4; backend agent loop complete in Phase 2.   |
 | US-5.3 AI Risk Alerts              | Partial       | A7         | Suggestions exist, but not proactive dashboard risk alerts.                                                             |
 | US-5.4 AI Weekly Report            | Not evidenced | A7, A9     | No report-generation flow was evidenced.                                                                                |
 | US-6.1 Invite Team Members         | Implemented   | A3, A8, A9 | Project-team invite, acceptance, and member management flows are mounted in the current collaboration surface.          |
