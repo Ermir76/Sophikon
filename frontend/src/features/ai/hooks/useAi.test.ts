@@ -3,12 +3,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAiEstimate, useAiSuggestions } from "./useAi";
+import { useAiEstimate, useAiSuggestions, useApprovePlan } from "./useAi";
 
 vi.mock("@/features/ai/api/ai.service", () => ({
   aiService: {
     estimate: vi.fn(),
     suggestions: vi.fn(),
+    resolvePlanApproval: vi.fn(),
   },
 }));
 
@@ -95,6 +96,58 @@ describe("useAi hooks", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(aiService.suggestions).toHaveBeenCalledWith("project-1", 8);
     expect(result.current.data).toEqual(mockResponse);
+  });
+
+  it("useApprovePlan calls resolvePlanApproval with approve=true", async () => {
+    vi.mocked(aiService.resolvePlanApproval).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useApprovePlan("project-1"), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ conversationId: "conv-1", approved: true });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(aiService.resolvePlanApproval).toHaveBeenCalledWith(
+      "project-1",
+      "conv-1",
+      true,
+      undefined,
+    );
+  });
+
+  it("useApprovePlan calls resolvePlanApproval with feedback on redirect", async () => {
+    vi.mocked(aiService.resolvePlanApproval).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useApprovePlan("project-1"), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({
+      conversationId: "conv-1",
+      approved: false,
+      feedback: "Do it differently",
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(aiService.resolvePlanApproval).toHaveBeenCalledWith(
+      "project-1",
+      "conv-1",
+      false,
+      "Do it differently",
+    );
+  });
+
+  it("useApprovePlan surfaces an error when no project is selected", async () => {
+    const { result } = renderHook(() => useApprovePlan(undefined), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ conversationId: "conv-1", approved: true });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toBe("No project selected");
+    expect(aiService.resolvePlanApproval).not.toHaveBeenCalled();
   });
 
   it("useAiSuggestions stays idle when disabled or missing a project", async () => {

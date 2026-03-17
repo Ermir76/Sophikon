@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/shared/api/api", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+}));
+
 vi.mock("axios", () => ({
   default: {
     create: vi.fn(() => ({
@@ -26,6 +33,7 @@ vi.mock("@/features/auth/lib/auth", () => ({
 
 import axios from "axios";
 
+import { api } from "@/shared/api/api";
 import { aiService } from "./ai.service";
 
 function createStreamResponse(
@@ -52,6 +60,80 @@ function createStreamResponse(
     ...overrides,
   } as Response;
 }
+
+describe("aiService REST methods", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("resolvePlanApproval posts approved=true with no feedback", async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { ok: true } } as never);
+
+    await aiService.resolvePlanApproval("project-1", "conv-1", true);
+
+    expect(api.post).toHaveBeenCalledWith(
+      "/projects/project-1/ai/plan-approval/conv-1",
+      { approved: true, feedback: null },
+    );
+  });
+
+  it("resolvePlanApproval posts approved=false with feedback", async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { ok: true } } as never);
+
+    await aiService.resolvePlanApproval(
+      "project-1",
+      "conv-1",
+      false,
+      "Do it differently",
+    );
+
+    expect(api.post).toHaveBeenCalledWith(
+      "/projects/project-1/ai/plan-approval/conv-1",
+      { approved: false, feedback: "Do it differently" },
+    );
+  });
+
+  it("getConversations returns the conversations array", async () => {
+    const conversations = [
+      {
+        id: "conv-1",
+        title: "Sprint planning",
+        status: "idle",
+        mode: "chat",
+        created_at: "2026-03-17T10:00:00Z",
+        updated_at: "2026-03-17T10:05:00Z",
+      },
+    ];
+    vi.mocked(api.get).mockResolvedValue({ data: { conversations } } as never);
+
+    const result = await aiService.getConversations("project-1");
+
+    expect(api.get).toHaveBeenCalledWith(
+      "/projects/project-1/ai/conversations",
+    );
+    expect(result).toEqual(conversations);
+  });
+
+  it("getConversation returns the full conversation detail", async () => {
+    const detail = {
+      id: "conv-1",
+      title: "Sprint planning",
+      status: "idle",
+      mode: "chat",
+      messages: [
+        { id: "m-1", role: "user", content: "Hi", created_at: "2026-03-17T10:00:00Z" },
+      ],
+    };
+    vi.mocked(api.get).mockResolvedValue({ data: detail } as never);
+
+    const result = await aiService.getConversation("project-1", "conv-1");
+
+    expect(api.get).toHaveBeenCalledWith(
+      "/projects/project-1/ai/conversations/conv-1",
+    );
+    expect(result).toEqual(detail);
+  });
+});
 
 describe("aiService.streamChat", () => {
   beforeEach(() => {

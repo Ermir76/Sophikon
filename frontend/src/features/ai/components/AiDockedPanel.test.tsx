@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { createElement, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,6 +27,11 @@ vi.mock("@/features/ai/api/ai.service", () => ({
 vi.mock("@/features/ai/hooks/useAi", () => ({
   useAiEstimate: vi.fn(),
   useAiSuggestions: vi.fn(),
+  useApprovePlan: vi.fn(),
+}));
+
+vi.mock("@/features/ai/hooks/useConversations", () => ({
+  useConversations: vi.fn(),
 }));
 
 vi.mock("@/features/tasks/hooks/useTasks", () => ({
@@ -140,21 +146,29 @@ vi.mock("sonner", () => ({
   },
 }));
 
-import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { useAiEstimate, useAiSuggestions, useApprovePlan } from "@/features/ai/hooks/useAi";
+import { useConversations } from "@/features/ai/hooks/useConversations";
 import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
 import { useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 
 function renderPanel() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={["/projects/project-1/tasks"]}>
-      <Routes>
-        <Route
-          path="/projects/:projectId/:view"
-          element={<AiDockedPanel projectId="project-1" />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      <MemoryRouter initialEntries={["/projects/project-1/tasks"]}>
+        <Routes>
+          <Route
+            path="/projects/:projectId/:view"
+            element={<AiDockedPanel projectId="project-1" />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    ),
   );
 }
 
@@ -234,6 +248,15 @@ describe("AiDockedPanel", () => {
       isPending: false,
       isError: false,
       error: null,
+    } as never);
+
+    vi.mocked(useApprovePlan).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as never);
+
+    vi.mocked(useConversations).mockReturnValue({
+      data: [],
     } as never);
   });
 
