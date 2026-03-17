@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router";
 import {
@@ -13,10 +13,13 @@ import { toast } from "sonner";
 
 import { aiService } from "@/features/ai/api/ai.service";
 import { ApprovalDialog } from "@/features/ai/components/ApprovalDialog";
-import { ToolCallIndicator } from "@/features/ai/components/ToolCallIndicator";
-import { useAiEstimate, useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { PlanApprovalCard } from "@/features/ai/components/PlanApprovalCard";
+import { ReasoningStep } from "@/features/ai/components/ReasoningStep";
+import { ToolCallRow } from "@/features/ai/components/ToolCallRow";
+import { useAiEstimate, useAiSuggestions, useApprovePlan } from "@/features/ai/hooks/useAi";
+import { useConversations } from "@/features/ai/hooks/useConversations";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
-import type { AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
+import type { AiChatMessage, AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
 import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
 import { taskKeys, useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
@@ -76,21 +79,28 @@ export function AiDockedPanel({
   const projectPanel = useAiPanelStore((state) => state.projects[projectId]);
   const activeTab = projectPanel?.activeTab ?? "chat";
   const conversationId = projectPanel?.conversationId ?? null;
+  const conversationStatus = projectPanel?.conversationStatus ?? null;
   const messages = projectPanel?.messages ?? [];
+  const pendingApproval = projectPanel?.pendingApproval ?? null;
+  const pendingPlan = projectPanel?.pendingPlan ?? null;
+  const isThinking = projectPanel?.isThinking ?? false;
+  const reasoningText = projectPanel?.reasoningText ?? "";
 
   const setActiveTab = useAiPanelStore((state) => state.setActiveTab);
   const setConversationId = useAiPanelStore((state) => state.setConversationId);
+  const setConversationStatus = useAiPanelStore((state) => state.setConversationStatus);
   const appendMessage = useAiPanelStore((state) => state.appendMessage);
   const appendToMessage = useAiPanelStore((state) => state.appendToMessage);
-  const replaceMessageContent = useAiPanelStore(
-    (state) => state.replaceMessageContent,
-  );
+  const replaceMessageContent = useAiPanelStore((state) => state.replaceMessageContent);
   const clearConversation = useAiPanelStore((state) => state.clearConversation);
+  const loadConversationMessages = useAiPanelStore((state) => state.loadConversationMessages);
   const setPendingApproval = useAiPanelStore((state) => state.setPendingApproval);
   const updateToolStatus = useAiPanelStore((state) => state.updateToolStatus);
-  const pendingApproval = useAiPanelStore(
-    (state) => state.projects[projectId]?.pendingApproval ?? null,
-  );
+  const setToolResult = useAiPanelStore((state) => state.setToolResult);
+  const setPendingPlan = useAiPanelStore((state) => state.setPendingPlan);
+  const setThinking = useAiPanelStore((state) => state.setThinking);
+  const appendReasoningText = useAiPanelStore((state) => state.appendReasoningText);
+  const clearReasoningText = useAiPanelStore((state) => state.clearReasoningText);
 
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -98,43 +108,39 @@ export function AiDockedPanel({
   const [adHocTaskName, setAdHocTaskName] = useState("");
   const [adHocTaskDescription, setAdHocTaskDescription] = useState("");
   const [estimateResults, setEstimateResults] = useState<AiEstimateItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const { data: tasksData } = useTasks(projectId);
   const estimateMutation = useAiEstimate(projectId);
-  const suggestionsQuery = useAiSuggestions(
-    projectId,
-    8,
-    activeTab === "suggestions",
-  );
+  const suggestionsQuery = useAiSuggestions(projectId, 8, activeTab === "suggestions");
   const updateTaskMutation = useUpdateTask(projectId);
   const createDependencyMutation = useCreateDependency(projectId);
   const aiPreferencesQuery = useAiPreferences();
   const updateAiPreferencesMutation = useUpdateAiPreferences();
+  const approvePlanMutation = useApprovePlan(projectId);
+  const { data: conversations } = useConversations(projectId);
 
   const taskOptions = useMemo(() => (tasksData?.items ?? []).slice(0, 20), [tasksData]);
   const aiProviders = aiPreferencesQuery.data?.providers ?? [];
   const selectedProvider =
     aiPreferencesQuery.data?.provider ?? aiPreferencesQuery.data?.defaults?.provider ?? "";
-  const selectedModel = aiPreferencesQuery.data?.model ?? aiPreferencesQuery.data?.defaults?.model ?? "";
+  const selectedModel =
+    aiPreferencesQuery.data?.model ?? aiPreferencesQuery.data?.defaults?.model ?? "";
   const providerRecord = aiProviders.find((provider) => provider.provider_id === selectedProvider);
   const providerModels = providerRecord?.models ?? [];
   const modelSelectDisabled = !selectedProvider || providerModels.length === 0;
 
-  const applyAiPreferencePatch = (patch: {
-    provider?: string | null;
-    model?: string | null;
-  }) => {
-    updateAiPreferencesMutation.mutate(
-      patch,
-      {
-        onSuccess: () => {
-          void aiPreferencesQuery.refetch();
-        },
-        onError: (error) => {
-          toast.error(getErrorMessage(error));
-        },
+  const inputBlocked = isStreaming || Boolean(pendingPlan);
+
+  const applyAiPreferencePatch = (patch: { provider?: string | null; model?: string | null }) => {
+    updateAiPreferencesMutation.mutate(patch, {
+      onSuccess: () => {
+        void aiPreferencesQuery.refetch();
       },
-    );
+      onError: (error) => {
+        toast.error(getErrorMessage(error));
+      },
+    });
   };
 
   const VIEW_PATHS: Record<string, string> = {
@@ -165,9 +171,65 @@ export function AiDockedPanel({
     }
   };
 
+  const handlePlanApprove = () => {
+    if (!conversationId) return;
+    const planSnapshot = pendingPlan;
+    approvePlanMutation.mutate(
+      { conversationId, approved: true },
+      {
+        onSuccess: () => {
+          setPendingPlan(projectId, null);
+          setConversationStatus(projectId, "executing");
+        },
+        onError: (error) => {
+          setPendingPlan(projectId, planSnapshot);
+          setConversationStatus(projectId, "awaiting_plan_approval");
+          toast.error(getErrorMessage(error));
+        },
+      },
+    );
+  };
+
+  const handlePlanRedirect = (feedback: string) => {
+    if (!conversationId) return;
+    const planSnapshot = pendingPlan;
+    setPendingPlan(projectId, null);
+    approvePlanMutation.mutate(
+      { conversationId, approved: false, feedback },
+      {
+        onError: (error) => {
+          setPendingPlan(projectId, planSnapshot);
+          toast.error(getErrorMessage(error));
+        },
+      },
+    );
+  };
+
+  const handleSelectConversation = async (selectedId: string) => {
+    if (selectedId === conversationId) return;
+    setLoadingHistory(true);
+    try {
+      const detail = await aiService.getConversation(projectId, selectedId);
+      const converted: AiChatMessage[] = detail.messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          createdAt: new Date(m.created_at).getTime(),
+        }));
+      loadConversationMessages(projectId, selectedId, converted);
+      setConversationStatus(projectId, detail.status);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const sendMessage = async () => {
     const trimmed = chatInput.trim();
-    if (!trimmed || isStreaming) return;
+    if (!trimmed || inputBlocked) return;
 
     const userMessageId = crypto.randomUUID();
     const assistantMessageId = crypto.randomUUID();
@@ -187,7 +249,6 @@ export function AiDockedPanel({
     setChatInput("");
     setIsStreaming(true);
 
-    // Map tool_use_id -> message id for updating status later
     const toolMessageIds = new Map<string, string>();
 
     let hadChunk = false;
@@ -207,10 +268,7 @@ export function AiDockedPanel({
             .filter((m) => m.role === "user" || m.role === "assistant")
             .filter((m) => !m.toolName)
             .slice(-8)
-            .map((message) => ({
-              role: message.role,
-              content: message.content,
-            })),
+            .map((message) => ({ role: message.role, content: message.content })),
         },
         (event) => {
           if (event.type === "start" && event.conversation_id) {
@@ -219,6 +277,18 @@ export function AiDockedPanel({
           if (event.type === "chunk") {
             hadChunk = true;
             appendToMessage(projectId, assistantMessageId, event.content);
+          }
+          if (event.type === "reasoning") {
+            setThinking(projectId, true);
+            appendReasoningText(projectId, event.content);
+          }
+          if (event.type === "plan") {
+            setPendingPlan(projectId, event.steps);
+            setConversationStatus(projectId, "awaiting_plan_approval");
+          }
+          if (event.type === "plan_approved") {
+            setPendingPlan(projectId, null);
+            setConversationStatus(projectId, "executing");
           }
           if (event.type === "tool_call") {
             hadToolOrUiEvent = true;
@@ -238,6 +308,7 @@ export function AiDockedPanel({
             const toolMsgId = toolMessageIds.get(event.tool_use_id);
             if (toolMsgId) {
               updateToolStatus(projectId, toolMsgId, "done");
+              setToolResult(projectId, toolMsgId, event.content);
             }
             const writeTool = [
               "create_task", "update_task", "delete_task",
@@ -269,9 +340,16 @@ export function AiDockedPanel({
             hadToolOrUiEvent = true;
             handleUiAction(event.action, event.tool_input ?? {});
           }
+          if (event.type === "done") {
+            setThinking(projectId, false);
+            clearReasoningText(projectId);
+            setConversationStatus(projectId, "idle");
+          }
           if (event.type === "error") {
             streamErrorMessage = event.error || "AI chat failed";
             toast.error(streamErrorMessage);
+            setThinking(projectId, false);
+            setConversationStatus(projectId, "idle");
           }
         },
       );
@@ -282,12 +360,16 @@ export function AiDockedPanel({
       try {
         const activeApproval = useAiPanelStore.getState().projects[projectId]?.pendingApproval;
         if (activeApproval) {
-          void aiService.resolveApproval(projectId, activeApproval.approval_id, false).catch(() => {});
+          void aiService
+            .resolveApproval(projectId, activeApproval.approval_id, false)
+            .catch(() => {});
         }
       } catch {
-        // ignore — approval may have already been resolved or timed out
+        // ignore
       }
       setPendingApproval(projectId, null);
+      setPendingPlan(projectId, null);
+      setThinking(projectId, false);
       if (streamErrorMessage && !hadChunk) {
         replaceMessageContent(projectId, assistantMessageId, streamErrorMessage);
       } else if (!hadChunk && hadToolOrUiEvent) {
@@ -312,7 +394,6 @@ export function AiDockedPanel({
       toast.error("Select task(s) or provide an ad-hoc task name");
       return;
     }
-
     try {
       const response = await estimateMutation.mutateAsync({
         task_ids: selectedTaskIds.length ? selectedTaskIds : undefined,
@@ -321,10 +402,7 @@ export function AiDockedPanel({
           ? undefined
           : adHocTaskDescription.trim() || undefined,
         include_reasoning: true,
-        ui_context: {
-          current_view: currentView,
-          selected_task_ids: selectedTaskIds,
-        },
+        ui_context: { current_view: currentView, selected_task_ids: selectedTaskIds },
       });
       setEstimateResults(response.estimates);
     } catch (error) {
@@ -337,13 +415,10 @@ export function AiDockedPanel({
       toast.error("This estimate is not linked to an existing task");
       return;
     }
-
     try {
       await updateTaskMutation.mutateAsync({
         taskId: estimate.task_id,
-        data: {
-          duration: Math.max(0, Math.round(estimate.recommended_minutes)),
-        },
+        data: { duration: Math.max(0, Math.round(estimate.recommended_minutes)) },
       });
       toast.success("Task duration updated from AI estimate");
     } catch (error) {
@@ -357,23 +432,15 @@ export function AiDockedPanel({
       toast.message("No direct action available for this suggestion");
       return;
     }
-
     try {
       if (action.type === "SET_PRIORITY") {
         const taskId = readString(action.payload, "task_id");
         const priority = readNumber(action.payload, "priority");
-        if (!taskId || priority === null) {
-          throw new Error("Invalid SET_PRIORITY suggestion payload");
-        }
-        await updateTaskMutation.mutateAsync({
-          taskId,
-          data: { priority },
-        });
+        if (!taskId || priority === null) throw new Error("Invalid SET_PRIORITY suggestion payload");
+        await updateTaskMutation.mutateAsync({ taskId, data: { priority } });
       } else if (action.type === "UPDATE_TASK") {
         const taskId = readString(action.payload, "task_id");
-        if (!taskId) {
-          throw new Error("Invalid UPDATE_TASK suggestion payload");
-        }
+        if (!taskId) throw new Error("Invalid UPDATE_TASK suggestion payload");
         const duration = readNumber(action.payload, "duration");
         const priority = readNumber(action.payload, "priority");
         const percentComplete = readNumber(action.payload, "percent_complete");
@@ -408,7 +475,6 @@ export function AiDockedPanel({
               : "FS",
         });
       }
-
       toast.success("Suggestion applied");
       await suggestionsQuery.refetch();
     } catch (error) {
@@ -430,36 +496,74 @@ export function AiDockedPanel({
           onDeny={() => void handleApproval(false)}
         />
       ) : null}
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Bot className="size-4 text-primary" />
-          <div>
-            <p className="text-sm font-semibold">AI Assistant</p>
-            <p className="text-[11px] text-muted-foreground">Project-aware guidance</p>
+
+      {/* Header */}
+      <div className="shrink-0 border-b">
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Bot className="size-4 text-primary" />
+            <div>
+              <p className="text-sm font-semibold">AI Assistant</p>
+              <p className="text-[11px] text-muted-foreground">Project-aware guidance</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => clearConversation(projectId)}
-          >
-            New
-          </Button>
-          {onClose ? (
+          <div className="flex items-center gap-1">
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="size-7"
-              onClick={onClose}
+              size="sm"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => clearConversation(projectId)}
             >
-              <X className="size-4" />
+              New
             </Button>
-          ) : null}
+            {onClose ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                onClick={onClose}
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
+          </div>
         </div>
+
+        {/* Conversation selector */}
+        {conversations && conversations.length > 0 ? (
+          <div className="px-3 pb-2">
+            <Select
+              value={conversationId ?? ""}
+              onValueChange={(id) => void handleSelectConversation(id)}
+              disabled={isStreaming || loadingHistory}
+            >
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Resume a past conversation..." />
+              </SelectTrigger>
+              <SelectContent>
+                {conversations.map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                    {c.title ?? "Untitled"}{" "}
+                    <span className="text-muted-foreground">({c.status})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        {/* Status banner */}
+        {conversationStatus === "interrupted" ? (
+          <div className="border-t bg-amber-50 px-3 py-1.5 text-[11px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+            Conversation interrupted — resume or start a new one.
+          </div>
+        ) : conversationStatus === "awaiting_plan_approval" ? (
+          <div className="border-t bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+            Waiting for plan approval.
+          </div>
+        ) : null}
       </div>
 
       <Tabs
@@ -467,7 +571,7 @@ export function AiDockedPanel({
         value={activeTab}
         onValueChange={(value) => setActiveTab(projectId, value as AiTab)}
       >
-        <div className="border-b px-2 py-2">
+        <div className="shrink-0 border-b px-2 py-2">
           <TabsList variant="line" className="w-full justify-start">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="estimate">Estimate</TabsTrigger>
@@ -485,10 +589,11 @@ export function AiDockedPanel({
               ) : (
                 messages.map((message) =>
                   message.toolName ? (
-                    <ToolCallIndicator
+                    <ToolCallRow
                       key={message.id}
                       toolName={message.toolName}
                       status={message.toolStatus ?? "running"}
+                      result={message.toolResult}
                     />
                   ) : (
                     <div
@@ -508,13 +613,31 @@ export function AiDockedPanel({
                   ),
                 )
               )}
+
+              {/* Live reasoning bubble */}
+              {(isThinking || reasoningText) ? (
+                <ReasoningStep text={reasoningText} isStreaming={isThinking} />
+              ) : null}
             </div>
           </ScrollArea>
-          <div className="border-t p-3">
-            {(aiPreferencesQuery.isError || updateAiPreferencesMutation.isError) ? (
+
+          {/* Plan approval card */}
+          {pendingPlan ? (
+            <PlanApprovalCard
+              steps={pendingPlan}
+              onApprove={handlePlanApprove}
+              onRedirect={handlePlanRedirect}
+              disabled={approvePlanMutation.isPending}
+            />
+          ) : null}
+
+          <div className="shrink-0 border-t p-3">
+            {aiPreferencesQuery.isError || updateAiPreferencesMutation.isError ? (
               <Alert variant="destructive" className="mb-3">
                 <AlertDescription>
-                  {getErrorMessage(aiPreferencesQuery.error ?? updateAiPreferencesMutation.error)}
+                  {getErrorMessage(
+                    aiPreferencesQuery.error ?? updateAiPreferencesMutation.error,
+                  )}
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -527,10 +650,7 @@ export function AiDockedPanel({
                     provider?.models.find((item) => item.recommended)?.model_id ??
                     provider?.models[0]?.model_id ??
                     null;
-                  applyAiPreferencePatch({
-                    provider: providerId,
-                    model: recommendedModel,
-                  });
+                  applyAiPreferencePatch({ provider: providerId, model: recommendedModel });
                 }}
                 disabled={aiPreferencesQuery.isLoading || updateAiPreferencesMutation.isPending}
               >
@@ -584,7 +704,7 @@ export function AiDockedPanel({
               }}
               placeholder="Ask the assistant about this project..."
               className="min-h-[72px] resize-none"
-              disabled={isStreaming}
+              disabled={inputBlocked}
             />
             <div className="mt-2 flex items-center justify-between">
               <p className="text-[11px] text-muted-foreground">
@@ -595,7 +715,7 @@ export function AiDockedPanel({
                 size="sm"
                 className="h-8 gap-1.5"
                 onClick={() => void sendMessage()}
-                disabled={isStreaming || !chatInput.trim()}
+                disabled={inputBlocked || !chatInput.trim()}
               >
                 <SendHorizontal className="size-3.5" />
                 {isStreaming ? "Sending..." : "Send"}
@@ -674,7 +794,10 @@ export function AiDockedPanel({
                 <div className="space-y-2">
                   <Separator />
                   {estimateResults.map((estimate) => (
-                    <div key={`${estimate.task_id ?? estimate.task_name}`} className="rounded-md border p-2.5">
+                    <div
+                      key={`${estimate.task_id ?? estimate.task_name}`}
+                      className="rounded-md border p-2.5"
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium">{estimate.task_name}</p>
                         <Badge variant="outline">
@@ -733,7 +856,10 @@ export function AiDockedPanel({
                   <div key={suggestion.id} className="rounded-md border p-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium">{suggestion.title}</p>
-                      <Badge variant="outline" className={suggestionToneClass(suggestion.severity)}>
+                      <Badge
+                        variant="outline"
+                        className={suggestionToneClass(suggestion.severity)}
+                      >
                         {suggestion.severity}
                       </Badge>
                     </div>
