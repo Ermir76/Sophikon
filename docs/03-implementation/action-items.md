@@ -10,6 +10,9 @@
 
 Read these first — every time:
 
+- `docs/01-requirements/functional-requirements.md
+- `docs/01-requirements/ai-features.md`
+- `docs/02-design/api-specification.md`
 - `docs/02-design/agent-platform-architecture.md` — the constitution, all decisions
 - `docs/03-implementation/agent-platform-plan.md` — detailed implementation spec
 - `CONVENTIONS.md` — layer rules, canonical examples
@@ -215,11 +218,49 @@ Apply `pydantic-style` throughout.
 
 > See `docs/03-implementation/agent-platform-plan.md` Phase 3 for full spec.
 
-- [ ] New endpoint `POST /v1/complete` — single-turn completion, streaming
-- [ ] Gut `brain_service.py` — thin router to providers only
-- [ ] Delete `tool_catalog.py` — now lives in backend
-- [ ] Simplify `contracts.py` — completion contract only
-- [ ] Add empty `mcp/__init__.py` and `a2a/__init__.py` stubs
+### 3.1 — Add `POST /v1/complete` endpoint
+
+- [x] Add `POST /v1/complete` to `ai-service/app/main.py` — streaming, calls `complete_stream()`
+
+### 3.2 — Delete `tool_catalog.py`
+
+- [x] Delete `ai-service/app/service/providers/tool_catalog.py`
+- [x] Update `ai-service/tests/test_tool_catalog.py` to a placeholder (no broken imports)
+
+### 3.3 — Add MCP and A2A stubs
+
+- [x] Create `ai-service/app/mcp/__init__.py` (empty stub)
+- [x] Create `ai-service/app/a2a/__init__.py` (empty stub)
+
+### 3.4 — Gut `brain_service.py` — thin router to providers only
+
+- [x] Delete `_KEYWORD_DAY_HINTS` dict from `brain_service.py`
+- [x] Delete `build_estimates()` function from `brain_service.py`
+- [x] Delete `build_suggestions()` function from `brain_service.py`
+
+### 3.5 — Delete estimate/suggestions endpoints from `main.py`
+
+- [x] Delete `POST /v1/brain/estimate` endpoint from `main.py`
+- [x] Delete `POST /v1/brain/suggestions` endpoint from `main.py`
+- [x] Remove `EstimateRequest`, `SuggestionsRequest` imports from `main.py`
+- [x] Remove `build_estimates`, `build_suggestions` imports from `main.py`
+
+### 3.6 — Simplify `contracts.py` — completion contract only
+
+- [x] Delete `ProjectContextTask` class from `contracts.py`
+- [x] Delete `ProjectContext` class from `contracts.py`
+- [x] Delete `EstimateTaskInput` class from `contracts.py`
+- [x] Delete `EstimateRequest` class from `contracts.py`
+- [x] Delete `EstimateItem` class from `contracts.py`
+- [x] Delete `EstimateResponse` class from `contracts.py`
+- [x] Delete `SuggestionAction` class from `contracts.py`
+- [x] Delete `SuggestionItem` class from `contracts.py`
+- [x] Delete `SuggestionsRequest` class from `contracts.py`
+- [x] Delete `SuggestionsResponse` class from `contracts.py`
+
+### 3.7 — Fix `ChatEvent` streaming contract
+
+- [x] Add `"reasoning"` to `ChatEvent.type` Literal in `ai-service/app/schema/contracts.py`
 
 ---
 

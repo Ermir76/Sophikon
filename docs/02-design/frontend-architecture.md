@@ -1,6 +1,5 @@
 # Frontend Architecture
 
-> **Created:** 2026-02-17
 > **Pattern:** Feature-based (domain slices)
 > **Rule:** Every new file must follow this structure. No exceptions.
 
@@ -9,7 +8,6 @@
 ## Directory Structure
 
 ```
-
 src/
 ├── app/
 │   ├── App.tsx
@@ -71,13 +69,16 @@ src/
 │   │   ├── components/
 │   │   │   ├── CreateProjectDialog.tsx
 │   │   │   ├── ProjectLayout.tsx
-│   │   │   └── ProjectMembersTab.tsx
+│   │   │   ├── ProjectMembersTab.tsx
+│   │   │   └── ProjectActivityFeedCard.tsx
 │   │   ├── hooks/
 │   │   │   ├── useProjects.ts
-│   │   │   └── useProjectMembers.ts
+│   │   │   ├── useProjectMembers.ts
+│   │   │   └── useProjectActivity.ts
 │   │   ├── api/
 │   │   │   ├── project.service.ts
-│   │   │   └── project-members.service.ts
+│   │   │   ├── project-members.service.ts
+│   │   │   └── project-activity.service.ts
 │   │   ├── types.ts
 │   │   └── index.ts
 │   │
@@ -111,11 +112,26 @@ src/
 │   │   │   └── ReportsPage.tsx
 │   │   └── index.ts
 │   │
+│   ├── notifications/
+│   │   ├── hooks/
+│   │   │   ├── useNotifications.ts
+│   │   │   └── useNotificationWebSocket.ts
+│   │   ├── api/
+│   │   │   └── notification.service.ts
+│   │   ├── store/
+│   │   │   └── notification-websocket-store.ts
+│   │   ├── types.ts
+│   │   └── index.ts
+│   │
 │   └── ai/
 │       ├── components/
-│       │   └── AiDockedPanel.tsx
+│       │   ├── AiDockedPanel.tsx        ← main panel container
+│       │   ├── PlanApprovalCard.tsx     ← shows agent plan, approve/redirect
+│       │   ├── ReasoningStep.tsx        ← collapsible agent reasoning display
+│       │   └── ToolCallRow.tsx          ← live tool call + result display
 │       ├── hooks/
-│       │   └── useAi.ts
+│       │   ├── useAi.ts                 ← chat stream, plan approval
+│       │   └── useConversations.ts      ← load/resume past conversations
 │       ├── api/
 │       │   └── ai.service.ts
 │       ├── store/
@@ -157,29 +173,6 @@ src/
 └── test/
     └── setup.ts
 ```
-
----
-
-## Current Project Feature Additions
-
-The `projects` feature now also includes:
-
-- `components/ProjectActivityFeedCard.tsx`
-- `hooks/useProjectActivity.ts`
-- `api/project-activity.service.ts`
-
-These files support the dedicated project activity feed used by the project overview page.
-
-The `notifications` feature now also includes:
-
-- `api/notification.service.ts`
-- `hooks/useNotifications.ts`
-- `hooks/useNotificationWebSocket.ts`
-- `store/notification-websocket-store.ts`
-- `types.ts`
-- `index.ts`
-
-These files support the global notifications inbox, settings toggles, and user-scoped realtime badge updates in shared layout surfaces.
 
 ---
 
@@ -243,96 +236,9 @@ import { Button } from "../../../shared/ui/button";
 
 ## Visual Architecture Rules
 
-The frontend visual system follows a strict hierarchy:
+1. `src/index.css` — design tokens, app-level visual defaults
+2. `src/shared/ui/*` — base widget layer (shadcn foundation), controlled changes only
+3. `src/shared/*` adapters — app-semantic wrappers, normalize drift from base layer
+4. `src/features/**` — composition and state rendering only, no local design systems
 
-1. `src/index.css`:
-
-- tokens and app-level visual defaults
-
-2. `src/shared/ui/*`:
-
-- base widget layer (current modified shadcn foundation)
-- controlled changes only, not routine feature edits
-
-3. `src/shared/*` adapters/primitives:
-
-- app-semantic wrappers for stable usage in feature code
-- normalize drift from the base widget layer
-
-4. `src/features/**`:
-
-- composition and state rendering only
-- no local private design systems
-
-Reference documents:
-
-- `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`
-- `docs/03-implementation/ui-ux-recovery-tracker.md`
-
----
-
-## Migration Map
-
-Current file location → target location.
-
-| Current                                         | Target                                                               |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| `main.tsx`                                      | `app/main.tsx`                                                       |
-| `App.tsx`                                       | `app/App.tsx`                                                        |
-| `components/ProtectedRoute.tsx`                 | `app/routing/ProtectedRoute.tsx`                                     |
-| `components/GuestRoute.tsx`                     | `app/routing/GuestRoute.tsx`                                         |
-| `components/OrgGuard.tsx`                       | `app/routing/OrgGuard.tsx`                                           |
-| `components/ErrorBoundary.tsx`                  | `shared/components/ErrorBoundary.tsx`                                |
-| `components/PageLoader.tsx`                     | `shared/components/PageLoader.tsx`                                   |
-| `components/QueryError.tsx`                     | `shared/components/QueryError.tsx`                                   |
-| `components/layout/AppLayout.tsx`               | `shared/layout/AppLayout.tsx`                                        |
-| `components/layout/AppSidebar.tsx`              | `shared/layout/AppSidebar.tsx`                                       |
-| `components/layout/AppHeader.tsx`               | `shared/layout/AppHeader.tsx`                                        |
-| `components/layout/AuthLayout.tsx`              | `shared/layout/AuthLayout.tsx`                                       |
-| `components/layout/NavUser.tsx`                 | `shared/layout/NavUser.tsx`                                          |
-| `components/layout/OrgSwitcher.tsx`             | `features/organizations/components/OrgSwitcher.tsx`                  |
-| `components/layout/ProjectLayout.tsx`           | `features/projects/components/ProjectLayout.tsx`                     |
-| `components/ui/*`                               | `shared/ui/*` (no change)                                            |
-| `pages/auth/LoginPage.tsx`                      | `features/auth/pages/LoginPage.tsx`                                  |
-| `pages/auth/RegisterPage.tsx`                   | `features/auth/pages/RegisterPage.tsx`                               |
-| `pages/DashboardPage.tsx`                       | `features/dashboard/pages/DashboardPage.tsx`                         |
-| `pages/CreateOrganizationPage.tsx`              | **DELETE** → `features/organizations/components/CreateOrgDialog.tsx` |
-| `pages/settings/OrgSettingsPage.tsx`            | `features/organizations/pages/OrgSettingsPage.tsx`                   |
-| `pages/settings/OrgMembersPage.tsx`             | `features/organizations/pages/OrgMembersPage.tsx`                    |
-| `pages/settings/members/InviteMemberDialog.tsx` | `features/organizations/components/InviteMemberDialog.tsx`           |
-| `pages/settings/members/MembersTable.tsx`       | `features/organizations/components/MembersTable.tsx`                 |
-| `pages/settings/members/MemberActions.tsx`      | `features/organizations/components/MemberActions.tsx`                |
-| `pages/ProjectsPage.tsx`                        | `features/projects/pages/ProjectsPage.tsx`                           |
-| `pages/ProjectOverviewPage.tsx`                 | `features/projects/pages/ProjectOverviewPage.tsx`                    |
-| `pages/ProjectSettingsPage.tsx`                 | `features/projects/pages/ProjectSettingsPage.tsx`                    |
-| `pages/projects/CreateProjectDialog.tsx`        | `features/projects/components/CreateProjectDialog.tsx`               |
-| `pages/TasksPage.tsx`                           | `features/tasks/pages/TasksPage.tsx`                                 |
-| `pages/GanttPage.tsx`                           | `features/gantt/pages/GanttPage.tsx`                                 |
-| `pages/CalendarPage.tsx`                        | `features/calendar/pages/CalendarPage.tsx`                           |
-| `pages/ResourcesPage.tsx`                       | `features/resources/pages/ResourcesPage.tsx`                         |
-| `pages/ReportsPage.tsx`                         | `features/reports/pages/ReportsPage.tsx`                             |
-| `pages/NotFoundPage.tsx`                        | `app/NotFoundPage.tsx`                                               |
-| `hooks/useAuth.ts`                              | `features/auth/hooks/useAuth.ts`                                     |
-| `hooks/useAuth.test.tsx`                        | `features/auth/hooks/useAuth.test.tsx`                               |
-| `hooks/useHooks.test.tsx`                       | **SPLIT** per feature                                                |
-| `hooks/useOrganizations.ts`                     | `features/organizations/hooks/useOrganizations.ts`                   |
-| `hooks/useMyOrgRole.ts`                         | `features/organizations/hooks/useMyOrgRole.ts`                       |
-| `hooks/useProjects.ts`                          | `features/projects/hooks/useProjects.ts`                             |
-| `hooks/use-mobile.ts`                           | `shared/hooks/use-mobile.ts`                                         |
-| `services/api.ts`                               | `shared/api/api.ts`                                                  |
-| `services/api.test.ts`                          | `shared/api/api.test.ts`                                             |
-| `services/auth.ts`                              | `features/auth/api/auth.service.ts`                                  |
-| `services/organization.ts`                      | `features/organizations/api/organization.service.ts`                 |
-| `services/project.ts`                           | `features/projects/api/project.service.ts`                           |
-| `store/auth-store.ts`                           | `features/auth/store/auth-store.ts`                                  |
-| `store/auth-store.test.ts`                      | `features/auth/store/auth-store.test.ts`                             |
-| `store/org-store.ts`                            | `features/organizations/store/org-store.ts`                          |
-| `store/org-store.test.ts`                       | `features/organizations/store/org-store.test.ts`                     |
-| `lib/auth.ts`                                   | `features/auth/lib/auth.ts`                                          |
-| `lib/errors.ts`                                 | `shared/lib/errors.ts`                                               |
-| `lib/roles.ts`                                  | `shared/lib/roles.ts`                                                |
-| `lib/utils.ts`                                  | `shared/lib/utils.ts`                                                |
-| `lib/react-query.ts`                            | `config/react-query.ts`                                              |
-| `types/api.ts`                                  | `shared/types/api.ts`                                                |
-| `types/organization.ts`                         | `features/organizations/types.ts`                                    |
-| `types/project.ts`                              | `features/projects/types.ts`                                         |
+Reference: `docs/02-design/FRONTEND_STYLING_CONSTITUTION.md`

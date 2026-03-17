@@ -207,10 +207,10 @@ This document records what is evidenced by the current codebase review.
 | FR-AI-002 | Implemented   | A7       | Chat feature exists with project/task context surface.                                                           |
 | FR-AI-003 | Partial       | A7       | Status-style project questions are supported by current AI surface, but broad coverage was not formally audited. |
 | FR-AI-004 | Partial       | A7, A9   | Plan approval and tool approval wired in backend agent loop (Phase 2); frontend confirmation UI pending (Phase 4). |
-| FR-AI-005 | Implemented   | A7       | Estimate flow exists.                                                                                            |
-| FR-AI-006 | Implemented   | A7       | Estimate reasoning is surfaced.                                                                                  |
-| FR-AI-007 | Implemented   | A7       | Multi-task estimation surface exists in the docked panel.                                                        |
-| FR-AI-008 | Implemented   | A7       | Suggestions flow exists.                                                                                         |
+| FR-AI-005 | Partial       | A7       | Estimate backend functions exist but call deleted ai-service endpoints (TODO Phase 6 — replace with real LLM agent calls). |
+| FR-AI-006 | Partial       | A7       | Estimate reasoning backend exists but ai-service endpoint deleted (TODO Phase 6).                                |
+| FR-AI-007 | Partial       | A7       | Multi-task estimation frontend exists but backend calls deleted ai-service endpoint (TODO Phase 6).              |
+| FR-AI-008 | Partial       | A7       | Suggestions backend functions exist but call deleted ai-service endpoint (TODO Phase 6).                         |
 | FR-AI-009 | Implemented   | A7       | Streaming chat flow exists.                                                                                      |
 
 ### 3.13 Collaboration
