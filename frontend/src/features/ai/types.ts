@@ -78,6 +78,17 @@ export type AiChatEvent =
       type: "ui_action";
       action: string;
       tool_input?: Record<string, unknown>;
+    }
+  | {
+      type: "plan";
+      steps: Array<{ action: string; reason: string }>;
+    }
+  | {
+      type: "plan_approved";
+    }
+  | {
+      type: "reasoning";
+      content: string;
     };
 
 export interface PendingApproval {

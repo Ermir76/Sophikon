@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from app.schema._uuid import SchemaUUID
 
@@ -30,34 +30,41 @@ class AIUsageMeta(BaseModel):
     model: str | None = None
 
 
-class AIChatEvent(BaseModel):
-    model_config = ConfigDict(validate_assignment=True)
-
-    type: Literal[
-        "start",
-        "chunk",
-        "done",
-        "error",
-        "tool_call",
-        "tool_result",
-        "approval_required",
-        "ui_action",
-    ]
-    conversation_id: SchemaUUID | None = None
-    message_id: SchemaUUID | None = None
-    content: str | None = None
-    usage: AIUsageMeta | None = None
-    error: str | None = None
-    model: str | None = None
-    tool_use_id: str | None = None
-    tool_name: str | None = None
-    tool_input: dict | None = None
-    approval_id: str | None = None
-    action: str | None = None
-
-
 class AIApprovalRequest(BaseModel):
     approved: bool
+
+
+class AIPlanApprovalRequest(BaseModel):
+    approved: bool
+    feedback: str | None = Field(default=None, max_length=2000)
+
+
+class ConversationSummaryResponse(BaseModel):
+    id: SchemaUUID
+    title: str | None = None
+    status: str
+    mode: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConversationListResponse(BaseModel):
+    conversations: list[ConversationSummaryResponse]
+
+
+class MessageResponse(BaseModel):
+    id: SchemaUUID
+    role: str
+    content: str
+    created_at: datetime
+
+
+class ConversationDetailResponse(BaseModel):
+    id: SchemaUUID
+    title: str | None = None
+    status: str
+    mode: str
+    messages: list[MessageResponse]
 
 
 class AIEstimateRequest(BaseModel):

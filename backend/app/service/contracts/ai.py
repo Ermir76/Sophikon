@@ -52,6 +52,9 @@ class AIChatEvent(BaseModel):
         "tool_result",
         "approval_required",
         "ui_action",
+        "plan",
+        "plan_approved",
+        "reasoning",
     ]
     conversation_id: ContractUUID | None = None
     message_id: ContractUUID | None = None
@@ -64,6 +67,7 @@ class AIChatEvent(BaseModel):
     tool_input: dict | None = None
     approval_id: str | None = None
     action: str | None = None
+    steps: list[dict] | None = None
 
 
 class AIEstimateInput(BaseModel):
@@ -169,3 +173,49 @@ class AIProviderSuggestionsRequest(BaseModel):
     project_context: ProjectContext
     limit: int = Field(default=5, ge=1, le=20)
     ui_context: UiContext | None = None
+
+
+# ---------------------------------------------------------------------------
+# Complete request (POST /v1/complete on ai-service)
+# ---------------------------------------------------------------------------
+
+
+class AICompleteRequest(BaseModel):
+    messages: list[dict] = Field(default_factory=list)
+    tools: list[dict] = Field(default_factory=list)
+    system_prompt: str = ""
+    provider: str
+    model: str
+    api_key: str | None = None
+    conversation_id: ContractUUID | None = None
+
+
+# ---------------------------------------------------------------------------
+# Plan approval contracts
+# ---------------------------------------------------------------------------
+
+
+class PlanApprovalInput(BaseModel):
+    approved: bool
+    feedback: str | None = Field(default=None, max_length=2000)
+
+
+# ---------------------------------------------------------------------------
+# Conversation contracts
+# ---------------------------------------------------------------------------
+
+
+class ConversationSummary(BaseModel):
+    id: ContractUUID
+    title: str | None = None
+    status: str
+    mode: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConversationMessage(BaseModel):
+    id: ContractUUID
+    role: str
+    content: str
+    created_at: datetime
