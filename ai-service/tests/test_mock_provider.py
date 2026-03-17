@@ -1,35 +1,23 @@
 import asyncio
 from uuid import uuid4
 
-from app.schema.contracts import ChatRequest
 from app.service.providers.mock_provider import stream_mock
 
 
-def _request_payload() -> dict:
-    return {
-        "message": "What is status?",
-        "provider": "openai",
-        "model": "gpt-5-mini",
-        "project_context": {
-            "project_id": str(uuid4()),
-            "name": "Mock Provider Project",
-            "description": None,
-            "status": "ACTIVE",
-            "start_date": "2026-03-01",
-            "finish_date": None,
-            "updated_at": "2026-03-01T00:00:00Z",
-            "tasks": [],
-        },
-        "conversation_id": str(uuid4()),
-        "user_id": str(uuid4()),
-    }
-
-
 def test_stream_mock_emits_start_chunks_done():
-    request = ChatRequest.model_validate(_request_payload())
+    messages = [{"role": "user", "content": "What is status?"}]
+    conversation_id = uuid4()
 
     async def _collect():
-        return [event async for event in stream_mock(request, model_id="sophikon-mock-v1")]
+        return [
+            event
+            async for event in stream_mock(
+                messages,
+                "You are a PM assistant.",
+                model_id="sophikon-mock-v1",
+                conversation_id=conversation_id,
+            )
+        ]
 
     events = asyncio.run(_collect())
 

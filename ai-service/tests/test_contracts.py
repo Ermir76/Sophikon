@@ -76,28 +76,19 @@ def project_context_payload():
     }
 
 
-def test_chat_request_payload_from_backend_schema_matches_ai_service_contract(
-    project_context_payload,
-):
-    backend_request = backend_ai.AIServiceChatRequest(
-        message="What is the project status?",
-        project_context=project_context_payload,
-        conversation_id=uuid4(),
-        user_id=uuid4(),
-        ui_context={
-            "current_view": "tasks",
-            "selected_task_ids": [uuid4()],
-        },
-        history=[
-            {"role": "user", "content": "Give me a quick summary."},
-            {"role": "assistant", "content": "There are active rollout tasks."},
+def test_complete_request_is_valid():
+    request = contracts.CompleteRequest(
+        messages=[
+            {"role": "user", "content": "What is the project status?"},
         ],
+        tools=[],
+        system_prompt="You are a PM assistant.",
+        provider="mock",
+        model="mock",
     )
-
-    payload = backend_request.model_dump(mode="json")
-    service_request = contracts.ChatRequest.model_validate(payload)
-
-    assert service_request.model_dump(mode="json") == payload
+    payload = request.model_dump(mode="json")
+    assert payload["provider"] == "mock"
+    assert len(payload["messages"]) == 1
 
 
 def test_estimate_request_payload_from_backend_schema_matches_ai_service_contract(
@@ -140,22 +131,23 @@ def test_suggestions_request_payload_from_backend_schema_matches_ai_service_cont
     assert service_request.model_dump(mode="json") == payload
 
 
-def test_chat_stream_response_matches_backend_event_contract(
+def test_complete_stream_response_matches_event_contract(
     client,
     service_headers,
-    project_context_payload,
 ):
-    backend_request = backend_ai.AIServiceChatRequest(
-        message="What is the project status?",
-        project_context=project_context_payload,
+    request = contracts.CompleteRequest(
+        messages=[{"role": "user", "content": "What is the project status?"}],
+        tools=[],
+        system_prompt="You are a PM assistant.",
+        provider="mock",
+        model="mock",
         conversation_id=uuid4(),
-        user_id=uuid4(),
     )
 
     response = client.post(
-        "/v1/brain/chat",
+        "/v1/complete",
         headers=service_headers,
-        json=backend_request.model_dump(mode="json"),
+        json=request.model_dump(mode="json"),
     )
 
     assert response.status_code == 200

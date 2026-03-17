@@ -4,87 +4,82 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from app.core.config import settings
-from app.schema.contracts import ChatRequest
 from app.service.providers import gemini_provider
-
-
-def _request_payload() -> dict:
-    return {
-        "message": "status",
-        "provider": "gemini",
-        "model": "gemini-2.5-flash",
-        "project_context": {
-            "project_id": str(uuid4()),
-            "name": "Gemini Provider Project",
-            "description": None,
-            "status": "ACTIVE",
-            "start_date": "2026-03-01",
-            "finish_date": None,
-            "updated_at": "2026-03-01T00:00:00Z",
-            "tasks": [],
-        },
-        "conversation_id": str(uuid4()),
-        "user_id": str(uuid4()),
-    }
 
 
 def test_stream_gemini_emits_chunk_tool_call_and_done(monkeypatch):
     monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
-    captured: dict = {"configured_key": None}
 
     class FakeChunk:
-        def __init__(self, *, text: str | None = None, function_call: object | None = None):
+        def __init__(self, *, text=None, function_call=None):
             self.text = text
+            self.usage_metadata = None
             self.candidates = []
             if function_call is not None:
                 part = SimpleNamespace(function_call=function_call)
                 content = SimpleNamespace(parts=[part])
                 self.candidates = [SimpleNamespace(content=content)]
-            self.usage_metadata = None
 
     class FakeUsageChunk:
         def __init__(self):
             self.text = None
             self.candidates = []
-            self.usage_metadata = SimpleNamespace(prompt_token_count=10, candidates_token_count=7)
-
-    class FakeGenerativeModel:
-        def __init__(self, *, model_name, system_instruction, tools):
-            captured["model_name"] = model_name
-            captured["system_instruction"] = system_instruction
-            captured["tools"] = tools
-
-        def generate_content(self, contents, stream):
-            captured["contents"] = contents
-            captured["stream"] = stream
-            return iter(
-                [
-                    FakeChunk(text="hello from gemini"),
-                    FakeChunk(
-                        function_call=SimpleNamespace(name="get_tasks", args={"limit": 5})
-                    ),
-                    FakeUsageChunk(),
-                ]
+            self.usage_metadata = SimpleNamespace(
+                prompt_token_count=10, candidates_token_count=7
             )
 
-    def _configure(*, api_key):
-        captured["configured_key"] = api_key
+    async def fake_generate_content_stream(**kwargs):
+        async def _gen():
+            yield FakeChunk(text="hello from gemini")
+            yield FakeChunk(
+                function_call=SimpleNamespace(name="get_tasks", args={"limit": 5})
+            )
+            yield FakeUsageChunk()
+
+        return _gen()
+
+    fake_models = SimpleNamespace(generate_content_stream=fake_generate_content_stream)
+    fake_aio = SimpleNamespace(models=fake_models)
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.api_key = api_key
+            self.aio = fake_aio
+
+    fake_types = SimpleNamespace(
+        FunctionDeclaration=lambda **kw: kw,
+        Tool=lambda **kw: kw,
+        GenerateContentConfig=lambda **kw: kw,
+    )
 
     monkeypatch.setitem(
         sys.modules,
-        "google.generativeai",
-        SimpleNamespace(configure=_configure, GenerativeModel=FakeGenerativeModel),
+        "google.genai",
+        SimpleNamespace(Client=FakeClient, types=fake_types),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "google.genai.types",
+        fake_types,
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "google",
+        SimpleNamespace(genai=SimpleNamespace(Client=FakeClient)),
     )
 
-    request = ChatRequest.model_validate(_request_payload())
+    messages = [{"role": "user", "content": "status"}]
+    tools = [{"name": "get_tasks", "input_schema": {"type": "object"}}]
 
     async def _collect():
         return [
             event
             async for event in gemini_provider.stream_gemini(
-                request,
+                messages,
+                "You are a PM assistant.",
+                tools,
                 model_id="gemini-2.5-flash",
-                tool_definitions=[{"name": "get_tasks", "input_schema": {"type": "object"}}],
+                conversation_id=uuid4(),
             )
         ]
 
@@ -94,56 +89,3 @@ def test_stream_gemini_emits_chunk_tool_call_and_done(monkeypatch):
     assert any(event["type"] == "chunk" and "gemini" in event["content"] for event in events)
     assert any(event["type"] == "tool_call" and event["tool_name"] == "get_tasks" for event in events)
     assert events[-1]["type"] == "done"
-    assert captured["configured_key"] == "test-key"
-    assert captured["model_name"] == "gemini-2.5-flash"
-    assert captured["stream"] is True
-
-
-def test_stream_gemini_emits_chunk_from_candidate_parts_when_chunk_text_is_empty(monkeypatch):
-    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
-
-    class FakeChunk:
-        def __init__(self):
-            self.text = None
-            self.usage_metadata = None
-            self.candidates = [
-                SimpleNamespace(
-                    content=SimpleNamespace(parts=[SimpleNamespace(text="hello from candidate parts")])
-                )
-            ]
-
-    class FakeGenerativeModel:
-        def __init__(self, *, model_name, system_instruction, tools):
-            self.model_name = model_name
-            self.system_instruction = system_instruction
-            self.tools = tools
-
-        def generate_content(self, contents, stream):
-            return iter([FakeChunk()])
-
-    monkeypatch.setitem(
-        sys.modules,
-        "google.generativeai",
-        SimpleNamespace(
-            configure=lambda **_: None,
-            GenerativeModel=FakeGenerativeModel,
-        ),
-    )
-
-    request = ChatRequest.model_validate(_request_payload())
-
-    async def _collect():
-        return [
-            event
-            async for event in gemini_provider.stream_gemini(
-                request,
-                model_id="gemini-2.5-flash",
-                tool_definitions=[],
-            )
-        ]
-
-    events = asyncio.run(_collect())
-    assert any(
-        event["type"] == "chunk" and event["content"] == "hello from candidate parts"
-        for event in events
-    )

@@ -3,28 +3,7 @@ import sys
 from types import SimpleNamespace
 from uuid import uuid4
 
-from app.schema.contracts import ChatRequest
 from app.service.providers.anthropic_provider import stream_claude
-
-
-def _request_payload() -> dict:
-    return {
-        "message": "status",
-        "provider": "anthropic",
-        "model": "claude-3-7-sonnet-latest",
-        "project_context": {
-            "project_id": str(uuid4()),
-            "name": "Anthropic Provider Project",
-            "description": None,
-            "status": "ACTIVE",
-            "start_date": "2026-03-01",
-            "finish_date": None,
-            "updated_at": "2026-03-01T00:00:00Z",
-            "tasks": [],
-        },
-        "conversation_id": str(uuid4()),
-        "user_id": str(uuid4()),
-    }
 
 
 def test_stream_claude_emits_tool_call_chunk_and_done(monkeypatch):
@@ -69,15 +48,18 @@ def test_stream_claude_emits_tool_call_chunk_and_done(monkeypatch):
         sys.modules, "anthropic", SimpleNamespace(AsyncAnthropic=FakeAsyncAnthropic)
     )
 
-    request = ChatRequest.model_validate(_request_payload())
+    messages = [{"role": "user", "content": "status"}]
+    tools = [{"name": "get_tasks", "input_schema": {"type": "object"}}]
 
     async def _collect():
         return [
             event
             async for event in stream_claude(
-                request,
+                messages,
+                "You are a PM assistant.",
+                tools,
                 model_id="claude-3-7-sonnet-latest",
-                tool_definitions=[{"name": "get_tasks", "input_schema": {"type": "object"}}],
+                conversation_id=uuid4(),
             )
         ]
 

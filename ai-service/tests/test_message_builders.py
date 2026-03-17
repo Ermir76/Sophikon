@@ -1,67 +1,76 @@
-from uuid import uuid4
-
-from app.schema.contracts import ChatRequest
-from app.service.providers.message_builders import (
-    build_claude_messages,
-    build_gemini_contents,
-    build_openai_messages,
-)
+from app.service.providers.message_builders import to_gemini_contents, to_openai_messages
 
 
-def _request_payload(*, with_tool_results: bool = False) -> dict:
-    return {
-        "message": "final user message",
-        "provider": "openai",
-        "model": "gpt-5-mini",
-        "project_context": {
-            "project_id": str(uuid4()),
-            "name": "Builder Project",
-            "description": None,
-            "status": "ACTIVE",
-            "start_date": "2026-03-01",
-            "finish_date": None,
-            "updated_at": "2026-03-01T00:00:00Z",
-            "tasks": [],
+def test_to_openai_messages_plain_text():
+    messages = [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi there"},
+        {"role": "user", "content": "What is the status?"},
+    ]
+    result = to_openai_messages(messages)
+    assert result[0]["role"] == "user"
+    assert result[1]["role"] == "assistant"
+    assert result[2]["role"] == "user"
+    assert result[2]["content"] == "What is the status?"
+
+
+def test_to_openai_messages_assistant_tool_use():
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Let me check tasks."},
+                {"type": "tool_use", "id": "tool-1", "name": "get_tasks", "input": {"filter_status": "all"}},
+            ],
         },
-        "conversation_id": str(uuid4()),
-        "user_id": str(uuid4()),
-        "history": [
-            {"role": "user", "content": "first"},
-            {"role": "assistant", "content": "second"},
-        ],
-        "tool_results": (
-            [{"tool_use_id": "tool-1", "content": "done", "is_error": False}]
-            if with_tool_results
-            else []
-        ),
-    }
+        {
+            "role": "user",
+            "content": [
+                {"type": "tool_result", "tool_use_id": "tool-1", "content": '{"tasks": []}'},
+            ],
+        },
+    ]
+    result = to_openai_messages(messages)
+
+    # assistant turn becomes role=assistant with tool_calls
+    assert result[0]["role"] == "assistant"
+    assert len(result[0]["tool_calls"]) == 1
+    assert result[0]["tool_calls"][0]["function"]["name"] == "get_tasks"
+
+    # tool result turn becomes role=tool
+    assert result[1]["role"] == "tool"
+    assert result[1]["tool_call_id"] == "tool-1"
 
 
-def test_build_claude_messages_appends_tool_results_when_present():
-    request = ChatRequest.model_validate(_request_payload(with_tool_results=True))
-    messages = build_claude_messages(request)
-
-    assert messages[0]["role"] == "user"
-    assert messages[1]["role"] == "assistant"
-    assert messages[-1]["role"] == "user"
-    assert messages[-1]["content"][0]["type"] == "tool_result"
-    assert messages[-1]["content"][0]["tool_use_id"] == "tool-1"
-
-
-def test_build_openai_messages_normalizes_roles_and_appends_message():
-    request = ChatRequest.model_validate(_request_payload(with_tool_results=False))
-    messages = build_openai_messages(request)
-
-    assert messages[0]["role"] == "user"
-    assert messages[1]["role"] == "assistant"
-    assert messages[-1]["role"] == "user"
-    assert messages[-1]["content"] == "final user message"
-
-
-def test_build_gemini_contents_maps_assistant_role_to_model():
-    request = ChatRequest.model_validate(_request_payload(with_tool_results=False))
-    contents = build_gemini_contents(request)
-
+def test_to_gemini_contents_maps_assistant_role_to_model():
+    messages = [
+        {"role": "user", "content": "first"},
+        {"role": "assistant", "content": "second"},
+    ]
+    contents = to_gemini_contents(messages)
     assert contents[0]["role"] == "user"
     assert contents[1]["role"] == "model"
-    assert contents[-1]["parts"][0]["text"] == "final user message"
+
+
+def test_to_gemini_contents_tool_use_and_result():
+    messages = [
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "tool_use", "id": "tool-1", "name": "get_tasks", "input": {}},
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "tool_result", "tool_use_id": "tool-1", "content": '{"tasks":[]}'},
+            ],
+        },
+    ]
+    contents = to_gemini_contents(messages)
+
+    assert contents[0]["role"] == "model"
+    assert contents[0]["parts"][0]["function_call"]["name"] == "get_tasks"
+
+    assert contents[1]["role"] == "user"
+    assert contents[1]["parts"][0]["function_response"]["name"] == "get_tasks"
