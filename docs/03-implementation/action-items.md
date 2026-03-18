@@ -455,19 +455,49 @@ The spec expects `current_utilization` and `is_over_allocated` per resource. Tod
 
 - [ ] `get_resources` — add `current_utilization` (percent) and `is_over_allocated` (bool) by computing from the utilization service for the project window
 
-### 6.4 — Replace broken `estimate_for_project` and `suggestions_for_project`
+### 6.4 — Replace broken `estimate_for_project` (FR-AI-005, FR-AI-006, FR-AI-007)
 
-Both functions in `ai_service.py` call `/v1/brain/estimate` and `/v1/brain/suggestions` on the ai-service, which were deleted in Phase 3. They return a 404 at runtime.
+`estimate_for_project` in `ai_service.py` calls `/v1/brain/estimate` which was deleted in Phase 3. Replace it with a direct `_complete_from_service` call — same pattern as `run_proactive_analysis` in `loop.py`.
 
-- [ ] Replace `estimate_for_project` — call `run_agent` or a direct tool-based flow via `AgentContext` instead of the deleted ai-service endpoint
-- [ ] Replace `suggestions_for_project` — same approach, use the agent loop or a direct LLM call via `_complete_from_service`
-- [ ] Update `backend/app/api/v1/endpoints/ai.py` estimate and suggestions handlers to match the new signatures
+The `AIEstimateResult` shape (`estimates: list[AIEstimateItem]`) and `AIEstimateItem` fields (`optimistic_minutes`, `likely_minutes`, `pessimistic_minutes`, `recommended_minutes`, `confidence`, `reasoning`) are correct and must be preserved — the frontend and endpoint schema depend on them.
 
-### 6.5 — Tests
+Read before starting:
+- `backend/app/service/ai_service.py` — `_complete_from_service`, `_resolve_effective_provider_model`, `_read_user_ai_preferences`, `get_model_catalog`, `build_project_context`, `track_usage`, `_build_estimate_task_inputs`
+- `backend/app/service/contracts/ai.py` — `AIEstimateResult`, `AIEstimateItem`, `AICompleteRequest`
+- `backend/app/api/v1/endpoints/ai.py` — `estimate_with_ai` handler (passes `user_id`, needs to pass `user`)
 
-- [ ] Update `test_agent_loop.py` or add a new test file covering the new SSE event shapes (`event_tool_result`, `event_ui_action`, `event_error`)
-- [ ] Add tests for the enriched `get_task` / `get_tasks` tool results (assignees and parent_name populated)
-- [ ] Add tests for the replaced `estimate_for_project` and `suggestions_for_project`
+Tasks:
+
+- [ ] Change `estimate_for_project` signature: replace `user_id: UUID` with `user: User` — needed to call `_resolve_effective_provider_model`
+- [ ] Inside `estimate_for_project`: call `get_model_catalog` + `_resolve_effective_provider_model` + `_read_user_ai_preferences` to get provider/model/api_key (same 3-liner as `run_proactive_analysis`)
+- [ ] Build a system prompt instructing the LLM to produce a JSON array of estimates — one per task — with fields: `task_id` (if provided), `task_name`, `optimistic_minutes`, `likely_minutes`, `pessimistic_minutes`, `recommended_minutes` (= likely), `confidence` (0.0–1.0), `reasoning` (only when `include_reasoning=True`)
+- [ ] Build the user message from `task_inputs` (name, description, existing duration as reference) and `project_context` (project name, status, other tasks for context)
+- [ ] Call `_complete_from_service` non-streaming, collect all `chunk` events into a string, parse with `json.loads` into `AIEstimateResult` — wrap parse errors in `InvalidOperationError`
+- [ ] Keep `track_usage` call after the LLM response (usage comes from the `done` event on the stream)
+- [ ] Delete `request_estimate` function and `AIProviderEstimateRequest` import — they are dead code
+- [ ] Update `estimate_with_ai` endpoint in `endpoints/ai.py` — pass `user=user` instead of `user_id=user.id`
+
+### 6.5 — Replace broken `suggestions_for_project` (FR-AI-008)
+
+`suggestions_for_project` calls `/v1/brain/suggestions` which was deleted in Phase 3. Same fix pattern.
+
+The `AISuggestionsResult` shape (`suggestions: list[AISuggestionItem]`) and `AISuggestionItem` fields (`id`, `type`, `severity`, `title`, `description`, `affected_task_id`, `suggested_action`) are correct and must be preserved.
+
+- [ ] Change `suggestions_for_project` signature: replace `user_id: UUID` with `user: User`
+- [ ] Inside `suggestions_for_project`: resolve provider/model/api_key same as above
+- [ ] Build a system prompt: analyze project data and return a JSON array of up to `limit` actionable suggestions — each with `id` (short slug), `type` (e.g. `OVERDUE_TASK`, `RESOURCE_CONFLICT`, `CRITICAL_PATH_RISK`), `severity` (`LOW`/`MEDIUM`/`HIGH`), `title`, `description`, `affected_task_id` (if applicable), `suggested_action` (`type` from `NONE`/`UPDATE_TASK`/`ADD_DEPENDENCY`/`SET_PRIORITY`, `payload` with relevant fields)
+- [ ] Build the user message from `build_project_context` output (project name, task list with dates/progress/critical flags)
+- [ ] Call `_complete_from_service` non-streaming, parse JSON into `AISuggestionsResult`
+- [ ] Keep `track_usage` call
+- [ ] Delete `request_suggestions` function and `AIProviderSuggestionsRequest` import — dead code
+- [ ] Update `get_ai_suggestions` endpoint — pass `user=user` instead of `user_id=user.id`
+
+### 6.6 — Tests
+
+- [ ] Update or add a streaming event test covering the fixed SSE shapes (`event_tool_result`, `event_ui_action`, `event_error`)
+- [ ] Add tests for enriched `get_task` / `get_tasks` tool results (assignees and parent_name populated)
+- [ ] Add `test_estimate_for_project` — mock `_complete_from_service` returning a valid JSON chunk, assert `AIEstimateResult` shape, assert reasoning populated when `include_reasoning=True`, assert bulk: 2 task_ids → 2 estimate items
+- [ ] Add `test_suggestions_for_project` — mock `_complete_from_service`, assert `AISuggestionsResult` shape, assert `limit` is respected
 
 ---
 
