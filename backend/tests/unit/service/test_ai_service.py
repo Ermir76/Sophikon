@@ -23,8 +23,7 @@ from app.service.contracts.ai import (
     AIChatInput,
     AICompleteRequest,
     AIEstimateInput,
-    AIProviderEstimateRequest,
-    AIProviderSuggestionsRequest,
+    AIUsageMeta,
     ConversationMessage,
     ConversationSummary,
 )
@@ -321,11 +320,7 @@ async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailabl
         _ = force_refresh
         raise InvalidOperationError("AI service is unavailable")
 
-    async def fake_finalize_chat(**kwargs):
-        return None
-
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_get_model_catalog)
-    monkeypatch.setattr(ai_service, "_finalize_chat", fake_finalize_chat)
 
     stream = await ai_service.prepare_chat_stream(
         session,
@@ -338,7 +333,7 @@ async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailabl
     assert len(payloads) == 1
     parsed = json.loads(payloads[0].removeprefix("data: ").strip())
     assert parsed["type"] == "error"
-    assert parsed["error"] == "AI service is unavailable"
+    assert parsed["message"] == "AI service is unavailable"
 
 
 def test_ai_schema_accepts_uuid_utils_uuid_values():
@@ -379,11 +374,9 @@ async def test_estimate_for_project_builds_task_inputs_and_tracks_usage(
         email="ai-estimate@example.com",
         slug="org-ai-estimate-service",
     )
-    captured = {}
 
-    async def fake_request_estimate(body):
-        captured["body"] = body
-        return {
+    estimate_payload = json.dumps(
+        {
             "estimates": [
                 {
                     "task_id": str(task.id),
@@ -395,20 +388,27 @@ async def test_estimate_for_project_builds_task_inputs_and_tracks_usage(
                     "confidence": 0.72,
                     "reasoning": "Based on similar release prep tasks.",
                 }
-            ],
-            "usage": {
-                "tokens_in": 7,
-                "tokens_out": 13,
-                "model": "mock-estimator",
-            },
+            ]
         }
+    )
 
-    monkeypatch.setattr(ai_service, "request_estimate", fake_request_estimate)
+    async def fake_catalog(*, force_refresh: bool = False) -> dict:
+        return _service_model_catalog_payload()
+
+    async def fake_complete(request):
+        yield AIChatEvent(type="chunk", content=estimate_payload)
+        yield AIChatEvent(
+            type="done",
+            usage=AIUsageMeta(tokens_in=7, tokens_out=13, model="mock-estimator"),
+        )
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
 
     response = await ai_service.estimate_for_project(
         session,
         project=project,
-        user_id=user.id,
+        user=user,
         body=AIEstimateInput(task_ids=[task.id], include_reasoning=True),
     )
 
@@ -418,10 +418,8 @@ async def test_estimate_for_project_builds_task_inputs_and_tracks_usage(
         ).scalars()
     )
 
-    assert captured["body"].task_inputs[0].task_id == task.id
-    assert captured["body"].task_inputs[0].task_name == task.name
-    assert captured["body"].project_context.project_id == project.id
     assert response.estimates[0].task_id == task.id
+    assert response.estimates[0].task_name == task.name
     assert len(usage_rows) == 1
     assert usage_rows[0].feature == "estimation"
     assert usage_rows[0].tokens_in == 7
@@ -444,7 +442,7 @@ async def test_estimate_for_project_rejects_missing_task_ids(
         await ai_service.estimate_for_project(
             session,
             project=project,
-            user_id=user.id,
+            user=user,
             body=AIEstimateInput(task_ids=[uuid.uuid4()]),
         )
 
@@ -498,7 +496,7 @@ async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
     assert events[0].type == "start"
     assert events[1] == AIChatEvent(
         type="error",
-        error="Malformed AI stream event",
+        message="Malformed AI stream event",
     )
 
 
@@ -537,81 +535,68 @@ async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailab
 
 
 @pytest.mark.asyncio
-async def test_request_estimate_rejects_malformed_ai_response(
+async def test_estimate_for_project_rejects_malformed_llm_response(
+    client: AsyncClient,
+    session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    class FakeResponse:
-        status_code = 200
+    user, project, task = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-estimate-bad-json@example.com",
+        slug="org-ai-estimate-bad-json",
+    )
 
-        def json(self):
-            raise json.JSONDecodeError("Expecting value", "", 0)
+    async def fake_catalog(*, force_refresh: bool = False) -> dict:
+        return _service_model_catalog_payload()
 
-    class FakeAsyncClient:
-        def __init__(self, *args, **kwargs):
-            pass
+    async def fake_complete(request):
+        yield AIChatEvent(type="chunk", content="not valid json {{{")
+        yield AIChatEvent(type="done", usage=AIUsageMeta())
 
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            return False
-
-        async def post(self, *args, **kwargs):
-            return FakeResponse()
-
-    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
 
     with pytest.raises(InvalidOperationError, match="Malformed AI estimation response"):
-        await ai_service.request_estimate(
-            AIProviderEstimateRequest(
-                project_context=_service_project_context_payload(),
-                task_inputs=[
-                    {
-                        "task_id": uuid.uuid4(),
-                        "task_name": "Estimate release prep",
-                        "task_description": "Prepare release",
-                        "duration": 480,
-                    }
-                ],
-                include_reasoning=True,
-            )
+        await ai_service.estimate_for_project(
+            session,
+            project=project,
+            user=user,
+            body=AIEstimateInput(task_ids=[task.id]),
         )
 
 
 @pytest.mark.asyncio
-async def test_request_suggestions_rejects_malformed_ai_response(
+async def test_suggestions_for_project_rejects_malformed_llm_response(
+    client: AsyncClient,
+    session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    class FakeResponse:
-        status_code = 200
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-suggestions-bad-json@example.com",
+        slug="org-ai-suggestions-bad-json",
+    )
 
-        def json(self):
-            raise json.JSONDecodeError("Expecting value", "", 0)
+    async def fake_catalog(*, force_refresh: bool = False) -> dict:
+        return _service_model_catalog_payload()
 
-    class FakeAsyncClient:
-        def __init__(self, *args, **kwargs):
-            pass
+    async def fake_complete(request):
+        yield AIChatEvent(type="chunk", content="not valid json {{{")
+        yield AIChatEvent(type="done", usage=AIUsageMeta())
 
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            return False
-
-        async def post(self, *args, **kwargs):
-            return FakeResponse()
-
-    monkeypatch.setattr(ai_service.httpx, "AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
 
     with pytest.raises(
-        InvalidOperationError,
-        match="Malformed AI suggestions response",
+        InvalidOperationError, match="Malformed AI suggestions response"
     ):
-        await ai_service.request_suggestions(
-            AIProviderSuggestionsRequest(
-                project_context=_service_project_context_payload(),
-                limit=5,
-            )
+        await ai_service.suggestions_for_project(
+            session,
+            project=project,
+            user=user,
+            limit=5,
         )
 
 
@@ -668,7 +653,7 @@ async def test_list_conversations_returns_conversation_summaries(
     assert isinstance(result, list)
     assert len(result) == 1
     assert isinstance(result[0], ConversationSummary)
-    assert result[0].id == conv.id
+    assert str(result[0].id) == str(conv.id)
     assert result[0].title == "Test conversation"
     assert result[0].status == "idle"
     assert result[0].mode == "chat"
@@ -715,7 +700,7 @@ async def test_get_conversation_messages_returns_summary_and_messages(
     )
 
     assert isinstance(summary, ConversationSummary)
-    assert summary.id == conv.id
+    assert str(summary.id) == str(conv.id)
     assert summary.title == "Msg conversation"
 
     assert isinstance(messages, list)
@@ -749,3 +734,91 @@ async def test_apply_ai_preferences_patch_accepts_allowlisted_auto_approve_keys(
 
     assert updated["ai"]["auto_approve"]["create_task"] is True
     assert updated["ai"]["auto_approve"]["calculate_schedule"] is False
+
+
+@pytest.mark.asyncio
+async def test_estimate_for_project_with_mock_provider(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Integration test: calls real AI service with mock provider."""
+    user, project, task = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-estimate-mock-provider@example.com",
+        slug="org-ai-estimate-mock-provider",
+    )
+
+    async def fake_catalog(*, force_refresh: bool = False) -> dict:
+        return {
+            "providers": [
+                {
+                    "provider_id": "mock",
+                    "display_name": "Mock",
+                    "available": True,
+                    "models": [
+                        {"model_id": "mock", "label": "Mock", "recommended": True}
+                    ],
+                }
+            ],
+            "defaults": {"provider": "mock", "model": "mock"},
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+
+    result = await ai_service.estimate_for_project(
+        session,
+        project=project,
+        user=user,
+        body=AIEstimateInput(task_ids=[task.id], include_reasoning=True),
+    )
+
+    assert isinstance(result, ai_service.AIEstimateResult)
+    assert len(result.estimates) >= 1
+    assert result.estimates[0].recommended_minutes > 0
+    assert result.usage.tokens_out > 0
+
+
+@pytest.mark.asyncio
+async def test_suggestions_for_project_with_mock_provider(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Integration test: calls real AI service with mock provider."""
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-suggestions-mock-provider@example.com",
+        slug="org-ai-suggestions-mock-provider",
+    )
+
+    async def fake_catalog(*, force_refresh: bool = False) -> dict:
+        return {
+            "providers": [
+                {
+                    "provider_id": "mock",
+                    "display_name": "Mock",
+                    "available": True,
+                    "models": [
+                        {"model_id": "mock", "label": "Mock", "recommended": True}
+                    ],
+                }
+            ],
+            "defaults": {"provider": "mock", "model": "mock"},
+        }
+
+    monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+
+    result = await ai_service.suggestions_for_project(
+        session,
+        project=project,
+        user=user,
+        limit=3,
+    )
+
+    assert isinstance(result, ai_service.AISuggestionsResult)
+    assert len(result.suggestions) >= 1
+    assert result.suggestions[0].severity in ("LOW", "MEDIUM", "HIGH")
+    assert result.usage.tokens_out > 0

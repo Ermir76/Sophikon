@@ -5,7 +5,7 @@ import pytest
 
 from app.service.agent import planner as planner_mod
 from app.service.agent.context import AgentContext
-from app.service.contracts.ai import AIChatEvent
+from app.service.contracts.ai import AIChatEvent, AIUsageMeta
 
 
 def _make_ctx() -> AgentContext:
@@ -67,7 +67,7 @@ async def test_plan_returns_empty_when_llm_does_not_call_define_plan(
     async def fake_complete(request):
         yield AIChatEvent(type="chunk", content="Sure, the project is on track.")
         yield AIChatEvent(
-            type="done", usage=MagicMock(tokens_in=5, tokens_out=15, model="mock")
+            type="done", usage=AIUsageMeta(tokens_in=5, tokens_out=15, model="mock")
         )
 
     import app.service.ai_service as ai_svc

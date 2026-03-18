@@ -63,8 +63,8 @@ def test_event_tool_result_success_serializes_data():
     assert payload["type"] == "tool_result"
     assert payload["tool_use_id"] == "abc-123"
     assert payload["tool_name"] == "get_tasks"
-    content = json.loads(payload["content"])
-    assert content == {"tasks": []}
+    assert payload["success"] is True
+    assert payload["data"] == {"tasks": []}
 
 
 def test_event_tool_result_failure_serializes_error():
@@ -74,8 +74,8 @@ def test_event_tool_result_failure_serializes_error():
         )
     )
     assert payload["type"] == "tool_result"
-    content = json.loads(payload["content"])
-    assert "error" in content
+    assert payload["success"] is False
+    assert payload["data"] == "Task not found"
 
 
 def test_event_approval_required():
@@ -95,11 +95,11 @@ def test_event_chunk():
     assert payload["content"] == "Hello, here is"
 
 
-def test_event_ui_action_uses_tool_input_field():
+def test_event_ui_action_uses_payload_field():
     payload = _parse(event_ui_action("navigate", {"view": "gantt"}))
     assert payload["type"] == "ui_action"
     assert payload["action"] == "navigate"
-    assert payload["tool_input"] == {"view": "gantt"}
+    assert payload["payload"] == {"view": "gantt"}
 
 
 def test_event_done():
@@ -113,10 +113,10 @@ def test_event_done():
     assert payload["usage"]["tokens_out"] == 200
 
 
-def test_event_error_uses_error_field():
+def test_event_error_uses_message_field():
     payload = _parse(event_error("Something went wrong"))
     assert payload["type"] == "error"
-    assert payload["error"] == "Something went wrong"
+    assert payload["message"] == "Something went wrong"
 
 
 def test_all_events_produce_valid_json():

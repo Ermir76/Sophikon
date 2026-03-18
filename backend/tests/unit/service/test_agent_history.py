@@ -264,7 +264,7 @@ def test_build_system_prompt_returns_non_empty_string():
         api_key="",
     )
 
-    prompt = history_mod.build_system_prompt(ctx, project_memory=None)
+    prompt = history_mod.build_system_prompt(ctx, memory=None)
 
     assert isinstance(prompt, str)
     assert len(prompt) > 0
@@ -282,6 +282,6 @@ def test_build_system_prompt_injects_project_memory():
         api_key="",
     )
 
-    prompt = history_mod.build_system_prompt(ctx, project_memory="Agent chose WBS 1.1")
+    prompt = history_mod.build_system_prompt(ctx, memory="Agent chose WBS 1.1")
 
     assert "Agent chose WBS 1.1" in prompt

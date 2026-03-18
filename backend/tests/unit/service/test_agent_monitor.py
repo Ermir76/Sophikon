@@ -79,7 +79,6 @@ async def test_run_proactive_check_posts_comment_and_notification_when_issues_fo
     monkeypatch.setattr(
         monitor.notification_service, "create_notification", mock_create_notification
     )
-    monkeypatch.setattr(monitor.realtime_service, "commit_and_publish", AsyncMock())
 
     with patch(
         "app.tasks.agent_monitor.AIConversation", return_value=mock_conversation
@@ -201,7 +200,6 @@ async def test_notification_targets_correct_project(
         AsyncMock(return_value=MagicMock()),
     )
     monkeypatch.setattr(monitor.comment_service, "create_comment", AsyncMock())
-    monkeypatch.setattr(monitor.realtime_service, "commit_and_publish", AsyncMock())
 
     mock_create_notification = AsyncMock()
     monkeypatch.setattr(
