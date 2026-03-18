@@ -20,6 +20,7 @@ class ProviderOption:
     display_name: str
     requires_env_key: str
     models: tuple[ModelOption, ...]
+    test_only: bool = False
 
 
 MODEL_CATALOG: dict[str, ProviderOption] = {
@@ -53,6 +54,15 @@ MODEL_CATALOG: dict[str, ProviderOption] = {
             ModelOption("gemini-3-flash-preview", "Gemini 3 Flash Preview"),
         ),
     ),
+    "mock": ProviderOption(
+        provider_id="mock",
+        display_name="Mock (Testing)",
+        requires_env_key="",
+        models=(
+            ModelOption("mock", "Mock Model", recommended=True),
+        ),
+        test_only=True,
+    ),
 }
 
 DEFAULT_PROVIDER = "gemini"
@@ -60,6 +70,7 @@ DEFAULT_MODELS: dict[str, str] = {
     "anthropic": "claude-haiku-4-5-20251001",
     "openai": "gpt-5-mini",
     "gemini": "gemini-2.5-pro",
+    "mock": "mock",
 }
 
 
@@ -70,12 +81,17 @@ def _provider_key_present(provider_id: str) -> bool:
         return bool(settings.OPENAI_API_KEY)
     if provider_id == "gemini":
         return bool(settings.GEMINI_API_KEY)
+    if provider_id == "mock":
+        return True
     return False
 
 
 def get_catalog_payload() -> dict:
+    is_live = settings.AI_MODE == "live"
     providers = []
     for provider in MODEL_CATALOG.values():
+        if is_live and provider.test_only:
+            continue
         providers.append(
             {
                 "provider_id": provider.provider_id,
@@ -127,6 +143,8 @@ def validate_provider_and_model(
     provider_option = MODEL_CATALOG.get(provider_id)
     if provider_option is None:
         return provider_id, model or "", f"Unsupported AI provider: {provider_id}"
+    if settings.AI_MODE == "live" and provider_option.test_only:
+        return provider_id, model or "", f"Provider '{provider_id}' is not available in live mode"
 
     # Provider-scoped default avoids cross-provider contamination from global AI_MODEL_NAME.
     model_id = (model or DEFAULT_MODELS[provider_id]).strip()
