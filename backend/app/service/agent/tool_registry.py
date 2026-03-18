@@ -14,7 +14,8 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.core.exceptions import AppException
+from app.core.exceptions import AppException, InvalidOperationError
+from app.models.assignment import Assignment
 from app.models.enums import (
     CommentEntityType,
     ConstraintType,
@@ -25,6 +26,7 @@ from app.models.enums import (
     TaskType,
     WorkContour,
 )
+from app.models.resource import Resource
 from app.service import (
     activity_log_service,
     assignment_service,
@@ -63,7 +65,7 @@ UI_TOOLS: frozenset[str] = frozenset(
 @dataclass
 class ToolResult:
     success: bool
-    data: object = field(default=None)
+    data: dict | list | str | int | float | bool | None = field(default=None)
     error: str | None = field(default=None)
     is_ui_action: bool = field(default=False)
 
@@ -661,6 +663,21 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
     if tool_name == "get_tasks":
         filter_status = tool_input.get("filter_status", "all")
         tasks, _ = await task_service.list_tasks(db, project, per_page=250)
+
+        # Batch-load assignees for all tasks in one query
+        task_ids = [t.id for t in tasks]
+        id_to_name = {t.id: t.name for t in tasks}
+        assignee_rows = await db.execute(
+            select(Assignment, Resource)
+            .join(Resource, Assignment.resource_id == Resource.id)
+            .where(Assignment.task_id.in_(task_ids))
+        )
+        assignees_by_task: dict = {}
+        for asgn, res in assignee_rows:
+            assignees_by_task.setdefault(asgn.task_id, []).append(
+                {"name": res.name, "units": float(asgn.units)}
+            )
+
         result = []
         for t in tasks:
             pct = float(t.percent_complete)
@@ -689,7 +706,11 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
                     "parent_task_id": str(t.parent_task_id)
                     if t.parent_task_id
                     else None,
+                    "parent_name": id_to_name.get(t.parent_task_id)
+                    if t.parent_task_id
+                    else None,
                     "color": t.color,
+                    "assignees": assignees_by_task.get(t.id, []),
                 }
             )
         return {"tasks": result, "total": len(result)}
@@ -699,6 +720,21 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
         task = await task_service.get_task_by_id(db, task_id, project.id)
         if not task:
             return {"error": "Task not found"}
+        parent_name = None
+        if task.parent_task_id:
+            parent = await task_service.get_task_by_id(
+                db, task.parent_task_id, project.id
+            )
+            parent_name = parent.name if parent else None
+        assignee_rows = await db.execute(
+            select(Assignment, Resource)
+            .join(Resource, Assignment.resource_id == Resource.id)
+            .where(Assignment.task_id == task_id)
+        )
+        assignees = [
+            {"name": res.name, "units": float(asgn.units)}
+            for asgn, res in assignee_rows
+        ]
         return {
             "id": str(task.id),
             "name": task.name,
@@ -713,7 +749,9 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
             "is_milestone": task.is_milestone,
             "notes": task.notes,
             "parent_task_id": str(task.parent_task_id) if task.parent_task_id else None,
+            "parent_name": parent_name,
             "color": task.color,
+            "assignees": assignees,
         }
 
     if tool_name == "search_tasks":
@@ -810,6 +848,18 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
         resources, _ = await resource_service.list_resources(
             db, project, per_page=100, include_inactive=include_inactive
         )
+        util_start = project.start_date
+        util_end = project.finish_date or today + timedelta(days=90)
+        # NOTE: get_project_utilization_summary computes full daily allocations for every
+        # resource across the entire project date range (O(days × resources) in Python).
+        # We only use two aggregate values from the result: average_utilization and
+        # is_over_allocated. For large projects this adds noticeable latency mid-agent-loop.
+        # TODO: replace with a lightweight SQL query that computes just the two aggregates
+        #       directly, without building the full daily breakdown.
+        util_summary = await utilization_service.get_project_utilization_summary(
+            db, project, util_start, util_end
+        )
+        util_by_id: dict = {str(r["resource_id"]): r for r in util_summary["resources"]}
         return {
             "resources": [
                 {
@@ -822,6 +872,15 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
                     "email": r.email,
                     "group_name": r.group_name,
                     "user_id": str(r.user_id) if r.user_id else None,
+                    "current_utilization": float(
+                        util_by_id.get(str(r.id), {}).get("average_utilization", 0.0)
+                    ),
+                    "is_over_allocated": any(
+                        d["is_over_allocated"]
+                        for d in util_by_id.get(str(r.id), {}).get(
+                            "daily_allocations", []
+                        )
+                    ),
                 }
                 for r in resources
             ],
@@ -1251,4 +1310,4 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
     if tool_name in UI_TOOLS:
         return {"action": tool_name, "payload": tool_input, "status": "dispatched"}
 
-    return {"error": f"Unknown tool: {tool_name}"}
+    raise InvalidOperationError(f"Unknown tool: {tool_name}")
