@@ -777,10 +777,10 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-AI-002 | Query tasks               | Must     | POST /projects/:id/ai/chat       | ✅  |
 | FR-AI-003 | Query status              | Must     | POST /projects/:id/ai/chat       | 🔶  |
 | FR-AI-004 | Actions with confirmation | Should   | POST /projects/:id/ai/chat       | ✅  |
-| FR-AI-005 | Task estimation           | Must     | POST /projects/:id/ai/estimate   | 🔶  |
-| FR-AI-006 | Show reasoning            | Should   | POST /projects/:id/ai/estimate   | 🔶  |
-| FR-AI-007 | Bulk estimate             | Should   | POST /projects/:id/ai/estimate   | 🔶  |
-| FR-AI-008 | Suggestions               | Should   | GET /projects/:id/ai/suggestions | 🔶  |
+| FR-AI-005 | Task estimation           | Must     | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-006 | Show reasoning            | Should   | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-007 | Bulk estimate             | Should   | POST /projects/:id/ai/estimate   | ✅  |
+| FR-AI-008 | Suggestions               | Should   | GET /projects/:id/ai/suggestions | ✅  |
 | FR-AI-009 | Streaming responses       | Must     | POST /projects/:id/ai/chat       | ✅  |
 
 ### 3.13 Collaboration

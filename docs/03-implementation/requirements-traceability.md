@@ -207,10 +207,10 @@ This document records what is evidenced by the current codebase review.
 | FR-AI-002 | Implemented   | A7       | Chat feature exists with project/task context surface.                                                           |
 | FR-AI-003 | Partial       | A7       | Status-style project questions are supported by current AI surface, but broad coverage was not formally audited. |
 | FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector all wired in Phase 4 frontend; backend agent loop wired in Phase 2. |
-| FR-AI-005 | Partial       | A7       | Estimate backend functions exist but call deleted ai-service endpoints (TODO Phase 6 — replace with real LLM agent calls). |
-| FR-AI-006 | Partial       | A7       | Estimate reasoning backend exists but ai-service endpoint deleted (TODO Phase 6).                                |
-| FR-AI-007 | Partial       | A7       | Multi-task estimation frontend exists but backend calls deleted ai-service endpoint (TODO Phase 6).              |
-| FR-AI-008 | Partial       | A7       | Suggestions backend functions exist but call deleted ai-service endpoint (TODO Phase 6).                         |
+| FR-AI-005 | Implemented   | A7       | `estimate_for_project` now calls `_complete_from_service` directly; JSON response parsed and validated into `AIEstimateResult`. |
+| FR-AI-006 | Implemented   | A7       | `reasoning` field returned in `AIEstimateItem` when `include_reasoning=True`; LLM prompt instructs model to populate it. |
+| FR-AI-007 | Implemented   | A7       | Bulk estimation via `task_ids` list implemented in `estimate_for_project`; batch DB query, one LLM call, N estimate items returned. |
+| FR-AI-008 | Implemented   | A7       | `suggestions_for_project` now calls `_complete_from_service`; discriminated union `AISuggestionAction` fully typed (Phase 6). |
 | FR-AI-009 | Implemented   | A7       | Streaming chat flow exists.                                                                                      |
 
 ### 3.13 Collaboration
