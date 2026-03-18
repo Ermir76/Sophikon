@@ -432,6 +432,29 @@ Read before starting:
 - `backend/app/service/agent/tool_registry.py` — all read tool return dicts
 - `backend/app/service/ai_service.py` — `estimate_for_project`, `suggestions_for_project` (broken — call deleted endpoints)
 
+### 6.0 — Type the suggestion action payload (prerequisite)
+
+`AISuggestionAction.payload` is currently `dict` — generic and untyped. The LLM prompt in §6.5 needs a concrete schema to instruct the model what to produce per action type. Do this first so the rest of Phase 6 builds on a solid contract.
+
+Backend and frontend must be updated together — they share this wire shape.
+
+Read before starting:
+- `backend/app/schema/ai.py` — `AISuggestionAction` (the TODO is here)
+- `backend/app/service/contracts/ai.py` — `AISuggestionAction` mirror in contracts layer
+- `frontend/src/features/ai/types.ts` — `AiSuggestionAction` interface
+
+Tasks:
+
+- [ ] In `backend/app/schema/ai.py` — define three typed payload models and replace `AISuggestionAction` with a discriminated union:
+  - `NonePayload` — empty model (no fields)
+  - `UpdateTaskPayload` — `task_id: UUID`, plus optional fields the agent can set: `percent_complete: float | None`, `duration: int | None`, `priority: int | None`, `notes: str | None`
+  - `AddDependencyPayload` — `predecessor_id: UUID`, `successor_id: UUID`, `type: str` (FS/FF/SS/SF), `lag: int` (default 0)
+  - `SetPriorityPayload` — `task_id: UUID`, `priority: int` (0–1000)
+  - Replace `payload: dict` with the discriminated union using `type` as discriminator
+- [ ] Mirror the same change in `backend/app/service/contracts/ai.py` — keep schema and contracts in sync
+- [ ] Update `frontend/src/features/ai/types.ts` — replace `payload: Record<string, unknown>` with typed payload interfaces per action type, matching the backend shape exactly
+- [ ] Delete the TODO comment from `schema/ai.py` — it is resolved
+
 ### 6.1 — Fix SSE event contract (`AIChatEvent` + `streaming.py` + `types.ts`)
 
 These three files must be updated together — they form the wire contract.
