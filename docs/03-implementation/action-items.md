@@ -375,11 +375,46 @@ Read before starting:
 
 > See `docs/03-implementation/agent-platform-plan.md` Phase 5 for full spec.
 
-- [ ] Create `backend/app/tasks/agent_monitor.py` — Celery task for daily health check
-- [ ] Proactive analysis: `get_project_summary` + `get_tasks(overdue)` + `get_critical_path`
-- [ ] On issues found: post project comment + notify project manager
-- [ ] Add Celery beat schedule — 8am daily
-- [ ] Manager approval via notification action URL triggers execution
+Read before starting:
+
+- `backend/app/tasks/notification_tasks.py` — pattern to follow
+- `backend/app/celery_app.py` — beat schedule to extend
+- `backend/app/service/agent/loop.py` — add `run_proactive_analysis()` here
+- `backend/app/service/agent/tool_registry.py` — `execute_tool()` to call directly
+- `backend/app/service/ai_service.py` — `_complete_from_service`, `_resolve_effective_provider_model`, `_read_user_ai_preferences`
+- `backend/app/service/comment_service.py` — full signature of `create_comment` + `CommentEntityContext`
+- `backend/app/models/project.py` — confirm `is_deleted` column exists
+
+### 5.1 — Add `AI_AGENT_FINDING` notification type
+
+- [x] Add `AI_AGENT_FINDING = "ai_agent_finding"` to `NotificationType` in `backend/app/models/enums.py` — Python `StrEnum`, no migration needed
+
+### 5.2 — Add `run_proactive_analysis()` to `loop.py`
+
+- [x] Add `ProactiveFindings` dataclass: `has_issues: bool`, `summary: str`
+- [x] Add `run_proactive_analysis(ctx)` async function — calls `get_project_summary`, `get_tasks(overdue)`, `get_critical_path` via `execute_tool()` directly, then single non-streaming LLM call to generate summary, returns `ProactiveFindings`
+- [x] Import `_complete_from_service` lazily at call site to avoid circular imports
+
+### 5.3 — Create `backend/app/tasks/agent_monitor.py`
+
+- [x] `_get_active_projects(db)` — queries all non-deleted projects
+- [x] `_run_proactive_check(db, project)` — loads owner user, resolves provider/model, creates `AIConversation(mode="proactive")`, builds `AgentContext`, calls `run_proactive_analysis`, on findings posts project comment + notifies owner with `entity_type="project"` and `entity_id=project.id`
+- [x] `_run_all_health_checks()` — loops projects, wraps each in try/except, logs failures, returns count
+- [x] `run_daily_project_health_check()` Celery shared_task — calls `asyncio.run(_run_all_health_checks())`
+
+### 5.4 — Add beat schedule to `celery_app.py`
+
+- [x] Add `daily-project-health-check` entry: task `app.tasks.agent_monitor.run_daily_project_health_check`, schedule `crontab(hour=8, minute=0)`
+
+### 5.5 — Tests
+
+- [x] Create `backend/tests/unit/service/test_agent_monitor.py`
+- [x] `test_run_proactive_check_posts_comment_and_notification_when_issues_found`
+- [x] `test_run_proactive_check_does_nothing_when_no_issues`
+- [x] `test_run_all_health_checks_skips_failed_project_and_continues`
+- [x] `test_notification_targets_correct_project`
+
+**Run `/review` before committing Phase 5.**
 
 ---
 

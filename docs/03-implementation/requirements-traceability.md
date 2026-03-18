@@ -269,7 +269,7 @@ This document records what is evidenced by the current codebase review.
 | US-4.4 Critical Path Highlighting  | Partial       | A5         | Critical-path toggle/rendering exists; end-to-end parity was not runtime-verified.                                      |
 | US-5.1 Chat with Project           | Partial       | A7         | Project-aware chat exists, but click-through entity navigation and some specific query types were not fully evidenced.  |
 | US-5.2 AI Actions via Chat         | Implemented   | A7, A9     | Plan approval card, tool call rows, and reasoning stream complete in Phase 4; backend agent loop complete in Phase 2.   |
-| US-5.3 AI Risk Alerts              | Partial       | A7         | Suggestions exist, but not proactive dashboard risk alerts.                                                             |
+| US-5.3 AI Risk Alerts              | Implemented   | A7         | Proactive Celery task (`agent_monitor.py`) runs daily health check via `run_proactive_analysis`, posts a project comment and AI_AGENT_FINDING notification when issues are detected. |
 | US-5.4 AI Weekly Report            | Not evidenced | A7, A9     | No report-generation flow was evidenced.                                                                                |
 | US-6.1 Invite Team Members         | Implemented   | A3, A8, A9 | Project-team invite, acceptance, and member management flows are mounted in the current collaboration surface.          |
 | US-6.2 Real-time Updates           | Implemented   | A3, A8, A9 | Project-scoped websocket endpoint, presence snapshots/updates, and realtime mutation push flows are mounted in backend and consumed in frontend project routes. |
