@@ -445,38 +445,38 @@ Read before starting:
 
 Tasks:
 
-- [ ] In `backend/app/schema/ai.py` — define three typed payload models and replace `AISuggestionAction` with a discriminated union:
+- [x] In `backend/app/schema/ai.py` — define three typed payload models and replace `AISuggestionAction` with a discriminated union:
   - `NonePayload` — empty model (no fields)
   - `UpdateTaskPayload` — `task_id: UUID`, plus optional fields the agent can set: `percent_complete: float | None`, `duration: int | None`, `priority: int | None`, `notes: str | None`
   - `AddDependencyPayload` — `predecessor_id: UUID`, `successor_id: UUID`, `type: str` (FS/FF/SS/SF), `lag: int` (default 0)
   - `SetPriorityPayload` — `task_id: UUID`, `priority: int` (0–1000)
   - Replace `payload: dict` with the discriminated union using `type` as discriminator
-- [ ] Mirror the same change in `backend/app/service/contracts/ai.py` — keep schema and contracts in sync
-- [ ] Update `frontend/src/features/ai/types.ts` — replace `payload: Record<string, unknown>` with typed payload interfaces per action type, matching the backend shape exactly
-- [ ] Delete the TODO comment from `schema/ai.py` — it is resolved
+- [x] Mirror the same change in `backend/app/service/contracts/ai.py` — keep schema and contracts in sync
+- [x] Update `frontend/src/features/ai/types.ts` — replace `payload: Record<string, unknown>` with typed payload interfaces per action type, matching the backend shape exactly
+- [x] Delete the TODO comment from `schema/ai.py` — it is resolved
 
 ### 6.1 — Fix SSE event contract (`AIChatEvent` + `streaming.py` + `types.ts`)
 
 These three files must be updated together — they form the wire contract.
 
-- [ ] Add `success: bool | None`, `data: object | None`, `payload: dict | None`, `message: str | None` to `AIChatEvent` in `contracts/ai.py`
-- [ ] Update `event_tool_result()` in `streaming.py` — emit `success` and `data` fields as per spec instead of serializing into `content`
-- [ ] Update `event_ui_action()` in `streaming.py` — emit `payload` instead of `tool_input`
-- [ ] Update `event_error()` in `streaming.py` — emit `message` instead of `error`
-- [ ] Update `frontend/src/features/ai/types.ts` — align `tool_result`, `ui_action`, and `error` union branches to the new field names
+- [x] Add `success: bool | None`, `data: object | None`, `payload: dict | None`, `message: str | None` to `AIChatEvent` in `contracts/ai.py`
+- [x] Update `event_tool_result()` in `streaming.py` — emit `success` and `data` fields as per spec instead of serializing into `content`
+- [x] Update `event_ui_action()` in `streaming.py` — emit `payload` instead of `tool_input`
+- [x] Update `event_error()` in `streaming.py` — emit `message` instead of `error`
+- [x] Update `frontend/src/features/ai/types.ts` — align `tool_result`, `ui_action`, and `error` union branches to the new field names
 
 ### 6.2 — Enrich `get_task` and `get_tasks` tool results
 
 Both tools are missing `parent_name` (resolved from `parent_task_id`) and `assignees` (list of assigned resources with role and units).
 
-- [ ] `get_task` — add `parent_name` (look up parent task name if `parent_task_id` is set) and `assignees` (query assignments + resources for that task)
-- [ ] `get_tasks` — add `parent_name` and `assignees` to each task row (batch-load to avoid N+1)
+- [x] `get_task` — add `parent_name` (look up parent task name if `parent_task_id` is set) and `assignees` (query assignments + resources for that task)
+- [x] `get_tasks` — add `parent_name` and `assignees` to each task row (batch-load to avoid N+1)
 
 ### 6.3 — Enrich `get_resources` tool result
 
 The spec expects `current_utilization` and `is_over_allocated` per resource. Today the tool returns raw model fields only.
 
-- [ ] `get_resources` — add `current_utilization` (percent) and `is_over_allocated` (bool) by computing from the utilization service for the project window
+- [x] `get_resources` — add `current_utilization` (percent) and `is_over_allocated` (bool) by computing from the utilization service for the project window
 
 ### 6.4 — Replace broken `estimate_for_project` (FR-AI-005, FR-AI-006, FR-AI-007)
 
@@ -491,14 +491,14 @@ Read before starting:
 
 Tasks:
 
-- [ ] Change `estimate_for_project` signature: replace `user_id: UUID` with `user: User` — needed to call `_resolve_effective_provider_model`
-- [ ] Inside `estimate_for_project`: call `get_model_catalog` + `_resolve_effective_provider_model` + `_read_user_ai_preferences` to get provider/model/api_key (same 3-liner as `run_proactive_analysis`)
-- [ ] Build a system prompt instructing the LLM to produce a JSON array of estimates — one per task — with fields: `task_id` (if provided), `task_name`, `optimistic_minutes`, `likely_minutes`, `pessimistic_minutes`, `recommended_minutes` (= likely), `confidence` (0.0–1.0), `reasoning` (only when `include_reasoning=True`)
-- [ ] Build the user message from `task_inputs` (name, description, existing duration as reference) and `project_context` (project name, status, other tasks for context)
-- [ ] Call `_complete_from_service` non-streaming, collect all `chunk` events into a string, parse with `json.loads` into `AIEstimateResult` — wrap parse errors in `InvalidOperationError`
-- [ ] Keep `track_usage` call after the LLM response (usage comes from the `done` event on the stream)
-- [ ] Delete `request_estimate` function and `AIProviderEstimateRequest` import — they are dead code
-- [ ] Update `estimate_with_ai` endpoint in `endpoints/ai.py` — pass `user=user` instead of `user_id=user.id`
+- [x] Change `estimate_for_project` signature: replace `user_id: UUID` with `user: User` — needed to call `_resolve_effective_provider_model`
+- [x] Inside `estimate_for_project`: call `get_model_catalog` + `_resolve_effective_provider_model` + `_read_user_ai_preferences` to get provider/model/api_key (same 3-liner as `run_proactive_analysis`)
+- [x] Build a system prompt instructing the LLM to produce a JSON array of estimates — one per task — with fields: `task_id` (if provided), `task_name`, `optimistic_minutes`, `likely_minutes`, `pessimistic_minutes`, `recommended_minutes` (= likely), `confidence` (0.0–1.0), `reasoning` (only when `include_reasoning=True`)
+- [x] Build the user message from `task_inputs` (name, description, existing duration as reference) and `project_context` (project name, status, other tasks for context)
+- [x] Call `_complete_from_service` non-streaming, collect all `chunk` events into a string, parse with `json.loads` into `AIEstimateResult` — wrap parse errors in `InvalidOperationError`
+- [x] Keep `track_usage` call after the LLM response (usage comes from the `done` event on the stream)
+- [x] Delete `request_estimate` function and `AIProviderEstimateRequest` import — they are dead code
+- [x] Update `estimate_with_ai` endpoint in `endpoints/ai.py` — pass `user=user` instead of `user_id=user.id`
 
 ### 6.5 — Replace broken `suggestions_for_project` (FR-AI-008)
 
@@ -506,21 +506,21 @@ Tasks:
 
 The `AISuggestionsResult` shape (`suggestions: list[AISuggestionItem]`) and `AISuggestionItem` fields (`id`, `type`, `severity`, `title`, `description`, `affected_task_id`, `suggested_action`) are correct and must be preserved.
 
-- [ ] Change `suggestions_for_project` signature: replace `user_id: UUID` with `user: User`
-- [ ] Inside `suggestions_for_project`: resolve provider/model/api_key same as above
-- [ ] Build a system prompt: analyze project data and return a JSON array of up to `limit` actionable suggestions — each with `id` (short slug), `type` (e.g. `OVERDUE_TASK`, `RESOURCE_CONFLICT`, `CRITICAL_PATH_RISK`), `severity` (`LOW`/`MEDIUM`/`HIGH`), `title`, `description`, `affected_task_id` (if applicable), `suggested_action` (`type` from `NONE`/`UPDATE_TASK`/`ADD_DEPENDENCY`/`SET_PRIORITY`, `payload` with relevant fields)
-- [ ] Build the user message from `build_project_context` output (project name, task list with dates/progress/critical flags)
-- [ ] Call `_complete_from_service` non-streaming, parse JSON into `AISuggestionsResult`
-- [ ] Keep `track_usage` call
-- [ ] Delete `request_suggestions` function and `AIProviderSuggestionsRequest` import — dead code
-- [ ] Update `get_ai_suggestions` endpoint — pass `user=user` instead of `user_id=user.id`
+- [x] Change `suggestions_for_project` signature: replace `user_id: UUID` with `user: User`
+- [x] Inside `suggestions_for_project`: resolve provider/model/api_key same as above
+- [x] Build a system prompt: analyze project data and return a JSON array of up to `limit` actionable suggestions — each with `id` (short slug), `type` (e.g. `OVERDUE_TASK`, `RESOURCE_CONFLICT`, `CRITICAL_PATH_RISK`), `severity` (`LOW`/`MEDIUM`/`HIGH`), `title`, `description`, `affected_task_id` (if applicable), `suggested_action` (`type` from `NONE`/`UPDATE_TASK`/`ADD_DEPENDENCY`/`SET_PRIORITY`, `payload` with relevant fields)
+- [x] Build the user message from `build_project_context` output (project name, task list with dates/progress/critical flags)
+- [x] Call `_complete_from_service` non-streaming, parse JSON into `AISuggestionsResult`
+- [x] Keep `track_usage` call
+- [x] Delete `request_suggestions` function and `AIProviderSuggestionsRequest` import — dead code
+- [x] Update `get_ai_suggestions` endpoint — pass `user=user` instead of `user_id=user.id`
 
 ### 6.6 — Tests
 
-- [ ] Update or add a streaming event test covering the fixed SSE shapes (`event_tool_result`, `event_ui_action`, `event_error`)
-- [ ] Add tests for enriched `get_task` / `get_tasks` tool results (assignees and parent_name populated)
-- [ ] Add `test_estimate_for_project` — mock `_complete_from_service` returning a valid JSON chunk, assert `AIEstimateResult` shape, assert reasoning populated when `include_reasoning=True`, assert bulk: 2 task_ids → 2 estimate items
-- [ ] Add `test_suggestions_for_project` — mock `_complete_from_service`, assert `AISuggestionsResult` shape, assert `limit` is respected
+- [x] Update or add a streaming event test covering the fixed SSE shapes (`event_tool_result`, `event_ui_action`, `event_error`)
+- [x] Add tests for enriched `get_task` / `get_tasks` tool results (assignees and parent_name populated)
+- [x] Add `test_estimate_for_project` — mock `_complete_from_service` returning a valid JSON chunk, assert `AIEstimateResult` shape, assert reasoning populated when `include_reasoning=True`, assert bulk: 2 task_ids → 2 estimate items
+- [x] Add `test_suggestions_for_project` — mock `_complete_from_service`, assert `AISuggestionsResult` shape, assert `limit` is respected
 
 ---
 
