@@ -418,6 +418,59 @@ Read before starting:
 
 ---
 
+## Phase 6 — Contracts & Serialization
+
+**Goal:** Fix the SSE event contract divergence from spec, enrich tool result payloads, and replace the broken estimate/suggestions functions with real agent calls.
+
+> See `docs/02-design/agent-platform-architecture.md §SSE Event Contract` and `agent-platform-plan.md` Phase 6 for full spec.
+
+Read before starting:
+
+- `backend/app/service/contracts/ai.py` — `AIChatEvent` flat model, needs new fields
+- `backend/app/service/agent/streaming.py` — three TODO blocks (tool_result, ui_action, error)
+- `frontend/src/features/ai/types.ts` — frontend SSE union type, must change together with backend
+- `backend/app/service/agent/tool_registry.py` — all read tool return dicts
+- `backend/app/service/ai_service.py` — `estimate_for_project`, `suggestions_for_project` (broken — call deleted endpoints)
+
+### 6.1 — Fix SSE event contract (`AIChatEvent` + `streaming.py` + `types.ts`)
+
+These three files must be updated together — they form the wire contract.
+
+- [ ] Add `success: bool | None`, `data: object | None`, `payload: dict | None`, `message: str | None` to `AIChatEvent` in `contracts/ai.py`
+- [ ] Update `event_tool_result()` in `streaming.py` — emit `success` and `data` fields as per spec instead of serializing into `content`
+- [ ] Update `event_ui_action()` in `streaming.py` — emit `payload` instead of `tool_input`
+- [ ] Update `event_error()` in `streaming.py` — emit `message` instead of `error`
+- [ ] Update `frontend/src/features/ai/types.ts` — align `tool_result`, `ui_action`, and `error` union branches to the new field names
+
+### 6.2 — Enrich `get_task` and `get_tasks` tool results
+
+Both tools are missing `parent_name` (resolved from `parent_task_id`) and `assignees` (list of assigned resources with role and units).
+
+- [ ] `get_task` — add `parent_name` (look up parent task name if `parent_task_id` is set) and `assignees` (query assignments + resources for that task)
+- [ ] `get_tasks` — add `parent_name` and `assignees` to each task row (batch-load to avoid N+1)
+
+### 6.3 — Enrich `get_resources` tool result
+
+The spec expects `current_utilization` and `is_over_allocated` per resource. Today the tool returns raw model fields only.
+
+- [ ] `get_resources` — add `current_utilization` (percent) and `is_over_allocated` (bool) by computing from the utilization service for the project window
+
+### 6.4 — Replace broken `estimate_for_project` and `suggestions_for_project`
+
+Both functions in `ai_service.py` call `/v1/brain/estimate` and `/v1/brain/suggestions` on the ai-service, which were deleted in Phase 3. They return a 404 at runtime.
+
+- [ ] Replace `estimate_for_project` — call `run_agent` or a direct tool-based flow via `AgentContext` instead of the deleted ai-service endpoint
+- [ ] Replace `suggestions_for_project` — same approach, use the agent loop or a direct LLM call via `_complete_from_service`
+- [ ] Update `backend/app/api/v1/endpoints/ai.py` estimate and suggestions handlers to match the new signatures
+
+### 6.5 — Tests
+
+- [ ] Update `test_agent_loop.py` or add a new test file covering the new SSE event shapes (`event_tool_result`, `event_ui_action`, `event_error`)
+- [ ] Add tests for the enriched `get_task` / `get_tasks` tool results (assignees and parent_name populated)
+- [ ] Add tests for the replaced `estimate_for_project` and `suggestions_for_project`
+
+---
+
 ## Definition of Done (full agent)
 
 Run `/done` when you think a phase is complete.
