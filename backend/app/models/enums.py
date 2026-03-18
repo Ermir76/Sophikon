@@ -194,6 +194,7 @@ class NotificationType(StrEnum):
     COMMENT_ADDED = "comment_added"
     DEADLINE_APPROACHING = "deadline_approaching"
     INVITATION_RECEIVED = "invitation_received"
+    AI_AGENT_FINDING = "ai_agent_finding"
 
 
 # ============================================================================

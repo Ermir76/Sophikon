@@ -23,7 +23,11 @@ celery_app.conf.update(
         "deadline-approaching-daily": {
             "task": "app.tasks.notification_tasks.send_deadline_approaching_notifications",
             "schedule": crontab(minute=0, hour=0),
-        }
+        },
+        "daily-project-health-check": {
+            "task": "app.tasks.agent_monitor.run_daily_project_health_check",
+            "schedule": crontab(hour=8, minute=0),
+        },
     },
 )
 

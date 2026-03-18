@@ -21,6 +21,70 @@ from app.service.agent.streaming import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Proactive analysis
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class ProactiveFindings:
+    has_issues: bool
+    summary: str
+
+
+async def run_proactive_analysis(ctx: AgentContext) -> ProactiveFindings:
+    """Collect project health data via read tools and summarise with one LLM call.
+
+    Returns ProactiveFindings(has_issues=False) if the project looks healthy.
+    Called from the Celery proactive agent — no streaming, no plan approval.
+    """
+    from app.service.agent.tool_registry import execute_tool
+    from app.service.ai_service import _complete_from_service
+    from app.service.contracts.ai import AICompleteRequest
+
+    summary_result = await execute_tool("get_project_summary", {}, ctx)
+    overdue_result = await execute_tool("get_tasks", {"filter_status": "overdue"}, ctx)
+    critical_path_result = await execute_tool("get_critical_path", {}, ctx)
+
+    data_context = (
+        f"Project summary:\n{summary_result.to_content()}\n\n"
+        f"Overdue tasks:\n{overdue_result.to_content()}\n\n"
+        f"Critical path:\n{critical_path_result.to_content()}"
+    )
+
+    project_memory = await history_mod.load_project_memory(ctx.db, ctx.project_id)
+    system_prompt = (
+        f"You are a proactive project health monitor for '{ctx.project.name}'. "
+        "Analyze the project data provided and identify actionable issues "
+        "(overdue tasks, critical path delays, serious risks). "
+        "If issues are found, start your response with 'ISSUES FOUND:' and list them concisely in markdown. "
+        "If the project is on track with no significant issues, respond only with 'NO ISSUES'."
+    )
+    if project_memory:
+        system_prompt += f"\n\nProject memory:\n{project_memory}"
+
+    request = AICompleteRequest(
+        messages=[{"role": "user", "content": data_context}],
+        tools=[],
+        system_prompt=system_prompt,
+        provider=ctx.provider,
+        model=ctx.model,
+        api_key=ctx.api_key or None,
+    )
+
+    text_chunks: list[str] = []
+    async for event in _complete_from_service(request):
+        if event.type == "chunk" and event.content:
+            text_chunks.append(event.content)
+
+    response_text = "".join(text_chunks).strip()
+    has_issues = bool(response_text) and not response_text.upper().startswith(
+        "NO ISSUES"
+    )
+    summary = response_text[:500] if has_issues else ""
+    return ProactiveFindings(has_issues=has_issues, summary=summary)
+
+
+# ---------------------------------------------------------------------------
 # Plan approval store — in-memory, single server (fine for portfolio/demo)
 # ---------------------------------------------------------------------------
 
