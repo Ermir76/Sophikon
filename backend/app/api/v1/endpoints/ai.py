@@ -180,7 +180,7 @@ async def estimate_with_ai(
     result = await ai_service.estimate_for_project(
         db,
         project=access.project,
-        user_id=user.id,
+        user=user,
         body=_to_estimate_input(body),
     )
     return result
@@ -197,6 +197,6 @@ async def get_ai_suggestions(
     return await ai_service.suggestions_for_project(
         db,
         project=access.project,
-        user_id=user.id,
+        user=user,
         limit=limit,
     )

@@ -6,11 +6,13 @@ from decimal import Decimal
 from uuid import UUID
 
 import httpx
+from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import (
+    AppException,
     InvalidOperationError,
     NotFoundError,
     ValidationError,
@@ -29,10 +31,9 @@ from app.service.contracts.ai import (
     AIChatInput,
     AICompleteRequest,
     AIEstimateInput,
+    AIEstimateItem,
     AIEstimateResult,
-    AIProviderEstimateRequest,
-    AIProviderEstimateTaskInput,
-    AIProviderSuggestionsRequest,
+    AISuggestionItem,
     AISuggestionsResult,
     AIUsageMeta,
     ConversationMessage,
@@ -508,7 +509,7 @@ async def _complete_from_service(
                         yield AIChatEvent.model_validate(parsed)
                     except (ValueError, TypeError):
                         yield AIChatEvent(
-                            type="error", error="Malformed AI stream event"
+                            type="error", message="Malformed AI stream event"
                         )
     except httpx.RequestError:
         raise InvalidOperationError("AI service is unavailable")
@@ -544,7 +545,18 @@ async def prepare_chat_stream(
     )
     await db.commit()
 
-    catalog = await get_model_catalog()
+    try:
+        catalog = await get_model_catalog()
+    except AppException as exc:
+        from app.service.agent.streaming import event_error
+
+        _err_msg = exc.message
+
+        async def _catalog_error() -> AsyncGenerator[str]:
+            yield event_error(_err_msg)
+
+        return _catalog_error()
+
     provider, model = _resolve_effective_provider_model(user, catalog)
     api_key = _read_user_ai_preferences(user).get("api_key") or ""
 
@@ -564,121 +576,128 @@ async def prepare_chat_stream(
 
 # ---------------------------------------------------------------------------
 # Estimate and suggestions
-# TODO: Phase 6 — /v1/brain/estimate on ai-service was deleted in Phase 3.
-# These functions call a deleted endpoint and will return a 404 at runtime.
-# Replace with real LLM calls via the agent loop (executor + get_tasks tool).
 # ---------------------------------------------------------------------------
 
 
-async def request_estimate(body: AIProviderEstimateRequest) -> dict:
-    try:
-        async with httpx.AsyncClient(timeout=_request_timeout()) as client:
-            response = await client.post(
-                _service_url("/v1/brain/estimate"),
-                headers=_service_headers(),
-                json=body.model_dump(mode="json"),
-            )
-        if response.status_code >= 400:
-            raise InvalidOperationError(await _extract_error_message(response))
-        try:
-            return response.json()
-        except ValueError as exc:
-            raise InvalidOperationError("Malformed AI estimation response") from exc
-    except httpx.RequestError:
-        raise InvalidOperationError("AI estimation service is unavailable")
-
-
-# TODO: Phase 6 — /v1/brain/suggestions on ai-service was deleted in Phase 3.
-# Same as request_estimate — will 404 at runtime until replaced by agent calls.
-async def request_suggestions(body: AIProviderSuggestionsRequest) -> dict:
-    try:
-        async with httpx.AsyncClient(timeout=_request_timeout()) as client:
-            response = await client.post(
-                _service_url("/v1/brain/suggestions"),
-                headers=_service_headers(),
-                json=body.model_dump(mode="json"),
-            )
-        if response.status_code >= 400:
-            raise InvalidOperationError(await _extract_error_message(response))
-        try:
-            return response.json()
-        except ValueError as exc:
-            raise InvalidOperationError("Malformed AI suggestions response") from exc
-    except httpx.RequestError:
-        raise InvalidOperationError("AI suggestions service is unavailable")
-
-
-async def _build_estimate_task_inputs(
-    db: AsyncSession,
-    *,
-    project_id: UUID,
-    body: AIEstimateInput,
-) -> list[AIProviderEstimateTaskInput]:
-    task_inputs: list[AIProviderEstimateTaskInput] = []
-
-    if body.task_ids:
-        result = await db.execute(
-            select(Task).where(
-                Task.project_id == project_id,
-                Task.is_deleted.is_(False),
-                Task.id.in_(body.task_ids),
-            )
-        )
-        tasks = list(result.scalars().all())
-        found_ids = {task.id for task in tasks}
-        missing_ids = [task_id for task_id in body.task_ids if task_id not in found_ids]
-        if missing_ids:
-            raise NotFoundError("One or more tasks were not found in this project")
-
-        task_inputs.extend(
-            AIProviderEstimateTaskInput(
-                task_id=task.id,
-                task_name=task.name,
-                task_description=task.notes,
-                duration=task.duration,
-            )
-            for task in tasks
-        )
-    elif body.task_name:
-        task_inputs.append(
-            AIProviderEstimateTaskInput(
-                task_name=body.task_name,
-                task_description=body.task_description,
-                duration=None,
-            )
-        )
-
-    return task_inputs
+def _strip_code_fence(text: str) -> str:
+    # NOTE: split("```") breaks if the LLM returns JSON with triple backticks inside
+    # string values — the split produces extra parts and inner picks the wrong segment.
+    # Low probability in practice (LLMs rarely embed ``` in JSON values) but not impossible.
+    # TODO: replace with a regex that matches only the outer fence, e.g.
+    #       re.match(r"^```(?:json)?\s*(.*?)\s*```$", text, re.DOTALL)
+    if text.startswith("```"):
+        parts = text.split("```")
+        inner = parts[1] if len(parts) > 1 else ""
+        if inner.startswith("json"):
+            inner = inner[4:]
+        return inner.strip()
+    return text
 
 
 async def estimate_for_project(
     db: AsyncSession,
     *,
     project: Project,
-    user_id: UUID,
+    user: User,
     body: AIEstimateInput,
 ) -> AIEstimateResult:
-    task_inputs = await _build_estimate_task_inputs(
-        db,
-        project_id=project.id,
-        body=body,
-    )
+    task_entries: list[dict] = []
+    if body.task_ids:
+        result = await db.execute(
+            select(Task).where(
+                Task.project_id == project.id,
+                Task.is_deleted.is_(False),
+                Task.id.in_(body.task_ids),
+            )
+        )
+        tasks = list(result.scalars().all())
+        found_ids = {task.id for task in tasks}
+        missing = [tid for tid in body.task_ids if tid not in found_ids]
+        if missing:
+            raise NotFoundError("One or more tasks were not found in this project")
+        task_entries = [
+            {
+                "task_id": str(task.id),
+                "task_name": task.name,
+                "description": task.notes or "",
+                "current_duration_minutes": task.duration,
+            }
+            for task in tasks
+        ]
+    elif body.task_name:
+        task_entries = [
+            {
+                "task_id": None,
+                "task_name": body.task_name,
+                "description": body.task_description or "",
+                "current_duration_minutes": None,
+            }
+        ]
+
+    if not task_entries:
+        raise InvalidOperationError("No tasks to estimate")
+
     context = await build_project_context(db, project)
-    service_request = AIProviderEstimateRequest(
-        project_context=context,
-        task_inputs=task_inputs,
-        include_reasoning=body.include_reasoning,
+    catalog = await get_model_catalog()
+    provider, model = _resolve_effective_provider_model(user, catalog)
+    api_key = _read_user_ai_preferences(user).get("api_key") or ""
+
+    project_snapshot = "\n".join(
+        f"- {t.name}: {t.duration}min, {int(t.percent_complete)}% done"
+        for t in context.tasks[:30]
+    )
+    task_list = "\n".join(
+        f"- {e['task_name']} (id:{e['task_id'] or 'new'}, "
+        f"description:{e['description']!r}, "
+        f"current:{e['current_duration_minutes']}min)"
+        for e in task_entries
+    )
+    prompt = (
+        f"Project: {context.name} (status: {context.status})\n"
+        f"Start: {context.start_date}, Finish: {context.finish_date or 'TBD'}\n\n"
+        f"Existing tasks (context):\n{project_snapshot}\n\n"
+        f"Tasks to estimate:\n{task_list}\n\n"
+        f"include_reasoning: {body.include_reasoning}"
+    )
+    system_prompt = (
+        "You are a project estimation expert. For each task, estimate durations in minutes. "
+        "Return ONLY valid JSON matching this exact schema (no markdown, no explanation):\n"
+        '{"estimates": [{"task_id": "uuid-or-null", "task_name": "str", '
+        '"optimistic_minutes": int, "likely_minutes": int, "pessimistic_minutes": int, '
+        '"recommended_minutes": int, "confidence": float, "reasoning": "str-or-null"}]}'
     )
 
-    raw_response = await request_estimate(service_request)
-    response = AIEstimateResult.model_validate(raw_response)
-
-    await track_usage(
-        db,
-        user_id=user_id,
-        feature="estimation",
-        usage=response.usage,
+    request = AICompleteRequest(
+        messages=[{"role": "user", "content": prompt}],
+        tools=[],
+        system_prompt=system_prompt,
+        provider=provider or "mock",
+        model=model or "mock",
+        api_key=api_key or None,
     )
+    text_chunks: list[str] = []
+    tokens_in = 0
+    tokens_out = 0
+    async for event in _complete_from_service(request):
+        if event.type == "chunk" and event.content:
+            text_chunks.append(event.content)
+        elif event.type == "done" and event.usage:
+            tokens_in = event.usage.tokens_in
+            tokens_out = event.usage.tokens_out
+
+    try:
+        raw = json.loads(_strip_code_fence("".join(text_chunks).strip()))
+        response = AIEstimateResult(
+            estimates=[
+                AIEstimateItem.model_validate(e) for e in raw.get("estimates", [])
+            ],
+            usage=AIUsageMeta(tokens_in=tokens_in, tokens_out=tokens_out, model=model),
+        )
+    except (ValueError, TypeError, PydanticValidationError) as exc:
+        raise InvalidOperationError("Malformed AI estimation response") from exc
+
+    usage_meta = response.usage
+    await track_usage(db, user_id=user.id, feature="estimation", usage=usage_meta)
     await db.commit()
     return response
 
@@ -687,23 +706,72 @@ async def suggestions_for_project(
     db: AsyncSession,
     *,
     project: Project,
-    user_id: UUID,
+    user: User,
     limit: int,
 ) -> AISuggestionsResult:
     context = await build_project_context(db, project)
-    service_request = AIProviderSuggestionsRequest(
-        project_context=context,
-        limit=limit,
+    catalog = await get_model_catalog()
+    provider, model = _resolve_effective_provider_model(user, catalog)
+    api_key = _read_user_ai_preferences(user).get("api_key") or ""
+
+    project_snapshot = "\n".join(
+        f"- {t.name}: start={t.start_date}, finish={t.finish_date}, "
+        f"duration={t.duration}min, {int(t.percent_complete)}% done, priority={t.priority}"
+        for t in context.tasks[:50]
+    )
+    prompt = (
+        f"Project: {context.name} (status: {context.status})\n"
+        f"Start: {context.start_date}, Finish: {context.finish_date or 'TBD'}\n\n"
+        f"Tasks:\n{project_snapshot}\n\n"
+        f"Provide up to {limit} actionable suggestions to improve this project schedule."
+    )
+    action_schema = (
+        '{"type":"NONE","payload":{}}'
+        ' | {"type":"UPDATE_TASK","payload":{"task_id":"uuid","percent_complete":null,'
+        '"duration":null,"priority":null,"notes":null}}'
+        ' | {"type":"ADD_DEPENDENCY","payload":{"predecessor_id":"uuid","successor_id":"uuid",'
+        '"dependency_type":"FS","lag":0}}'
+        ' | {"type":"SET_PRIORITY","payload":{"task_id":"uuid","priority":int}}'
+    )
+    system_prompt = (
+        "You are a project management expert. Analyze the project and suggest improvements. "
+        "Return ONLY valid JSON (no markdown, no explanation) matching this exact schema:\n"
+        '{"suggestions": [{"id": "unique-str", "type": "str", "severity": "LOW|MEDIUM|HIGH", '
+        '"title": "str", "description": "str", "affected_task_id": "uuid-or-null", '
+        f'"suggested_action": {action_schema}}}]}}'
     )
 
-    raw_response = await request_suggestions(service_request)
-    response = AISuggestionsResult.model_validate(raw_response)
-
-    await track_usage(
-        db,
-        user_id=user_id,
-        feature="suggestion",
-        usage=response.usage,
+    request = AICompleteRequest(
+        messages=[{"role": "user", "content": prompt}],
+        tools=[],
+        system_prompt=system_prompt,
+        provider=provider or "mock",
+        model=model or "mock",
+        api_key=api_key or None,
     )
+    text_chunks: list[str] = []
+    tokens_in = 0
+    tokens_out = 0
+    async for event in _complete_from_service(request):
+        if event.type == "chunk" and event.content:
+            text_chunks.append(event.content)
+        elif event.type == "done" and event.usage:
+            tokens_in = event.usage.tokens_in
+            tokens_out = event.usage.tokens_out
+
+    try:
+        raw = json.loads(_strip_code_fence("".join(text_chunks).strip()))
+        response = AISuggestionsResult(
+            suggestions=[
+                AISuggestionItem.model_validate(s)
+                for s in raw.get("suggestions", [])[:limit]
+            ],
+            usage=AIUsageMeta(tokens_in=tokens_in, tokens_out=tokens_out, model=model),
+        )
+    except (ValueError, TypeError, PydanticValidationError) as exc:
+        raise InvalidOperationError("Malformed AI suggestions response") from exc
+
+    usage_meta = response.usage
+    await track_usage(db, user_id=user.id, feature="suggestion", usage=usage_meta)
     await db.commit()
     return response
