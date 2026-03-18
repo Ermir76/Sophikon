@@ -43,23 +43,20 @@ def event_tool_call(tool_use_id: str, tool_name: str, tool_input: dict) -> str:
     )
 
 
-# TODO: Phase 4 — spec (agent-platform-plan.md §4.1) defines tool_result as
-# { success: boolean, data: unknown } but current frontend types.ts uses
-# { content: string }. Update both this function and frontend types.ts together.
 def event_tool_result(
-    tool_use_id: str, tool_name: str, *, success: bool, data: object
+    tool_use_id: str,
+    tool_name: str,
+    *,
+    success: bool,
+    data: dict | list | str | int | float | bool | None,
 ) -> str:
-    content = (
-        json.dumps(data, default=str)
-        if success
-        else json.dumps({"error": str(data) if data else "Tool failed"})
-    )
     return _fmt(
         AIChatEvent(
             type="tool_result",
             tool_use_id=tool_use_id,
             tool_name=tool_name,
-            content=content,
+            success=success,
+            data=data,
         )
     )
 
@@ -82,11 +79,8 @@ def event_chunk(content: str) -> str:
     return _fmt(AIChatEvent(type="chunk", content=content))
 
 
-# TODO: Phase 4 — spec defines ui_action as { action, payload } but AIChatEvent
-# uses tool_input field for the payload. Update AIChatEvent to add a payload field
-# and align frontend types.ts at the same time.
 def event_ui_action(action: str, payload: dict) -> str:
-    return _fmt(AIChatEvent(type="ui_action", action=action, tool_input=payload))
+    return _fmt(AIChatEvent(type="ui_action", action=action, payload=payload))
 
 
 def event_done(conversation_id: UUID, usage: dict) -> str:
@@ -103,7 +97,5 @@ def event_done(conversation_id: UUID, usage: dict) -> str:
     )
 
 
-# TODO: Phase 4 — spec defines error as { message: string } but AIChatEvent uses
-# the error field. Update both AIChatEvent and frontend types.ts together.
 def event_error(message: str) -> str:
-    return _fmt(AIChatEvent(type="error", error=message))
+    return _fmt(AIChatEvent(type="error", message=message))
