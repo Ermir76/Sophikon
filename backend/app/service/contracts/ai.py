@@ -3,7 +3,7 @@ Service-layer AI contracts.
 """
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -60,6 +60,11 @@ class AIChatEvent(BaseModel):
     message_id: ContractUUID | None = None
     content: str | None = None
     usage: AIUsageMeta | None = None
+    # NOTE: two error fields exist because this model is reused in both directions:
+    # - `error`   — read when parsing incoming ai-service events (ai-service ChatEvent uses this field)
+    # - `message` — written when building outgoing frontend events (streaming.py uses this field)
+    # TODO: align ai-service ChatEvent to use `message` instead of `error`, then drop `error` here
+    #       so there is one field, one contract, one direction.
     error: str | None = None
     model: str | None = None
     tool_use_id: str | None = None
@@ -68,6 +73,10 @@ class AIChatEvent(BaseModel):
     approval_id: str | None = None
     action: str | None = None
     steps: list[dict] | None = None
+    success: bool | None = None
+    data: dict | list | str | int | float | bool | None = None
+    payload: dict | None = None
+    message: str | None = None
 
 
 class AIEstimateInput(BaseModel):
@@ -100,9 +109,57 @@ class AIEstimateResult(BaseModel):
     usage: AIUsageMeta
 
 
-class AISuggestionAction(BaseModel):
-    type: Literal["NONE", "UPDATE_TASK", "ADD_DEPENDENCY", "SET_PRIORITY"]
-    payload: dict = Field(default_factory=dict)
+class NonePayload(BaseModel):
+    pass
+
+
+class UpdateTaskPayload(BaseModel):
+    task_id: ContractUUID
+    percent_complete: float | None = None
+    duration: int | None = None
+    priority: int | None = None
+    notes: str | None = None
+
+
+class AddDependencyPayload(BaseModel):
+    predecessor_id: ContractUUID
+    successor_id: ContractUUID
+    dependency_type: str = "FS"
+    lag: int = 0
+
+
+class SetPriorityPayload(BaseModel):
+    task_id: ContractUUID
+    priority: int
+
+
+class NoneSuggestionAction(BaseModel):
+    type: Literal["NONE"] = "NONE"
+    payload: NonePayload = Field(default_factory=NonePayload)
+
+
+class UpdateTaskSuggestionAction(BaseModel):
+    type: Literal["UPDATE_TASK"] = "UPDATE_TASK"
+    payload: UpdateTaskPayload
+
+
+class AddDependencySuggestionAction(BaseModel):
+    type: Literal["ADD_DEPENDENCY"] = "ADD_DEPENDENCY"
+    payload: AddDependencyPayload
+
+
+class SetPrioritySuggestionAction(BaseModel):
+    type: Literal["SET_PRIORITY"] = "SET_PRIORITY"
+    payload: SetPriorityPayload
+
+
+AISuggestionAction = Annotated[
+    NoneSuggestionAction
+    | UpdateTaskSuggestionAction
+    | AddDependencySuggestionAction
+    | SetPrioritySuggestionAction,
+    Field(discriminator="type"),
+]
 
 
 class AISuggestionItem(BaseModel):
@@ -142,37 +199,6 @@ class ProjectContext(BaseModel):
     finish_date: date | None = None
     updated_at: datetime
     tasks: list[ProjectContextTask] = Field(default_factory=list)
-
-
-class AIProviderEstimateTaskInput(BaseModel):
-    task_id: ContractUUID | None = None
-    task_name: str
-    task_description: str | None = None
-    duration: int | None = None
-
-
-class AIProviderChatRequest(BaseModel):
-    message: str | None = None
-    provider: str | None = Field(default=None, max_length=32)
-    model: str | None = Field(default=None, max_length=128)
-    project_context: ProjectContext
-    conversation_id: ContractUUID | None = None
-    user_id: ContractUUID
-    ui_context: UiContext | None = None
-    history: list[ChatHistoryItem] = Field(default_factory=list)
-    tool_results: list[ToolResultInput] = Field(default_factory=list)
-
-
-class AIProviderEstimateRequest(BaseModel):
-    project_context: ProjectContext
-    task_inputs: list[AIProviderEstimateTaskInput]
-    include_reasoning: bool = True
-
-
-class AIProviderSuggestionsRequest(BaseModel):
-    project_context: ProjectContext
-    limit: int = Field(default=5, ge=1, le=20)
-    ui_context: UiContext | None = None
 
 
 # ---------------------------------------------------------------------------

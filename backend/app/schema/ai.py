@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -97,12 +97,57 @@ class AIEstimateResponse(BaseModel):
     usage: AIUsageMeta
 
 
-class AISuggestionAction(BaseModel):
-    type: Literal["NONE", "UPDATE_TASK", "ADD_DEPENDENCY", "SET_PRIORITY"]
-    # NOTE: Temporary generic payload contract.
-    # TODO: Replace with typed payload models per action type (discriminated union)
-    # before expanding suggestion generation/automation beyond current deterministic logic.
-    payload: dict = Field(default_factory=dict)
+class NonePayload(BaseModel):
+    pass
+
+
+class UpdateTaskPayload(BaseModel):
+    task_id: SchemaUUID
+    percent_complete: float | None = None
+    duration: int | None = None
+    priority: int | None = None
+    notes: str | None = None
+
+
+class AddDependencyPayload(BaseModel):
+    predecessor_id: SchemaUUID
+    successor_id: SchemaUUID
+    dependency_type: str = "FS"
+    lag: int = 0
+
+
+class SetPriorityPayload(BaseModel):
+    task_id: SchemaUUID
+    priority: int
+
+
+class NoneSuggestionAction(BaseModel):
+    type: Literal["NONE"] = "NONE"
+    payload: NonePayload = Field(default_factory=NonePayload)
+
+
+class UpdateTaskSuggestionAction(BaseModel):
+    type: Literal["UPDATE_TASK"] = "UPDATE_TASK"
+    payload: UpdateTaskPayload
+
+
+class AddDependencySuggestionAction(BaseModel):
+    type: Literal["ADD_DEPENDENCY"] = "ADD_DEPENDENCY"
+    payload: AddDependencyPayload
+
+
+class SetPrioritySuggestionAction(BaseModel):
+    type: Literal["SET_PRIORITY"] = "SET_PRIORITY"
+    payload: SetPriorityPayload
+
+
+AISuggestionAction = Annotated[
+    NoneSuggestionAction
+    | UpdateTaskSuggestionAction
+    | AddDependencySuggestionAction
+    | SetPrioritySuggestionAction,
+    Field(discriminator="type"),
+]
 
 
 class AISuggestionItem(BaseModel):
@@ -142,31 +187,3 @@ class ProjectContext(BaseModel):
     finish_date: date | None = None
     updated_at: datetime
     tasks: list[ProjectContextTask] = Field(default_factory=list)
-
-
-class AIServiceEstimateTaskInput(BaseModel):
-    task_id: SchemaUUID | None = None
-    task_name: str
-    task_description: str | None = None
-    duration: int | None = None
-
-
-class AIServiceChatRequest(BaseModel):
-    message: str
-    project_context: ProjectContext
-    conversation_id: SchemaUUID | None = None
-    user_id: SchemaUUID
-    ui_context: UiContext | None = None
-    history: list[ChatHistoryItem] = Field(default_factory=list)
-
-
-class AIServiceEstimateRequest(BaseModel):
-    project_context: ProjectContext
-    task_inputs: list[AIServiceEstimateTaskInput]
-    include_reasoning: bool = True
-
-
-class AIServiceSuggestionsRequest(BaseModel):
-    project_context: ProjectContext
-    limit: int = Field(default=5, ge=1, le=20)
-    ui_context: UiContext | None = None
