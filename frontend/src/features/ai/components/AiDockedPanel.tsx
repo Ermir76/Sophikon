@@ -307,8 +307,14 @@ export function AiDockedPanel({
             hadToolOrUiEvent = true;
             const toolMsgId = toolMessageIds.get(event.tool_use_id);
             if (toolMsgId) {
-              updateToolStatus(projectId, toolMsgId, "done");
-              setToolResult(projectId, toolMsgId, event.content);
+              updateToolStatus(projectId, toolMsgId, event.success ? "done" : "error");
+              setToolResult(
+                projectId,
+                toolMsgId,
+                typeof event.data === "string"
+                  ? event.data
+                  : JSON.stringify(event.data),
+              );
             }
             const writeTool = [
               "create_task", "update_task", "delete_task",
@@ -338,7 +344,7 @@ export function AiDockedPanel({
           }
           if (event.type === "ui_action") {
             hadToolOrUiEvent = true;
-            handleUiAction(event.action, event.tool_input ?? {});
+            handleUiAction(event.action, event.payload);
           }
           if (event.type === "done") {
             setThinking(projectId, false);
@@ -346,7 +352,7 @@ export function AiDockedPanel({
             setConversationStatus(projectId, "idle");
           }
           if (event.type === "error") {
-            streamErrorMessage = event.error || "AI chat failed";
+            streamErrorMessage = event.message || "AI chat failed";
             toast.error(streamErrorMessage);
             setThinking(projectId, false);
             setConversationStatus(projectId, "idle");

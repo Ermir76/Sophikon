@@ -76,7 +76,7 @@ export type AiChatEvent =
     }
   | {
       type: "error";
-      error: string;
+      message: string;
     }
   | {
       type: "tool_call";
@@ -88,7 +88,8 @@ export type AiChatEvent =
       type: "tool_result";
       tool_use_id: string;
       tool_name: string;
-      content: string;
+      success: boolean;
+      data: unknown;
     }
   | {
       type: "approval_required";
@@ -100,7 +101,7 @@ export type AiChatEvent =
   | {
       type: "ui_action";
       action: string;
-      tool_input?: Record<string, unknown>;
+      payload: Record<string, unknown>;
     }
   | {
       type: "plan";
@@ -148,16 +149,35 @@ export interface AiEstimateResponse {
   usage: AiUsageMeta;
 }
 
-export type AiSuggestionActionType =
-  | "NONE"
-  | "UPDATE_TASK"
-  | "ADD_DEPENDENCY"
-  | "SET_PRIORITY";
-
-export interface AiSuggestionAction {
-  type: AiSuggestionActionType;
-  payload: Record<string, unknown>;
+export interface NonePayload {
+  [key: string]: never;
 }
+
+export interface UpdateTaskPayload {
+  task_id: string;
+  percent_complete?: number | null;
+  duration?: number | null;
+  priority?: number | null;
+  notes?: string | null;
+}
+
+export interface AddDependencyPayload {
+  predecessor_id: string;
+  successor_id: string;
+  dependency_type: "FS" | "FF" | "SS" | "SF";
+  lag: number;
+}
+
+export interface SetPriorityPayload {
+  task_id: string;
+  priority: number;
+}
+
+export type AiSuggestionAction =
+  | { type: "NONE"; payload: NonePayload }
+  | { type: "UPDATE_TASK"; payload: UpdateTaskPayload }
+  | { type: "ADD_DEPENDENCY"; payload: AddDependencyPayload }
+  | { type: "SET_PRIORITY"; payload: SetPriorityPayload };
 
 export interface AiSuggestion {
   id: string;
