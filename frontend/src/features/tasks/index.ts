@@ -1,7 +1,7 @@
 // Public API for the `tasks` feature
 export { default as TasksPage } from './pages/TasksPage';
 
-export { useTasks } from './hooks/useTasks';
+export { useTasks, useUpdateTask } from './hooks/useTasks';
 export { useDependencies } from './hooks/useDependencies';
 export { useAssignments } from './hooks/useAssignments';
 export { useComments } from './hooks/useComments';
