@@ -34,15 +34,15 @@ export interface TimelineUnit {
 }
 
 export const DEFAULT_GANTT_CONFIG: GanttConfig = {
-  rowHeight: 36,
+  rowHeight: 48,
   headerHeight: 50,
-  barHeight: 24,
+  barHeight: 36,
   barRadius: 4,
   milestoneSize: 16,
 };
 
 export const ZOOM_PX_PER_DAY: Record<ZoomLevel, number> = {
-  day: 40,
-  week: 16,
-  month: 5,
+  day: 100,
+  week: 70,
+  month: 40,
 };

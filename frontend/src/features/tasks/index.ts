@@ -3,7 +3,7 @@ export { default as TasksPage } from './pages/TasksPage';
 export { TaskDetailPanel } from './components/task-detail/TaskDetailPanel';
 
 export { useTasks, useUpdateTask, useDeleteTask } from './hooks/useTasks';
-export { useDependencies } from './hooks/useDependencies';
+export { useDependencies, useCreateDependency, useDeleteDependency } from './hooks/useDependencies';
 export { useAssignments } from './hooks/useAssignments';
 export { useComments } from './hooks/useComments';
 export { useCollapsedTasks } from './hooks/useCollapsedTasks';

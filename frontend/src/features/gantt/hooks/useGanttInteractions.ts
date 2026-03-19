@@ -14,29 +14,33 @@ export function useGanttInteractions({
     chartBodyRef,
 }: UseGanttInteractionsProps) {
     const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
-    const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hoverOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleTaskHover = useCallback((taskId: string | null) => {
-        setHoveredTaskId(taskId);
+        if (taskId !== null) {
+            if (hoverOffTimerRef.current) {
+                clearTimeout(hoverOffTimerRef.current);
+                hoverOffTimerRef.current = null;
+            }
+            setHoveredTaskId(taskId);
+        } else {
+            hoverOffTimerRef.current = setTimeout(() => {
+                hoverOffTimerRef.current = null;
+                setHoveredTaskId(null);
+            }, 400);
+        }
     }, []);
 
     const handleChartTaskClick = useCallback(
         (taskId: string) => {
-            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-            clickTimerRef.current = setTimeout(() => {
-                clickTimerRef.current = null;
-                onTaskClick(taskId);
-            }, 200);
+            onTaskClick(taskId);
+            onTaskDoubleClick(taskId);
         },
-        [onTaskClick]
+        [onTaskClick, onTaskDoubleClick]
     );
 
     const handleChartTaskDoubleClick = useCallback(
         (taskId: string) => {
-            if (clickTimerRef.current) {
-                clearTimeout(clickTimerRef.current);
-                clickTimerRef.current = null;
-            }
             onTaskDoubleClick(taskId);
         },
         [onTaskDoubleClick]

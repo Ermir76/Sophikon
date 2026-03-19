@@ -10,6 +10,7 @@ import {
 import { buildArrowPath } from "../utils/arrowPath";
 import { eachDayOfInterval } from "date-fns";
 import type { DragState } from "../hooks/useGanttBarDrag";
+import type { DepDragState } from "../hooks/useGanttDependencyDrag";
 
 interface GanttChartProps {
   tasks: Task[];
@@ -18,6 +19,7 @@ interface GanttChartProps {
   pxPerDay: number;
   showCriticalPath: boolean;
   selectedTaskId: string | null;
+  hoveredTaskId: string | null;
   onTaskClick: (taskId: string) => void;
   onTaskDoubleClick: (taskId: string) => void;
   onTaskHover: (taskId: string | null) => void;
@@ -28,6 +30,9 @@ interface GanttChartProps {
   dragState: DragState | null;
   onBarDragStart: (e: React.PointerEvent, task: Task, mode: DragState["dragMode"]) => void;
   onTaskContextMenu: (e: React.MouseEvent, taskId: string) => void;
+  depDragState: DepDragState | null;
+  onConnectorDragStart: (e: React.PointerEvent, sourceTaskId: string, sourceEdge: "start" | "finish", fromX: number, fromY: number) => void;
+  onDependencyContextMenu: (e: React.MouseEvent, depId: string) => void;
 }
 
 export function GanttChart({
@@ -37,6 +42,7 @@ export function GanttChart({
   pxPerDay,
   showCriticalPath,
   selectedTaskId,
+  hoveredTaskId,
   onTaskClick,
   onTaskDoubleClick,
   onTaskHover,
@@ -47,6 +53,9 @@ export function GanttChart({
   dragState,
   onBarDragStart,
   onTaskContextMenu,
+  depDragState,
+  onConnectorDragStart,
+  onDependencyContextMenu,
 }: GanttChartProps) {
   const todayX = useMemo(
     () => dateToX(new Date(), chartStartDate, pxPerDay),
@@ -152,6 +161,53 @@ export function GanttChart({
         />
       )}
 
+      {/* Dependency arrows — rendered before bars so they appear behind */}
+      {dependencies
+        .filter((d) => !d.is_disabled)
+        .map((dep) => {
+          const pred = taskMap.get(dep.predecessor_id);
+          const succ = taskMap.get(dep.successor_id);
+          if (!pred || !succ) return null;
+
+          const path = buildArrowPath(
+            pred.task,
+            succ.task,
+            pred.index,
+            succ.index,
+            dep.type,
+            chartStartDate,
+            pxPerDay,
+            config,
+          );
+
+          const isCritical =
+            showCriticalPath && pred.task.is_critical && succ.task.is_critical;
+
+          return (
+            <g key={dep.id}>
+              {/* Visible arrow */}
+              <path
+                d={path}
+                fill="none"
+                className={isCritical ? "stroke-destructive" : "stroke-muted-foreground"}
+                strokeWidth={1}
+                strokeOpacity={0.6}
+                markerEnd={isCritical ? "url(#arrowhead-critical)" : "url(#arrowhead)"}
+                style={{ pointerEvents: "none" }}
+              />
+              {/* Invisible fat hit area for right-click */}
+              <path
+                d={path}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={12}
+                style={{ pointerEvents: "auto", cursor: "context-menu" }}
+                onContextMenu={(e) => { e.preventDefault(); onDependencyContextMenu(e, dep.id); }}
+              />
+            </g>
+          );
+        })}
+
       {/* Task bars */}
       {tasks.map((task, index) => {
         const y = index * config.rowHeight;
@@ -172,11 +228,14 @@ export function GanttChart({
               isCritical={isCritical}
               isSelected={isSelected}
               color={taskColor}
+              isHovered={hoveredTaskId === task.id}
+              depDragTargeted={depDragState?.targetTaskId === task.id}
               onClick={() => onTaskClick(task.id)}
               onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
               onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id); }}
+              onConnectorDragStart={onConnectorDragStart}
             />
           );
         }
@@ -235,7 +294,6 @@ export function GanttChart({
             <g
               className="cursor-grab"
               style={{ pointerEvents: "auto", opacity: isDragged ? 0.4 : 1 }}
-              onClick={() => onTaskClick(task.id)}
               onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
@@ -312,6 +370,33 @@ export function GanttChart({
                 onPointerDown={(e) => { e.stopPropagation(); onBarDragStart(e, task, "resize-right"); }}
               />
             </g>
+            {/* Connector dots — siblings of bar <g> so they have independent hover, no gap problem */}
+            {hoveredTaskId === task.id && (
+              <>
+                <circle
+                  cx={x - 8}
+                  cy={barY + config.barHeight / 2}
+                  r={6}
+                  className="fill-primary stroke-background"
+                  strokeWidth={1.5}
+                  style={{ cursor: "crosshair", pointerEvents: "auto" }}
+                  onMouseEnter={() => onTaskHover(task.id)}
+                  onMouseLeave={() => onTaskHover(null)}
+                  onPointerDown={(e) => onConnectorDragStart(e, task.id, "start", x - 8, barY + config.barHeight / 2)}
+                />
+                <circle
+                  cx={x + barWidth + 8}
+                  cy={barY + config.barHeight / 2}
+                  r={6}
+                  className="fill-primary stroke-background"
+                  strokeWidth={1.5}
+                  style={{ cursor: "crosshair", pointerEvents: "auto" }}
+                  onMouseEnter={() => onTaskHover(task.id)}
+                  onMouseLeave={() => onTaskHover(null)}
+                  onPointerDown={(e) => onConnectorDragStart(e, task.id, "finish", x + barWidth + 8, barY + config.barHeight / 2)}
+                />
+              </>
+            )}
             {/* Ghost bar — shows preview position during drag */}
             {isDragged && dragState && (
               <rect
@@ -331,47 +416,39 @@ export function GanttChart({
                 }}
               />
             )}
+            {/* Dependency drag target highlight */}
+            {depDragState?.targetTaskId === task.id && (
+              <rect
+                x={x - 3}
+                y={barY - 3}
+                width={barWidth + 6}
+                height={config.barHeight + 6}
+                rx={config.barRadius + 2}
+                ry={config.barRadius + 2}
+                fill="none"
+                className="stroke-primary"
+                strokeWidth={2}
+                strokeDasharray="4 2"
+                style={{ pointerEvents: "none" }}
+              />
+            )}
           </Fragment>
         );
       })}
 
-      {/* Dependency arrows */}
-      {dependencies
-        .filter((d) => !d.is_disabled)
-        .map((dep) => {
-          const pred = taskMap.get(dep.predecessor_id);
-          const succ = taskMap.get(dep.successor_id);
-          if (!pred || !succ) return null;
-
-          const path = buildArrowPath(
-            pred.task,
-            succ.task,
-            pred.index,
-            succ.index,
-            dep.type,
-            chartStartDate,
-            pxPerDay,
-            config,
-          );
-
-          const isCritical =
-            showCriticalPath && pred.task.is_critical && succ.task.is_critical;
-
-          return (
-            <path
-              key={dep.id}
-              d={path}
-              fill="none"
-              className={
-                isCritical ? "stroke-destructive" : "stroke-muted-foreground"
-              }
-              strokeWidth={1.5}
-              markerEnd={
-                isCritical ? "url(#arrowhead-critical)" : "url(#arrowhead)"
-              }
-            />
-          );
-        })}
+      {/* Dependency drag preview line */}
+      {depDragState && (
+        <line
+          x1={depDragState.fromX}
+          y1={depDragState.fromY}
+          x2={depDragState.currentX}
+          y2={depDragState.currentY}
+          className="stroke-primary"
+          strokeWidth={2}
+          strokeDasharray="6 3"
+          style={{ pointerEvents: "none" }}
+        />
+      )}
     </svg>
   );
 }
@@ -387,11 +464,14 @@ function MilestoneMarker({
   isCritical,
   isSelected,
   color,
+  isHovered,
+  depDragTargeted,
   onClick,
   onDoubleClick,
   onMouseEnter,
   onMouseLeave,
   onContextMenu,
+  onConnectorDragStart,
 }: {
   task: Task;
   y: number;
@@ -401,11 +481,14 @@ function MilestoneMarker({
   isCritical: boolean;
   isSelected: boolean;
   color: string | null;
+  isHovered: boolean;
+  depDragTargeted: boolean;
   onClick: () => void;
   onDoubleClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
+  onConnectorDragStart: (e: React.PointerEvent, sourceTaskId: string, sourceEdge: "start" | "finish", fromX: number, fromY: number) => void;
 }) {
   const cx = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
   const cy = y + config.rowHeight / 2;
@@ -426,6 +509,40 @@ function MilestoneMarker({
         stroke={isSelected ? "hsl(var(--ring))" : (!isCritical && !color ? "var(--border)" : "none")}
         strokeWidth={isSelected ? 2 : (!isCritical && !color ? 1.5 : 0)}
       />
+      {depDragTargeted && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={size + 6}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth={2}
+          strokeDasharray="4 2"
+          style={{ pointerEvents: "none" }}
+        />
+      )}
+      {isHovered && (
+        <>
+          <circle
+            cx={cx - size - 8}
+            cy={cy}
+            r={5}
+            className="fill-primary stroke-background"
+            strokeWidth={1.5}
+            style={{ cursor: "crosshair", pointerEvents: "auto" }}
+            onPointerDown={(e) => { e.stopPropagation(); onConnectorDragStart(e, task.id, "start", cx - size - 8, cy); }}
+          />
+          <circle
+            cx={cx + size + 8}
+            cy={cy}
+            r={5}
+            className="fill-primary stroke-background"
+            strokeWidth={1.5}
+            style={{ cursor: "crosshair", pointerEvents: "auto" }}
+            onPointerDown={(e) => { e.stopPropagation(); onConnectorDragStart(e, task.id, "finish", cx + size + 8, cy); }}
+          />
+        </>
+      )}
     </g>
   );
 }

@@ -16,9 +16,10 @@ export interface DragState {
 interface UseGanttBarDragProps {
     pxPerDay: number;
     projectId: string;
+    onTaskClick: (taskId: string) => void;
 }
 
-export function useGanttBarDrag({ pxPerDay, projectId }: UseGanttBarDragProps) {
+export function useGanttBarDrag({ pxPerDay, projectId, onTaskClick }: UseGanttBarDragProps) {
     const [dragState, setDragState] = useState<DragState | null>(null);
     const dragStateRef = useRef<DragState | null>(null);
     const pxPerDayRef = useRef(pxPerDay);
@@ -27,6 +28,8 @@ export function useGanttBarDrag({ pxPerDay, projectId }: UseGanttBarDragProps) {
     const updateTask = useUpdateTask(projectId);
     const mutateRef = useRef(updateTask.mutate);
     mutateRef.current = updateTask.mutate;
+    const onTaskClickRef = useRef(onTaskClick);
+    onTaskClickRef.current = onTaskClick;
 
     const startDrag = useCallback(
         (e: React.PointerEvent, task: Task, mode: DragState["dragMode"]) => {
@@ -68,7 +71,12 @@ export function useGanttBarDrag({ pxPerDay, projectId }: UseGanttBarDragProps) {
             const ds = dragStateRef.current;
             dragStateRef.current = null;
             setDragState(null);
-            if (!ds || ds.deltaDays === 0) return;
+            if (!ds) return;
+            if (ds.deltaDays === 0) {
+                // No movement — treat as a click, but only for the bar body (not resize handles)
+                if (ds.dragMode === "move") onTaskClickRef.current(ds.taskId);
+                return;
+            }
 
             const origStart = new Date(ds.originalStartDate);
             const origFinish = new Date(ds.originalFinishDate);

@@ -1,14 +1,16 @@
 import { useRef, useLayoutEffect, useImperativeHandle, useMemo, useCallback, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
 import type { Task, Dependency } from "@/features/tasks";
+import { useDeleteDependency } from "@/features/tasks";
 import type { GanttConfig, ZoomLevel } from "../types";
-import { differenceInCalendarDays } from "../utils/dateUtils";
+import { differenceInCalendarDays, dateToX, taskSpanWidthPx } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";
 import { GanttChart } from "./GanttChart";
 import { GanttHoverTooltip } from "./GanttHoverTooltip";
 import { TimelineHeader } from "./TimelineHeader";
-import { GanttClickPopoverOverlay } from "./GanttClickPopoverOverlay";
 import { useGanttInteractions } from "../hooks/useGanttInteractions";
 import { useGanttBarDrag } from "../hooks/useGanttBarDrag";
+import { useGanttDependencyDrag } from "../hooks/useGanttDependencyDrag";
 import { GanttContextMenu } from "./GanttContextMenu";
 import {
   ResizablePanelGroup,
@@ -76,7 +78,15 @@ export function GanttContainer({
     chartBodyRef: timelineRef,
   });
 
-  const { dragState, startDrag } = useGanttBarDrag({ pxPerDay, projectId });
+  const { dragState, startDrag } = useGanttBarDrag({ pxPerDay, projectId, onTaskClick });
+
+  const { depDragState, startConnectorDrag } = useGanttDependencyDrag({
+    projectId,
+    tasks,
+    rowHeight: config.rowHeight,
+    headerHeight: config.headerHeight,
+    getTimelineEl: () => timelineRef.current,
+  });
 
   const [contextMenuState, setContextMenuState] = useState<{
     taskId: string;
@@ -87,6 +97,18 @@ export function GanttContainer({
   const handleTaskContextMenu = useCallback((e: React.MouseEvent, taskId: string) => {
     setContextMenuState({ taskId, x: e.clientX, y: e.clientY });
   }, []);
+
+  const [depContextMenuState, setDepContextMenuState] = useState<{
+    depId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleDependencyContextMenu = useCallback((e: React.MouseEvent, depId: string) => {
+    setDepContextMenuState({ depId, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const deleteDependency = useDeleteDependency(projectId);
 
   const taskMap = useMemo(() => {
     const map = new Map<string, { task: Task; index: number }>();
@@ -186,6 +208,7 @@ export function GanttContainer({
             pxPerDay={pxPerDay}
             showCriticalPath={showCriticalPath}
             selectedTaskId={selectedTaskId}
+            hoveredTaskId={hoveredTaskId}
             onTaskClick={handleChartTaskClick}
             onTaskDoubleClick={handleChartTaskDoubleClick}
             onTaskHover={handleTaskHover}
@@ -196,32 +219,62 @@ export function GanttContainer({
             dragState={dragState}
             onBarDragStart={startDrag}
             onTaskContextMenu={handleTaskContextMenu}
+            depDragState={depDragState}
+            onConnectorDragStart={startConnectorDrag}
+            onDependencyContextMenu={handleDependencyContextMenu}
           />
 
-          {/* Hover tooltip overlay */}
-          {hoveredTaskId && hoveredTaskId !== selectedTaskId && (
-            <GanttHoverTooltip
-              hoveredTaskId={hoveredTaskId}
-              taskMap={taskMap}
-              chartStartDate={chartStartDate}
-              pxPerDay={pxPerDay}
-              config={config}
-            />
+          {/* Open detail button — shown on bar hover */}
+          {hoveredTaskId && !depDragState && !dragState && (() => {
+            const entry = taskMap.get(hoveredTaskId);
+            if (!entry || entry.task.is_summary) return null;
+            const { task, index } = entry;
+            const barX = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
+            const barWidth = taskSpanWidthPx(new Date(task.start_date), new Date(task.finish_date), pxPerDay);
+            if (barWidth < 24) return null;
+            const barY = index * config.rowHeight + (config.rowHeight - config.barHeight) / 2;
+            return (
+              <button
+                className="absolute z-20 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 transition-colors"
+                style={{
+                  left: barX + barWidth - 28,
+                  top: config.headerHeight + barY + (config.barHeight / 2) - 12,
+                  width: 24,
+                  height: 24,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={() => handleTaskHover(hoveredTaskId)}
+                onMouseLeave={() => handleTaskHover(null)}
+                onClick={() => onTaskDoubleClick(hoveredTaskId)}
+              >
+                <MoreHorizontal className="size-3.5 text-white" />
+              </button>
+            );
+          })()}
+
+          {/* Dependency arrow context menu */}
+          {depContextMenuState && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onPointerDown={() => setDepContextMenuState(null)}
+              />
+              <div
+                className="fixed z-50 min-w-[140px] rounded-md border border-border bg-popover shadow-md py-1"
+                style={{ left: depContextMenuState.x, top: depContextMenuState.y }}
+              >
+                <button
+                  className="w-full text-left px-3 py-1.5 text-sm text-destructive hover:bg-muted"
+                  onClick={() => {
+                    deleteDependency.mutate(depContextMenuState.depId);
+                    setDepContextMenuState(null);
+                  }}
+                >
+                  Delete dependency
+                </button>
+              </div>
+            </>
           )}
-
-          {/* Click popover overlay */}
-          <GanttClickPopoverOverlay
-            clickedTaskId={selectedTaskId}
-            taskMap={taskMap}
-            chartStartDate={chartStartDate}
-            pxPerDay={pxPerDay}
-            config={config}
-            onClose={() => {
-              if (selectedTaskId) {
-                onTaskClick(selectedTaskId);
-              }
-            }}
-          />
 
           {/* Context menu */}
           {contextMenuState && (() => {

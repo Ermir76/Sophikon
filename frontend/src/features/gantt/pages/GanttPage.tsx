@@ -231,6 +231,7 @@ export default function GanttPage() {
         taskId={detailTaskId}
         isOpen={!!detailTaskId}
         onClose={() => setDetailTaskId(null)}
+        floating
       />
     </PageShell>
   );

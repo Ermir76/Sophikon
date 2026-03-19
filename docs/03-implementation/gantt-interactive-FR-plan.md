@@ -181,28 +181,28 @@ interface DepDragState {
 }
 ```
 
-- [ ] Define `DepDragState` interface + state
-- [ ] `startDrag(e, task, edge)` — set pointer capture, set state
-- [ ] `pointermove` on document — update `currentX/Y`; compute `targetTaskId` via Y-hit-test: `Math.floor((currentY - timelineTop) / rowHeight)`
-- [ ] `pointerup` on document — if `targetTaskId` valid and ≠ source, call `createDependency.mutateAsync({ predecessor_id: sourceTaskId, successor_id: targetTaskId, type: edge === "finish" ? "FS" : "SS" })`
-- [ ] Attach/detach `pointermove`/`pointerup` on document via `useEffect` when active
-- [ ] Return `{ depDragState, startConnectorDrag }`
+- [x] Define `DepDragState` interface + state
+- [x] `startDrag(e, task, edge)` — set pointer capture, set state
+- [x] `pointermove` on document — update `currentX/Y`; compute `targetTaskId` via Y-hit-test: `Math.floor(svgY / rowHeight)` (coords converted from client via timelineEl bounding rect)
+- [x] `pointerup` on document — if `targetTaskId` valid and ≠ source, call `createDependency.mutate({ predecessor_id: sourceTaskId, successor_id: targetTaskId, type: edge === "finish" ? "FS" : "SS" })`
+- [x] Attach/detach `pointermove`/`pointerup` on document via `useEffect` when active
+- [x] Return `{ depDragState, startConnectorDrag }`
 
 ### 5b — Wire into `GanttChart.tsx`
 
-- [ ] Add `dependencyDragState: DepDragState | null` and `onConnectorDragStart` props
-- [ ] On each regular bar + milestone when `hoveredTaskId === task.id`:
+- [x] Add `depDragState: DepDragState | null`, `hoveredTaskId`, and `onConnectorDragStart` props
+- [x] On each regular bar + milestone when `hoveredTaskId === task.id`:
   - Left connector `<circle cx={barX - 8} cy={barMidY} r={5}>` — `edge="start"`, `cursor: crosshair`
   - Right connector `<circle cx={barX + barWidth + 8} cy={barMidY} r={5}>` — `edge="finish"`, `cursor: crosshair`
-  - `onPointerDown={(e) => { e.stopPropagation(); onConnectorDragStart(e, task, edge) }}`
+  - `onPointerDown={(e) => { e.stopPropagation(); onConnectorDragStart(e, task.id, edge, fromX, fromY) }}`
   - Rendered **after** resize handles in SVG order
-- [ ] When `dependencyDragState` active: render dashed `<line>` (`stroke-primary`, `pointerEvents: none`) from `fromX/Y` to `currentX/Y`
-- [ ] When `targetTaskId` non-null: render highlight ring on the target bar
+- [x] When `depDragState` active: render dashed `<line>` (`stroke-primary`, `pointerEvents: none`) from `fromX/Y` to `currentX/Y`
+- [x] When `targetTaskId` non-null: render highlight ring on the target bar
 
 ### 5c — Wire into `GanttContainer.tsx`
 
-- [ ] Instantiate `useGanttDependencyDrag({ pxPerDay, projectId, tasks, rowHeight, timelineTop })`
-- [ ] Pass `dependencyDragState` and `onConnectorDragStart` to `GanttChart`
+- [x] Instantiate `useGanttDependencyDrag({ projectId, tasks, rowHeight, headerHeight, getTimelineEl })`
+- [x] Pass `depDragState`, `hoveredTaskId`, and `onConnectorDragStart` to `GanttChart`
 
 ✅ **Done when:** hovering a bar shows connector dots; dragging from one to another creates a dependency arrow in the Gantt.
 
@@ -247,4 +247,4 @@ interface DepDragState {
 - [x] GC-017 — drag bar → ghost preview follows; release → dates updated, task list reflects change
 - [x] GC-018 — drag right edge → bar stretches; drag left edge → start moves; min 1 day enforced
 - [x] GC-020 — right-click → menu appears; all 5 actions work; click outside → menu closes
-- [ ] GC-019 — hover → connector dots appear; drag to another bar → dependency created and arrow drawn
+- [x] GC-019 — hover → connector dots appear; drag to another bar → dependency created and arrow drawn
