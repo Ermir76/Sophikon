@@ -11,13 +11,31 @@ import { useLocalStorageSet } from "@/shared/hooks/useLocalStorageSet";
  * @param storageKey - localStorage key for persisting collapsed state
  * @param data - flat array of tree nodes
  * @param getParentId - function to extract the parent ID from a node
+ * @param defaultCollapseAll - if true and no saved state exists, collapse all parent nodes on first load
  */
 export function useCollapsedTree<T extends { id: string }>(
     storageKey: string,
     data: T[],
     getParentId: (node: T) => string | undefined | null,
+    defaultCollapseAll: boolean = false,
 ) {
-    const { value: collapsedIds, toggle: toggleCollapse, remove: removeCollapsed } = useLocalStorageSet(storageKey);
+    const { value: collapsedIds, toggle: toggleCollapse, remove: removeCollapsed, setValue } = useLocalStorageSet(storageKey);
+
+    // On first data load, if no saved state exists and defaultCollapseAll is set,
+    // collapse all parent nodes so the tree starts fully folded.
+    const initializedRef = useRef(false);
+    useLayoutEffect(() => {
+        if (!defaultCollapseAll || initializedRef.current || data.length === 0) return;
+        initializedRef.current = true;
+
+        // If the user has already saved a preference (even an empty one), respect it.
+        if (window.localStorage.getItem(storageKey) !== null) return;
+
+        const parentIds = new Set(
+            data.map(t => getParentId(t)).filter((id): id is string => id != null)
+        );
+        if (parentIds.size > 0) setValue(parentIds);
+    }, [data.length]);
 
     // Snapshot of each node's parent so we can detect hierarchy changes.
     const prevParentsRef = useRef<Map<string, string | undefined | null>>(

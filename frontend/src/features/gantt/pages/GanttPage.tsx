@@ -40,7 +40,7 @@ export default function GanttPage() {
   const dependencies = depData?.items ?? [];
 
   const { visibleData: visibleTasks, collapsedIds, toggleCollapse } =
-    useCollapsedTree(`sophikon:gantt_collapsed:${projectId}`, tasks, getParentId);
+    useCollapsedTree(`sophikon:gantt_collapsed:${projectId}`, tasks, getParentId, true);
 
   const pxPerDay = customPxPerDay ?? ZOOM_PX_PER_DAY[zoom];
 

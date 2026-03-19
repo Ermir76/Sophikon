@@ -9,7 +9,7 @@ const getParentId = (t: Task) => t.parent_task_id;
  */
 export function useCollapsedTasks(projectId: string, data: Task[]) {
     const { visibleData, collapsedIds: collapsedTaskIds, toggleCollapse: toggleTaskCollapse } =
-        useCollapsedTree(`sophikon:collapsed_tasks:${projectId}`, data, getParentId);
+        useCollapsedTree(`sophikon:collapsed_tasks:${projectId}`, data, getParentId, true);
 
     return { visibleData, collapsedTaskIds, toggleTaskCollapse };
 }
