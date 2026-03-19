@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models.enums import ConstraintType, TaskType
+from app.models.enums import ConstraintType, TaskStatus, TaskType
 from app.models.task import Task
 from app.schema._patch import ModelPatchSchema
 
@@ -33,6 +33,7 @@ class TaskCreate(BaseModel):
     fixed_cost: Decimal = Decimal("0")
     calendar_id: uuid.UUID | None = None
     color: str | None = Field(default=None, max_length=32)
+    status: TaskStatus = TaskStatus.BACKLOG
 
 
 class TaskUpdate(ModelPatchSchema):
@@ -63,6 +64,7 @@ class TaskUpdate(ModelPatchSchema):
     constraint_date: date | None = None
     deadline: date | None = None
     color: str | None = Field(default=None, max_length=32)
+    status: TaskStatus | None = Field(default=None)
 
 
 class TaskReorder(BaseModel):
@@ -150,6 +152,7 @@ class TaskResponse(BaseModel):
     total_cost: Decimal
     actual_cost: Decimal
     color: str | None
+    status: TaskStatus
     comments_count: int = 0
     created_at: datetime
     updated_at: datetime

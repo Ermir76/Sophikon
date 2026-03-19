@@ -25,7 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_utils import uuid7
 
 from app.core.database import Base
-from app.models.enums import ConstraintType, CostAccrual, TaskType
+from app.models.enums import ConstraintType, CostAccrual, TaskStatus, TaskType
 
 if TYPE_CHECKING:
     from app.models.assignment import Assignment
@@ -115,6 +115,13 @@ class Task(Base):
         Boolean,  # On critical path(calculated)
         nullable=False,
         server_default=text("FALSE"),
+    )
+
+    # Kanban Status
+    status: Mapped[TaskStatus] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default=text("'BACKLOG'"),
     )
 
     # Calendar
@@ -376,6 +383,11 @@ class Task(Base):
             finish_date,
             postgresql_where=text("NOT is_deleted"),
         ),
+        CheckConstraint(
+            "status IN ('BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE')",
+            name="check_task_status",
+        ),
+        Index("idx_task_status", "status", postgresql_where=text("NOT is_deleted")),
     )
 
     # Relationships
