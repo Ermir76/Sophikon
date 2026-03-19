@@ -2,6 +2,8 @@ import type { TaskStatus } from "@/features/tasks";
 
 export type { TaskStatus };
 
+export type PriorityFilter = "all" | "high" | "medium" | "low" | "minimal";
+
 export interface KanbanColumn {
     id: TaskStatus;
     label: string;

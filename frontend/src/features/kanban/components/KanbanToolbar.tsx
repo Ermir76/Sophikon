@@ -7,8 +7,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/shared/ui/select";
+import type { PriorityFilter } from "../types";
 
-export type PriorityFilter = "all" | "high" | "medium" | "low" | "minimal";
+export type { PriorityFilter };
 
 interface KanbanToolbarProps {
     searchQuery: string;

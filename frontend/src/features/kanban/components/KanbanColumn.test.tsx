@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanColumn } from "./KanbanColumn";
+import { useKanbanStore } from "../store/kanban-store";
 import type { Task } from "@/features/tasks";
 import type { KanbanColumn as KanbanColumnType } from "../types";
 
@@ -8,6 +9,14 @@ vi.mock("@dnd-kit/core", () => ({
     useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
     useDraggable: () => ({ setNodeRef: vi.fn(), listeners: {}, attributes: {}, isDragging: false }),
 }));
+
+vi.mock("@/features/tasks/hooks/useTasks", () => ({
+    useCreateTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
+beforeEach(() => {
+    useKanbanStore.setState({ collapsedByProject: {}, searchQuery: "", priorityFilter: "all" });
+});
 
 const backlogCol: KanbanColumnType = {
     id: "BACKLOG",
@@ -48,26 +57,26 @@ const makeTask = (id: string, name: string): Task => ({
 
 describe("KanbanColumn", () => {
     it("renders empty state when no tasks", () => {
-        render(<KanbanColumn column={backlogCol} tasks={[]} />);
+        render(<KanbanColumn column={backlogCol} tasks={[]} projectId="proj-1" />);
         expect(screen.getByText("No tasks")).toBeInTheDocument();
     });
 
     it("renders task cards when tasks are provided", () => {
         const tasks = [makeTask("t1", "Deploy API"), makeTask("t2", "Write tests")];
-        render(<KanbanColumn column={backlogCol} tasks={tasks} />);
+        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" />);
         expect(screen.getByText("Deploy API")).toBeInTheDocument();
         expect(screen.getByText("Write tests")).toBeInTheDocument();
     });
 
     it("renders column header with correct count", () => {
         const tasks = [makeTask("t1", "Task A"), makeTask("t2", "Task B")];
-        render(<KanbanColumn column={backlogCol} tasks={tasks} />);
+        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" />);
         expect(screen.getByText("Backlog")).toBeInTheDocument();
         expect(screen.getByText("2")).toBeInTheDocument();
     });
 
     it("does not render 'No tasks' when tasks are present", () => {
-        render(<KanbanColumn column={backlogCol} tasks={[makeTask("t1", "Task A")]} />);
+        render(<KanbanColumn column={backlogCol} tasks={[makeTask("t1", "Task A")]} projectId="proj-1" />);
         expect(screen.queryByText("No tasks")).not.toBeInTheDocument();
     });
 });

@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanBoard } from "./KanbanBoard";
+import { useKanbanStore } from "../store/kanban-store";
 import type { Task } from "@/features/tasks";
 import type { TaskStatus } from "../types";
+
+vi.mock("@/features/tasks/hooks/useTasks", () => ({
+    useCreateTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 
 vi.mock("@dnd-kit/core", () => ({
     DndContext: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -63,6 +68,10 @@ function makeTask(id: string, name: string, status: TaskStatus): Task {
 }
 
 describe("KanbanBoard", () => {
+    beforeEach(() => {
+        useKanbanStore.setState({ collapsedByProject: {}, searchQuery: "", priorityFilter: "all" });
+    });
+
     it("renders all 5 column headers", () => {
         render(<KanbanBoard tasksByStatus={makeEmptyBoard()} projectId="proj-1" />);
         expect(screen.getByText("Backlog")).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams } from "react-router";
 import { useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
@@ -6,6 +6,7 @@ import { PageLoading } from "@/shared/components/state/PageLoading";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { KanbanBoard } from "../components/KanbanBoard";
 import { KanbanToolbar, type PriorityFilter } from "../components/KanbanToolbar";
+import { useKanbanStore } from "../store/kanban-store";
 import { KANBAN_COLUMNS, type TaskStatus } from "../types";
 import type { Task } from "@/features/tasks";
 
@@ -25,8 +26,7 @@ export default function KanbanPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const { data: taskData, isLoading, error, refetch } = useTasks(projectId);
 
-    const [searchQuery, setSearchQuery] = useState("");
-    const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
+    const { searchQuery, priorityFilter, setSearch, setPriorityFilter } = useKanbanStore();
 
     const filteredLeafTasks = useMemo(() => {
         return (taskData?.items ?? EMPTY).filter((t) => {
@@ -42,7 +42,7 @@ export default function KanbanPage() {
             KANBAN_COLUMNS.map((col) => [col.id, [] as Task[]])
         ) as Record<TaskStatus, Task[]>;
         for (const task of filteredLeafTasks) {
-            map[task.status]?.push(task);
+            (map[task.status] ?? map["BACKLOG"]).push(task);
         }
         return map;
     }, [filteredLeafTasks]);
@@ -62,7 +62,7 @@ export default function KanbanPage() {
                 <PageHeader title="Kanban" />
                 <KanbanToolbar
                     searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
+                    onSearchChange={setSearch}
                     priorityFilter={priorityFilter}
                     onPriorityFilterChange={setPriorityFilter}
                 />

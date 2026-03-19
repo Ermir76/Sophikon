@@ -33,6 +33,7 @@ export function KanbanBoard({ tasksByStatus, projectId }: KanbanBoardProps) {
                         key={col.id}
                         column={col}
                         tasks={tasksByStatus[col.id]}
+                        projectId={projectId}
                     />
                 ))}
             </div>

@@ -1,14 +1,15 @@
-import { Plus } from "lucide-react";
+import { ChevronsLeft, Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import type { KanbanColumn } from "../types";
 
 interface KanbanColumnHeaderProps {
     column: KanbanColumn;
     count: number;
+    onToggleCollapse: () => void;
     onAdd?: () => void;
 }
 
-export function KanbanColumnHeader({ column, count, onAdd }: KanbanColumnHeaderProps) {
+export function KanbanColumnHeader({ column, count, onToggleCollapse, onAdd }: KanbanColumnHeaderProps) {
     return (
         <div className="flex items-center justify-between px-3 py-2.5 shrink-0 border-b border-border">
             <div className="flex items-center gap-2">
@@ -18,16 +19,29 @@ export function KanbanColumnHeader({ column, count, onAdd }: KanbanColumnHeaderP
                     {count}
                 </span>
             </div>
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={onAdd}
-                aria-label={`Add task to ${column.label}`}
-            >
-                <Plus className="size-3.5" />
-            </Button>
+            <div className="flex items-center gap-1">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                    onClick={onAdd}
+                    aria-label={`Add task to ${column.label}`}
+                >
+                    <Plus className="size-3.5" />
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                    onClick={onToggleCollapse}
+                    aria-label={`Collapse ${column.label}`}
+                    aria-expanded={true}
+                >
+                    <ChevronsLeft className="size-3.5" />
+                </Button>
+            </div>
         </div>
     );
 }

@@ -234,13 +234,13 @@ This document records what is evidenced by the current codebase review.
 
 | ID        | Status        | Evidence | Note                                              |
 | --------- | ------------- | -------- | ------------------------------------------------- |
-| FR-KB-001 | Partial       | A9, A10  | `kanban/` feature module, route, and 5-column board are mounted; column collapse (Phase 5) not yet built. |
+| FR-KB-001 | Implemented   | A9, A10  | `kanban/` feature module, route, and 5-column board are mounted; column collapse implemented in Phase 5 (`KanbanColumn.tsx` collapsed icon-strip branch + `useKanbanStore.collapsedByProject`). |
 | FR-KB-002 | Implemented   | A4, A10  | `task.status` DB field (BACKLOG/TODO/IN_PROGRESS/IN_REVIEW/DONE), migration, and `KanbanPage` grouping by status all implemented. |
 | FR-KB-003 | Implemented   | A4, A10  | `useKanbanDrag` calls `useUpdateTask` with `{status: newStatus}` via PATCH on drag-end; 6-test suite passes. |
 | FR-KB-004 | Implemented   | A10      | `KanbanCard` shows task name, WBS code, priority badge, deadline date, overdue indicator, progress bar, and comments count. |
 | FR-KB-005 | Implemented   | A10      | `KanbanToolbar` provides text search and priority-filter dropdown; `KanbanPage` filters before grouping. |
-| FR-KB-006 | Not evidenced | A9       | Column collapse not yet built (Phase 5).          |
-| FR-KB-007 | Not evidenced | A4, A9   | Quick-add card from column header not yet built (Phase 5). |
+| FR-KB-006 | Implemented   | A9, A10  | `KanbanColumn.tsx` renders a collapsed icon-strip (12-wide, vertical label, task count badge, expand button) when `collapsedByProject[projectId]` includes the column id; `KanbanColumnHeader` collapse button toggles via `useKanbanStore.toggleCollapse`. |
+| FR-KB-007 | Implemented   | A4, A9, A10 | `KanbanColumnHeader` exposes a `+` icon button (`onAdd` prop); `KanbanColumn` sets `isAdding=true` on click and renders an inline `Input` at the column footer that calls `useCreateTask.mutateAsync` with the column's status on Enter/blur. |
 
 ### 3.14 Import/Export
 
