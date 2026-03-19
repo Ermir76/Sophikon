@@ -34,7 +34,7 @@ async def list_dependencies(
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
     page: Annotated[int, Query(ge=1)] = 1,
-    per_page: Annotated[int, Query(ge=1, le=200)] = 50,
+    per_page: Annotated[int, Query(ge=1, le=10000)] = 50,
 ):
     """List all dependencies in the project."""
     dependencies, total = await dependency_service.list_dependencies(

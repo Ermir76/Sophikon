@@ -15,7 +15,7 @@ import type { PaginatedResponse } from "@/shared/types/api";
 export const taskService = {
     list: async (projectId: string) => {
         const response = await api.get<PaginatedResponse<Task>>(`/projects/${projectId}/tasks`, {
-            params: { per_page: 1000 },
+            params: { per_page: 10000 },
         });
         return response.data;
     },

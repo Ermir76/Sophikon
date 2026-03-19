@@ -57,7 +57,7 @@ async def list_tasks(
     access: Annotated[ProjectAccess, Depends(get_project_or_404)],
     db: Annotated[AsyncSession, Depends(get_db)],
     page: Annotated[int, Query(ge=1)] = 1,
-    per_page: Annotated[int, Query(ge=1, le=1000)] = 50,
+    per_page: Annotated[int, Query(ge=1, le=10000)] = 50,
     include_deleted: Annotated[bool, Query()] = False,
 ):
     """List all tasks in the project."""

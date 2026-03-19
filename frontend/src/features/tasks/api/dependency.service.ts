@@ -4,7 +4,9 @@ import type { PaginatedResponse } from "@/shared/types/api";
 
 export const dependencyService = {
     list: async (projectId: string) => {
-        const response = await api.get<PaginatedResponse<Dependency>>(`/projects/${projectId}/dependencies`);
+        const response = await api.get<PaginatedResponse<Dependency>>(`/projects/${projectId}/dependencies`, {
+            params: { per_page: 10000 },
+        });
         return response.data;
     },
 

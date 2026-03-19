@@ -31,10 +31,9 @@ async def list_tasks_for_project(
     total = int(total_result.scalar() or 0)
 
     offset = (page - 1) * per_page
-    paginated_query = (
+    result = await db.execute(
         base_query.order_by(Task.sort_order.asc()).offset(offset).limit(per_page)
     )
-    result = await db.execute(paginated_query)
     return list(result.scalars().all()), total
 
 
