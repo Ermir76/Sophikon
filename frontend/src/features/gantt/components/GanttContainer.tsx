@@ -23,6 +23,7 @@ interface GanttContainerProps {
   showCriticalPath: boolean;
   selectedTaskId: string | null;
   onTaskClick: (taskId: string) => void;
+  onTaskDoubleClick: (taskId: string) => void;
   collapsedIds: Set<string>;
   onToggleCollapse: (taskId: string) => void;
   chartStartDate: Date;
@@ -44,6 +45,7 @@ export function GanttContainer({
   showCriticalPath,
   selectedTaskId,
   onTaskClick,
+  onTaskDoubleClick,
   collapsedIds,
   onToggleCollapse,
   chartStartDate,
@@ -61,9 +63,11 @@ export function GanttContainer({
     hoveredTaskId,
     handleTaskHover,
     handleChartTaskClick,
+    handleChartTaskDoubleClick,
     handleChartWheel,
   } = useGanttInteractions({
     onTaskClick,
+    onTaskDoubleClick,
     onZoomAtPoint,
     chartBodyRef: timelineRef,
   });
@@ -167,6 +171,7 @@ export function GanttContainer({
             showCriticalPath={showCriticalPath}
             selectedTaskId={selectedTaskId}
             onTaskClick={handleChartTaskClick}
+            onTaskDoubleClick={handleChartTaskDoubleClick}
             onTaskHover={handleTaskHover}
             chartStartDate={chartStartDate}
             chartEndDate={chartEndDate}

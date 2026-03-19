@@ -17,6 +17,7 @@ interface GanttChartProps {
   showCriticalPath: boolean;
   selectedTaskId: string | null;
   onTaskClick: (taskId: string) => void;
+  onTaskDoubleClick: (taskId: string) => void;
   onTaskHover: (taskId: string | null) => void;
   chartStartDate: Date;
   chartEndDate: Date;
@@ -32,6 +33,7 @@ export function GanttChart({
   showCriticalPath,
   selectedTaskId,
   onTaskClick,
+  onTaskDoubleClick,
   onTaskHover,
   chartStartDate,
   chartEndDate,
@@ -163,6 +165,7 @@ export function GanttChart({
               isSelected={isSelected}
               color={taskColor}
               onClick={() => onTaskClick(task.id)}
+              onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
             />
@@ -182,6 +185,7 @@ export function GanttChart({
               isSelected={isSelected}
               color={taskColor}
               onClick={() => onTaskClick(task.id)}
+              onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
             />
@@ -202,6 +206,7 @@ export function GanttChart({
             className="cursor-pointer"
             style={{ pointerEvents: "auto" }}
             onClick={() => onTaskClick(task.id)}
+            onDoubleClick={() => onTaskDoubleClick(task.id)}
             onMouseEnter={() => onTaskHover(task.id)}
             onMouseLeave={() => onTaskHover(null)}
           >
@@ -314,6 +319,7 @@ function MilestoneMarker({
   isSelected,
   color,
   onClick,
+  onDoubleClick,
   onMouseEnter,
   onMouseLeave,
 }: {
@@ -326,6 +332,7 @@ function MilestoneMarker({
   isSelected: boolean;
   color: string | null;
   onClick: () => void;
+  onDoubleClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) {
@@ -334,7 +341,7 @@ function MilestoneMarker({
   const size = config.milestoneSize / 2;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <rect
         x={cx - size}
         y={cy - size}
@@ -362,6 +369,7 @@ function SummaryBar({
   isSelected,
   color,
   onClick,
+  onDoubleClick,
   onMouseEnter,
   onMouseLeave,
 }: {
@@ -374,6 +382,7 @@ function SummaryBar({
   isSelected: boolean;
   color: string | null;
   onClick: () => void;
+  onDoubleClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) {
@@ -415,7 +424,7 @@ function SummaryBar({
   const fillClass = isCritical ? "fill-destructive" : undefined;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <path
         d={d}
         className={fillClass}

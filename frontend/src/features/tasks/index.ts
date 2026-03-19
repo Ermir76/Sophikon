@@ -1,5 +1,6 @@
 // Public API for the `tasks` feature
 export { default as TasksPage } from './pages/TasksPage';
+export { TaskDetailPanel } from './components/task-detail/TaskDetailPanel';
 
 export { useTasks, useUpdateTask } from './hooks/useTasks';
 export { useDependencies } from './hooks/useDependencies';

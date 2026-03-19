@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-import { useTasks, useDependencies, type Task } from "@/features/tasks";
+import { useTasks, useDependencies, TaskDetailPanel, type Task } from "@/features/tasks";
 import { useProject, useUpdateProject } from "@/features/projects";
 import { useCollapsedTree } from "@/shared/hooks/useCollapsedTree";
 import { buildColorInheritanceMap } from "../utils/colorInheritance";
@@ -32,6 +32,7 @@ export default function GanttPage() {
   const [customPxPerDay, setCustomPxPerDay] = useState<number | null>(null);
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   const containerWidthRef = useRef(0);
   const chartScrollRef = useRef<{ scrollTo: (left: number) => void } | null>(null);
@@ -191,6 +192,7 @@ export default function GanttPage() {
             onZoomChange={handleZoomChange}
             showCriticalPath={showCriticalPath}
             onToggleCriticalPath={() => setShowCriticalPath((v) => !v)}
+            criticalTaskCount={tasks.filter((t) => t.is_critical).length}
             onScrollToToday={handleScrollToToday}
             onZoomToFit={handleZoomToFit}
             autoCalculate={autoCalculate}
@@ -211,6 +213,7 @@ export default function GanttPage() {
           showCriticalPath={showCriticalPath}
           selectedTaskId={selectedTaskId}
           onTaskClick={handleTaskClick}
+          onTaskDoubleClick={setDetailTaskId}
           collapsedIds={collapsedIds}
           onToggleCollapse={toggleCollapse}
           chartStartDate={chartStartDate}
@@ -221,6 +224,13 @@ export default function GanttPage() {
           colorMap={colorMap}
         />
       </div>
+
+      <TaskDetailPanel
+        projectId={projectId ?? ""}
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+      />
     </PageShell>
   );
 }

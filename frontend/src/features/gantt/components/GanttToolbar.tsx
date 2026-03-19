@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays, Calculator, Loader2 } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays, Calculator, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import type { ZoomLevel } from "../types";
@@ -9,6 +9,7 @@ interface GanttToolbarProps {
   onZoomChange: (zoom: ZoomLevel) => void;
   showCriticalPath: boolean;
   onToggleCriticalPath: () => void;
+  criticalTaskCount: number;
   onScrollToToday: () => void;
   onZoomToFit: () => void;
   autoCalculate: boolean;
@@ -24,6 +25,7 @@ export function GanttToolbar({
   onZoomChange,
   showCriticalPath,
   onToggleCriticalPath,
+  criticalTaskCount,
   onScrollToToday,
   onZoomToFit,
   autoCalculate,
@@ -99,6 +101,11 @@ export function GanttToolbar({
       >
         <Route className="size-4" />
       </Button>
+      {showCriticalPath && criticalTaskCount === 0 && (
+        <span title="No critical path data — run Schedule → Calculate first">
+          <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+        </span>
+      )}
 
       <Separator orientation="vertical" className="mx-1 h-5" />
 

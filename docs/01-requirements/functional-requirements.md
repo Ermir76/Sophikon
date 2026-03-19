@@ -700,9 +700,9 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-GC-011 | Horizontal scroll         | Must     | Frontend     | ✅  |
 | FR-GC-012 | Vertical scroll           | Must     | Frontend     | ✅  |
 | FR-GC-013 | Today line                | Must     | Frontend     | ✅  |
-| FR-GC-014 | Critical path highlight   | Should   | Frontend     | 🔶  |
+| FR-GC-014 | Critical path highlight   | Should   | Frontend     | ✅  |
 | FR-GC-015 | Click to select           | Must     | Frontend     | ✅  |
-| FR-GC-016 | Double-click for details  | Must     | Frontend     | ❌  |
+| FR-GC-016 | Double-click for details  | Must     | Frontend     | ✅  |
 | FR-GC-017 | Drag to change dates      | Could    | Frontend     | ❌  |
 | FR-GC-018 | Drag edges for duration   | Could    | Frontend     | ❌  |
 | FR-GC-019 | Drag to create dependency | Could    | Frontend     | ❌  |

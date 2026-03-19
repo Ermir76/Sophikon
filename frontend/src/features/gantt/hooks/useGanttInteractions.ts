@@ -1,17 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface UseGanttInteractionsProps {
     onTaskClick: (taskId: string) => void;
+    onTaskDoubleClick: (taskId: string) => void;
     onZoomAtPoint: (deltaY: number, cursorX: number) => void;
     chartBodyRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useGanttInteractions({
     onTaskClick,
+    onTaskDoubleClick,
     onZoomAtPoint,
     chartBodyRef,
 }: UseGanttInteractionsProps) {
     const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+    const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleTaskHover = useCallback((taskId: string | null) => {
         setHoveredTaskId(taskId);
@@ -19,9 +22,24 @@ export function useGanttInteractions({
 
     const handleChartTaskClick = useCallback(
         (taskId: string) => {
-            onTaskClick(taskId);
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            clickTimerRef.current = setTimeout(() => {
+                clickTimerRef.current = null;
+                onTaskClick(taskId);
+            }, 200);
         },
         [onTaskClick]
+    );
+
+    const handleChartTaskDoubleClick = useCallback(
+        (taskId: string) => {
+            if (clickTimerRef.current) {
+                clearTimeout(clickTimerRef.current);
+                clickTimerRef.current = null;
+            }
+            onTaskDoubleClick(taskId);
+        },
+        [onTaskDoubleClick]
     );
 
     const handleChartWheel = useCallback(
@@ -54,6 +72,7 @@ export function useGanttInteractions({
         setHoveredTaskId,
         handleTaskHover,
         handleChartTaskClick,
+        handleChartTaskDoubleClick,
         handleChartWheel,
     };
 }
