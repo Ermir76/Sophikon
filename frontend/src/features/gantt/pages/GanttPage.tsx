@@ -90,7 +90,18 @@ export default function GanttPage() {
     (deltaY: number, cursorX: number) => {
       const zoomDelta = -deltaY * ZOOM_WHEEL_FACTOR;
       const factor = Math.pow(2, zoomDelta);
-      const newPxPerDay = Math.max(1, Math.min(80, pxPerDay * factor));
+      const rawPxPerDay = Math.max(1, pxPerDay * factor);
+
+      let newZoom: ZoomLevel;
+      if (rawPxPerDay >= 85) {
+        newZoom = "day";
+      } else if (rawPxPerDay >= 55) {
+        newZoom = "week";
+      } else {
+        newZoom = "month";
+      }
+
+      const newPxPerDay = ZOOM_PX_PER_DAY[newZoom];
 
       // Recenter on cursor position
       const newCursorX = cursorX * (newPxPerDay / pxPerDay);
@@ -98,17 +109,8 @@ export default function GanttPage() {
       const scrollFraction = rect > 0 ? (cursorX - (chartScrollRef.current ? 0 : 0)) / rect : 0;
       const newScrollLeft = newCursorX - scrollFraction * rect;
 
-      let newZoom: ZoomLevel;
-      if (newPxPerDay >= 25) {
-        newZoom = "day";
-      } else if (newPxPerDay >= 8) {
-        newZoom = "week";
-      } else {
-        newZoom = "month";
-      }
-
       setZoom(newZoom);
-      setCustomPxPerDay(newPxPerDay);
+      setCustomPxPerDay(null);
 
       // Schedule scroll after re-render
       requestAnimationFrame(() => {
@@ -135,15 +137,17 @@ export default function GanttPage() {
 
     const fitted = cw / totalDays;
 
-    if (fitted >= 25) {
-      setZoom("day");
-    } else if (fitted >= 8) {
-      setZoom("week");
+    let newZoom: ZoomLevel;
+    if (fitted >= 85) {
+      newZoom = "day";
+    } else if (fitted >= 55) {
+      newZoom = "week";
     } else {
-      setZoom("month");
+      newZoom = "month";
     }
 
-    setCustomPxPerDay(fitted);
+    setZoom(newZoom);
+    setCustomPxPerDay(null);
 
     requestAnimationFrame(() => {
       chartScrollRef.current?.scrollTo(0);

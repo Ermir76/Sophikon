@@ -12,6 +12,7 @@ import { useGanttInteractions } from "../hooks/useGanttInteractions";
 import { useGanttBarDrag } from "../hooks/useGanttBarDrag";
 import { useGanttDependencyDrag } from "../hooks/useGanttDependencyDrag";
 import { GanttContextMenu } from "./GanttContextMenu";
+import { GanttBarQuickInfo } from "./GanttBarQuickInfo";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -100,6 +101,12 @@ export function GanttContainer({
 
   const [depContextMenuState, setDepContextMenuState] = useState<{
     depId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [quickInfoState, setQuickInfoState] = useState<{
+    taskId: string;
     x: number;
     y: number;
   } | null>(null);
@@ -245,7 +252,7 @@ export function GanttContainer({
                 }}
                 onMouseEnter={() => handleTaskHover(hoveredTaskId)}
                 onMouseLeave={() => handleTaskHover(null)}
-                onClick={() => onTaskDoubleClick(hoveredTaskId)}
+                onClick={(e) => { e.stopPropagation(); setQuickInfoState({ taskId: hoveredTaskId, x: e.clientX, y: e.clientY }); }}
               >
                 <MoreHorizontal className="size-3.5 text-white" />
               </button>
@@ -288,6 +295,22 @@ export function GanttContainer({
                 y={contextMenuState.y}
                 onClose={() => setContextMenuState(null)}
                 onOpenDetails={onTaskDoubleClick}
+              />
+            );
+          })()}
+
+          {/* Quick info popover (⋯ button) */}
+          {quickInfoState && (() => {
+            const entry = taskMap.get(quickInfoState.taskId);
+            if (!entry) return null;
+            return (
+              <GanttBarQuickInfo
+                task={entry.task}
+                projectId={projectId}
+                x={quickInfoState.x}
+                y={quickInfoState.y}
+                onClose={() => setQuickInfoState(null)}
+                onOpenDetails={(id) => { onTaskDoubleClick(id); setQuickInfoState(null); }}
               />
             );
           })()}
