@@ -35,6 +35,7 @@ This document records what is evidenced by the current codebase review.
 - `A7` AI surface: `backend/app/api/v1/endpoints/ai.py`, `backend/app/service/ai_service.py`, `ai-service/app/main.py`, `frontend/src/features/ai/*`
 - `A8` Mounted backend scope boundary: `backend/app/main.py`
 - `A9` Mounted frontend route boundary: `frontend/src/app/App.tsx`
+- `A10` Kanban surface: `frontend/src/features/kanban/*`, `backend/app/models/enums.py` (TaskStatus), `backend/app/models/task.py` (status field), `backend/alembic/versions/b3c4d5e6f7a8_add_task_status.py`
 
 ---
 
@@ -228,6 +229,18 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
 | FR-CO-010 | Implemented   | A3, A8, A9 | Task attachment flow is mounted end-to-end (`/projects/{project_id}/tasks/{task_id}/attachments` upload/list/download/delete) with private storage and task-detail UI integration. |
 | FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline triggers create rows, and header bell UI consumes live user websocket updates. |
+
+### 3.15 Kanban Board
+
+| ID        | Status        | Evidence | Note                                              |
+| --------- | ------------- | -------- | ------------------------------------------------- |
+| FR-KB-001 | Partial       | A9, A10  | `kanban/` feature module, route, and 5-column board are mounted; column collapse (Phase 5) not yet built. |
+| FR-KB-002 | Implemented   | A4, A10  | `task.status` DB field (BACKLOG/TODO/IN_PROGRESS/IN_REVIEW/DONE), migration, and `KanbanPage` grouping by status all implemented. |
+| FR-KB-003 | Implemented   | A4, A10  | `useKanbanDrag` calls `useUpdateTask` with `{status: newStatus}` via PATCH on drag-end; 6-test suite passes. |
+| FR-KB-004 | Implemented   | A10      | `KanbanCard` shows task name, WBS code, priority badge, deadline date, overdue indicator, progress bar, and comments count. |
+| FR-KB-005 | Implemented   | A10      | `KanbanToolbar` provides text search and priority-filter dropdown; `KanbanPage` filters before grouping. |
+| FR-KB-006 | Not evidenced | A9       | Column collapse not yet built (Phase 5).          |
+| FR-KB-007 | Not evidenced | A4, A9   | Quick-add card from column header not yet built (Phase 5). |
 
 ### 3.14 Import/Export
 

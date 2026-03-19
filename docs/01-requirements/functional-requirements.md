@@ -799,6 +799,18 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | FR-CO-010 | File attachments         | Should   | POST /projects/:id/tasks/:taskId/attachments | ✅  |
 | FR-CO-011 | Notifications            | Should   | GET /notifications                      | ✅  |
 
+### 3.15 Kanban Board
+
+| ID        | Requirement                               | Priority | API Endpoint                                      |     |
+| --------- | ----------------------------------------- | -------- | ------------------------------------------------- | --- |
+| FR-KB-001 | Display 5-column Kanban board             | Must     | Frontend (uses GET /projects/:id/tasks)           | 🔶  |
+| FR-KB-002 | Group leaf tasks by `status` field        | Must     | Frontend                                          | ✅  |
+| FR-KB-003 | Drag card to change task status           | Must     | PATCH /projects/:id/tasks/:taskId `{"status": …}` | ✅  |
+| FR-KB-004 | Card shows name, WBS, priority, date, progress | Must | Frontend                                         | ✅  |
+| FR-KB-005 | Search and filter cards                   | Should   | Frontend                                          | ✅  |
+| FR-KB-006 | Collapse column to icon strip             | Should   | Frontend                                          | ❌  |
+| FR-KB-007 | Quick-add card from column header         | Should   | PATCH /projects/:id/tasks/:taskId                 | ❌  |
+
 ### 3.14 Import/Export
 
 | ID        | Requirement                | Priority | API Endpoint                 |     |
@@ -952,3 +964,5 @@ Status: ✅ Implemented | 🔶 Partial | ❌ Not started
 | 2.0     | 2026-02-05 | Ermir  | Scoped to V2.0 MVP                                                                                                  |
 | 3.0     | 2026-02-06 | Ermir  | Aligned with database-schema.md v3.0                                                                                |
 | 4.0     | 2026-03-06 | Ermir  | Added implementation status (✅🔶❌) to all FR tables, updated roadmap with AI MVP in V1.0, fixed table count to 28 |
+| 5.0     | 2026-03-19 | Ermir  | Added §3.15 Kanban Board (FR-KB-001–007)                                                                            |
+| 6.0     | 2026-03-19 | Ermir  | Updated §3.15 emoji for FR-KB-001 (🔶), FR-KB-002–004 (✅), FR-KB-005 (✅) after Phases 2–4 DoD check             |

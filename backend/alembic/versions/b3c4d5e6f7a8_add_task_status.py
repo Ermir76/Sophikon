@@ -28,6 +28,9 @@ def upgrade() -> None:
             server_default=sa.text("'BACKLOG'"),
         ),
     )
+    op.execute(
+        "UPDATE task SET status = 'DONE' WHERE percent_complete = 100 AND is_deleted = FALSE"
+    )
     op.create_index("idx_task_status", "task", ["status"])
 
 

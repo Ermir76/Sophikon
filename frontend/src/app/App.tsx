@@ -24,6 +24,7 @@ const DashboardPage = lazy(
 );
 const TasksPage = lazy(() => import("@/features/tasks").then(m => ({ default: m.TasksPage })));
 const GanttPage = lazy(() => import("@/features/gantt").then(m => ({ default: m.GanttPage })));
+const KanbanPage = lazy(() => import("@/features/kanban").then(m => ({ default: m.KanbanPage })));
 const ResourcesPage = lazy(
   () => import("@/features/resources").then(m => ({ default: m.ResourcesPage }))
 );
@@ -125,6 +126,7 @@ function App() {
               <Route index element={<ProjectOverviewPage />} />
               <Route path="tasks" element={<TasksPage />} />
               <Route path="gantt" element={<GanttPage />} />
+              <Route path="kanban" element={<KanbanPage />} />
               <Route path="resources" element={<ResourcesPage />} />
               <Route path="utilization" element={<UtilizationPage />} />
               <Route path="calendar" element={<CalendarPage />} />

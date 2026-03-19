@@ -5,6 +5,7 @@ import {
   Calendar,
   GanttChart,
   LayoutDashboard,
+  Kanban,
   ListTodo,
   Settings,
   Users,
@@ -100,6 +101,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Gantt",
       url: `/projects/${projectId}/gantt`,
       icon: GanttChart,
+    },
+    {
+      title: "Kanban",
+      url: `/projects/${projectId}/kanban`,
+      icon: Kanban,
     },
     {
       title: "Resources",

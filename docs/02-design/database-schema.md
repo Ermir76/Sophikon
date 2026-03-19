@@ -505,6 +505,7 @@ Work breakdown structure (WBS) tasks with full scheduling data.
 | **deadline**              | DATE          | NULL                          | -                  | Soft deadline (shows indicator)                 |
 | **total_slack**           | INTEGER       | NOT NULL                      | 0                  | Total slack in minutes (calculated)             |
 | **free_slack**            | INTEGER       | NOT NULL                      | 0                  | Free slack in minutes (calculated)              |
+| **status**                | VARCHAR(20)   | NOT NULL, CHECK, INDEX        | 'BACKLOG'          | Kanban status: BACKLOG, TODO, IN_PROGRESS, IN_REVIEW, DONE |
 | **priority**              | INTEGER       | NOT NULL, CHECK(0-1000)       | 500                | Task priority                                   |
 | **fixed_cost**            | DECIMAL(15,2) | NOT NULL                      | 0                  | Fixed cost                                      |
 | **fixed_cost_accrual**    | VARCHAR(10)   | NOT NULL, CHECK               | 'PRORATED'         | START, END, PRORATED                            |

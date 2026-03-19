@@ -97,6 +97,22 @@ src/
 │   │   │   └── GanttPage.tsx
 │   │   └── index.ts
 │   │
+│   ├── kanban/
+│   │   ├── pages/
+│   │   │   └── KanbanPage.tsx
+│   │   ├── components/
+│   │   │   ├── KanbanBoard.tsx
+│   │   │   ├── KanbanColumn.tsx
+│   │   │   ├── KanbanColumnHeader.tsx
+│   │   │   ├── KanbanCard.tsx
+│   │   │   └── KanbanToolbar.tsx
+│   │   ├── hooks/
+│   │   │   └── useKanbanDrag.ts
+│   │   ├── store/
+│   │   │   └── kanban-store.ts
+│   │   ├── types.ts
+│   │   └── index.ts
+│   │
 │   ├── calendar/
 │   │   ├── pages/
 │   │   │   └── CalendarPage.tsx

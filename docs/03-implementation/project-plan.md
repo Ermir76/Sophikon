@@ -174,6 +174,31 @@
 
 ---
 
+### Week 4b: Kanban Board
+
+**Backend:**
+
+- [ ] Add `TaskStatus` enum to `backend/app/models/enums.py`
+- [ ] Add `status` column to `task` model (default `BACKLOG`, indexed)
+- [ ] Alembic migration: `op.add_column` + `op.create_index`
+- [ ] Add `status` to `TaskCreate`, `TaskUpdate`, `TaskResponse` schemas
+
+**Frontend:**
+
+- [ ] `features/kanban/` feature module (types, components, page, hooks, store)
+- [ ] Kanban route at `/projects/:projectId/kanban`
+- [ ] Kanban nav item in sidebar (after Gantt)
+- [ ] Drag-and-drop via `@dnd-kit/core` — drag card → changes `task.status`
+- [ ] Column collapse, quick-add card, search/priority filter
+
+**Deliverables:**
+
+- Working Kanban board with 5 columns
+- Drag-to-change-status with optimistic update + rollback
+- Search, filter, column collapse, quick-add
+
+---
+
 ### Week 5: Scheduling Engine
 
 **Backend:**

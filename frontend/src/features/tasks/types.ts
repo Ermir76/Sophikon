@@ -1,3 +1,5 @@
+export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+
 export interface Task {
     id: string;
     project_id: string;
@@ -34,6 +36,7 @@ export interface Task {
     total_slack: number;
     free_slack: number;
     color?: string | null;
+    status: TaskStatus;
     comments_count?: number;
     created_at: string;
     updated_at: string;
@@ -55,6 +58,7 @@ export interface TaskCreate {
     deadline?: string;
     priority?: number;
     color?: string | null;
+    status?: TaskStatus;
 }
 
 export interface TaskUpdate {
@@ -75,6 +79,7 @@ export interface TaskUpdate {
     constraint_date?: string | null;
     deadline?: string | null;
     color?: string | null;
+    status?: TaskStatus;
 }
 
 export interface TaskReorder {

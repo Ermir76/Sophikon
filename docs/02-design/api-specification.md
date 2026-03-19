@@ -1315,7 +1315,8 @@ Create a task.
   "task_type": "FIXED_UNITS",
   "effort_driven": true,
   "constraint_type": "ASAP",
-  "notes": "Include responsive design"
+  "notes": "Include responsive design",
+  "status": "BACKLOG"
 }
 ```
 
@@ -1388,6 +1389,7 @@ Get task details.
         "cost": 600.00
       }
     ],
+    "status": "BACKLOG",
     "comments_count": 3,
     "attachments_count": 2,
     "created_at": "2026-02-01T10:00:00Z",
@@ -1405,6 +1407,8 @@ Update task.
 Summary task note: `start_date`, `finish_date`, `duration`, and `percent_complete`
 are auto-calculated from child tasks. Patching those fields on a summary task
 returns `422`.
+
+Kanban note: `status` is a writable field (`BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`). This is the primary field changed by Kanban board drag-and-drop.
 
 **Request:**
 
