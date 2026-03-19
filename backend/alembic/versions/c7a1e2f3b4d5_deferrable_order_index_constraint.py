@@ -64,6 +64,29 @@ def downgrade() -> None:
         table_name="task",
         postgresql_where=sa.text("NOT is_deleted AND parent_task_id IS NOT NULL"),
     )
+    # Reassign order_index globally per project before recreating the old unique
+    # index. The upgrade replaced per-project uniqueness with per-sibling
+    # uniqueness, so tasks may now share order_index values across different
+    # parents within the same project — which violates the old constraint.
+    op.execute(
+        sa.text(
+            """
+            UPDATE task t
+            SET order_index = sub.new_order
+            FROM (
+                SELECT id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY project_id
+                           ORDER BY order_index, id
+                       ) AS new_order
+                FROM task
+                WHERE NOT is_deleted
+            ) sub
+            WHERE t.id = sub.id
+              AND NOT t.is_deleted
+            """
+        )
+    )
     op.create_index(
         "idx_task_project_order",
         "task",

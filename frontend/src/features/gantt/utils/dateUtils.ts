@@ -26,6 +26,24 @@ export function xToDate(x: number, startDate: Date, pxPerDay: number): Date {
   return addDays(startDate, Math.round(x / pxPerDay));
 }
 
+/**
+ * Render width for task bars.
+ *
+ * Non-milestone same-day tasks should still display as one full day at
+ * the current zoom level instead of collapsing to a tiny pixel stub.
+ */
+export function taskSpanWidthPx(
+  startDate: Date,
+  finishDate: Date,
+  pxPerDay: number,
+): number {
+  const spanDays = Math.max(
+    differenceInCalendarDays(finishDate, startDate) + 1,
+    1,
+  );
+  return Math.max(spanDays * pxPerDay, 4);
+}
+
 export function getTimelineUnits(
   rangeStart: Date,
   rangeEnd: Date,

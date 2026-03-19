@@ -1,6 +1,6 @@
 import type { Task } from "@/features/tasks";
 import type { GanttConfig } from "../types";
-import { dateToX, differenceInCalendarDays } from "./dateUtils";
+import { dateToX, taskSpanWidthPx } from "./dateUtils";
 
 type DepType = "FS" | "FF" | "SS" | "SF";
 
@@ -62,16 +62,18 @@ export function buildArrowPath(
   const predStart = dateToX(new Date(pred.start_date), chartStartDate, pxPerDay);
   const predEnd =
     predStart +
-    Math.max(
-      differenceInCalendarDays(new Date(pred.finish_date), new Date(pred.start_date)) * pxPerDay,
-      4,
+    taskSpanWidthPx(
+      new Date(pred.start_date),
+      new Date(pred.finish_date),
+      pxPerDay,
     );
   const succStart = dateToX(new Date(succ.start_date), chartStartDate, pxPerDay);
   const succEnd =
     succStart +
-    Math.max(
-      differenceInCalendarDays(new Date(succ.finish_date), new Date(succ.start_date)) * pxPerDay,
-      4,
+    taskSpanWidthPx(
+      new Date(succ.start_date),
+      new Date(succ.finish_date),
+      pxPerDay,
     );
 
   const predCy = predIndex * config.rowHeight + config.rowHeight / 2;

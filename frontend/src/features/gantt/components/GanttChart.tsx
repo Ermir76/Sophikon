@@ -4,7 +4,7 @@ import type { GanttConfig } from "../types";
 import {
   dateToX,
   isWeekend,
-  differenceInCalendarDays,
+  taskSpanWidthPx,
 } from "../utils/dateUtils";
 import { buildArrowPath } from "../utils/arrowPath";
 import { eachDayOfInterval } from "date-fns";
@@ -189,12 +189,10 @@ export function GanttChart({
         }
 
         const x = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
-        const barWidth = Math.max(
-          differenceInCalendarDays(
-            new Date(task.finish_date),
-            new Date(task.start_date),
-          ) * pxPerDay,
-          4,
+        const barWidth = taskSpanWidthPx(
+          new Date(task.start_date),
+          new Date(task.finish_date),
+          pxPerDay,
         );
         const progressWidth = barWidth * (task.percent_complete / 100);
 
@@ -380,12 +378,10 @@ function SummaryBar({
   onMouseLeave: () => void;
 }) {
   const x = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
-  const barWidth = Math.max(
-    differenceInCalendarDays(
-      new Date(task.finish_date),
-      new Date(task.start_date),
-    ) * pxPerDay,
-    4,
+  const barWidth = taskSpanWidthPx(
+    new Date(task.start_date),
+    new Date(task.finish_date),
+    pxPerDay,
   );
   const cy = y + config.rowHeight / 2;
   const h = 12;

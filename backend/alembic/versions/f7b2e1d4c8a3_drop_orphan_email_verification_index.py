@@ -23,7 +23,9 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.drop_index("ix_email_verification_user_id", table_name="email_verification")
+    # Some environments already removed this orphan index manually or through
+    # drifted migration history. Keep this upgrade idempotent.
+    op.execute("DROP INDEX IF EXISTS ix_email_verification_user_id")
 
 
 def downgrade() -> None:
