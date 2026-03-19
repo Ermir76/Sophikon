@@ -11,7 +11,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import InvalidOperationError
-from app.models.enums import AuditAction, ConstraintType, TaskType
+from app.models.enums import AuditAction, ConstraintType, TaskStatus, TaskType
 from app.models.project import Project
 from app.models.task import Task
 from app.repository import task_repo
@@ -230,6 +230,7 @@ async def create_task(
         deadline=payload.get("deadline"),
         priority=payload.get("priority", 500),
         fixed_cost=payload.get("fixed_cost", 0),
+        status=payload.get("status", TaskStatus.BACKLOG),
     )
     sync_leaf_duration_progress(task)
     db.add(task)

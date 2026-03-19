@@ -1740,3 +1740,213 @@ async def test_reorder_both_after_before(client: AsyncClient):
         json={"after_task_id": t1_id, "before_task_id": t1_id},
     )
     assert resp.status_code == 422
+
+
+# --- Status Tests ---
+
+
+@pytest.mark.asyncio
+async def test_create_task_default_status(client: AsyncClient):
+    """Create — no status provided — defaults to BACKLOG."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_t_stat_d@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr T Stat D",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Stat D", "slug": "org-stat-d"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Stat D",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "Task Stat D", "start_date": "2024-01-01", "duration": 480},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["status"] == "BACKLOG"
+
+
+@pytest.mark.asyncio
+async def test_create_task_explicit_status(client: AsyncClient):
+    """Create — explicit status provided — returned as-is."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "cr_t_stat_e@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Cr T Stat E",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations", json={"name": "Org Stat E", "slug": "org-stat-e"}
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Stat E",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Task Stat E",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "status": "IN_PROGRESS",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["status"] == "IN_PROGRESS"
+
+
+@pytest.mark.asyncio
+async def test_patch_task_status(client: AsyncClient):
+    """Update — PATCH status → 200, new status returned."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_t_stat@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd T Stat",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Upd Stat", "slug": "org-upd-stat"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Upd Stat",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+    task_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Task Stat", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}", json={"status": "DONE"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "DONE"
+
+
+@pytest.mark.asyncio
+async def test_patch_task_invalid_status(client: AsyncClient):
+    """Update — invalid status value → 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_t_stat_inv@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd T Stat Inv",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Stat Inv", "slug": "org-stat-inv"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Stat Inv",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+    task_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={"name": "Task Inv", "start_date": "2024-01-01", "duration": 480},
+        )
+    ).json()["id"]
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}", json={"status": "INVALID"}
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_list_tasks_includes_status(client: AsyncClient):
+    """List — each item in response includes a `status` field."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "list_t_stat@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "List T Stat",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org List Stat", "slug": "org-list-stat"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj List Stat",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "Task 1", "start_date": "2024-01-01", "duration": 480},
+    )
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Task 2",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "status": "TODO",
+        },
+    )
+
+    resp = await client.get(f"/api/v1/projects/{proj_id}/tasks")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) == 2
+    for item in items:
+        assert "status" in item
+    statuses = {item["status"] for item in items}
+    assert statuses == {"BACKLOG", "TODO"}
