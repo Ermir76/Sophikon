@@ -1,5 +1,22 @@
 export type ZoomLevel = "day" | "week" | "month";
 
+export interface GanttColumn {
+  id: string;
+  label: string;
+  width: number;
+  minWidth: number;
+  visible: boolean;
+}
+
+export const DEFAULT_COLUMNS: GanttColumn[] = [
+  { id: "wbs",    label: "WBS",       width: 56,  minWidth: 40,  visible: true },
+  { id: "name",   label: "Task Name", width: 200, minWidth: 120, visible: true },
+  { id: "start",  label: "Start",     width: 72,  minWidth: 56,  visible: true },
+  { id: "finish", label: "Finish",    width: 72,  minWidth: 56,  visible: true },
+  { id: "dur",    label: "Dur.",      width: 52,  minWidth: 40,  visible: true },
+  { id: "slack",  label: "Slack",     width: 52,  minWidth: 40,  visible: true },
+];
+
 export interface GanttConfig {
   rowHeight: number;
   headerHeight: number;

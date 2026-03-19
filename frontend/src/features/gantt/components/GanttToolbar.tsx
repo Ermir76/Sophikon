@@ -2,6 +2,7 @@ import { ZoomIn, ZoomOut, Maximize2, Route, CalendarDays, Calculator, Loader2 } 
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
 import type { ZoomLevel } from "../types";
+import { ColumnVisibilityMenu } from "./ColumnVisibilityMenu";
 
 interface GanttToolbarProps {
   zoom: ZoomLevel;
@@ -46,6 +47,8 @@ export function GanttToolbar({
 
   return (
     <div className="flex items-center gap-1">
+      <ColumnVisibilityMenu />
+      <Separator orientation="vertical" className="mx-1 h-5" />
       <Button
         variant="outline"
         size="icon-sm"
