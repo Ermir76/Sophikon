@@ -73,9 +73,9 @@ SVG root has `pointerEvents: "none"`. Individual `<g>` elements opt in with `poi
 
 ### 3a — Optimistic update prerequisite
 
-- [ ] **`useTasks.ts`** — add `onMutate` to `useUpdateTask`: snapshot `taskKeys.list(projectId)` cache, apply update optimistically, return rollback snapshot
-- [ ] **`useTasks.ts`** — add `onError`: restore rollback snapshot
-- [ ] **`useTasks.ts`** — add `onSettled`: `queryClient.invalidateQueries(taskKeys.list(projectId))`
+- [x] **`useTasks.ts`** — add `onMutate` to `useUpdateTask`: snapshot `taskKeys.list(projectId)` cache, apply update optimistically, return rollback snapshot
+- [x] **`useTasks.ts`** — add `onError`: restore rollback snapshot
+- [x] **`useTasks.ts`** — add `onSettled`: `queryClient.invalidateQueries(taskKeys.list(projectId))`
 
 ### 3b — Create `useGanttBarDrag.ts`
 
@@ -93,36 +93,36 @@ interface DragState {
 }
 ```
 
-- [ ] Define `DragState` interface + `dragState` state (null when idle)
-- [ ] `startDrag(e, task, mode)` — call `e.currentTarget.setPointerCapture(e.pointerId)`, set drag state
-- [ ] `pointermove` on document — compute `deltaDays = Math.round(deltaX / pxPerDay)`; only activate after `>4px` threshold
-- [ ] `pointerup` on document:
+- [x] Define `DragState` interface + `dragState` state (null when idle)
+- [x] `startDrag(e, task, mode)` — call `e.currentTarget.setPointerCapture(e.pointerId)`, set drag state
+- [x] `pointermove` on document — compute `deltaDays = Math.round(deltaX / pxPerDay)`; only activate after `>4px` threshold
+- [x] `pointerup` on document:
   - `"move"` → `useUpdateTask({ start_date, finish_date })`
   - `"resize-right"` → `useUpdateTask({ finish_date, duration })`
   - `"resize-left"` → `useUpdateTask({ start_date, duration })`, clamp `newDuration >= 1`
-- [ ] Attach `pointermove`/`pointerup` to document in `useEffect` when drag is active; clean up on pointerup
-- [ ] Return `{ dragState, startDrag }`
+- [x] Attach `pointermove`/`pointerup` to document in `useEffect` when drag is active; clean up on pointerup
+- [x] Return `{ dragState, startDrag }`
 
 ### 3c — Wire drag into `GanttChart.tsx`
 
-- [ ] Add `dragState`, `onBarDragStart`, `onBarResizeLeft`, `onBarResizeRight` props
-- [ ] On each **regular** bar `<g>` — body: `onPointerDown → onBarDragStart(e, task, "move")`, `cursor: grab`
-- [ ] On each **regular** bar `<g>` — left 6px `<rect>` hit zone: `onBarResizeLeft`, `cursor: w-resize`
-- [ ] On each **regular** bar `<g>` — right 6px `<rect>` hit zone: `onBarResizeRight`, `cursor: e-resize`
-- [ ] Resize `<rect>`s rendered **after** bar body in SVG order (so they win hit-test)
-- [ ] Ghost bar: when `dragState.taskId === task.id`, render semi-transparent `<rect>` at preview position; original bar at `opacity: 0.4`
-- [ ] Summary tasks and milestones: **no drag handles**
+- [x] Add `dragState`, `onBarDragStart` props (unified: mode passed as argument)
+- [x] On each **regular** bar `<g>` — body: `onPointerDown → onBarDragStart(e, task, "move")`, `cursor: grab`
+- [x] On each **regular** bar `<g>` — left 6px `<rect>` hit zone: `resize-left`, `cursor: w-resize`
+- [x] On each **regular** bar `<g>` — right 6px `<rect>` hit zone: `resize-right`, `cursor: e-resize`
+- [x] Resize `<rect>`s rendered **after** bar body in SVG order (so they win hit-test)
+- [x] Ghost bar: when `dragState.taskId === task.id`, render semi-transparent `<rect>` at preview position; original bar at `opacity: 0.4`
+- [x] Summary tasks and milestones: **no drag handles**
 
 ### 3d — Wire into `GanttContainer.tsx`
 
-- [ ] Add `projectId: string` to `GanttContainerProps` (also needed for GC-019/020)
-- [ ] Instantiate `useGanttBarDrag({ pxPerDay, projectId, tasks })`
-- [ ] Pass `dragState`, `onBarDragStart`, `onBarResizeLeft`, `onBarResizeRight` to `GanttChart`
-- [ ] During active drag: add `cursor-grabbing` CSS class to container `div`
+- [x] Add `projectId: string` to `GanttContainerProps` (also needed for GC-019/020)
+- [x] Instantiate `useGanttBarDrag({ pxPerDay, projectId })`
+- [x] Pass `dragState`, `onBarDragStart` to `GanttChart`
+- [x] During active drag: add `cursor-grabbing` CSS class to container `div`
 
 ### 3e — `GanttPage.tsx`
 
-- [ ] Pass `projectId={projectId}` to `GanttContainer`
+- [x] Pass `projectId={projectId}` to `GanttContainer`
 
 ✅ **Done when:** dragging a bar moves its dates; dragging left/right edges changes duration. Task list updates instantly (optimistic).
 
@@ -137,27 +137,27 @@ interface DragState {
 New file: `frontend/src/features/gantt/components/GanttContextMenu.tsx`
 Props: `task, projectId, x, y, onClose, onOpenDetails`
 
-- [ ] Render a `0×0` absolute `div` at `{left: x, top: y}` as anchor
-- [ ] Open `DropdownMenuContent` programmatically (defaultOpen)
-- [ ] Menu item: **Open Details** → `onOpenDetails(task.id)`
-- [ ] Menu item: **Add Dependency** → open small inline dialog (pick target task + dependency type)
-- [ ] Menu item: **Set / Unset Milestone** → `useUpdateTask({ is_milestone: !task.is_milestone })`
-- [ ] Menu item: **Delete Task** → `useDeleteTask` + `AlertDialog` confirm
-- [ ] Separator
-- [ ] Menu item: **Copy WBS Code** → `navigator.clipboard.writeText(task.wbs_code)`
-- [ ] Call `onClose()` after any action or outside click
+- [x] Render a `0×0` fixed `div` at `{left: x, top: y}` as anchor
+- [x] Open `DropdownMenuContent` programmatically (controlled open)
+- [x] Menu item: **Open Details** → `onOpenDetails(task.id)`
+- [x] Menu item: **Add Dependency** → open `AddDependencyDialog` (already exists in tasks feature)
+- [x] Menu item: **Set / Unset Milestone** → `useUpdateTask({ is_milestone: !task.is_milestone })`
+- [x] Menu item: **Delete Task** → `useDeleteTask` + `AlertDialog` confirm
+- [x] Separator
+- [x] Menu item: **Copy WBS Code** → `navigator.clipboard.writeText(task.wbs_code)`
+- [x] Call `onClose()` after any action or outside click
 
 ### 4b — Wire into `GanttChart.tsx`
 
-- [ ] Add `onTaskContextMenu: (e: React.MouseEvent, taskId: string) => void` prop
-- [ ] On each bar `<g>`: `onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id) }}`
+- [x] Add `onTaskContextMenu: (e: React.MouseEvent, taskId: string) => void` prop
+- [x] On each bar `<g>`: `onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id) }}`
 
 ### 4c — Wire into `GanttContainer.tsx`
 
-- [ ] Add `contextMenuState: { taskId: string; x: number; y: number } | null` state
-- [ ] `handleTaskContextMenu(e, taskId)` — compute position via container `getBoundingClientRect()`
-- [ ] Mount `<GanttContextMenu>` when `contextMenuState` is set
-- [ ] Pass `onOpenDetails` callback that sets `detailTaskId` in `GanttPage`
+- [x] Add `contextMenuState: { taskId: string; x: number; y: number } | null` state
+- [x] `handleTaskContextMenu(e, taskId)` — uses `e.clientX/Y` (fixed positioning, no rect math needed)
+- [x] Mount `<GanttContextMenu>` when `contextMenuState` is set
+- [x] Pass `onTaskDoubleClick` (= `setDetailTaskId` in GanttPage) as `onOpenDetails`
 
 ✅ **Done when:** right-click on any bar shows context menu; all 5 actions work.
 
@@ -244,7 +244,7 @@ interface DepDragState {
 
 - [x] GC-014 — enable critical path with no schedule calculated → amber warning on toolbar
 - [x] GC-016 — double-click bar → detail sheet opens; single-click → popover still works
-- [ ] GC-017 — drag bar → ghost preview follows; release → dates updated, task list reflects change
-- [ ] GC-018 — drag right edge → bar stretches; drag left edge → start moves; min 1 day enforced
-- [ ] GC-020 — right-click → menu appears; all 5 actions work; click outside → menu closes
+- [x] GC-017 — drag bar → ghost preview follows; release → dates updated, task list reflects change
+- [x] GC-018 — drag right edge → bar stretches; drag left edge → start moves; min 1 day enforced
+- [x] GC-020 — right-click → menu appears; all 5 actions work; click outside → menu closes
 - [ ] GC-019 — hover → connector dots appear; drag to another bar → dependency created and arrow drawn

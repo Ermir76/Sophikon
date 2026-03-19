@@ -133,10 +133,10 @@ This document records what is evidenced by the current codebase review.
 | FR-GC-014 | Implemented   | A5       | Critical-path toggle, red bar/arrow rendering, and amber warning hint (when no schedule calculated) all implemented. |
 | FR-GC-015 | Implemented   | A5       | Task click selection exists.                                                                 |
 | FR-GC-016 | Implemented   | A5, A9   | Double-click on any bar opens TaskDetailPanel sheet; single-click popover disambiguation via 200ms timer. |
-| FR-GC-017 | Not evidenced | A5, A9   | No drag-to-change-dates flow was verified from this pass.                                    |
-| FR-GC-018 | Not evidenced | A5, A9   | No drag-edge resize flow was verified from this pass.                                        |
+| FR-GC-017 | Implemented   | A5, A9   | useGanttBarDrag hook + GanttChart ghost bar; drag fires optimistic useUpdateTask with corrected dates. |
+| FR-GC-018 | Implemented   | A5, A9   | 6px resize handles on bar edges; resize-left/right modes in useGanttBarDrag; duration sent in minutes. |
 | FR-GC-019 | Not evidenced | A5, A9   | No drag-to-create-dependency flow was verified from this pass.                               |
-| FR-GC-020 | Not evidenced | A5, A9   | No gantt context-menu flow was verified from this pass.                                      |
+| FR-GC-020 | Implemented   | A5, A9   | GanttContextMenu: right-click opens DropdownMenu with 5 actions; AlertDialog confirm for delete.       |
 
 ### 3.7 Calendar Management
 

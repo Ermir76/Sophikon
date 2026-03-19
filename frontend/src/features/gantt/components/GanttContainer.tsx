@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useImperativeHandle, useMemo, useCallback } from "react";
+import { useRef, useLayoutEffect, useImperativeHandle, useMemo, useCallback, useState } from "react";
 import type { Task, Dependency } from "@/features/tasks";
 import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays } from "../utils/dateUtils";
@@ -8,6 +8,8 @@ import { GanttHoverTooltip } from "./GanttHoverTooltip";
 import { TimelineHeader } from "./TimelineHeader";
 import { GanttClickPopoverOverlay } from "./GanttClickPopoverOverlay";
 import { useGanttInteractions } from "../hooks/useGanttInteractions";
+import { useGanttBarDrag } from "../hooks/useGanttBarDrag";
+import { GanttContextMenu } from "./GanttContextMenu";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -15,6 +17,7 @@ import {
 } from "@/shared/ui/resizable";
 
 interface GanttContainerProps {
+  projectId: string;
   tasks: Task[];
   dependencies: Dependency[];
   config: GanttConfig;
@@ -37,6 +40,7 @@ interface GanttContainerProps {
 }
 
 export function GanttContainer({
+  projectId,
   tasks,
   dependencies,
   config,
@@ -71,6 +75,18 @@ export function GanttContainer({
     onZoomAtPoint,
     chartBodyRef: timelineRef,
   });
+
+  const { dragState, startDrag } = useGanttBarDrag({ pxPerDay, projectId });
+
+  const [contextMenuState, setContextMenuState] = useState<{
+    taskId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleTaskContextMenu = useCallback((e: React.MouseEvent, taskId: string) => {
+    setContextMenuState({ taskId, x: e.clientX, y: e.clientY });
+  }, []);
 
   const taskMap = useMemo(() => {
     const map = new Map<string, { task: Task; index: number }>();
@@ -147,7 +163,7 @@ export function GanttContainer({
       <ResizablePanel defaultSize="70%">
         <div
           ref={timelineRef}
-          className="h-full overflow-auto relative"
+          className={`h-full overflow-auto relative${dragState ? " cursor-grabbing" : ""}`}
           style={{ lineHeight: 0 }}
           onScroll={() => handleScroll("timeline")}
           onWheel={handleChartWheel}
@@ -177,6 +193,9 @@ export function GanttContainer({
             chartEndDate={chartEndDate}
             totalWidth={totalWidth}
             colorMap={colorMap}
+            dragState={dragState}
+            onBarDragStart={startDrag}
+            onTaskContextMenu={handleTaskContextMenu}
           />
 
           {/* Hover tooltip overlay */}
@@ -203,6 +222,22 @@ export function GanttContainer({
               }
             }}
           />
+
+          {/* Context menu */}
+          {contextMenuState && (() => {
+            const entry = taskMap.get(contextMenuState.taskId);
+            if (!entry) return null;
+            return (
+              <GanttContextMenu
+                task={entry.task}
+                projectId={projectId}
+                x={contextMenuState.x}
+                y={contextMenuState.y}
+                onClose={() => setContextMenuState(null)}
+                onOpenDetails={onTaskDoubleClick}
+              />
+            );
+          })()}
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>

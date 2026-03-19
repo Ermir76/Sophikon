@@ -59,9 +59,28 @@ export function useUpdateTask(projectId: string | undefined) {
             if (!projectId) throw new Error("No active project");
             return taskService.update(projectId, taskId, data);
         },
+        onMutate: async ({ taskId, data }) => {
+            if (!projectId) return;
+            await queryClient.cancelQueries({ queryKey: taskKeys.list(projectId) });
+            const previousTasks = queryClient.getQueryData(taskKeys.list(projectId));
+            queryClient.setQueryData(taskKeys.list(projectId), (old: PaginatedResponse<Task> | undefined) => {
+                if (!old) return old;
+                return { ...old, items: old.items.map((t) => t.id === taskId ? { ...t, ...data } : t) };
+            });
+            return { previousTasks };
+        },
+        onError: (_err, _variables, context) => {
+            if (context?.previousTasks && projectId) {
+                queryClient.setQueryData(taskKeys.list(projectId), context.previousTasks);
+            }
+        },
         onSuccess: (_, variables) => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.detail(projectId, variables.taskId) });
+            }
+        },
+        onSettled: () => {
+            if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
             }
         },

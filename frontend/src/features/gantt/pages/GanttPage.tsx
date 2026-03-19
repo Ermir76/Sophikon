@@ -205,6 +205,7 @@ export default function GanttPage() {
 
       <div className="flex-1 min-h-0">
         <GanttContainer
+          projectId={projectId ?? ""}
           tasks={visibleTasks}
           dependencies={dependencies}
           config={config}

@@ -1,13 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import type { Task, Dependency } from "@/features/tasks";
 import type { GanttConfig } from "../types";
 import {
   dateToX,
   isWeekend,
   taskSpanWidthPx,
+  differenceInCalendarDays,
 } from "../utils/dateUtils";
 import { buildArrowPath } from "../utils/arrowPath";
 import { eachDayOfInterval } from "date-fns";
+import type { DragState } from "../hooks/useGanttBarDrag";
 
 interface GanttChartProps {
   tasks: Task[];
@@ -23,6 +25,9 @@ interface GanttChartProps {
   chartEndDate: Date;
   totalWidth: number;
   colorMap?: Map<string, string | null>;
+  dragState: DragState | null;
+  onBarDragStart: (e: React.PointerEvent, task: Task, mode: DragState["dragMode"]) => void;
+  onTaskContextMenu: (e: React.MouseEvent, taskId: string) => void;
 }
 
 export function GanttChart({
@@ -39,6 +44,9 @@ export function GanttChart({
   chartEndDate,
   totalWidth,
   colorMap,
+  dragState,
+  onBarDragStart,
+  onTaskContextMenu,
 }: GanttChartProps) {
   const todayX = useMemo(
     () => dateToX(new Date(), chartStartDate, pxPerDay),
@@ -168,6 +176,7 @@ export function GanttChart({
               onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
+              onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id); }}
             />
           );
         }
@@ -188,6 +197,7 @@ export function GanttChart({
               onDoubleClick={() => onTaskDoubleClick(task.id)}
               onMouseEnter={() => onTaskHover(task.id)}
               onMouseLeave={() => onTaskHover(null)}
+              onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id); }}
             />
           );
         }
@@ -200,69 +210,128 @@ export function GanttChart({
         );
         const progressWidth = barWidth * (task.percent_complete / 100);
 
+        const isDragged = dragState?.taskId === task.id;
+        let ghostX = x;
+        let ghostBarWidth = barWidth;
+        if (isDragged && dragState) {
+          const origSpan =
+            differenceInCalendarDays(
+              new Date(dragState.originalFinishDate),
+              new Date(dragState.originalStartDate),
+            ) + 1;
+          if (dragState.dragMode === "move") {
+            ghostX = x + dragState.deltaDays * pxPerDay;
+          } else if (dragState.dragMode === "resize-right") {
+            ghostBarWidth = Math.max(1, origSpan + dragState.deltaDays) * pxPerDay;
+          } else {
+            const newSpan = Math.max(1, origSpan - dragState.deltaDays);
+            ghostX = x + dragState.deltaDays * pxPerDay;
+            ghostBarWidth = newSpan * pxPerDay;
+          }
+        }
+
         return (
-          <g
-            key={task.id}
-            className="cursor-pointer"
-            style={{ pointerEvents: "auto" }}
-            onClick={() => onTaskClick(task.id)}
-            onDoubleClick={() => onTaskDoubleClick(task.id)}
-            onMouseEnter={() => onTaskHover(task.id)}
-            onMouseLeave={() => onTaskHover(null)}
-          >
-            {/* Background bar */}
-            <rect
-              x={x}
-              y={barY}
-              width={barWidth}
-              height={config.barHeight}
-              rx={config.barRadius}
-              ry={config.barRadius}
-              className={isCritical ? "fill-destructive/70" : undefined}
-              style={
-                isCritical
-                  ? undefined
-                  : taskColor
-                    ? { fill: taskColor, fillOpacity: 0.45 }
-                    : { fill: "transparent", stroke: "var(--border)", strokeWidth: 1.5 }
-              }
-              stroke={isSelected ? "hsl(var(--ring))" : undefined}
-              strokeWidth={isSelected ? 2 : undefined}
-            />
-            {/* Progress bar */}
-            {progressWidth > 0 && (
+          <Fragment key={task.id}>
+            <g
+              className="cursor-grab"
+              style={{ pointerEvents: "auto", opacity: isDragged ? 0.4 : 1 }}
+              onClick={() => onTaskClick(task.id)}
+              onDoubleClick={() => onTaskDoubleClick(task.id)}
+              onMouseEnter={() => onTaskHover(task.id)}
+              onMouseLeave={() => onTaskHover(null)}
+              onPointerDown={(e) => onBarDragStart(e, task, "move")}
+              onContextMenu={(e) => { e.preventDefault(); onTaskContextMenu(e, task.id); }}
+            >
+              {/* Background bar */}
               <rect
                 x={x}
                 y={barY}
-                width={progressWidth}
+                width={barWidth}
                 height={config.barHeight}
                 rx={config.barRadius}
                 ry={config.barRadius}
-                className={isCritical ? "fill-destructive" : undefined}
+                className={isCritical ? "fill-destructive/70" : undefined}
                 style={
                   isCritical
                     ? undefined
                     : taskColor
-                      ? { fill: taskColor, fillOpacity: 0.85 }
-                      : { fill: "var(--foreground)", fillOpacity: 0.15 }
+                      ? { fill: taskColor, fillOpacity: 0.45 }
+                      : { fill: "transparent", stroke: "var(--border)", strokeWidth: 1.5 }
                 }
+                stroke={isSelected ? "hsl(var(--ring))" : undefined}
+                strokeWidth={isSelected ? 2 : undefined}
+              />
+              {/* Progress bar */}
+              {progressWidth > 0 && (
+                <rect
+                  x={x}
+                  y={barY}
+                  width={progressWidth}
+                  height={config.barHeight}
+                  rx={config.barRadius}
+                  ry={config.barRadius}
+                  className={isCritical ? "fill-destructive" : undefined}
+                  style={
+                    isCritical
+                      ? undefined
+                      : taskColor
+                        ? { fill: taskColor, fillOpacity: 0.85 }
+                        : { fill: "var(--foreground)", fillOpacity: 0.15 }
+                  }
+                />
+              )}
+              {/* Label */}
+              {barWidth > 60 && (
+                <text
+                  x={x + 6}
+                  y={barY + config.barHeight / 2}
+                  dy="0.35em"
+                  className={isCritical ? "fill-primary-foreground text-[11px]" : (taskColor ? "text-[11px]" : "fill-foreground text-[11px]")}
+                  style={taskColor && !isCritical ? { fill: "#fff", pointerEvents: "none" } : { pointerEvents: "none" }}
+                >
+                  {task.name.length > barWidth / 7
+                    ? task.name.slice(0, Math.floor(barWidth / 7) - 1) + "\u2026"
+                    : task.name}
+                </text>
+              )}
+              {/* Resize handles — rendered last to win hit-test over the bar body */}
+              <rect
+                x={x}
+                y={barY}
+                width={6}
+                height={config.barHeight}
+                style={{ fill: "transparent", cursor: "w-resize" }}
+                onPointerDown={(e) => { e.stopPropagation(); onBarDragStart(e, task, "resize-left"); }}
+              />
+              <rect
+                x={x + barWidth - 6}
+                y={barY}
+                width={6}
+                height={config.barHeight}
+                style={{ fill: "transparent", cursor: "e-resize" }}
+                onPointerDown={(e) => { e.stopPropagation(); onBarDragStart(e, task, "resize-right"); }}
+              />
+            </g>
+            {/* Ghost bar — shows preview position during drag */}
+            {isDragged && dragState && (
+              <rect
+                x={ghostX}
+                y={barY}
+                width={Math.max(ghostBarWidth, 4)}
+                height={config.barHeight}
+                rx={config.barRadius}
+                ry={config.barRadius}
+                className={isCritical ? "fill-destructive" : undefined}
+                style={{
+                  fill: isCritical ? undefined : (taskColor ?? "var(--foreground)"),
+                  fillOpacity: 0.5,
+                  pointerEvents: "none",
+                  stroke: "hsl(var(--ring))",
+                  strokeWidth: 1.5,
+                }}
               />
             )}
-            {/* Label */}
-            {barWidth > 60 && (
-              <text
-                x={x + 6}
-                y={barY + config.barHeight / 2}
-                dy="0.35em"
-                className={isCritical ? "fill-primary-foreground text-[11px]" : (taskColor ? "text-[11px]" : "fill-foreground text-[11px]")}
-                style={taskColor && !isCritical ? { fill: "#fff", pointerEvents: "none" } : { pointerEvents: "none" }}
-              >
-                {task.name.length > barWidth / 7
-                  ? task.name.slice(0, Math.floor(barWidth / 7) - 1) + "\u2026"
-                  : task.name}
-              </text>
-            )}
-          </g>
+          </Fragment>
         );
       })}
 
@@ -322,6 +391,7 @@ function MilestoneMarker({
   onDoubleClick,
   onMouseEnter,
   onMouseLeave,
+  onContextMenu,
 }: {
   task: Task;
   y: number;
@@ -335,13 +405,14 @@ function MilestoneMarker({
   onDoubleClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }) {
   const cx = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
   const cy = y + config.rowHeight / 2;
   const size = config.milestoneSize / 2;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onContextMenu={onContextMenu}>
       <rect
         x={cx - size}
         y={cy - size}
@@ -372,6 +443,7 @@ function SummaryBar({
   onDoubleClick,
   onMouseEnter,
   onMouseLeave,
+  onContextMenu,
 }: {
   task: Task;
   y: number;
@@ -385,6 +457,7 @@ function SummaryBar({
   onDoubleClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }) {
   const x = dateToX(new Date(task.start_date), chartStartDate, pxPerDay);
   const barWidth = taskSpanWidthPx(
@@ -424,7 +497,7 @@ function SummaryBar({
   const fillClass = isCritical ? "fill-destructive" : undefined;
 
   return (
-    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <g className="cursor-pointer" style={{ pointerEvents: "auto" }} onClick={onClick} onDoubleClick={onDoubleClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onContextMenu={onContextMenu}>
       <path
         d={d}
         className={fillClass}
