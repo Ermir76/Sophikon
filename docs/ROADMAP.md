@@ -85,13 +85,13 @@
 
 | Feature                               | Priority | Status  |
 | ------------------------------------- | -------- | ------- |
-| 5-column board (Backlog→Done)         | Must     | Planned |
-| Group leaf tasks by `status` field    | Must     | Planned |
-| Drag card to change status            | Must     | Planned |
-| Card: name, WBS, priority, date, progress | Must | Planned |
-| Search and filter cards               | Should   | Planned |
-| Column collapse to icon strip         | Should   | Planned |
-| Quick-add card from column header     | Should   | Planned |
+| 5-column board (Backlog→Done)         | Must     | Done    |
+| Group leaf tasks by `status` field    | Must     | Done    |
+| Drag card to change status            | Must     | Done    |
+| Card: name, WBS, priority, date, progress | Must | Done    |
+| Search and filter cards               | Should   | Done    |
+| Column collapse to icon strip         | Should   | Done    |
+| Quick-add card from column header     | Should   | Done    |
 
 #### Scheduling Engine
 

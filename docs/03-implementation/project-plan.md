@@ -185,11 +185,11 @@
 
 **Frontend:**
 
-- [ ] `features/kanban/` feature module (types, components, page, hooks, store)
-- [ ] Kanban route at `/projects/:projectId/kanban`
-- [ ] Kanban nav item in sidebar (after Gantt)
-- [ ] Drag-and-drop via `@dnd-kit/core` — drag card → changes `task.status`
-- [ ] Column collapse, quick-add card, search/priority filter
+- [x] `features/kanban/` feature module (types, components, page, hooks, store)
+- [x] Kanban route at `/projects/:projectId/kanban`
+- [x] Kanban nav item in sidebar (after Gantt)
+- [x] Drag-and-drop via `@dnd-kit/core` — drag card → changes `task.status`
+- [x] Column collapse, quick-add card, search/priority filter
 
 **Deliverables:**
 
