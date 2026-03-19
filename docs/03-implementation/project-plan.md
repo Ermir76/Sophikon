@@ -178,10 +178,10 @@
 
 **Backend:**
 
-- [ ] Add `TaskStatus` enum to `backend/app/models/enums.py`
-- [ ] Add `status` column to `task` model (default `BACKLOG`, indexed)
-- [ ] Alembic migration: `op.add_column` + `op.create_index`
-- [ ] Add `status` to `TaskCreate`, `TaskUpdate`, `TaskResponse` schemas
+- [x] Add `TaskStatus` enum to `backend/app/models/enums.py`
+- [x] Add `status` column to `task` model (default `BACKLOG`, indexed)
+- [x] Alembic migration: `op.add_column` + `op.create_index`
+- [x] Add `status` to `TaskCreate`, `TaskUpdate`, `TaskResponse` schemas
 
 **Frontend:**
 
