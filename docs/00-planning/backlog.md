@@ -32,7 +32,12 @@ Points scale:
 | ------- | ----------------------- | ---------------- | -------- | ------ | ------------ | -------------- | ----------------------------------------------------------- | ----- | ---------------------- |
 | TECH-01 | TECH                    | Frontend Automated Audit (tsc + eslint + tests → issue triage) | P1 | 2 | - | V1.0 | DONE | - | S01 |
 | TECH-02 | TECH                    | Frontend Standards Review (feature-by-feature /consistency-review) | P1 | 5 | TECH-01 | V1.0 | DONE | - | S01; one feature per session |
-| TECH-03 | TECH                    | Frontend Bug Remediation (fix confirmed findings from TECH-01 + TECH-02) | P1 | TBD | TECH-01, TECH-02 | V1.0 | READY | - | Scope known after audit |
+| TECH-03-A | TECH                  | Fix failing Gantt tests — export TaskDetailPanel from tasks barrel (#27) | P1 | 1 | TECH-01, TECH-02 | V1.0 | IN_PROGRESS | - | S02 |
+| TECH-03-B | TECH                  | Remove dead code — unused imports, dead files/exports, non-functional UI (#28 #32 #36 #42 #49) | P1 | 2 | TECH-01, TECH-02 | V1.0 | IN_PROGRESS | - | S02 |
+| TECH-03-C | TECH                  | Fix `any` types in test files (#29) | P1 | 1 | TECH-01, TECH-02 | V1.0 | IN_PROGRESS | - | S02 |
+| TECH-03-D | TECH                  | Fix query key namespacing + Zustand selectors (#34 #38 #45) | P1 | 1 | TECH-01, TECH-02 | V1.0 | IN_PROGRESS | - | S02 |
+| TECH-03-E | TECH                  | Fix cross-feature internal imports (11 files) (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55) | P1 | 2 | TECH-01, TECH-02 | V1.0 | IN_PROGRESS | - | S02 |
+| TECH-04   | TECH                  | Frontend P2 bug fixes (#26 #30 #35 #41 #43 #46 #51 #53 #56) | P1 | TBD | TECH-03-A..E | V1.0 | NOT_READY | - | S03 |
 
 ---
 

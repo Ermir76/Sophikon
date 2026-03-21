@@ -2,11 +2,118 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S01
+**Sprint ID:** S02
 **Dates:** 2026-03-21 -> 2026-04-04
 **References:** `docs/03-implementation/sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
+
+---
+
+## Active Items — S02
+
+### TECH-03-A — Fix Failing Gantt Tests (#27)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Export `TaskDetailPanel` from `frontend/src/features/tasks/index.ts`
+- [ ] Verify all 3 failing Gantt tests pass
+- [ ] Run `npm test -- --run` to confirm no regressions
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Fix is barrel-only — do not move the component
+
+---
+
+### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
+- [ ] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
+- [ ] #36: Remove the non-functional `<Eye>` icon button from `LoginPage.tsx`
+- [ ] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
+- [ ] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+
+---
+
+### TECH-03-C — Fix `any` Types in Test Files (#29)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Find all `any` usages in test files (`*.test.ts`, `*.test.tsx`)
+- [ ] Replace with proper types or `unknown` + type narrowing
+- [ ] Confirm `tsc --noEmit` passes with no new errors
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Scope strictly to test files only — do not touch production code
+
+---
+
+### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] #34: Prefix `ai-preferences` query key with feature namespace in auth hooks
+- [ ] #38: Prefix `dependencies`, `assignments`, `attachments`, `comments` query keys with `tasks` namespace
+- [ ] #45: Replace whole-store subscriptions in kanban with selector-based subscriptions
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+
+---
+
+### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [ ] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
+- [ ] #37: Task-detail components — import through `@/features/tasks` barrel
+- [ ] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
+- [ ] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
+- [ ] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
+- [ ] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
+- [ ] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
+- [ ] #50: `CalendarPage` — fix all cross-feature internal imports
+- [ ] #52: AI feature — import tasks types through `@/features/tasks` barrel
+- [ ] #54: Notifications hook — import auth through `@/features/auth` barrel
+- [ ] #55: Resources — replace relative imports with absolute `@/` imports
+
+#### Notes
+
+- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Blockers: -
+- Decisions: Never add internal path imports as a workaround; always fix the barrel
+
+---
+
+## Previous Sprint Items — S01
 
 ---
 

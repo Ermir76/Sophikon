@@ -29,6 +29,9 @@ backend/scripts/seed_sophikon.py
 .claude/settings.local.json
 .claude/compacts/
 .claude/
+.codex/
+.githooks/
+.agents/
 
 # Local tools and config
 wiki/
