@@ -23,3 +23,15 @@ DEPLOYMENT_GUIDE.md
 
 # Seed scripts
 backend/scripts/seed_sophikon.py
+
+# Claude Code runtime files
+.claude/scope.json
+.claude/settings.local.json
+.claude/compacts/
+.claude/
+
+# Local tools and config
+wiki/
+.skill-staging/
+pyrightconfig.json
+fucking_rules/

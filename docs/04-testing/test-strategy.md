@@ -8,11 +8,11 @@
 
 ## 0. Recent Traceability (2026-03-11)
 
-| Commit | Change | Evidence files | Validation (run by user) |
-| --- | --- | --- | --- |
-| `5ad6fd1` | Fixed nested-summary test determinism by setting explicit hierarchy depth in fixtures. | `backend/tests/unit/service/test_scheduling_service.py` | Targeted scheduling test passed (`test_nested_summaries_propagate_bottom_up`). |
-| `f3e0021` | Hardened auth/scheduling edge behavior and expanded service-depth coverage + doc sync. | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, `docs/04-testing/{test-implementation-plan,test-strategy}.md` | Service suite, affected API suites, and affected integration scheduling/task flow suites passed. |
-| _(working tree)_ | Completed remaining backend checklist coverage: calendar/utilization pass-now depth, integration notification/bulk/resource flows, security hardening tests, and concurrency/performance suites. | `backend/tests/integration/{flows/test_{notification_flows,bulk_rollup_flows,resource_cleanup_flows}.py,test_{concurrency,performance}.py}`, `backend/tests/unit/{api/v1/test_security.py,service/test_{calendar_service,task_rollup_service,utilization_service}.py}`, `docs/04-testing/{test-implementation-plan,test-strategy}.md` | Pending user run (see handoff commands). |
+| Commit           | Change                                                                                                                                                                                           | Evidence files                                                                                                                                                                                                                                                                                                                        | Validation (run by user)                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `5ad6fd1`        | Fixed nested-summary test determinism by setting explicit hierarchy depth in fixtures.                                                                                                           | `backend/tests/unit/service/test_scheduling_service.py`                                                                                                                                                                                                                                                                               | Targeted scheduling test passed (`test_nested_summaries_propagate_bottom_up`).                   |
+| `f3e0021`        | Hardened auth/scheduling edge behavior and expanded service-depth coverage + doc sync.                                                                                                           | `backend/app/service/{auth_service,scheduling_service,task_rollup_service}.py`, `backend/tests/unit/service/{test_auth_service,test_task_rollup_service}.py`, `docs/04-testing/{test-implementation-plan,test-strategy}.md`                                                                                                           | Service suite, affected API suites, and affected integration scheduling/task flow suites passed. |
+| _(working tree)_ | Completed remaining backend checklist coverage: calendar/utilization pass-now depth, integration notification/bulk/resource flows, security hardening tests, and concurrency/performance suites. | `backend/tests/integration/{flows/test_{notification_flows,bulk_rollup_flows,resource_cleanup_flows}.py,test_{concurrency,performance}.py}`, `backend/tests/unit/{api/v1/test_security.py,service/test_{calendar_service,task_rollup_service,utilization_service}.py}`, `docs/04-testing/{test-implementation-plan,test-strategy}.md` | Pending user run (see handoff commands).                                                         |
 
 ---
 
@@ -22,10 +22,10 @@
 
 ```
          ╱╲
-        ╱ E2E╲           Playwright (FE) — 8 specs
-       ╱──────╲          Backend E2E — empty (stub only)
+        ╱E2E╲           Playwright (FE) — 8 specs
+       ╱─────╲          Backend E2E — empty (stub only)
       ╱ Integr. ╲        11 flow files + 1 persistence + 2 root suites
-     ╱────────────╲      50+ integration tests
+     ╱───────────╲      50+ integration tests
     ╱    Unit       ╲    50+ backend files, 41 frontend files
    ╱─────────────────╲   ~320+ backend unit tests (est.)
   ╱____________________╲
@@ -94,41 +94,41 @@
 | `ws_protocol`                   | `test_ws_protocol.py`                | 8     | ✅ Good                       |
 | `ws_session_service`            | `test_ws_session_service.py`         | 5     | ✅ Good                       |
 | `service_layer_architecture`    | `test_service_layer_architecture.py` | 1     | ✅ Architectural import guard |
-| `auth_service`                | `test_auth_service.py`              | 7     | ✅ Baseline added (Phase 1)  |
-| `calendar_service`              | `test_calendar_service.py`           | 14    | ✅ Baseline + pass-now depth |
-| `dependency_service`            | `test_dependency_service.py`         | 11    | ✅ Baseline added (Phase 1)  |
+| `auth_service`                  | `test_auth_service.py`               | 7     | ✅ Baseline added (Phase 1)   |
+| `calendar_service`              | `test_calendar_service.py`           | 14    | ✅ Baseline + pass-now depth  |
+| `dependency_service`            | `test_dependency_service.py`         | 11    | ✅ Baseline added (Phase 1)   |
 | **organization_service**        | ❌ None                              | 0     | ❌ Tested via API only        |
 | **organization_member_service** | ❌ None                              | 0     | ❌ Tested via API only        |
 | **resource_service**            | ❌ None                              | 0     | ❌ Tested via API only        |
-| `scheduling_service`          | `test_scheduling_service.py`        | 7     | ✅ Baseline added (Phase 1)  |
+| `scheduling_service`            | `test_scheduling_service.py`         | 7     | ✅ Baseline added (Phase 1)   |
 | **task_bulk_service**           | ❌ None                              | 0     | ❌ Tested via API only        |
-| `task_hierarchy_service`        | `test_task_hierarchy_service.py`     | 14    | ✅ Baseline added (Phase 1)  |
-| `task_rollup_service`           | `test_task_rollup_service.py`       | 13    | ✅ Baseline + depth added    |
+| `task_hierarchy_service`        | `test_task_hierarchy_service.py`     | 14    | ✅ Baseline added (Phase 1)   |
+| `task_rollup_service`           | `test_task_rollup_service.py`        | 13    | ✅ Baseline + depth added     |
 | **task_service**                | ⚠️ Integration only                  | 3     | ⚠️ Persistence focus          |
-| `utilization_service`           | `test_utilization_service.py`        | 12    | ✅ Baseline + edge depth     |
+| `utilization_service`           | `test_utilization_service.py`        | 12    | ✅ Baseline + edge depth      |
 
 ### Backend — Integration Flows (`tests/integration/flows/`)
 
-| Flow File                  | Tests | What It Covers                                                                            |
-| -------------------------- | ----- | ----------------------------------------------------------------------------------------- |
-| `test_auth_flows.py`       | 3     | Personal org creation, token rotation, atomic failure                                     |
-| `test_task_flows.py`       | 6     | WBS inheritance, parent cascade, indent/outdent, summary rollup, ancestor rollup, reorder |
-| `test_scheduling_flows.py` | 6     | Full CPM flow, RBAC, dep change/delete reschedule, constraint override, parallel paths    |
-| `test_project_flows.py`    | 2     | Non-member access, soft delete cascade                                                    |
-| `test_org_flows.py`        | 2     | Invite visibility, remove member visibility                                               |
-| `test_dependency_flows.py` | 1     | Cascade delete                                                                            |
-| `test_assignment_flows.py` | 2     | Duplicate blocked, cross-project blocked                                                  |
-| `test_calendar_scheduling_flows.py` | 3 | Calendar exception + default calendar switch rescheduling flows                         |
-| `test_resource_cleanup_flows.py` | 3 | Resource delete/deactivate flows and assignment integrity                                |
-| `test_notification_flows.py` | 5 | Mention/assignment notification delivery and read-all behavior                             |
-| `test_bulk_rollup_flows.py` | 3 | Bulk create/delete/update summary rollup cascades                                         |
+| Flow File                           | Tests | What It Covers                                                                            |
+| ----------------------------------- | ----- | ----------------------------------------------------------------------------------------- |
+| `test_auth_flows.py`                | 3     | Personal org creation, token rotation, atomic failure                                     |
+| `test_task_flows.py`                | 6     | WBS inheritance, parent cascade, indent/outdent, summary rollup, ancestor rollup, reorder |
+| `test_scheduling_flows.py`          | 6     | Full CPM flow, RBAC, dep change/delete reschedule, constraint override, parallel paths    |
+| `test_project_flows.py`             | 2     | Non-member access, soft delete cascade                                                    |
+| `test_org_flows.py`                 | 2     | Invite visibility, remove member visibility                                               |
+| `test_dependency_flows.py`          | 1     | Cascade delete                                                                            |
+| `test_assignment_flows.py`          | 2     | Duplicate blocked, cross-project blocked                                                  |
+| `test_calendar_scheduling_flows.py` | 3     | Calendar exception + default calendar switch rescheduling flows                           |
+| `test_resource_cleanup_flows.py`    | 3     | Resource delete/deactivate flows and assignment integrity                                 |
+| `test_notification_flows.py`        | 5     | Mention/assignment notification delivery and read-all behavior                            |
+| `test_bulk_rollup_flows.py`         | 3     | Bulk create/delete/update summary rollup cascades                                         |
 
 ### Backend — Integration Concurrency/Performance (`tests/integration/`)
 
-| File | Tests | Notes |
-| ---- | ----- | ----- |
-| `test_concurrency.py` | 4 | Race-window guards for create/schedule/invitation/WBS behavior |
-| `test_performance.py` | 4 | Opt-in perf smoke tests (`RUN_PERF_TESTS=1`) |
+| File                  | Tests | Notes                                                          |
+| --------------------- | ----- | -------------------------------------------------------------- |
+| `test_concurrency.py` | 4     | Race-window guards for create/schedule/invitation/WBS behavior |
+| `test_performance.py` | 4     | Opt-in perf smoke tests (`RUN_PERF_TESTS=1`)                   |
 
 ### Frontend — Unit Tests (Vitest)
 
@@ -189,7 +189,7 @@
 Current phase status (built vs pending, updated 2026-03-11):
 
 - [x] Each constraint type individually: MSO, MFO, SNET, SNLT, FNET, FNLT, ALAP
-  Status: helper-level coverage now exists across all 8 constraint types.
+      Status: helper-level coverage now exists across all 8 constraint types.
 - [x] SS, FF, SF dependency types (helper-level `_compute_dep_driven_date` coverage)
 - [x] Negative lag (lead time) producing correct early starts
 - [x] Mixed dependency types on same successor (e.g., FS + SS from different predecessors)
@@ -259,11 +259,11 @@ Current phase status (built vs pending, updated 2026-03-11):
 - [x] Calendar inheritance reference handling (`base_calendar_id`)
 - [x] Delete calendar referenced by project/base relation (FK `SET NULL` behavior)
 - [x] Exception overlap detection policy (same-date collisions)
-  Status: pass-now coverage asserts overlaps are currently allowed.
+      Status: pass-now coverage asserts overlaps are currently allowed.
 - [x] Date-range exception filtering behavior
-  Status: pass-now coverage asserts current calendar-scoped unfiltered listing.
+      Status: pass-now coverage asserts current calendar-scoped unfiltered listing.
 - [x] Effective work-week merge semantics (base + child override) when runtime API exists
-  Status: scheduler coverage now validates task-level effective base+child work-week and exception override behavior.
+      Status: scheduler coverage now validates task-level effective base+child work-week and exception override behavior.
 
 **Recommended file:** `tests/unit/service/test_calendar_service.py`
 
@@ -298,7 +298,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 - [x] Resource with `max_units=0` — every assignment is over-allocated
 - [x] Date range where `end_date < start_date` → error or empty result
-  Status: pass-now coverage asserts empty result window (no service exception).
+      Status: pass-now coverage asserts empty result window (no service exception).
 - [x] Zero assignments in range → all daily allocations = 0
 - [x] Overlapping assignments from same resource to different tasks
 - [x] Day-boundary edge: assignment start_date = range end_date
@@ -342,12 +342,12 @@ Current phase status (built vs pending, updated 2026-03-11):
 
 #### G-09: Frontend Missing Feature Tests
 
-| Feature   | What to Test                                        | Priority |
-| --------- | --------------------------------------------------- | -------- |
+| Feature   | What to Test                                            | Priority |
+| --------- | ------------------------------------------------------- | -------- |
 | Calendar  | CalendarPage list/create/default flow render/assertions | Medium   |
-| Reports   | useReports hook, ReportsPage render                 | Low      |
-| Resources | ResourcesPage component, utilization view rendering | Medium   |
-| Dashboard | DashboardPage component, metric card rendering      | Low      |
+| Reports   | useReports hook, ReportsPage render                     | Low      |
+| Resources | ResourcesPage component, utilization view rendering     | Medium   |
+| Dashboard | DashboardPage component, metric card rendering          | Low      |
 
 ---
 
@@ -360,7 +360,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 - [x] CORS header validation (only allowed origins get `Access-Control-Allow-Origin`)
 - [x] CSRF protection with SameSite cookie
 - [x] Rate limit enforcement (re-enable limiter in specific test)
-  Status: pass-now handler-contract coverage (limiter disabled globally for deterministic tests).
+      Status: pass-now handler-contract coverage (limiter disabled globally for deterministic tests).
 - [x] Excessive request body size (>1MB JSON)
 - [x] UUID format validation on path params (random string → 422, not 500)
 
@@ -377,7 +377,7 @@ Current phase status (built vs pending, updated 2026-03-11):
 - [x] Project with 100 tasks + 200 dependencies → no timeout
 - [x] Resource utilization over 365-day range → acceptable response time
 - [x] Bulk create 50 tasks → response time <3s
-  Status: implemented as opt-in perf suite (`RUN_PERF_TESTS=1`) to keep default CI stable.
+      Status: implemented as opt-in perf suite (`RUN_PERF_TESTS=1`) to keep default CI stable.
 
 #### G-13: Auth Expansion Test Gap (`FR-AU-003`, `FR-AU-005`, `FR-AU-006`)
 
