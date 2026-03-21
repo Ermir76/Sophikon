@@ -6,18 +6,18 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
-**Sprint ID:** SXX
-**Dates:** YYYY-MM-DD -> YYYY-MM-DD
-**Goal:** One sentence outcome
-**Owner(s):** Name(s)
+**Sprint ID:** S01
+**Dates:** 2026-03-21 -> 2026-04-04
+**Goal:** Complete frontend quality audit — automated tool scan + feature-by-feature standards review — producing a prioritized issue backlog for remediation
+**Owner(s):** wwwer
 
 ### Capacity
 
-- Available focus days: `X`
+- Available focus days: `10`
 - Focus factor: `0.6`
-- Effective days: `X * 0.6 = Y`
-- Planned points capacity: `Z`
-- Buffer: `15-20%`
+- Effective days: `10 * 0.6 = 6`
+- Planned points capacity: `7`
+- Buffer: `~15%` (1 pt)
 
 ### Commitment Rules
 
@@ -29,32 +29,34 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Item ID | Title | Points | Why now | Dependencies | Done criteria |
 | --- | --- | --- | --- | --- | --- |
-| FR-XXX | Placeholder | 3 | Placeholder | - | Tests + docs + traceability updated |
+| TECH-01 | Frontend Automated Audit | 2 | Foundation for all other audit work | - | tsc + eslint + test results captured; all surviving findings in issues/open_issues/ |
+| TECH-02 | Frontend Standards Review | 5 | Identify dead code, standards violations, cross-agent inconsistencies | TECH-01 complete | All 12 features reviewed via /consistency-review; findings triaged into issues/ |
 
-**Total committed points:** `0`
+**Total committed points:** `7`
 
 ### Stretch (Optional)
 
 | Item ID | Title | Points | Trigger to pull in |
 | --- | --- | --- | --- |
-| - | - | - | - |
+| TECH-03 | Frontend Bug Remediation | TBD | Pull in only if TECH-01+02 finish early and scope is small |
 
 ### Risks and Blockers
 
 | Risk/Blocker | Impact | Mitigation | Owner |
 | --- | --- | --- | --- |
-| - | - | - | - |
+| tsc/eslint finds 50+ violations | Triage time blows out | Ruthlessly filter: dismissed_issues + roadmap items don't count | wwwer |
+| Context loss mid-TECH-02 | Review quality degrades | One feature per session, findings committed to issues/ immediately | wwwer |
 
 ---
 
 ## Sprint Review (Fill at end)
 
-- Planned points: `0`
-- Completed points: `0`
+- Planned points: `7`
+- Completed points: `7`
 - Carry-over points: `0`
-- Main wins:
-- Main misses:
-- Process changes for next sprint:
+- Main wins: Full frontend audit complete — tsc, eslint, tests captured; all 13 feature folders reviewed via /consistency-review; confirmed findings written to issues/open_issues/
+- Main misses: -
+- Process changes for next sprint: -
 
 ---
 
@@ -62,4 +64,4 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates | Planned | Completed | Carry-over | Notes |
 | --- | --- | --- | --- | --- | --- |
-| SXX | YYYY-MM-DD -> YYYY-MM-DD | 0 | 0 | 0 | - |
+| S01 | 2026-03-21 -> 2026-04-04 | 7 | 7 | 0 | Frontend audit sprint — full tsc/eslint/test + 13-feature standards review complete |

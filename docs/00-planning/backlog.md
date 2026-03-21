@@ -2,7 +2,7 @@
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
-**Last updated:** YYYY-MM-DD
+**Last updated:** 2026-03-21
 **Status source:** `docs/03-implementation/requirements-traceability.md`
 **Roadmap source:** `docs/ROADMAP.md`
 
@@ -30,7 +30,9 @@ Points scale:
 
 | Item ID | Type (`FR`/`AP`/`TECH`) | Title            | Priority | Points | Dependencies | Target Release | Status (`NOT_READY`/`READY`/`IN_PROGRESS`/`BLOCKED`/`DONE`) | Owner | Notes                  |
 | ------- | ----------------------- | ---------------- | -------- | ------ | ------------ | -------------- | ----------------------------------------------------------- | ----- | ---------------------- |
-| FR-XXX  | FR                      | Placeholder item | P2       | 3      | -            | V1.0           | NOT_READY                                                   | -     | Replace with real item |
+| TECH-01 | TECH                    | Frontend Automated Audit (tsc + eslint + tests → issue triage) | P1 | 2 | - | V1.0 | DONE | - | S01 |
+| TECH-02 | TECH                    | Frontend Standards Review (feature-by-feature /consistency-review) | P1 | 5 | TECH-01 | V1.0 | DONE | - | S01; one feature per session |
+| TECH-03 | TECH                    | Frontend Bug Remediation (fix confirmed findings from TECH-01 + TECH-02) | P1 | TBD | TECH-01, TECH-02 | V1.0 | READY | - | Scope known after audit |
 
 ---
 
@@ -40,7 +42,9 @@ Points scale:
 
 | Item ID | Title | Points | Planned Sprint |
 | ------- | ----- | ------ | -------------- |
-| -       | -     | -      | -              |
+| TECH-01 | Frontend Automated Audit | 2 | S01 |
+| TECH-02 | Frontend Standards Review | 5 | S01 |
+| TECH-03 | Frontend Bug Remediation | TBD | S02 |
 
 ### V1.1 (Planned)
 

@@ -18,21 +18,21 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 ## 1. Authentication & User Management
 
-| ID        | Requirement                  | Priority | Status  |
-| --------- | ---------------------------- | -------- | ------- |
-| FR-AU-001 | Register with email/password | Must     | DONE    |
-| FR-AU-002 | Login with email/password    | Must     | DONE    |
-| FR-AU-003 | Login with Google OAuth      | Must     | DONE    |
-| FR-AU-004 | Logout (revoke token)        | Must     | DONE    |
-| FR-AU-005 | Password reset via email     | Should   | DONE    |
-| FR-AU-006 | Update profile               | Should   | DONE    |
-| FR-AU-007 | JWT with refresh tokens      | Must     | DONE    |
-| FR-AU-008 | Session management           | Should   | PENDING |
-| FR-AU-009 | Verify email via link        | Must     | DONE    |
-| FR-AU-010 | Resend verification email    | Should   | DONE    |
-| FR-AU-011 | Change password while authenticated | Must | DONE    |
-| FR-AU-012 | Upload/remove profile avatar | Should   | DONE    |
-| FR-AU-013 | Manage AI preferences for account | Should | DONE    |
+| ID        | Requirement                         | Priority | Status  |
+| --------- | ----------------------------------- | -------- | ------- |
+| FR-AU-001 | Register with email/password        | Must     | DONE    |
+| FR-AU-002 | Login with email/password           | Must     | DONE    |
+| FR-AU-003 | Login with Google OAuth             | Must     | DONE    |
+| FR-AU-004 | Logout (revoke token)               | Must     | DONE    |
+| FR-AU-005 | Password reset via email            | Should   | DONE    |
+| FR-AU-006 | Update profile                      | Should   | DONE    |
+| FR-AU-007 | JWT with refresh tokens             | Must     | DONE    |
+| FR-AU-008 | Session management                  | Should   | PENDING |
+| FR-AU-009 | Verify email via link               | Must     | DONE    |
+| FR-AU-010 | Resend verification email           | Should   | DONE    |
+| FR-AU-011 | Change password while authenticated | Must     | DONE    |
+| FR-AU-012 | Upload/remove profile avatar        | Should   | DONE    |
+| FR-AU-013 | Manage AI preferences for account   | Should   | DONE    |
 
 ## 2. Project Management
 
@@ -182,38 +182,38 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 ## 12. AI Features
 
-| ID        | Requirement               | Priority | Status  |
-| --------- | ------------------------- | -------- | ------- |
-| FR-AI-001 | Chat about project        | Must     | DONE    |
-| FR-AI-002 | Query tasks               | Must     | DONE    |
-| FR-AI-003 | Query status              | Must     | PARTIAL |
-| FR-AI-004 | Actions with confirmation | Should   | DONE    |
-| FR-AI-005 | Task estimation           | Must     | DONE    |
-| FR-AI-006 | Show reasoning            | Should   | PARTIAL |
-| FR-AI-007 | Bulk estimate             | Should   | DONE    |
-| FR-AI-008 | Suggestions               | Should   | DONE    |
-| FR-AI-009 | Streaming responses       | Must     | DONE    |
-| FR-AI-010 | Resolve pending AI tool approvals | Should | DONE |
-| FR-AI-011 | Approve or redirect AI execution plan | Should | DONE |
-| FR-AI-012 | List AI conversations for a project | Should | DONE |
-| FR-AI-013 | Load AI conversation history | Should | DONE |
+| ID        | Requirement                           | Priority | Status  |
+| --------- | ------------------------------------- | -------- | ------- |
+| FR-AI-001 | Chat about project                    | Must     | DONE    |
+| FR-AI-002 | Query tasks                           | Must     | DONE    |
+| FR-AI-003 | Query status                          | Must     | PARTIAL |
+| FR-AI-004 | Actions with confirmation             | Should   | DONE    |
+| FR-AI-005 | Task estimation                       | Must     | DONE    |
+| FR-AI-006 | Show reasoning                        | Should   | PARTIAL |
+| FR-AI-007 | Bulk estimate                         | Should   | DONE    |
+| FR-AI-008 | Suggestions                           | Should   | DONE    |
+| FR-AI-009 | Streaming responses                   | Must     | DONE    |
+| FR-AI-010 | Resolve pending AI tool approvals     | Should   | DONE    |
+| FR-AI-011 | Approve or redirect AI execution plan | Should   | DONE    |
+| FR-AI-012 | List AI conversations for a project   | Should   | DONE    |
+| FR-AI-013 | Load AI conversation history          | Should   | DONE    |
 
 ## 13. Collaboration
 
-| ID        | Requirement               | Priority | Status |
-| --------- | ------------------------- | -------- | ------ |
-| FR-CO-001 | Invite to project         | Must     | DONE   |
-| FR-CO-002 | Set member role           | Must     | DONE   |
-| FR-CO-003 | Remove member             | Must     | DONE   |
-| FR-CO-004 | View members              | Must     | DONE   |
-| FR-CO-005 | Real-time updates         | Must     | DONE   |
-| FR-CO-006 | Presence (who is editing) | Should   | DONE   |
-| FR-CO-007 | Activity log              | Should   | DONE   |
-| FR-CO-008 | Comments on tasks         | Should   | DONE   |
-| FR-CO-009 | @mentions                 | Should   | DONE   |
-| FR-CO-010 | File attachments          | Should   | DONE   |
-| FR-CO-011 | Notifications             | Should   | DONE   |
-| FR-CO-012 | Manage notification settings | Should | DONE |
+| ID        | Requirement                  | Priority | Status |
+| --------- | ---------------------------- | -------- | ------ |
+| FR-CO-001 | Invite to project            | Must     | DONE   |
+| FR-CO-002 | Set member role              | Must     | DONE   |
+| FR-CO-003 | Remove member                | Must     | DONE   |
+| FR-CO-004 | View members                 | Must     | DONE   |
+| FR-CO-005 | Real-time updates            | Must     | DONE   |
+| FR-CO-006 | Presence (who is editing)    | Should   | DONE   |
+| FR-CO-007 | Activity log                 | Should   | DONE   |
+| FR-CO-008 | Comments on tasks            | Should   | DONE   |
+| FR-CO-009 | @mentions                    | Should   | DONE   |
+| FR-CO-010 | File attachments             | Should   | DONE   |
+| FR-CO-011 | Notifications                | Should   | DONE   |
+| FR-CO-012 | Manage notification settings | Should   | DONE   |
 
 ## 14. Import/Export
 
@@ -241,25 +241,25 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 ## 16. Organization Management
 
-| ID        | Requirement                                 | Priority | Status |
-| --------- | ------------------------------------------- | -------- | ------ |
-| FR-OR-001 | List organizations available to current user | Must    | DONE   |
-| FR-OR-002 | Create organization                         | Must     | DONE   |
-| FR-OR-003 | Update organization settings                | Should   | DONE   |
-| FR-OR-004 | Delete organization                         | Should   | DONE   |
-| FR-OR-005 | List organization members                   | Must     | DONE   |
-| FR-OR-006 | Invite organization member                  | Must     | DONE   |
-| FR-OR-007 | Update organization member role             | Must     | DONE   |
-| FR-OR-008 | Remove organization member                  | Must     | DONE   |
-| FR-OR-009 | Resolve current user's organization role/membership | Should | DONE |
-| FR-OR-010 | Show organization-level dashboard insights  | Should   | DONE   |
+| ID        | Requirement                                         | Priority | Status |
+| --------- | --------------------------------------------------- | -------- | ------ |
+| FR-OR-001 | List organizations available to current user        | Must     | DONE   |
+| FR-OR-002 | Create organization                                 | Must     | DONE   |
+| FR-OR-003 | Update organization settings                        | Should   | DONE   |
+| FR-OR-004 | Delete organization                                 | Should   | DONE   |
+| FR-OR-005 | List organization members                           | Must     | DONE   |
+| FR-OR-006 | Invite organization member                          | Must     | DONE   |
+| FR-OR-007 | Update organization member role                     | Must     | DONE   |
+| FR-OR-008 | Remove organization member                          | Must     | DONE   |
+| FR-OR-009 | Resolve current user's organization role/membership | Should   | DONE   |
+| FR-OR-010 | Show organization-level dashboard insights          | Should   | DONE   |
 
 ## 17. Reporting Workspace
 
-| ID        | Requirement                                 | Priority | Status  |
-| --------- | ------------------------------------------- | -------- | ------- |
-| FR-RP-001 | Provide project reports workspace route/page | Should  | DONE    |
-| FR-RP-002 | Render actionable reporting widgets and metrics | Should | PENDING |
+| ID        | Requirement                                     | Priority | Status  |
+| --------- | ----------------------------------------------- | -------- | ------- |
+| FR-RP-001 | Provide project reports workspace route/page    | Should   | DONE    |
+| FR-RP-002 | Render actionable reporting widgets and metrics | Should   | PENDING |
 
 ---
 
@@ -291,8 +291,8 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 ## Document History
 
-| Version | Date       | Author | Changes |
-| ------- | ---------- | ------ | ------- |
-| 8.0     | 2026-03-20 | Codex  | Cleaned to requirements-only content, added explicit DONE/PARTIAL/PENDING Status columns, synced with traceability and targeted code verification, retained FR-AI requirements in this file. |
+| Version | Date       | Author | Changes                                                                                                                                                                                                |
+| ------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 8.0     | 2026-03-20 | Codex  | Cleaned to requirements-only content, added explicit DONE/PARTIAL/PENDING Status columns, synced with traceability and targeted code verification, retained FR-AI requirements in this file.           |
 | 9.0     | 2026-03-20 | Codex  | Coverage hardening pass: added traced requirements for organization management, account settings extras, AI conversation/plan-approval flows, notification settings, and reporting workspace surfaces. |
-| 9.1     | 2026-03-20 | Codex  | Consistency pass with phase-2 design docs: adjusted FR-AI-006 from DONE to PARTIAL to match current design/code evidence (reasoning stream path not fully evidenced). |
+| 9.1     | 2026-03-20 | Codex  | Consistency pass with phase-2 design docs: adjusted FR-AI-006 from DONE to PARTIAL to match current design/code evidence (reasoning stream path not fully evidenced).                                  |
