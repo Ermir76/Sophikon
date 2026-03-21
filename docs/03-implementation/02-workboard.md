@@ -14,13 +14,13 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ### TECH-03-A — Fix Failing Gantt Tests (#27)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Export `TaskDetailPanel` from `frontend/src/features/tasks/index.ts`
-- [ ] Verify all 3 failing Gantt tests pass
-- [ ] Run `npm test -- --run` to confirm no regressions
+- [x] Export `TaskDetailPanel` from `frontend/src/features/tasks/index.ts`
+- [x] Verify all 3 failing Gantt tests pass
+- [x] Run `npm test -- --run` to confirm no regressions
 
 #### Notes
 

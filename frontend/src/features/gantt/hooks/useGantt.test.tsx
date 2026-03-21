@@ -35,6 +35,7 @@ vi.mock("react-router", async () => {
 vi.mock("@/features/tasks", () => ({
   useTasks: mocks.useTasks,
   useDependencies: mocks.useDependencies,
+  TaskDetailPanel: () => null,
 }));
 
 vi.mock("@/features/projects", () => ({
