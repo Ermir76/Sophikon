@@ -2,9 +2,9 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAuthStore, type AuthState } from "@/features/auth/store/auth-store";
+import { useAuthStore, type AuthState } from "@/features/auth";
 import { useCalendars } from "@/features/calendar";
-import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
+import { useProjectMembers } from "@/features/projects";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 
@@ -17,11 +17,11 @@ vi.mock("@/features/tasks/hooks/useTasks", () => ({
     useUpdateTask: vi.fn(),
 }));
 
-vi.mock("@/features/projects/hooks/useProjectMembers", () => ({
+vi.mock("@/features/projects", () => ({
     useProjectMembers: vi.fn(),
 }));
 
-vi.mock("@/features/auth/store/auth-store", () => ({
+vi.mock("@/features/auth", () => ({
     useAuthStore: vi.fn(),
 }));
 

@@ -4,7 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { ChevronsRight, LayoutList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateTask } from "@/features/tasks/hooks/useTasks";
+import { useCreateTask } from "@/features/tasks";
 import { Input } from "@/shared/ui/input";
 import type { Task } from "@/features/tasks";
 import type { KanbanColumn as KanbanColumnType } from "../types";

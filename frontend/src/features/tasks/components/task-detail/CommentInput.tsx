@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
+import { useProjectMembers } from "@/features/projects";
 import {
     buildMentionToken,
     getMentionQueryMatch,

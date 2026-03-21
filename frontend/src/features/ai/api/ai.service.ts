@@ -1,6 +1,6 @@
 import { api } from "@/shared/api/api";
 import axios from "axios";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import type {
   AiChatEvent,
   AiChatRequest,

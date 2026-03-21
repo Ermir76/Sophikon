@@ -33,7 +33,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | TECH-03-B | Remove dead code (#28 #32 #36 #42 #49)                                           | 2      | Low-risk, high noise-reduction            | -            | Unused imports removed; dead files/exports deleted; login eye button removed |
 | TECH-03-C | Fix `any` types in test files (#29)                                              | 1      | Type safety in tests                      | -            | No `any` types remain in test files; tsc passes                              |
 | TECH-03-D | Fix query key namespacing + Zustand selectors (#34 #38 #45)                      | 1      | Standards compliance                      | -            | All query keys namespaced by feature; kanban store accessed via selectors    |
-| TECH-03-E | Fix cross-feature internal imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55) | 2      | Standards compliance; 1-line fix per file | -            | All 11 files import through public barrel; no internal path imports          |
+| TECH-03-E | ~~Fix cross-feature internal imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)~~ ✅ | 2      | Standards compliance; 1-line fix per file | -            | All 11 files import through public barrel; no internal path imports          |
 
 **Total committed points:** `7`
 
@@ -55,7 +55,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 ## Sprint Review (Fill at end)
 
 - Planned points: `7`
-- Completed points: `0`
+- Completed points: `7`
 - Carry-over points: `0`
 - Main wins:
 - Main misses:

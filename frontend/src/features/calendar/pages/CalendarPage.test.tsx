@@ -2,9 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import CalendarPage from "@/features/calendar/pages/CalendarPage";
-import { useAuthStore, type AuthState } from "@/features/auth/store/auth-store";
-import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
-import { useProject, useUpdateProject } from "@/features/projects/hooks/useProjects";
+import { useAuthStore, type AuthState } from "@/features/auth";
+import { useProjectMembers, useProject, useUpdateProject } from "@/features/projects";
 import {
   useCalendarExceptions,
   useCalendars,
@@ -24,15 +23,12 @@ vi.mock("react-router", async () => {
   };
 });
 
-vi.mock("@/features/auth/store/auth-store", () => ({
+vi.mock("@/features/auth", () => ({
   useAuthStore: vi.fn(),
 }));
 
-vi.mock("@/features/projects/hooks/useProjectMembers", () => ({
+vi.mock("@/features/projects", () => ({
   useProjectMembers: vi.fn(),
-}));
-
-vi.mock("@/features/projects/hooks/useProjects", () => ({
   useProject: vi.fn(),
   useUpdateProject: vi.fn(),
 }));

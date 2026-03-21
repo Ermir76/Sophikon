@@ -3,7 +3,7 @@ import { Navigate, useParams } from "react-router";
 import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import {
   useCalendarExceptions,
   useCalendars,
@@ -21,8 +21,7 @@ import type {
   CalendarExceptionCreate,
   WorkDay,
 } from "@/features/calendar";
-import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
-import { useProject, useUpdateProject } from "@/features/projects/hooks/useProjects";
+import { useProjectMembers, useProject, useUpdateProject } from "@/features/projects";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {

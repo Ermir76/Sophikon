@@ -34,6 +34,11 @@ cd backend && uv run ruff check . && uv run ruff format .
 cd frontend && npm run lint && npm run format
 ```
 
+## Discord Session Rules
+
+- When a Discord message arrives (a `<channel source="discord" ...>` tag is present), immediately write the `chat_id` to `~/.claude/channels/discord/active_session` before doing anything else.
+- Never `git push` or `git reset --hard` during a Discord session without saying what you're about to do first.
+
 ## Hard Rules — Never Break These
 
 ### General

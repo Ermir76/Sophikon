@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import { projectActivityKeys } from "@/features/projects/hooks/useProjectActivity";
 import { projectDashboardKeys } from "@/features/projects/hooks/useProjectDashboard";
 import { projectMemberKeys } from "@/features/projects/hooks/useProjectMembers";
@@ -15,11 +15,8 @@ import type {
 } from "@/features/projects/types";
 import { resourceKeys } from "@/features/resources/hooks/useResources";
 import { API_BASE } from "@/shared/api/api";
-import { assignmentKeys } from "@/features/tasks/hooks/useAssignments";
-import { commentKeys } from "@/features/tasks/hooks/useComments";
-import { dependencyKeys } from "@/features/tasks/hooks/useDependencies";
-import { taskKeys } from "@/features/tasks/hooks/useTasks";
-import type { CommentEntityType } from "@/features/tasks/types";
+import { assignmentKeys, commentKeys, dependencyKeys, taskKeys } from "@/features/tasks";
+import type { CommentEntityType } from "@/features/tasks";
 
 const DEFAULT_CHANNELS: ProjectRealtimeChannel[] = [
   "tasks",

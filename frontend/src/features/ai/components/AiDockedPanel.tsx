@@ -20,9 +20,8 @@ import { useAiEstimate, useAiSuggestions, useApprovePlan } from "@/features/ai/h
 import { useConversations } from "@/features/ai/hooks/useConversations";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
 import type { AiChatMessage, AiEstimateItem, AiSuggestion, AiTab } from "@/features/ai/types";
-import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/useAuth";
-import { taskKeys, useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
-import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
+import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth";
+import { taskKeys, useTasks, useUpdateTask, useCreateDependency } from "@/features/tasks";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { cn } from "@/shared/lib/utils";
 import { Alert, AlertDescription } from "@/shared/ui/alert";

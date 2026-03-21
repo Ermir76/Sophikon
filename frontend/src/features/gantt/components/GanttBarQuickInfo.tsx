@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { useAssignments } from "@/features/tasks/hooks/useAssignments";
+import { useAssignments } from "@/features/tasks";
 import { useResources } from "@/features/resources";
 import { useDeleteTask } from "@/features/tasks";
 import type { Task } from "@/features/tasks";

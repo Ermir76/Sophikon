@@ -16,6 +16,8 @@ export {
   useChangePassword,
   useUploadAvatar,
   useDeleteAvatar,
+  useAiPreferences,
+  useUpdateAiPreferences,
 } from './hooks/useAuth';
 export { useAuthStore } from './store/auth-store';
 export { authService } from './api/auth.service';

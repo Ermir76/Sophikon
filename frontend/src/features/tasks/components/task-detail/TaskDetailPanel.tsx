@@ -23,14 +23,14 @@ import {
     AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { useTask, useUpdateTask } from "@/features/tasks/hooks/useTasks";
-import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
+import { useProjectMembers } from "@/features/projects";
 import { TaskDependencyList } from "@/features/tasks/components/task-detail/TaskDependencyList";
 import { TaskAssignmentList } from "@/features/tasks/components/task-detail/TaskAssignmentList";
 import { TaskAttachmentList } from "@/features/tasks/components/task-detail/TaskAttachmentList";
 import { TaskDetailCoreFields } from "@/features/tasks/components/task-detail/TaskDetailCoreFields";
 import { CommentThread } from "@/features/tasks/components/task-detail/CommentThread";
 import { useCalendars } from "@/features/calendar";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import { toast } from "sonner";
 import type { TaskUpdate } from "@/features/tasks/types";
 

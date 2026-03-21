@@ -88,22 +88,22 @@ Status: `DONE`
 
 ### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [ ] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [ ] #37: Task-detail components — import through `@/features/tasks` barrel
-- [ ] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [ ] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [ ] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [ ] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [ ] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [ ] #50: `CalendarPage` — fix all cross-feature internal imports
-- [ ] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [ ] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [ ] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components — import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` — fix all cross-feature internal imports
+- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
+- [x] #55: Resources — replace relative imports with absolute `@/` imports
 
 #### Notes
 

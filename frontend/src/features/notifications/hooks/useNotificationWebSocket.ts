@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/features/auth";
 import { notificationKeys } from "@/features/notifications/hooks/useNotifications";
 import { useNotificationWebSocketStore } from "@/features/notifications/store/notification-websocket-store";
 import type { NotificationWebSocketMessage } from "@/features/notifications/types";

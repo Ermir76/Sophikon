@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { useAiSuggestions } from "@/features/ai/hooks/useAi";
+import { useAiSuggestions } from "@/features/ai";
 import { ProjectActivityFeedCard } from "@/features/projects/components/ProjectActivityFeedCard";
 import { useProjectActivity } from "@/features/projects/hooks/useProjectActivity";
 import { useProjectDashboard } from "@/features/projects/hooks/useProjectDashboard";

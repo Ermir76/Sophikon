@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { scheduleService } from "@/features/gantt/api/schedule.service";
-import { taskKeys } from "@/features/tasks/hooks/useTasks";
+import { taskKeys } from "@/features/tasks";
 
 export function useCalculateSchedule(projectId?: string | null) {
     const queryClient = useQueryClient();

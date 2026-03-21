@@ -15,9 +15,9 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
-import { OverAllocationList } from "../components/OverAllocationList";
-import { UtilizationChart } from "../components/UtilizationChart";
-import { UtilizationSummaryCards } from "../components/UtilizationSummaryCards";
+import { OverAllocationList } from "@/features/resources/components/OverAllocationList";
+import { UtilizationChart } from "@/features/resources/components/UtilizationChart";
+import { UtilizationSummaryCards } from "@/features/resources/components/UtilizationSummaryCards";
 
 const RESOURCE_COLORS = [
   "var(--resource-series-1)",

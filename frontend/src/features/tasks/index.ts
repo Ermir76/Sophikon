@@ -2,10 +2,10 @@
 export { default as TasksPage } from './pages/TasksPage';
 export { TaskDetailPanel } from './components/task-detail/TaskDetailPanel';
 
-export { useTasks, useUpdateTask, useDeleteTask } from './hooks/useTasks';
-export { useDependencies, useCreateDependency, useDeleteDependency } from './hooks/useDependencies';
-export { useAssignments } from './hooks/useAssignments';
-export { useComments } from './hooks/useComments';
+export { taskKeys, useTasks, useCreateTask, useUpdateTask, useDeleteTask } from './hooks/useTasks';
+export { dependencyKeys, useDependencies, useCreateDependency, useDeleteDependency } from './hooks/useDependencies';
+export { assignmentKeys, useAssignments } from './hooks/useAssignments';
+export { commentKeys, useComments } from './hooks/useComments';
 export { useCollapsedTasks } from './hooks/useCollapsedTasks';
 
 export { TaskDependencyList } from './components/task-detail/TaskDependencyList';

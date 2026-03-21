@@ -23,9 +23,9 @@ import {
 } from "@/shared/ui/alert-dialog";
 import { useResource, useUpdateResource } from "@/features/resources/hooks/useResources";
 import { toast } from "sonner";
-import { ResourceDetailsSection } from "./ResourceDetailsSection";
-import { ResourceRatesSection } from "./ResourceRatesSection";
-import { ResourceStatusSection } from "./ResourceStatusSection";
+import { ResourceDetailsSection } from "@/features/resources/components/ResourceDetailsSection";
+import { ResourceRatesSection } from "@/features/resources/components/ResourceRatesSection";
+import { ResourceStatusSection } from "@/features/resources/components/ResourceStatusSection";
 import { useCalendars } from "@/features/calendar";
 import type { ResourceUpdate } from "@/features/resources/types";
 
