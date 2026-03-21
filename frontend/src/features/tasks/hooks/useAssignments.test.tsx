@@ -42,7 +42,7 @@ describe("Assignment Hooks", () => {
 
     it("useAssignments — fetches list, disabled when no taskId", async () => {
         const mockData = [{ id: assignmentId, task_id: taskId, resource_id: "res-1", units: 1.0 }];
-        (assignmentService.list as any).mockResolvedValue(mockData);
+        vi.mocked(assignmentService.list).mockResolvedValue(mockData);
 
         const { result, rerender } = renderHook(
             ({ pid, tid }: { pid: string; tid: string | undefined }) => useAssignments(pid, tid),
@@ -68,7 +68,7 @@ describe("Assignment Hooks", () => {
             start_date: "2024-01-01",
             finish_date: "2024-01-10",
         };
-        (assignmentService.create as any).mockResolvedValue({ id: "asgn-2", ...newData });
+        vi.mocked(assignmentService.create).mockResolvedValue({ id: "asgn-2", ...newData });
 
         const { result } = renderHook(() => useCreateAssignment(projectId, taskId), { wrapper: createWrapper() });
 
@@ -80,7 +80,7 @@ describe("Assignment Hooks", () => {
 
     it("useUpdateAssignment — calls service with assignmentId and data", async () => {
         const updateData: AssignmentUpdate = { units: 0.5 };
-        (assignmentService.update as any).mockResolvedValue({ id: assignmentId, ...updateData });
+        vi.mocked(assignmentService.update).mockResolvedValue({ id: assignmentId, ...updateData });
 
         const { result } = renderHook(() => useUpdateAssignment(projectId, taskId), { wrapper: createWrapper() });
 
@@ -91,7 +91,7 @@ describe("Assignment Hooks", () => {
     });
 
     it("useDeleteAssignment — calls service, invalidates caches", async () => {
-        (assignmentService.delete as any).mockResolvedValue(null);
+        vi.mocked(assignmentService.delete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useDeleteAssignment(projectId, taskId), { wrapper: createWrapper() });
 

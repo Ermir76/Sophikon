@@ -27,7 +27,7 @@ describe("useDashboardInsights", () => {
   });
 
   it("fetches when organization and valid window are present", async () => {
-    (dashboardInsightsService.getByOrganization as any).mockResolvedValue({
+    vi.mocked(dashboardInsightsService.getByOrganization).mockResolvedValue({
       kpis: { active_projects: 1 },
       project_health: [],
       trend: [],

@@ -52,13 +52,13 @@ Status: `DONE`
 
 ### TECH-03-C — Fix `any` Types in Test Files (#29)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Find all `any` usages in test files (`*.test.ts`, `*.test.tsx`)
-- [ ] Replace with proper types or `unknown` + type narrowing
-- [ ] Confirm `tsc --noEmit` passes with no new errors
+- [x] Find all `any` usages in test files (`*.test.ts`, `*.test.tsx`)
+- [x] Replace with proper types or `unknown` + type narrowing
+- [x] Confirm `tsc --noEmit` passes with no new errors
 
 #### Notes
 

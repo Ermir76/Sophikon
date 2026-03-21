@@ -55,7 +55,7 @@ describe("Task Hooks", () => {
 
     it("useTasks — fetches list, disabled when no projectId", async () => {
         const mockTasks = { items: [{ id: "1", name: "Task 1" }] };
-        (taskService.list as any).mockResolvedValue(mockTasks);
+        vi.mocked(taskService.list).mockResolvedValue(mockTasks);
 
         const { result, rerender } = renderHook((pid: string | undefined) => useTasks(pid), {
             wrapper: createWrapper(),
@@ -74,7 +74,7 @@ describe("Task Hooks", () => {
 
     it("useTask — fetches single task, disabled when no taskId", async () => {
         const mockTask = { id: taskId, name: "Task 1" };
-        (taskService.get as any).mockResolvedValue(mockTask);
+        vi.mocked(taskService.get).mockResolvedValue(mockTask);
 
         const { result, rerender } = renderHook(({ pid, tid }: { pid: string; tid: string | undefined }) => useTask(pid, tid), {
             wrapper: createWrapper(),
@@ -93,7 +93,7 @@ describe("Task Hooks", () => {
 
     it("useCreateTask — calls service.create, invalidates list cache", async () => {
         const newTaskData = { name: "New Task", start_date: "2024-01-01", duration: 60 };
-        (taskService.create as any).mockResolvedValue({ id: "new-id", ...newTaskData });
+        vi.mocked(taskService.create).mockResolvedValue({ id: "new-id", ...newTaskData });
 
         const { result } = renderHook(() => useCreateTask(projectId), { wrapper: createWrapper() });
 
@@ -105,7 +105,7 @@ describe("Task Hooks", () => {
 
     it("useUpdateTask — calls service.update, invalidates list + detail cache", async () => {
         const updateData = { name: "Updated Task" };
-        (taskService.update as any).mockResolvedValue({ id: taskId, ...updateData });
+        vi.mocked(taskService.update).mockResolvedValue({ id: taskId, ...updateData });
 
         const { result } = renderHook(() => useUpdateTask(projectId), { wrapper: createWrapper() });
 
@@ -116,7 +116,7 @@ describe("Task Hooks", () => {
     });
 
     it("useDeleteTask — calls service.delete, invalidates list cache", async () => {
-        (taskService.delete as any).mockResolvedValue(null);
+        vi.mocked(taskService.delete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useDeleteTask(projectId), { wrapper: createWrapper() });
 
@@ -127,7 +127,7 @@ describe("Task Hooks", () => {
     });
 
     it("useIndentTask — calls service.indent, invalidates list cache", async () => {
-        (taskService.indent as any).mockResolvedValue({ id: taskId, outline_level: 2 });
+        vi.mocked(taskService.indent).mockResolvedValue({ id: taskId, outline_level: 2 });
 
         const { result } = renderHook(() => useIndentTask(projectId), { wrapper: createWrapper() });
 
@@ -138,7 +138,7 @@ describe("Task Hooks", () => {
     });
 
     it("useOutdentTask — calls service.outdent, invalidates list cache", async () => {
-        (taskService.outdent as any).mockResolvedValue({ id: taskId, outline_level: 1 });
+        vi.mocked(taskService.outdent).mockResolvedValue({ id: taskId, outline_level: 1 });
 
         const { result } = renderHook(() => useOutdentTask(projectId), { wrapper: createWrapper() });
 
@@ -152,7 +152,7 @@ describe("Task Hooks", () => {
         const reorderData = { after_task_id: "other-task" };
         const optimisticData = [{ id: "other-task" }, { id: taskId }] as unknown as Task[];
 
-        (taskService.reorder as any).mockResolvedValue({ message: "reordered" });
+        vi.mocked(taskService.reorder).mockResolvedValue({ message: "reordered" });
 
         const { result } = renderHook(() => useReorderTask(projectId), { wrapper: createWrapper() });
 
@@ -164,7 +164,7 @@ describe("Task Hooks", () => {
 
     it("useBulkCreateTasks — calls service.bulkCreate", async () => {
         const bulkData = { tasks: [{ name: "Bulk Task", start_date: "2024-01-01", duration: 60 }] };
-        (taskService.bulkCreate as any).mockResolvedValue({ items: bulkData.tasks });
+        vi.mocked(taskService.bulkCreate).mockResolvedValue({ items: bulkData.tasks });
 
         const { result } = renderHook(() => useBulkCreateTasks(projectId), { wrapper: createWrapper() });
 
@@ -176,7 +176,7 @@ describe("Task Hooks", () => {
 
     it("useBulkUpdateTasks — calls service.bulkUpdate", async () => {
         const bulkData = { tasks: [{ id: taskId, data: { name: "Bulk Update" } }] };
-        (taskService.bulkUpdate as any).mockResolvedValue({ items: bulkData.tasks });
+        vi.mocked(taskService.bulkUpdate).mockResolvedValue({ items: bulkData.tasks });
 
         const { result } = renderHook(() => useBulkUpdateTasks(projectId), { wrapper: createWrapper() });
 
@@ -188,7 +188,7 @@ describe("Task Hooks", () => {
 
     it("useBulkDeleteTasks — calls service.bulkDelete", async () => {
         const bulkData = { task_ids: [taskId] };
-        (taskService.bulkDelete as any).mockResolvedValue(null);
+        vi.mocked(taskService.bulkDelete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useBulkDeleteTasks(projectId), { wrapper: createWrapper() });
 

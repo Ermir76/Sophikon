@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore, type AuthState } from "@/features/auth/store/auth-store";
 import { useCalendars } from "@/features/calendar";
 import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
@@ -124,8 +124,8 @@ describe("TaskDetailPanel", () => {
             isLoading: false,
             isError: false,
         } as never);
-        vi.mocked(useAuthStore).mockImplementation((selector: (state: any) => any) =>
-            selector({ user: { id: "user-1" } }));
+        vi.mocked(useAuthStore).mockImplementation((selector: (state: AuthState) => unknown) =>
+            selector({ user: { id: "user-1" } } as AuthState));
     });
 
     it("passes canModerate=true when current user is owner/manager", () => {

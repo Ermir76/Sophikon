@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import CalendarPage from "@/features/calendar/pages/CalendarPage";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore, type AuthState } from "@/features/auth/store/auth-store";
 import { useProjectMembers } from "@/features/projects/hooks/useProjectMembers";
 import { useProject, useUpdateProject } from "@/features/projects/hooks/useProjects";
 import {
@@ -70,8 +70,8 @@ const calendarsMock = [
 describe("CalendarPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthStore).mockImplementation((selector: any) =>
-      selector({ user: { id: "user-1" } }),
+    vi.mocked(useAuthStore).mockImplementation((selector: (state: AuthState) => unknown) =>
+      selector({ user: { id: "user-1" } } as AuthState),
     );
     vi.mocked(useProject).mockReturnValue({
       data: projectMock,

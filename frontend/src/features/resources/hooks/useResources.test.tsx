@@ -44,7 +44,7 @@ describe("Resource Hooks", () => {
 
     it("useResources — fetches list, disabled when no projectId", async () => {
         const mockData = { items: [{ id: "res-1", name: "Alice" }], total: 1 };
-        (resourceService.list as any).mockResolvedValue(mockData);
+        vi.mocked(resourceService.list).mockResolvedValue(mockData);
 
         const { result, rerender } = renderHook((pid: string | undefined) => useResources(pid), {
             wrapper: createWrapper(),
@@ -62,7 +62,7 @@ describe("Resource Hooks", () => {
 
     it("useResource — fetches single resource, disabled when no resourceId", async () => {
         const mockResource = { id: resourceId, name: "Alice" };
-        (resourceService.get as any).mockResolvedValue(mockResource);
+        vi.mocked(resourceService.get).mockResolvedValue(mockResource);
 
         const { result, rerender } = renderHook(
             ({ pid, rid }: { pid: string; rid: string | undefined }) => useResource(pid, rid),
@@ -83,7 +83,7 @@ describe("Resource Hooks", () => {
 
     it("useCreateResource — calls service, invalidates list cache", async () => {
         const newData: ResourceCreate = { name: "Bob", type: "WORK" };
-        (resourceService.create as any).mockResolvedValue({ id: "res-2", ...newData });
+        vi.mocked(resourceService.create).mockResolvedValue({ id: "res-2", ...newData });
 
         const { result } = renderHook(() => useCreateResource(projectId), { wrapper: createWrapper() });
 
@@ -95,7 +95,7 @@ describe("Resource Hooks", () => {
 
     it("useUpdateResource — calls service, invalidates list + detail cache", async () => {
         const updateData: ResourceUpdate = { name: "Alice Updated" };
-        (resourceService.update as any).mockResolvedValue({ id: resourceId, ...updateData });
+        vi.mocked(resourceService.update).mockResolvedValue({ id: resourceId, ...updateData });
 
         const { result } = renderHook(() => useUpdateResource(projectId), { wrapper: createWrapper() });
 
@@ -106,7 +106,7 @@ describe("Resource Hooks", () => {
     });
 
     it("useDeleteResource — calls service, invalidates list cache", async () => {
-        (resourceService.delete as any).mockResolvedValue(null);
+        vi.mocked(resourceService.delete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useDeleteResource(projectId), { wrapper: createWrapper() });
 
@@ -117,7 +117,7 @@ describe("Resource Hooks", () => {
     });
 
     it("useBulkDeleteResources — calls delete for each id, returns succeeded/failed counts", async () => {
-        (resourceService.delete as any).mockResolvedValue(null);
+        vi.mocked(resourceService.delete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useBulkDeleteResources(projectId), { wrapper: createWrapper() });
 
@@ -129,7 +129,7 @@ describe("Resource Hooks", () => {
     });
 
     it("useBulkDeleteResources — partial failure returns correct counts", async () => {
-        (resourceService.delete as any)
+        vi.mocked(resourceService.delete)
             .mockResolvedValueOnce(null)
             .mockRejectedValueOnce(new Error("fail"))
             .mockResolvedValueOnce(null);

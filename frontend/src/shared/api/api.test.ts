@@ -34,6 +34,8 @@ vi.mock("@/features/auth/lib/auth", () => ({
 import { api } from "./api";
 import axios from "axios";
 
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
 describe("API Interceptors", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -45,19 +47,19 @@ describe("API Interceptors", () => {
 
     it("401 triggers token refresh", async () => {
         // Mock refresh success
-        (axios.post as any).mockResolvedValue({ status: 200 });
+        vi.mocked(axios.post).mockResolvedValue({ status: 200 });
 
         // Mock adapter for api requests
-        const adapterMock = vi.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
-            if (config.url === "/test" && !(config as any)._retry) {
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            if (config.url === "/test" && !config._retry) {
                 // First attempt: 401
-                const error: any = new Error("Request failed with status code 401");
-                error.response = { status: 401, config };
-                error.config = config;
-                error.isAxiosError = true;
-                throw error;
+                throw Object.assign(new Error("Request failed with status code 401"), {
+                    response: { status: 401, config },
+                    config,
+                    isAxiosError: true,
+                });
             }
-            if ((config as any)._retry) {
+            if (config._retry) {
                 // Retry: 200
                 return { data: "success", status: 200, headers: {} };
             }
@@ -72,17 +74,17 @@ describe("API Interceptors", () => {
     });
 
     it("successful refresh retries original request", async () => {
-        (axios.post as any).mockResolvedValue({ status: 200 });
+        vi.mocked(axios.post).mockResolvedValue({ status: 200 });
 
-        const adapterMock = vi.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
-            if (config.url === "/test" && !(config as any)._retry) {
-                const error: any = new Error("401");
-                error.response = { status: 401, config };
-                error.config = config;
-                error.isAxiosError = true;
-                throw error;
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            if (config.url === "/test" && !config._retry) {
+                throw Object.assign(new Error("401"), {
+                    response: { status: 401, config },
+                    config,
+                    isAxiosError: true,
+                });
             }
-            if ((config as any)._retry) {
+            if (config._retry) {
                 return { data: "retry-success", status: 200, headers: {} };
             }
         });
@@ -96,14 +98,14 @@ describe("API Interceptors", () => {
 
     it("failed refresh triggers logout", async () => {
         // Mock refresh fail
-        (axios.post as any).mockRejectedValue(new Error("Refresh failed"));
+        vi.mocked(axios.post).mockRejectedValue(new Error("Refresh failed"));
 
-        const adapterMock = vi.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
-            const error: any = new Error("401");
-            error.response = { status: 401, config };
-            error.config = config;
-            error.isAxiosError = true;
-            throw error;
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            throw Object.assign(new Error("401"), {
+                response: { status: 401, config },
+                config,
+                isAxiosError: true,
+            });
         });
         api.defaults.adapter = adapterMock;
 
@@ -117,14 +119,14 @@ describe("API Interceptors", () => {
     });
 
     it("does not retry if already retried", async () => {
-        const adapterMock = vi.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
-            const error: any = new Error("401");
-            error.response = { status: 401 };
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
             // Simulate that the config ALREADY had _retry: true
-            config = { ...config, _retry: true } as any;
-            error.config = config;
-            error.isAxiosError = true;
-            throw error;
+            const retryConfig: RetryableConfig = { ...config, _retry: true };
+            throw Object.assign(new Error("401"), {
+                response: { status: 401 },
+                config: retryConfig,
+                isAxiosError: true,
+            });
         });
         api.defaults.adapter = adapterMock;
 

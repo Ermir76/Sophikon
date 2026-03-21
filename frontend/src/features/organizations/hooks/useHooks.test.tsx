@@ -45,7 +45,7 @@ describe("Data Hooks", () => {
 
     it("useOrganizations — fetches org list", async () => {
         const mockOrgs = [{ id: "1", name: "Org" }];
-        (organizationService.list as any).mockResolvedValue(mockOrgs);
+        vi.mocked(organizationService.list).mockResolvedValue(mockOrgs);
 
         const { result } = renderHook(() => useOrganizations(), { wrapper: createWrapper() });
 
@@ -55,7 +55,7 @@ describe("Data Hooks", () => {
 
     it("useOrganization(id) — fetches single org, disabled when no id", async () => {
         const mockOrg = { id: "1", name: "Org" };
-        (organizationService.get as any).mockResolvedValue(mockOrg);
+        vi.mocked(organizationService.get).mockResolvedValue(mockOrg);
 
         // Fetch with ID
         const { result, rerender } = renderHook((id) => useOrganization(id), {
@@ -76,7 +76,7 @@ describe("Data Hooks", () => {
     it("useProjects — fetches projects scoped to activeOrgId", async () => {
         // activeOrgId is "org-1" from mock
         const mockProjs = [{ id: "p1", name: "Proj" }];
-        (projectService.list as any).mockResolvedValue(mockProjs);
+        vi.mocked(projectService.list).mockResolvedValue(mockProjs);
 
         const { result } = renderHook(() => useProjects(), { wrapper: createWrapper() });
 
@@ -88,7 +88,7 @@ describe("Data Hooks", () => {
     it("useMyOrgRole — returns current user's org role", async () => {
         // activeOrgId is "org-1"
         const mockMembership = { role: "admin" };
-        (organizationService.getMyMembership as any).mockResolvedValue(mockMembership);
+        vi.mocked(organizationService.getMyMembership).mockResolvedValue(mockMembership);
 
         // Why? Wait. `useMyOrgRole` implementation:
         // export function useMyOrgRole() {

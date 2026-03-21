@@ -35,7 +35,7 @@ describe("Dependency Hooks", () => {
 
     it("useDependencies — fetches list, disabled when no projectId", async () => {
         const mockDeps = { items: [{ id: "dep-1", predecessor_id: "t1", successor_id: "t2", type: "FS" }] };
-        (dependencyService.list as any).mockResolvedValue(mockDeps);
+        vi.mocked(dependencyService.list).mockResolvedValue(mockDeps);
 
         const { result, rerender } = renderHook((pid: string | undefined) => useDependencies(pid), {
             wrapper: createWrapper(),
@@ -54,7 +54,7 @@ describe("Dependency Hooks", () => {
 
     it("useCreateDependency — calls service, invalidates dependency list + task list", async () => {
         const newDepData: DependencyCreate = { predecessor_id: "t1", successor_id: "t2", type: "FS" };
-        (dependencyService.create as any).mockResolvedValue({ id: "new-dep-id", ...newDepData });
+        vi.mocked(dependencyService.create).mockResolvedValue({ id: "new-dep-id", ...newDepData });
 
         const { result } = renderHook(() => useCreateDependency(projectId), { wrapper: createWrapper() });
 
@@ -66,7 +66,7 @@ describe("Dependency Hooks", () => {
 
     it("useUpdateDependency — calls service, invalidates caches", async () => {
         const updateData: DependencyUpdate = { type: "SS", lag: 10 };
-        (dependencyService.update as any).mockResolvedValue({ id: "dep-1", ...updateData });
+        vi.mocked(dependencyService.update).mockResolvedValue({ id: "dep-1", ...updateData });
 
         const { result } = renderHook(() => useUpdateDependency(projectId), { wrapper: createWrapper() });
 
@@ -77,7 +77,7 @@ describe("Dependency Hooks", () => {
     });
 
     it("useDeleteDependency — calls service, invalidates dependency list + task list", async () => {
-        (dependencyService.delete as any).mockResolvedValue(null);
+        vi.mocked(dependencyService.delete).mockResolvedValue(null);
 
         const { result } = renderHook(() => useDeleteDependency(projectId), { wrapper: createWrapper() });
 
