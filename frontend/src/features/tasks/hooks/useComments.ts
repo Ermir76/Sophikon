@@ -5,7 +5,7 @@ import { taskKeys } from "@/features/tasks/hooks/useTasks";
 import type { CommentEntityType, TaskCommentCreate, TaskCommentUpdate } from "@/features/tasks/types";
 
 export const commentKeys = {
-    all: ["comments"] as const,
+    all: ["tasks", "comments"] as const,
     byEntity: (entityType: CommentEntityType, entityId: string) =>
         [...commentKeys.all, entityType, entityId] as const,
 };

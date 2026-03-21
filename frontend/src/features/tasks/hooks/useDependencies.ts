@@ -4,7 +4,7 @@ import type { DependencyCreate, DependencyUpdate } from "@/features/tasks/types"
 import { taskKeys } from "./useTasks";
 
 export const dependencyKeys = {
-    all: ["dependencies"] as const,
+    all: ["tasks", "dependencies"] as const,
     lists: () => [...dependencyKeys.all, "list"] as const,
     list: (projectId: string) => [...dependencyKeys.lists(), projectId] as const,
 };

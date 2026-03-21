@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { attachmentService } from "@/features/tasks/api/attachment.service";
 
 export const attachmentKeys = {
-  all: ["attachments"] as const,
+  all: ["tasks", "attachments"] as const,
   list: (projectId: string | undefined, taskId: string | undefined) =>
     [...attachmentKeys.all, projectId, taskId] as const,
 };

@@ -102,7 +102,7 @@ export function useDeleteAvatar() {
 
 export function useAiPreferences() {
   return useQuery({
-    queryKey: ["ai-preferences"],
+    queryKey: ["auth", "ai-preferences"],
     queryFn: () => authService.getAiPreferences(),
   });
 }
@@ -113,7 +113,7 @@ export function useUpdateAiPreferences() {
     mutationFn: (data: AiPreferencesPatchRequest) =>
       authService.updateAiPreferences(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ai-preferences"] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "ai-preferences"] });
     },
   });
 }

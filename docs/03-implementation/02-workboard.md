@@ -70,13 +70,13 @@ Status: `DONE`
 
 ### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] #34: Prefix `ai-preferences` query key with feature namespace in auth hooks
-- [ ] #38: Prefix `dependencies`, `assignments`, `attachments`, `comments` query keys with `tasks` namespace
-- [ ] #45: Replace whole-store subscriptions in kanban with selector-based subscriptions
+- [x] #34: Prefix `ai-preferences` query key with feature namespace in auth hooks
+- [x] #38: Prefix `dependencies`, `assignments`, `attachments`, `comments` query keys with `tasks` namespace
+- [x] #45: Replace whole-store subscriptions in kanban with selector-based subscriptions
 
 #### Notes
 

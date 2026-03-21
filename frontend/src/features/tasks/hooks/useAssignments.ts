@@ -4,7 +4,7 @@ import { taskKeys } from "@/features/tasks/hooks/useTasks";
 import type { AssignmentCreate, AssignmentUpdate } from "@/features/tasks/types";
 
 export const assignmentKeys = {
-    all: ["assignments"] as const,
+    all: ["tasks", "assignments"] as const,
     lists: () => [...assignmentKeys.all, "list"] as const,
     list: (projectId: string, taskId: string) => [...assignmentKeys.lists(), projectId, taskId] as const,
 };

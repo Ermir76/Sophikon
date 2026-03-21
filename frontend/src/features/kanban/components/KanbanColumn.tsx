@@ -20,7 +20,8 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({ column, tasks, projectId }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
-    const { collapsedByProject, toggleCollapse } = useKanbanStore();
+    const collapsedByProject = useKanbanStore((s) => s.collapsedByProject);
+    const toggleCollapse = useKanbanStore((s) => s.toggleCollapse);
     const isCollapsed = projectId
         ? (collapsedByProject[projectId] ?? []).includes(column.id)
         : false;

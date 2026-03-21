@@ -26,7 +26,10 @@ export default function KanbanPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const { data: taskData, isLoading, error, refetch } = useTasks(projectId);
 
-    const { searchQuery, priorityFilter, setSearch, setPriorityFilter } = useKanbanStore();
+    const searchQuery = useKanbanStore((s) => s.searchQuery);
+    const priorityFilter = useKanbanStore((s) => s.priorityFilter);
+    const setSearch = useKanbanStore((s) => s.setSearch);
+    const setPriorityFilter = useKanbanStore((s) => s.setPriorityFilter);
 
     const filteredLeafTasks = useMemo(() => {
         return (taskData?.items ?? EMPTY).filter((t) => {
