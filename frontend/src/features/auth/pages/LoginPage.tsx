@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Link, useSearchParams } from "react-router";
 import { z } from "zod";
@@ -29,6 +30,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const [searchParams] = useSearchParams();
   const next = searchParams.get("next");
   const oauthStatus = searchParams.get("oauth");
@@ -101,7 +103,7 @@ export default function LoginPage() {
                 <FormControl>
                   <div className="relative">
                     <Input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="********"
                       autoComplete="current-password"
                       {...field}
@@ -109,8 +111,9 @@ export default function LoginPage() {
                     <button
                       type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowPassword((v) => !v)}
                     >
-                      <Eye className="size-4" />
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
                 </FormControl>

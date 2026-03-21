@@ -32,15 +32,15 @@ Status: `DONE`
 
 ### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
-- [ ] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [ ] #36: Remove the non-functional `<Eye>` icon button from `LoginPage.tsx`
-- [ ] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
-- [ ] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
+- [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
+- [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
+- [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
 #### Notes
 

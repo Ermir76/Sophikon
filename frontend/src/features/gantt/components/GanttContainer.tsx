@@ -6,7 +6,6 @@ import type { GanttConfig, ZoomLevel } from "../types";
 import { differenceInCalendarDays, dateToX, taskSpanWidthPx } from "../utils/dateUtils";
 import { GanttTable, GanttTableHeader } from "./GanttTable";
 import { GanttChart } from "./GanttChart";
-import { GanttHoverTooltip } from "./GanttHoverTooltip";
 import { TimelineHeader } from "./TimelineHeader";
 import { useGanttInteractions } from "../hooks/useGanttInteractions";
 import { useGanttBarDrag } from "../hooks/useGanttBarDrag";
