@@ -17,6 +17,7 @@ import {
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { PageShell } from "@/shared/components/layout/PageShell";
+import { QueryError } from "@/shared/components/QueryError";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -132,7 +133,6 @@ export default function ProfilePage() {
     updateAiPreferencesMutation.mutate(
       { auto_approve: { [toolName]: value } },
       {
-        onSuccess: () => aiPreferencesQuery.refetch(),
         onError: (error) => toast.error(getErrorMessage(error)),
       },
     );
@@ -549,6 +549,11 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               {aiPreferencesQuery.isLoading ? (
                 <p className="text-sm text-muted-foreground">Loading preferences...</p>
+              ) : aiPreferencesQuery.isError ? (
+                <QueryError
+                  message={getErrorMessage(aiPreferencesQuery.error)}
+                  onRetry={() => aiPreferencesQuery.refetch()}
+                />
               ) : (
                 <div className="space-y-3">
                   {Object.entries(AI_TOOL_LABELS).map(([toolName, label]) => (

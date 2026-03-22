@@ -33,12 +33,12 @@ Status: `DONE`
 
 ### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [ ] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
 
 #### Notes
 
