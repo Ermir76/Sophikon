@@ -192,7 +192,7 @@ describe("aiService.streamChat", () => {
 
     expect(onEvent).toHaveBeenCalledWith({
       type: "error",
-      error: "Malformed streaming response",
+      message: "Malformed streaming response",
     });
   });
 

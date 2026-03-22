@@ -104,13 +104,13 @@ Status: `NOT_STARTED`
 
 ### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
-- [ ] Update corresponding test expectation in `ai.service.test.ts`
-- [ ] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] Update corresponding test expectation in `ai.service.test.ts`
+- [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
 #### Notes
 

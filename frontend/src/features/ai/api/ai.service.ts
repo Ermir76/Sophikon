@@ -101,7 +101,7 @@ export const aiService = {
           const event = JSON.parse(payload) as AiChatEvent;
           onEvent(event);
         } catch {
-          onEvent({ type: "error", error: "Malformed streaming response" });
+          onEvent({ type: "error", message: "Malformed streaming response" });
         }
       }
     }
