@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Navigate } from "react-router";
 import { ListTodo, Trash2, Pencil } from "lucide-react";
 import { isValid, parseISO, startOfDay } from "date-fns";
@@ -81,12 +81,7 @@ export default function TasksPage() {
   const selectedTaskIdSet = new Set(selectedTaskIds);
   const selectedTasks = tasks.filter((task) => selectedTaskIdSet.has(task.id));
 
-  // Reset the "adding first task" state if tasks are successfully loaded from the backend
-  useEffect(() => {
-    if (tasks.length > 0 && isAddingFirstTask) {
-      setIsAddingFirstTask(false);
-    }
-  }, [tasks.length, isAddingFirstTask]);
+  const isAddingFirstTaskMode = isAddingFirstTask && tasks.length === 0;
 
   // Single task delete handler (used by row actions + detail panel)
   const handleDeleteTask = async (taskId: string) => {
@@ -167,7 +162,7 @@ export default function TasksPage() {
 
       {isLoading ? (
         <PageLoading />
-      ) : tasks.length === 0 && !isAddingFirstTask ? (
+      ) : tasks.length === 0 && !isAddingFirstTaskMode ? (
         <PageEmpty
           icon={ListTodo}
           title="No tasks"
@@ -185,7 +180,7 @@ export default function TasksPage() {
             data={tasks}
             rowSelection={rowSelection}
             setRowSelection={setRowSelection}
-            forceAdding={isAddingFirstTask}
+            forceAdding={isAddingFirstTaskMode}
             onCancelAdding={() => setIsAddingFirstTask(false)}
             onIndent={async (id) => {
               try { await indentTask.mutateAsync(id); } catch { toast.error("Failed to indent task"); }

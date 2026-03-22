@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router";
 import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -108,7 +108,7 @@ export default function CalendarPage() {
   const deleteException = useDeleteCalendarException(projectId);
   const updateProject = useUpdateProject(projectId);
 
-  const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
+  const [_requestedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   const [calendarEditing, setCalendarEditing] = useState<Calendar | null>(null);
   const [calendarName, setCalendarName] = useState("");
@@ -125,29 +125,18 @@ export default function CalendarPage() {
   const [exceptionStartTime, setExceptionStartTime] = useState("09:00");
   const [exceptionEndTime, setExceptionEndTime] = useState("17:00");
 
-  const exceptionsQuery = useCalendarExceptions(projectId, selectedCalendarId);
-
-  const calendars = calendarsQuery.data ?? [];
+  const calendars = useMemo(() => calendarsQuery.data ?? [], [calendarsQuery.data]);
+  const selectedCalendarId = useMemo(() => {
+    if (calendars.length === 0) return null;
+    if (_requestedCalendarId && calendars.some((c) => c.id === _requestedCalendarId)) return _requestedCalendarId;
+    return calendars[0].id;
+  }, [calendars, _requestedCalendarId]);
   const selectedCalendar = useMemo(
     () => calendars.find((calendar) => calendar.id === selectedCalendarId) ?? null,
     [calendars, selectedCalendarId],
   );
 
-  useEffect(() => {
-    if (!selectedCalendarId && calendars.length > 0) {
-      setSelectedCalendarId(calendars[0].id);
-    }
-    if (
-      selectedCalendarId &&
-      calendars.length > 0 &&
-      !calendars.some((calendar) => calendar.id === selectedCalendarId)
-    ) {
-      setSelectedCalendarId(calendars[0].id);
-    }
-    if (calendars.length === 0) {
-      setSelectedCalendarId(null);
-    }
-  }, [calendars, selectedCalendarId]);
+  const exceptionsQuery = useCalendarExceptions(projectId, selectedCalendarId);
 
   const memberRole = membersQuery.data?.items.find(
     (member) => member.user_id === currentUserId,

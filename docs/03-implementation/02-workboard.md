@@ -50,13 +50,13 @@ Status: `DONE`
 
 ### TECH-04-C — Fix `setState` in `useEffect` (#26)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [ ] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
-- [ ] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
+- [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
 
