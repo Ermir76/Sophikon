@@ -2,15 +2,125 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S02
-**Dates:** 2026-03-21 -> 2026-04-04
+**Sprint ID:** S03
+**Dates:** 2026-03-22 -> 2026-04-05
 **References:** `docs/03-implementation/sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S02
+## Active Items — S03
+
+### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
+
+---
+
+### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
+- [ ] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+
+---
+
+### TECH-04-C — Fix `setState` in `useEffect` (#26)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
+- [ ] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [ ] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Prefer derived state over `useState` initialization if the value can be computed from props/query data
+
+---
+
+### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Read `useCollapsedTree.ts` and determine intent of the `useLayoutEffect` at line 38
+- [ ] If truly mount-only: add `// eslint-disable-next-line react-hooks/exhaustive-deps` with explicit rationale comment
+- [ ] If should re-run on changes: add all 5 missing deps (`data`, `defaultCollapseAll`, `getParentId`, `setValue`, `storageKey`); ensure `getParentId` is stable (wrapped in `useCallback` at call sites if needed)
+- [ ] Verify gantt and task tree views still behave correctly after change
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: TBD — must read the hook intent first before committing to either approach
+
+---
+
+### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [ ] Manually verify: single click selects; double click opens panel; no regression on regular task bars
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: 1-line removal; do not touch `handleChartTaskDoubleClick`
+
+---
+
+### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [ ] Update corresponding test expectation in `ai.service.test.ts`
+- [ ] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+
+---
+
+## Previous Sprint Items — S02
 
 ### TECH-03-A — Fix Failing Gantt Tests (#27)
 

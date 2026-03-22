@@ -6,6 +6,68 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S03
+**Dates:** 2026-03-22 -> 2026-04-05
+**Goal:** Fix P2 frontend bugs — missing error states, hook anti-patterns, Gantt UX inconsistency, and AI stream contract mismatch
+**Owner(s):** wwwer
+
+### Capacity
+
+- Available focus days: `10`
+- Focus factor: `0.6`
+- Effective days: `10 * 0.6 = 6`
+- Planned points capacity: `7`
+- Buffer: `~15%` (1 pt)
+
+### Commitment Rules
+
+1. Do not exceed planned points capacity.
+2. Do not commit blocked items.
+3. Do not commit items without clear acceptance criteria.
+
+### Committed Items
+
+| Item ID    | Title                                                                                              | Points | Why now                                   | Dependencies | Done criteria                                                                                    |
+| ---------- | -------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------ |
+| TECH-04-A  | Batch error state fixes — OrgSwitcher, Kanban drag, Calendar exceptions, Resources (#41 #43 #51 #56) | 2      | All trivial 1-liner fixes; same pattern   | -            | `isError` handled with `QueryError`/toast in all 4 locations; no silent failures                |
+| TECH-04-B  | ProfilePage AI error state + remove double refetch (#35)                                           | 1      | Misleading UI when API down               | -            | `isError` branch renders error UI; redundant `refetch()` call removed from `handleAiToggle`     |
+| TECH-04-C  | Fix `setState` in `useEffect` — CalendarPage + TasksPage (#26)                                    | 1      | ESLint violation; cascade render risk     | -            | `setSelectedCalendarId` and `setIsAddingFirstTask` removed from effect bodies; ESLint passes     |
+| TECH-04-D  | Fix `useLayoutEffect` missing deps in `useCollapsedTree` (#30)                                    | 1      | Stale closure across features             | -            | All 5 missing deps added or documented with explicit rationale; ESLint `exhaustive-deps` passes  |
+| TECH-04-E  | Fix Gantt milestone/summary click opens detail panel (#46)                                         | 1      | UX inconsistency vs regular task bars     | -            | Single click selects only; `onTaskDoubleClick` removed from `handleChartTaskClick`              |
+| TECH-04-F  | Fix AI stream error event field name mismatch (#53)                                                | 1      | Breaks declared event contract            | -            | `ai.service.ts` emits `{ type: "error", message: ... }`; test expectation aligned               |
+
+**Total committed points:** `7`
+
+### Stretch (Optional)
+
+| Item ID | Title | Points | Trigger to pull in |
+| ------- | ----- | ------ | ------------------ |
+| -       | -     | -      | Pull in if all 6 items ship early |
+
+### Risks and Blockers
+
+| Risk/Blocker                                                   | Impact                        | Mitigation                                                          | Owner |
+| -------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------- | ----- |
+| `useCollapsedTree` deps fix triggers mount-time re-renders     | Visual regression in tree UIs | Test gantt + task tree views after fix; scope to run-once if needed | wwwer |
+| `setState` removal in CalendarPage may need derived state rework | More refactor than expected  | Derive from `calendars[0]?.id` directly; no new state introduced    | wwwer |
+
+---
+
+## Sprint Review (Fill at end)
+
+- Planned points: `7`
+- Completed points: `-`
+- Carry-over points: `-`
+- Main wins:
+- Main misses:
+- Process changes for next sprint:
+
+---
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S02
 **Dates:** 2026-03-21 -> 2026-04-04
 **Goal:** Frontend cleanup — remove dead code, fix cross-feature import violations, fix query key namespacing, and repair the failing Gantt test suite
@@ -65,9 +127,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ---
 
-## Previous Sprint
-
-**Sprint ID:** S01
+## Sprint Archive — S01
 **Dates:** 2026-03-21 -> 2026-04-04
 **Goal:** Complete frontend quality audit — automated tool scan + feature-by-feature standards review — producing a prioritized issue backlog for remediation
 **Owner(s):** wwwer
@@ -125,5 +185,6 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S02    | 2026-03-21 -> 2026-04-04 | 7       | -         | -          | Frontend cleanup — dead code, cross-feature imports, query keys, failing tests      |
+| S03    | 2026-03-22 -> 2026-04-05 | 7       | -         | -          | P2 bug fixes — error states, hook anti-patterns, Gantt UX, AI contract              |
+| S02    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend cleanup — dead code, cross-feature imports, query keys, failing tests      |
 | S01    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend audit sprint — full tsc/eslint/test + 13-feature standards review complete |

@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { QueryError } from "@/shared/components/QueryError";
 import { PageShell } from "@/shared/components/layout/PageShell";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
@@ -470,6 +471,11 @@ export default function CalendarPage() {
 
                   {exceptionsQuery.isLoading ? (
                     <PageLoading />
+                  ) : exceptionsQuery.isError ? (
+                    <QueryError
+                      message={getErrorMessage(exceptionsQuery.error)}
+                      onRetry={() => exceptionsQuery.refetch()}
+                    />
                   ) : (exceptionsQuery.data ?? []).length === 0 ? (
                     <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
                       No exceptions configured.

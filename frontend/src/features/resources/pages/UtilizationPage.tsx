@@ -47,7 +47,11 @@ export default function UtilizationPage() {
     refetch,
   } = useProjectUtilization(projectId, startDate, endDate);
 
-  const { data: overAllocations } = useOverAllocations(projectId, startDate, endDate);
+  const {
+    data: overAllocations,
+    isError: isOverAllocationsError,
+    refetch: refetchOverAllocations,
+  } = useOverAllocations(projectId, startDate, endDate);
 
   const chartData = useMemo(() => {
     if (!utilization?.resources?.length) return [];
@@ -180,10 +184,17 @@ export default function UtilizationPage() {
         overAllocatedColor={OVER_ALLOCATED_COLOR}
       />
 
-      <OverAllocationList
-        overAllocations={overAllocations}
-        overAllocationCount={overAllocationCount}
-      />
+      {isOverAllocationsError ? (
+        <QueryError
+          message="Failed to load over-allocation data."
+          onRetry={() => refetchOverAllocations()}
+        />
+      ) : (
+        <OverAllocationList
+          overAllocations={overAllocations}
+          overAllocationCount={overAllocationCount}
+        />
+      )}
 
       <UtilizationSummaryCards
         resources={utilization?.resources ?? []}

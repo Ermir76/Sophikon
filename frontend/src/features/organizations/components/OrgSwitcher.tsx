@@ -31,7 +31,7 @@ export function OrgSwitcher() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
 
-  const { data: organizationsData, isLoading } = useOrganizations();
+  const { data: organizationsData, isLoading, isError, refetch } = useOrganizations();
   const { data: activeOrgData } = useOrganization(activeOrgId);
 
   const organizations = React.useMemo(
@@ -88,6 +88,13 @@ export function OrgSwitcher() {
               <div className="flex justify-center p-2">
                 <Loader2 className="size-4 animate-spin text-muted-foreground" />
               </div>
+            ) : isError ? (
+              <DropdownMenuItem
+                className="gap-2 p-2 text-destructive cursor-pointer"
+                onClick={() => refetch()}
+              >
+                Failed to load organizations. Retry?
+              </DropdownMenuItem>
             ) : (
               organizations.map((org) => (
                 <DropdownMenuItem

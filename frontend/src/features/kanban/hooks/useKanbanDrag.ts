@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
 import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { toast } from "sonner";
 import { useUpdateTask } from "@/features/tasks";
+import { getErrorMessage } from "@/shared/lib/errors";
 import type { TaskStatus } from "../types";
 
 export function useKanbanDrag(projectId: string | undefined) {
@@ -32,10 +34,10 @@ export function useKanbanDrag(projectId: string | undefined) {
 
             if (newStatus === currentStatus) return;
 
-            mutate({
-                taskId: active.id as string,
-                data: { status: newStatus },
-            });
+            mutate(
+                { taskId: active.id as string, data: { status: newStatus } },
+                { onError: (error) => toast.error(getErrorMessage(error)) },
+            );
         },
         [mutate],
     );

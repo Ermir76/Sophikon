@@ -75,10 +75,10 @@ describe("useKanbanDrag", () => {
             result.current.handleDragEnd(makeDragEnd("task-1", "BACKLOG", "IN_PROGRESS"));
         });
 
-        expect(mockMutate).toHaveBeenCalledWith({
-            taskId: "task-1",
-            data: { status: "IN_PROGRESS" },
-        });
+        expect(mockMutate).toHaveBeenCalledWith(
+            { taskId: "task-1", data: { status: "IN_PROGRESS" } },
+            expect.objectContaining({ onError: expect.any(Function) }),
+        );
     });
 
     it("handleDragEnd does nothing when dropped on the same column", () => {
