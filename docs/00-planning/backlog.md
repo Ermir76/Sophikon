@@ -37,12 +37,12 @@ Points scale:
 | TECH-03-C | TECH                  | Fix `any` types in test files (#29) | P1 | 1 | TECH-01, TECH-02 | V1.0 | DONE | - | S02 |
 | TECH-03-D | TECH                  | Fix query key namespacing + Zustand selectors (#34 #38 #45) | P1 | 1 | TECH-01, TECH-02 | V1.0 | DONE | - | S02 |
 | TECH-03-E | TECH                  | Fix cross-feature internal imports (11 files) (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55) | P1 | 2 | TECH-01, TECH-02 | V1.0 | DONE | - | S02 |
-| TECH-04-A | TECH                  | Batch error state fixes — OrgSwitcher, Kanban drag, Calendar exceptions, Resources (#41 #43 #51 #56) | P2 | 2 | TECH-03-A..E | V1.0 | READY | - | S03 |
-| TECH-04-B | TECH                  | ProfilePage AI error state + remove double refetch (#35) | P2 | 1 | TECH-03-A..E | V1.0 | READY | - | S03 |
-| TECH-04-C | TECH                  | Fix setState in useEffect — CalendarPage + TasksPage (#26) | P2 | 1 | TECH-03-A..E | V1.0 | READY | - | S03 |
-| TECH-04-D | TECH                  | Fix useLayoutEffect missing deps in useCollapsedTree (#30) | P2 | 1 | TECH-03-A..E | V1.0 | READY | - | S03 |
-| TECH-04-E | TECH                  | Fix Gantt milestone/summary click opens detail panel (#46) | P2 | 1 | TECH-03-A..E | V1.0 | READY | - | S03 |
-| TECH-04-F | TECH                  | Fix AI stream error event field name mismatch (#53) | P2 | 1 | TECH-03-A..E | V1.0 | READY | - | S03 |
+| TECH-04-A | TECH                  | Batch error state fixes — OrgSwitcher, Kanban drag, Calendar exceptions, Resources (#41 #43 #51 #56) | P2 | 2 | TECH-03-A..E | V1.0 | DONE | - | S03 |
+| TECH-04-B | TECH                  | ProfilePage AI error state + remove double refetch (#35) | P2 | 1 | TECH-03-A..E | V1.0 | DONE | - | S03 |
+| TECH-04-C | TECH                  | Fix setState in useEffect — CalendarPage + TasksPage (#26) | P2 | 1 | TECH-03-A..E | V1.0 | DONE | - | S03 |
+| TECH-04-D | TECH                  | Fix useLayoutEffect missing deps in useCollapsedTree (#30) | P2 | 1 | TECH-03-A..E | V1.0 | DONE | - | S03 |
+| TECH-04-E | TECH                  | Fix Gantt milestone/summary click opens detail panel (#46) | P2 | 1 | TECH-03-A..E | V1.0 | DONE | - | S03 |
+| TECH-04-F | TECH                  | Fix AI stream error event field name mismatch (#53) | P2 | 1 | TECH-03-A..E | V1.0 | DONE | - | S03 |
 
 ---
 
