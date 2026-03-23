@@ -15,7 +15,13 @@ vi.mock("@/features/tasks/hooks/useTasks", () => ({
 }));
 
 beforeEach(() => {
-    useKanbanStore.setState({ collapsedByProject: {}, searchQuery: "", priorityFilter: "all" });
+    useKanbanStore.setState({
+        collapsedByProject: {},
+        searchQuery: "",
+        priorityFilter: "all",
+        selectedTaskId: null,
+        wipLimitsByProject: {},
+    });
 });
 
 const backlogCol: KanbanColumnType = {
@@ -78,5 +84,12 @@ describe("KanbanColumn", () => {
     it("does not render 'No tasks' when tasks are present", () => {
         render(<KanbanColumn column={backlogCol} tasks={[makeTask("t1", "Task A")]} projectId="proj-1" />);
         expect(screen.queryByText("No tasks")).not.toBeInTheDocument();
+    });
+
+    it("shows warning indicator when task count exceeds WIP limit", () => {
+        const tasks = [makeTask("t1", "Task A"), makeTask("t2", "Task B")];
+        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" wipLimit={1} />);
+        expect(screen.getByText("2/1")).toBeInTheDocument();
+        expect(screen.getByLabelText("Backlog WIP limit exceeded")).toBeInTheDocument();
     });
 });

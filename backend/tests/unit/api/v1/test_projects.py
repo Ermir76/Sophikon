@@ -420,6 +420,39 @@ async def test_update_project_rejects_unknown_settings_keys(client: AsyncClient)
 
 
 @pytest.mark.asyncio
+async def test_update_project_accepts_kanban_wip_limits(client: AsyncClient):
+    """Update accepts bounded kanban_wip_limits keys in settings payload."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_set_wip@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Set Wip",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations", json={"name": "Org Upd Wip", "slug": "org-upd-wip"}
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Wip",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"settings": {"kanban_wip_limits": {"BACKLOG": 3, "TODO": 5}}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["settings"]["kanban_wip_limits"] == {"BACKLOG": 3, "TODO": 5}
+
+
+@pytest.mark.asyncio
 async def test_update_project_success_manager(
     client: AsyncClient, session: AsyncSession, setup_roles
 ):

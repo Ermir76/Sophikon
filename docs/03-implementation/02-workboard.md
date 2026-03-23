@@ -39,21 +39,23 @@ Status: `DONE`
 
 ### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
-- [ ] Add WIP limit config to kanban store (per-column, per-project)
-- [ ] Add UI to set limit in column header (input or settings modal)
-- [ ] Show visual warning on column header when card count exceeds limit
-- [ ] Persist limit setting across sessions
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Add WIP limit config to kanban store (per-column, per-project)
+- [x] Add UI to set limit in column header (input or settings modal)
+- [x] Show visual warning on column header when card count exceeds limit
+- [x] Persist limit setting across sessions
 
 #### Notes
 
 - Dependencies: -
-- Blockers: Storage decision (ADR required first)
-- Decisions: TBD — must resolve localStorage vs backend before writing code
+- Blockers: -
+- Decisions:
+  - Store limits in backend project settings (`project.settings.kanban_wip_limits`) for cross-browser/device persistence
+  - Keep a local kanban store copy for immediate UI state and optimistic updates
 
 ---
 

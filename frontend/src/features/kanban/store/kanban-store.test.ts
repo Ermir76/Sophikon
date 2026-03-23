@@ -10,6 +10,7 @@ describe("useKanbanStore", () => {
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
+            wipLimitsByProject: {},
         });
     });
 
@@ -19,6 +20,7 @@ describe("useKanbanStore", () => {
         expect(state.searchQuery).toBe("");
         expect(state.priorityFilter).toBe("all");
         expect(state.selectedTaskId).toBeNull();
+        expect(state.wipLimitsByProject).toEqual({});
     });
 
     it("toggleCollapse adds column to the project's collapsed list", () => {
@@ -68,5 +70,21 @@ describe("useKanbanStore", () => {
 
         useKanbanStore.getState().clearSelectedTaskId();
         expect(useKanbanStore.getState().selectedTaskId).toBeNull();
+    });
+
+    it("setProjectWipLimits stores limits by project", () => {
+        useKanbanStore.getState().setProjectWipLimits(PROJECT, { BACKLOG: 3, TODO: 5 });
+        expect(useKanbanStore.getState().wipLimitsByProject[PROJECT]).toEqual({
+            BACKLOG: 3,
+            TODO: 5,
+        });
+    });
+
+    it("setColumnWipLimit sets and clears single-column limits", () => {
+        useKanbanStore.getState().setColumnWipLimit(PROJECT, "IN_PROGRESS", 2);
+        expect(useKanbanStore.getState().wipLimitsByProject[PROJECT]?.IN_PROGRESS).toBe(2);
+
+        useKanbanStore.getState().setColumnWipLimit(PROJECT, "IN_PROGRESS", null);
+        expect(useKanbanStore.getState().wipLimitsByProject[PROJECT]?.IN_PROGRESS).toBeUndefined();
     });
 });

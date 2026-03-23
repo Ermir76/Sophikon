@@ -16,10 +16,19 @@ interface KanbanColumnProps {
     column: KanbanColumnType;
     tasks: Task[];
     projectId: string | undefined;
+    wipLimit?: number;
     onTaskClick?: (taskId: string) => void;
+    onSetWipLimit?: (limit: number | null) => void;
 }
 
-export function KanbanColumn({ column, tasks, projectId, onTaskClick }: KanbanColumnProps) {
+export function KanbanColumn({
+    column,
+    tasks,
+    projectId,
+    wipLimit,
+    onTaskClick,
+    onSetWipLimit,
+}: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const collapsedByProject = useKanbanStore((s) => s.collapsedByProject);
     const toggleCollapse = useKanbanStore((s) => s.toggleCollapse);
@@ -79,6 +88,7 @@ export function KanbanColumn({ column, tasks, projectId, onTaskClick }: KanbanCo
     const handleToggleCollapse = () => {
         if (projectId) toggleCollapse(projectId, column.id);
     };
+    const isOverLimit = typeof wipLimit === "number" && tasks.length > wipLimit;
 
     if (isCollapsed) {
         return (
@@ -118,8 +128,11 @@ export function KanbanColumn({ column, tasks, projectId, onTaskClick }: KanbanCo
             <KanbanColumnHeader
                 column={column}
                 count={tasks.length}
+                limit={wipLimit}
+                isOverLimit={isOverLimit}
                 onToggleCollapse={handleToggleCollapse}
                 onAdd={() => setIsAdding(true)}
+                onSetWipLimit={onSetWipLimit}
             />
 
             <div className="flex flex-col flex-1 overflow-y-auto min-h-0 p-2">

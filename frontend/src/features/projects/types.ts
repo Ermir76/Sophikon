@@ -1,7 +1,14 @@
+import type { TaskStatus } from "@/features/tasks";
+
 export interface ProjectSettings {
   auto_calculate: boolean;
   hours_per_day: number;
+  hours_per_week?: number;
   days_per_month: number;
+  first_day_of_week?: number;
+  default_task_type?: "FIXED_UNITS" | "FIXED_DURATION" | "FIXED_WORK";
+  new_tasks_effort_driven?: boolean;
+  kanban_wip_limits?: Partial<Record<TaskStatus, number>>;
   [key: string]: unknown;
 }
 

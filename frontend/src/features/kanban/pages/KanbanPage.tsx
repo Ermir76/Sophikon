@@ -1,13 +1,17 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useParams } from "react-router";
+import { toast } from "sonner";
+import { useProject, useUpdateProject } from "@/features/projects";
 import { TaskDetailPanel, useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
-import { PageLoading } from "@/shared/components/state/PageLoading";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
+import { PageLoading } from "@/shared/components/state/PageLoading";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { KanbanBoard } from "../components/KanbanBoard";
 import { KanbanToolbar, type PriorityFilter } from "../components/KanbanToolbar";
 import { useKanbanStore } from "../store/kanban-store";
-import { KANBAN_COLUMNS, type TaskStatus } from "../types";
+import { KANBAN_COLUMNS, type KanbanWipLimits, type TaskStatus } from "../types";
+import type { ProjectUpdate } from "@/features/projects";
 import type { Task } from "@/features/tasks";
 
 const EMPTY: Task[] = [];
@@ -22,17 +26,68 @@ function matchesPriority(priority: number, filter: PriorityFilter): boolean {
     }
 }
 
+function normalizeWipLimits(raw: unknown): KanbanWipLimits {
+    if (!raw || typeof raw !== "object") return {};
+    const record = raw as Record<string, unknown>;
+    const normalized: KanbanWipLimits = {};
+    for (const column of KANBAN_COLUMNS) {
+        const value = record[column.id];
+        if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+            normalized[column.id] = value;
+        }
+    }
+    return normalized;
+}
+
+function buildProjectSettingsPatch(
+    settings: Record<string, unknown> | undefined,
+    limits: KanbanWipLimits,
+): ProjectUpdate["settings"] {
+    return {
+        hours_per_day: typeof settings?.hours_per_day === "number" ? settings.hours_per_day : undefined,
+        hours_per_week: typeof settings?.hours_per_week === "number" ? settings.hours_per_week : undefined,
+        days_per_month: typeof settings?.days_per_month === "number" ? settings.days_per_month : undefined,
+        first_day_of_week: typeof settings?.first_day_of_week === "number" ? settings.first_day_of_week : undefined,
+        default_task_type:
+            settings?.default_task_type === "FIXED_UNITS"
+            || settings?.default_task_type === "FIXED_DURATION"
+            || settings?.default_task_type === "FIXED_WORK"
+                ? settings.default_task_type
+                : undefined,
+        new_tasks_effort_driven:
+            typeof settings?.new_tasks_effort_driven === "boolean"
+                ? settings.new_tasks_effort_driven
+                : undefined,
+        auto_calculate: typeof settings?.auto_calculate === "boolean" ? settings.auto_calculate : undefined,
+        kanban_wip_limits: limits,
+    };
+}
+
 export default function KanbanPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const { data: taskData, isLoading, error, refetch } = useTasks(projectId);
+    const { data: project } = useProject(projectId);
+    const updateProject = useUpdateProject(projectId);
 
     const searchQuery = useKanbanStore((s) => s.searchQuery);
     const priorityFilter = useKanbanStore((s) => s.priorityFilter);
     const selectedTaskId = useKanbanStore((s) => s.selectedTaskId);
+    const wipLimitsByProject = useKanbanStore((s) => s.wipLimitsByProject);
     const setSearch = useKanbanStore((s) => s.setSearch);
     const setPriorityFilter = useKanbanStore((s) => s.setPriorityFilter);
     const setSelectedTaskId = useKanbanStore((s) => s.setSelectedTaskId);
     const clearSelectedTaskId = useKanbanStore((s) => s.clearSelectedTaskId);
+    const setProjectWipLimits = useKanbanStore((s) => s.setProjectWipLimits);
+
+    const wipLimits = projectId ? (wipLimitsByProject[projectId] ?? {}) : {};
+
+    useEffect(() => {
+        if (!projectId || !project) return;
+        setProjectWipLimits(
+            projectId,
+            normalizeWipLimits(project.settings?.kanban_wip_limits),
+        );
+    }, [projectId, project, setProjectWipLimits]);
 
     const filteredLeafTasks = useMemo(() => {
         return (taskData?.items ?? EMPTY).filter((t) => {
@@ -52,6 +107,35 @@ export default function KanbanPage() {
         }
         return map;
     }, [filteredLeafTasks]);
+
+    const handleSetColumnWipLimit = useCallback(async (
+        status: TaskStatus,
+        limit: number | null,
+    ) => {
+        if (!projectId || !project) return;
+
+        const previous = wipLimitsByProject[projectId] ?? {};
+        const next = { ...previous };
+        if (limit === null) {
+            delete next[status];
+        } else {
+            next[status] = limit;
+        }
+
+        setProjectWipLimits(projectId, next);
+
+        try {
+            await updateProject.mutateAsync({
+                settings: buildProjectSettingsPatch(
+                    (project.settings ?? {}) as Record<string, unknown>,
+                    next,
+                ),
+            });
+        } catch (mutationError) {
+            setProjectWipLimits(projectId, previous);
+            toast.error(getErrorMessage(mutationError));
+        }
+    }, [projectId, project, setProjectWipLimits, updateProject, wipLimitsByProject]);
 
     if (isLoading) return <PageLoading message="Loading tasks..." />;
     if (error) {
@@ -77,7 +161,9 @@ export default function KanbanPage() {
                 <KanbanBoard
                     tasksByStatus={tasksByStatus}
                     projectId={projectId}
+                    wipLimits={wipLimits}
                     onTaskClick={setSelectedTaskId}
+                    onSetColumnWipLimit={handleSetColumnWipLimit}
                 />
             </div>
             <TaskDetailPanel

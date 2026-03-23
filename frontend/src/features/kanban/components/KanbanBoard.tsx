@@ -1,6 +1,6 @@
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { Task } from "@/features/tasks";
-import { KANBAN_COLUMNS, type TaskStatus } from "../types";
+import { KANBAN_COLUMNS, type KanbanWipLimits, type TaskStatus } from "../types";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCard } from "./KanbanCard";
 import { useKanbanDrag } from "../hooks/useKanbanDrag";
@@ -8,10 +8,18 @@ import { useKanbanDrag } from "../hooks/useKanbanDrag";
 interface KanbanBoardProps {
     tasksByStatus: Record<TaskStatus, Task[]>;
     projectId: string | undefined;
+    wipLimits: KanbanWipLimits;
     onTaskClick: (taskId: string) => void;
+    onSetColumnWipLimit: (column: TaskStatus, limit: number | null) => void;
 }
 
-export function KanbanBoard({ tasksByStatus, projectId, onTaskClick }: KanbanBoardProps) {
+export function KanbanBoard({
+    tasksByStatus,
+    projectId,
+    wipLimits,
+    onTaskClick,
+    onSetColumnWipLimit,
+}: KanbanBoardProps) {
     const { sensors, activeTaskId, handleDragStart, handleDragCancel, handleDragEnd } =
         useKanbanDrag(projectId);
 
@@ -35,7 +43,9 @@ export function KanbanBoard({ tasksByStatus, projectId, onTaskClick }: KanbanBoa
                         column={col}
                         tasks={tasksByStatus[col.id]}
                         projectId={projectId}
+                        wipLimit={wipLimits[col.id]}
                         onTaskClick={onTaskClick}
+                        onSetWipLimit={(limit) => onSetColumnWipLimit(col.id, limit)}
                     />
                 ))}
             </div>

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { PriorityFilter, TaskStatus } from "../types";
+import type { KanbanWipLimits, PriorityFilter, TaskStatus } from "../types";
 
 interface KanbanState {
     /** Collapsed column IDs keyed by projectId and persisted per project */
@@ -8,11 +8,18 @@ interface KanbanState {
     searchQuery: string;
     priorityFilter: PriorityFilter;
     selectedTaskId: string | null;
+    wipLimitsByProject: Record<string, KanbanWipLimits>;
     toggleCollapse: (projectId: string, col: TaskStatus) => void;
     setSearch: (q: string) => void;
     setPriorityFilter: (f: PriorityFilter) => void;
     setSelectedTaskId: (taskId: string) => void;
     clearSelectedTaskId: () => void;
+    setProjectWipLimits: (projectId: string, limits: KanbanWipLimits) => void;
+    setColumnWipLimit: (
+        projectId: string,
+        col: TaskStatus,
+        limit: number | null,
+    ) => void;
 }
 
 export const useKanbanStore = create<KanbanState>()(
@@ -22,6 +29,7 @@ export const useKanbanStore = create<KanbanState>()(
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
+            wipLimitsByProject: {},
 
             toggleCollapse: (projectId, col) => {
                 const current = get().collapsedByProject[projectId] ?? [];
@@ -43,6 +51,30 @@ export const useKanbanStore = create<KanbanState>()(
             setSelectedTaskId: (taskId) => set({ selectedTaskId: taskId }),
 
             clearSelectedTaskId: () => set({ selectedTaskId: null }),
+
+            setProjectWipLimits: (projectId, limits) =>
+                set({
+                    wipLimitsByProject: {
+                        ...get().wipLimitsByProject,
+                        [projectId]: limits,
+                    },
+                }),
+
+            setColumnWipLimit: (projectId, col, limit) => {
+                const current = get().wipLimitsByProject[projectId] ?? {};
+                const next = { ...current };
+                if (limit === null) {
+                    delete next[col];
+                } else {
+                    next[col] = limit;
+                }
+                set({
+                    wipLimitsByProject: {
+                        ...get().wipLimitsByProject,
+                        [projectId]: next,
+                    },
+                });
+            },
         }),
         {
             name: "sophikon-kanban-storage",

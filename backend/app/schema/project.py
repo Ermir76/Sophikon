@@ -5,10 +5,11 @@ Pydantic schemas for Project endpoints.
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from app.models.enums import ProjectStatus, ScheduleFrom, TaskType
+from app.models.enums import ProjectStatus, ScheduleFrom, TaskStatus, TaskType
 from app.models.project import Project
 from app.schema._patch import ModelPatchSchema
 
@@ -27,6 +28,9 @@ class ProjectSettingsPatch(BaseModel):
     default_task_type: TaskType | None = Field(default=None)
     new_tasks_effort_driven: bool | None = Field(default=None)
     auto_calculate: bool | None = Field(default=None)
+    kanban_wip_limits: dict[TaskStatus, Annotated[int, Field(ge=1, le=999)]] | None = (
+        Field(default=None, max_length=5)
+    )
 
 
 class ProjectCreate(BaseModel):

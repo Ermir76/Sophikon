@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KanbanPage from "./KanbanPage";
+import { useProject, useUpdateProject } from "@/features/projects";
 import { useTasks } from "@/features/tasks";
 import { useKanbanStore } from "../store/kanban-store";
 import type { Task } from "@/features/tasks";
@@ -18,13 +19,20 @@ vi.mock("@/features/tasks", () => ({
         isOpen ? <div data-testid="task-detail-panel">task detail</div> : null,
 }));
 
+vi.mock("@/features/projects", () => ({
+    useProject: vi.fn(),
+    useUpdateProject: vi.fn(),
+}));
+
 vi.mock("../components/KanbanBoard", () => ({
     KanbanBoard: ({
         tasksByStatus,
         onTaskClick,
+        onSetColumnWipLimit,
     }: {
         tasksByStatus: Record<string, Task[]>;
         onTaskClick: (taskId: string) => void;
+        onSetColumnWipLimit: (status: TaskStatus, limit: number | null) => void;
     }) => (
         <div data-testid="kanban-board">
             {Object.values(tasksByStatus)
@@ -34,6 +42,9 @@ vi.mock("../components/KanbanBoard", () => ({
                         {t.name}
                     </button>
                 ))}
+            <button type="button" onClick={() => onSetColumnWipLimit("BACKLOG", 3)}>
+                set backlog limit
+            </button>
         </div>
     ),
 }));
@@ -100,11 +111,33 @@ function mockLoaded(tasks: Task[]) {
 describe("KanbanPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(useProject).mockReturnValue({
+            data: {
+                id: "proj-1",
+                organization_id: "org-1",
+                name: "Project",
+                start_date: "2025-01-01",
+                schedule_from: "start",
+                status: "active",
+                settings: {
+                    auto_calculate: true,
+                    hours_per_day: 8,
+                    days_per_month: 20,
+                    kanban_wip_limits: { BACKLOG: 2 },
+                },
+                created_at: "2025-01-01T00:00:00Z",
+                updated_at: "2025-01-01T00:00:00Z",
+            },
+        } as never);
+        vi.mocked(useUpdateProject).mockReturnValue({
+            mutateAsync: vi.fn().mockResolvedValue(undefined),
+        } as never);
         useKanbanStore.setState({
             collapsedByProject: {},
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
+            wipLimitsByProject: {},
         });
     });
 
@@ -185,5 +218,16 @@ describe("KanbanPage", () => {
 
         await user.click(screen.getByRole("button", { name: "Write docs" }));
         expect(useKanbanStore.getState().selectedTaskId).toBe("t2");
+    });
+
+    it("updates WIP limit through project settings mutation", async () => {
+        const user = userEvent.setup();
+        const mutateAsync = vi.fn().mockResolvedValue(undefined);
+        vi.mocked(useUpdateProject).mockReturnValue({ mutateAsync } as never);
+        mockLoaded(leafTasks);
+        render(<KanbanPage />);
+
+        await user.click(screen.getByRole("button", { name: "set backlog limit" }));
+        expect(mutateAsync).toHaveBeenCalled();
     });
 });
