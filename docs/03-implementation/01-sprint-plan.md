@@ -56,11 +56,11 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 ## Sprint Review (Fill at end)
 
 - Planned points: `7`
-- Completed points: `-`
-- Carry-over points: `-`
-- Main wins:
-- Main misses:
-- Process changes for next sprint:
+- Completed points: `7`
+- Carry-over points: `0`
+- Main wins: All 6 items shipped; TECH-04-D resolved as eslint-disable (mount-only intent confirmed); TECH-04-E was a clean 1-line removal
+- Main misses: -
+- Process changes for next sprint: -
 
 ---
 

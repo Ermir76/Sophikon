@@ -87,12 +87,12 @@ Status: `DONE`
 
 ### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
-- [ ] Manually verify: single click selects; double click opens panel; no regression on regular task bars
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
 

@@ -34,9 +34,8 @@ export function useGanttInteractions({
     const handleChartTaskClick = useCallback(
         (taskId: string) => {
             onTaskClick(taskId);
-            onTaskDoubleClick(taskId);
         },
-        [onTaskClick, onTaskDoubleClick]
+        [onTaskClick]
     );
 
     const handleChartTaskDoubleClick = useCallback(
