@@ -6,6 +6,66 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S04
+**Dates:** 2026-03-23 -> 2026-04-06
+**Goal:** Kanban enhancement — task detail panel, WIP limits, assignee avatar, dependency indicator
+**Owner(s):** wwwer
+
+### Capacity
+
+- Available focus days: `10`
+- Focus factor: `0.6`
+- Effective days: `10 * 0.6 = 6`
+- Planned points capacity: `7`
+- Buffer: `~15%` (1 pt)
+
+### Commitment Rules
+
+1. Do not exceed planned points capacity.
+2. Do not commit blocked items.
+3. Do not commit items without clear acceptance criteria.
+
+### Committed Items
+
+| Item ID | Title                                                        | Points | Why now                                              | Dependencies | Done criteria                                                                                           |
+| ------- | ------------------------------------------------------------ | ------ | ---------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| KB-01   | Kanban: task detail panel from card (FR-KB-008)              | 2      | P1; unblocks KB-02, KB-05, KB-09                    | -            | Clicking a card opens the existing task detail panel inline; board stays mounted; panel is closeable    |
+| KB-03   | Kanban: WIP limits per column (FR-KB-010)                    | 2      | Independent; high value; no deps                     | -            | Per-column limit configurable; column header shows warning indicator when limit exceeded                |
+| KB-07   | Kanban: assignee avatar on card (FR-KB-014)                  | 1      | Independent; 1-liner; high visibility improvement    | -            | Assignee avatar rendered on card; falls back to initials if no avatar; tooltip shows full name          |
+| KB-08   | Kanban: dependency indicator on card (FR-KB-015)             | 1      | Independent; 1-liner; unblocks team visibility       | -            | Card shows blocked/blocking badge when active dependencies exist; badge links to dependency list        |
+
+**Total committed points:** `6`
+
+### Stretch (Optional)
+
+| Item ID | Title                                         | Points | Trigger to pull in           |
+| ------- | --------------------------------------------- | ------ | ---------------------------- |
+| KB-02   | Kanban: card reordering within column (FR-KB-009) | 2  | Pull in if KB-01 ships early |
+
+### Risks and Blockers
+
+| Risk/Blocker                                                        | Impact                              | Mitigation                                                              | Owner |
+| ------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- | ----- |
+| Task detail panel integration may need new barrel exports           | Scope creep into tasks feature      | Read tasks barrel first; add exports cleanly without touching internals | wwwer |
+| WIP limit storage (localStorage vs backend) requires design decision | Architecture choice before coding  | Decide and write ADR before touching code                               | wwwer |
+
+---
+
+## Sprint Review (Fill at end)
+
+- Planned points: `6`
+- Completed points: `-`
+- Carry-over points: `-`
+- Main wins:
+- Main misses:
+- Process changes for next sprint:
+
+---
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S03
 **Dates:** 2026-03-22 -> 2026-04-05
 **Goal:** Fix P2 frontend bugs — missing error states, hook anti-patterns, Gantt UX inconsistency, and AI stream contract mismatch

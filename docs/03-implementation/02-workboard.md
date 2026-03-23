@@ -2,15 +2,96 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S03
-**Dates:** 2026-03-22 -> 2026-04-05
+**Sprint ID:** S04
+**Dates:** 2026-03-23 -> 2026-04-06
 **References:** `docs/03-implementation/sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S03
+## Active Items — S04
+
+### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [ ] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
+- [ ] Wire card click to set `selectedTaskId` (replace current no-op)
+- [ ] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [ ] Ensure panel is closeable (Escape key + close button)
+- [ ] Verify board stays mounted and interactive while panel is open
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+
+---
+
+### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [ ] Add WIP limit config to kanban store (per-column, per-project)
+- [ ] Add UI to set limit in column header (input or settings modal)
+- [ ] Show visual warning on column header when card count exceeds limit
+- [ ] Persist limit setting across sessions
+
+#### Notes
+
+- Dependencies: -
+- Blockers: Storage decision (ADR required first)
+- Decisions: TBD — must resolve localStorage vs backend before writing code
+
+---
+
+### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Read assignment data available on task card (check if `assignments` is already in task query response)
+- [ ] Render assignee avatar on `KanbanCard` — use shared avatar component; fallback to initials
+- [ ] Add tooltip with full assignee name on hover
+- [ ] Handle unassigned state gracefully (no avatar rendered)
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Use existing shared avatar/initials pattern — do not introduce new component
+
+---
+
+### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Check if dependency data is available in current task query response
+- [ ] Add blocked/blocking badge to `KanbanCard` when active dependencies exist
+- [ ] Blocked = has predecessor with unfinished status; Blocking = has successor
+- [ ] Badge should be visually distinct (e.g. icon + count)
+
+#### Notes
+
+- Dependencies: -
+- Blockers: Depends on whether dependency data is included in task list API response
+- Decisions: TBD — if not in response, decide whether to add to query or use separate fetch
+
+---
+
+## Previous Sprint Items — S03
 
 ### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
 
