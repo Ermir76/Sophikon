@@ -33,9 +33,20 @@ interface KanbanCardProps {
     dependencyIndicator?: KanbanDependencyIndicator;
     isDragOverlay?: boolean;
     onClick?: (taskId: string) => void;
+    isKeyboardFocused?: boolean;
+    onFocus?: (taskId: string) => void;
+    cardRef?: (node: HTMLDivElement | null) => void;
 }
 
-export function KanbanCard({ task, dependencyIndicator, isDragOverlay = false, onClick }: KanbanCardProps) {
+export function KanbanCard({
+    task,
+    dependencyIndicator,
+    isDragOverlay = false,
+    onClick,
+    isKeyboardFocused = false,
+    onFocus,
+    cardRef,
+}: KanbanCardProps) {
     const { setNodeRef, listeners, attributes, transform, transition, isDragging } = useSortable({
         id: task.id,
         data: {
@@ -68,16 +79,27 @@ export function KanbanCard({ task, dependencyIndicator, isDragOverlay = false, o
         event.stopPropagation();
     };
 
+    const handleFocus = () => {
+        if (isDragOverlay) return;
+        onFocus?.(task.id);
+    };
+
     return (
         <div
-            ref={isDragOverlay ? undefined : setNodeRef}
+            ref={isDragOverlay ? undefined : (node) => {
+                setNodeRef(node);
+                cardRef?.(node);
+            }}
             style={style}
             {...(isDragOverlay ? {} : listeners)}
             {...(isDragOverlay ? {} : attributes)}
             onClick={isDragOverlay ? undefined : () => onClick?.(task.id)}
+            onFocus={handleFocus}
+            tabIndex={isDragOverlay ? undefined : (isKeyboardFocused ? 0 : -1)}
+            data-task-id={task.id}
             className={`flex rounded-lg border border-border bg-card shadow-sm cursor-grab active:cursor-grabbing select-none overflow-hidden hover:shadow-md transition-shadow ${
                 !isDragOverlay && isDragging ? "opacity-40" : ""
-            }`}
+            } ${isKeyboardFocused ? "ring-2 ring-primary/40" : ""}`}
         >
             {/* Left color strip — inline style required for dynamic task.color */}
             <div className="w-[3px] shrink-0" style={{ backgroundColor: task.color ?? "transparent" }} />

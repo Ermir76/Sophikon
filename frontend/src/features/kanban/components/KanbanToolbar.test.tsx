@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { KanbanToolbar } from "./KanbanToolbar";
 import type { PriorityFilter } from "./KanbanToolbar";
+import { TooltipProvider } from "@/shared/ui/tooltip";
 
 function renderToolbar(overrides?: Partial<Parameters<typeof KanbanToolbar>[0]>) {
     const props = {
@@ -13,7 +14,7 @@ function renderToolbar(overrides?: Partial<Parameters<typeof KanbanToolbar>[0]>)
         onLaneModeChange: vi.fn(),
         ...overrides,
     };
-    return { ...render(<KanbanToolbar {...props} />), props };
+    return { ...render(<TooltipProvider><KanbanToolbar {...props} /></TooltipProvider>), props };
 }
 
 describe("KanbanToolbar", () => {
@@ -32,5 +33,10 @@ describe("KanbanToolbar", () => {
     it("renders priority and lane mode select triggers", () => {
         renderToolbar();
         expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    });
+
+    it("renders keyboard shortcuts help control", () => {
+        renderToolbar();
+        expect(screen.getByRole("button", { name: "Keyboard shortcuts help" })).toBeInTheDocument();
     });
 });

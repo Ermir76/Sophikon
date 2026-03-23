@@ -240,7 +240,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-009 | Drag to reorder cards within a column                                           | Should | DONE    |
 | FR-KB-010 | WIP limits — set max cards per column with visual warning when exceeded         | Should | DONE    |
 | FR-KB-011 | Swimlanes — group cards by assignee or priority within each column              | Should | DONE    |
-| FR-KB-012 | Keyboard shortcuts — quick-add card, arrow navigation between cards             | Should | PENDING |
+| FR-KB-012 | Keyboard shortcuts — quick-add card, arrow navigation between cards             | Should | DONE    |
 | FR-KB-013 | Bulk select and move multiple cards across columns                              | Should | PENDING |
 | FR-KB-014 | Show assignee avatar on card                                                    | Should | DONE    |
 | FR-KB-015 | Show dependency indicator on card — blocked and blocking states                 | Should | DONE    |

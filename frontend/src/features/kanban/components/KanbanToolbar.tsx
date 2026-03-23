@@ -12,6 +12,7 @@ import {
     type KanbanLaneMode,
     type PriorityFilter,
 } from "../types";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 
 export type { PriorityFilter };
 
@@ -73,6 +74,22 @@ export function KanbanToolbar({
                     ))}
                 </SelectContent>
             </Select>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="h-9 rounded-md border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-muted/50"
+                        aria-label="Keyboard shortcuts help"
+                    >
+                        Shortcuts
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent className="space-y-1 text-xs">
+                    <p><kbd className="rounded border border-border bg-muted px-1 py-0.5">N</kbd> Quick-add in focused column</p>
+                    <p><kbd className="rounded border border-border bg-muted px-1 py-0.5">Arrow keys</kbd> Move card focus</p>
+                    <p><kbd className="rounded border border-border bg-muted px-1 py-0.5">Enter</kbd> Open focused card</p>
+                </TooltipContent>
+            </Tooltip>
         </div>
     );
 }

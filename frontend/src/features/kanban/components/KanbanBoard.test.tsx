@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanBoard } from "./KanbanBoard";
@@ -143,5 +144,68 @@ describe("KanbanBoard", () => {
         expect(screen.getByText("Write spec")).toBeInTheDocument();
         expect(screen.getByText("Implement API")).toBeInTheDocument();
         expect(screen.getByText("Deploy v1")).toBeInTheDocument();
+    });
+
+    it("supports keyboard navigation and enter-to-open", async () => {
+        const user = userEvent.setup();
+        const onTaskClick = vi.fn();
+        const board = makeEmptyBoard();
+        board.BACKLOG = [makeTask("t1", "Backlog A", "BACKLOG"), makeTask("t2", "Backlog B", "BACKLOG")];
+        board.TODO = [makeTask("t3", "Todo A", "TODO")];
+
+        render(
+            <KanbanBoard
+                tasksByStatus={board}
+                allLeafTasksByStatus={board}
+                allTasks={Object.values(board).flat()}
+                dependencyIndicatorsByTaskId={{}}
+                projectId="proj-1"
+                wipLimits={{}}
+                laneMode="none"
+                onTaskClick={onTaskClick}
+                onSetColumnWipLimit={vi.fn()}
+            />
+        );
+
+        await user.tab();
+        expect(document.activeElement).toHaveAttribute("data-task-id", "t1");
+
+        await user.keyboard("{ArrowDown}");
+        expect(document.activeElement).toHaveAttribute("data-task-id", "t2");
+
+        await user.keyboard("{ArrowRight}");
+        expect(document.activeElement).toHaveAttribute("data-task-id", "t3");
+
+        await user.keyboard("{Enter}");
+        expect(onTaskClick).toHaveBeenCalledWith("t3");
+    });
+
+    it("opens quick-add with n and ignores board shortcuts while input is focused", async () => {
+        const user = userEvent.setup();
+        const onTaskClick = vi.fn();
+        const board = makeEmptyBoard();
+        board.BACKLOG = [makeTask("t1", "Backlog A", "BACKLOG")];
+
+        render(
+            <KanbanBoard
+                tasksByStatus={board}
+                allLeafTasksByStatus={board}
+                allTasks={Object.values(board).flat()}
+                dependencyIndicatorsByTaskId={{}}
+                projectId="proj-1"
+                wipLimits={{}}
+                laneMode="none"
+                onTaskClick={onTaskClick}
+                onSetColumnWipLimit={vi.fn()}
+            />
+        );
+
+        await user.tab();
+        await user.keyboard("n");
+        const input = await screen.findByPlaceholderText("Task name...");
+        input.focus();
+
+        await user.keyboard("{Enter}");
+        expect(onTaskClick).not.toHaveBeenCalled();
     });
 });

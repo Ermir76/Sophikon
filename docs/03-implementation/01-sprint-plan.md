@@ -33,7 +33,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011)           | 3      | Highest visibility improvement for team-level workload balancing | -    | Board can group cards by assignee or priority within each status column, with clear lane headers        |
 | KB-05   | Kanban: keyboard shortcuts (FR-KB-012)                       | 2      | Improves execution speed and accessibility without backend risk | KB-01 | Quick-add and keyboard navigation work end-to-end on the board with documented shortcut hints            |
 
-Progress update (2026-03-23): `KB-02` and `KB-04` completed.
+Progress update (2026-03-23): `KB-02`, `KB-04`, and `KB-05` completed.
 
 **Total committed points:** `7`
 

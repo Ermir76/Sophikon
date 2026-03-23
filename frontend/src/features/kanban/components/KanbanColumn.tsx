@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ChevronsRight, LayoutList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateTask } from "@/features/tasks";
+import { getErrorMessage } from "@/shared/lib/errors";
 import { Input } from "@/shared/ui/input";
 import type { Task, TaskAssignmentSummary } from "@/features/tasks";
 import type {
@@ -26,6 +27,10 @@ interface KanbanColumnProps {
     laneMode: KanbanLaneMode;
     onTaskClick?: (taskId: string) => void;
     onSetWipLimit?: (limit: number | null) => void;
+    focusedTaskId?: string | null;
+    onCardFocus?: (taskId: string) => void;
+    getCardRef?: (taskId: string) => (node: HTMLDivElement | null) => void;
+    quickAddNonce?: number;
 }
 
 interface KanbanLane {
@@ -116,6 +121,10 @@ export function KanbanColumn({
     laneMode,
     onTaskClick,
     onSetWipLimit,
+    focusedTaskId,
+    onCardFocus,
+    getCardRef,
+    quickAddNonce = 0,
 }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: column.id,
@@ -132,6 +141,7 @@ export function KanbanColumn({
     const createTask = useCreateTask(projectId);
     const isSubmitting = useRef(false);
     const isMounted = useRef(true);
+    const lastQuickAddNonceRef = useRef(0);
 
     const lanes = useMemo(() => buildLanes(tasks, laneMode), [tasks, laneMode]);
 
@@ -140,6 +150,12 @@ export function KanbanColumn({
             isMounted.current = false;
         };
     }, []);
+
+    useEffect(() => {
+        if (quickAddNonce <= 0 || quickAddNonce === lastQuickAddNonceRef.current) return;
+        lastQuickAddNonceRef.current = quickAddNonce;
+        setIsAdding(true);
+    }, [quickAddNonce]);
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") handleSubmit();
@@ -169,9 +185,9 @@ export function KanbanColumn({
                 setTaskName("");
                 setIsAdding(false);
             }
-        } catch {
+        } catch (error) {
             if (isMounted.current) {
-                toast.error("Failed to create task");
+                toast.error(getErrorMessage(error));
             }
         } finally {
             isSubmitting.current = false;
@@ -243,6 +259,9 @@ export function KanbanColumn({
                                     task={task}
                                     dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                     onClick={onTaskClick}
+                                    isKeyboardFocused={focusedTaskId === task.id}
+                                    onFocus={onCardFocus}
+                                    cardRef={getCardRef?.(task.id)}
                                 />
                             ))}
                         </div>
@@ -265,6 +284,9 @@ export function KanbanColumn({
                                                 task={task}
                                                 dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                                 onClick={onTaskClick}
+                                                isKeyboardFocused={focusedTaskId === task.id}
+                                                onFocus={onCardFocus}
+                                                cardRef={getCardRef?.(task.id)}
                                             />
                                         ))}
                                     </div>

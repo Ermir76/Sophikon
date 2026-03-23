@@ -64,16 +64,16 @@ Status: `DONE`
 
 ### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Define shortcut map for MVP (`n` quick-add, arrow navigation between cards, Enter to open detail)
-- [ ] Implement board-focus and roving-focus model for card navigation
-- [ ] Implement quick-add shortcut targeting the currently focused column
-- [ ] Guard shortcuts when text inputs or editors are focused
-- [ ] Add visible shortcut hints in board UI/help tooltip
-- [ ] Add tests for keyboard navigation and quick-add behaviors
+- [x] Define shortcut map for MVP (`n` quick-add, arrow navigation between cards, Enter to open detail)
+- [x] Implement board-focus and roving-focus model for card navigation
+- [x] Implement quick-add shortcut targeting the currently focused column
+- [x] Guard shortcuts when text inputs or editors are focused
+- [x] Add visible shortcut hints in board UI/help tooltip
+- [x] Add tests for keyboard navigation and quick-add behaviors
 
 #### Notes
 
@@ -82,6 +82,8 @@ Status: `NOT_STARTED`
 - Decisions:
   - Shortcuts are active only when kanban board has focus context
   - Browser/reserved combos are out of scope for this sprint
+  - `n` targets the focused card's column; when no card is focused, fallback target is `BACKLOG`
+  - Enter opens the currently roving-focused card detail and is ignored while input/editor controls are focused
 
 ---
 

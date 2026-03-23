@@ -193,4 +193,32 @@ describe("KanbanColumn", () => {
         expect(latestCall.id).toBe("BACKLOG");
         expect(latestCall.items).toEqual(["t1", "t2"]);
     });
+
+    it("opens quick-add input when quickAddNonce increments", () => {
+        const { rerender } = render(
+            <KanbanColumn
+                column={backlogCol}
+                tasks={[makeTask("t1", "Task A")]}
+                dependencyIndicatorsByTaskId={{}}
+                projectId="proj-1"
+                laneMode="none"
+                quickAddNonce={0}
+            />
+        );
+
+        expect(screen.queryByPlaceholderText("Task name...")).not.toBeInTheDocument();
+
+        rerender(
+            <KanbanColumn
+                column={backlogCol}
+                tasks={[makeTask("t1", "Task A")]}
+                dependencyIndicatorsByTaskId={{}}
+                projectId="proj-1"
+                laneMode="none"
+                quickAddNonce={1}
+            />
+        );
+
+        expect(screen.getByPlaceholderText("Task name...")).toBeInTheDocument();
+    });
 });
