@@ -9,6 +9,8 @@ function renderToolbar(overrides?: Partial<Parameters<typeof KanbanToolbar>[0]>)
         onSearchChange: vi.fn(),
         priorityFilter: "all" as PriorityFilter,
         onPriorityFilterChange: vi.fn(),
+        laneMode: "none" as const,
+        onLaneModeChange: vi.fn(),
         ...overrides,
     };
     return { ...render(<KanbanToolbar {...props} />), props };
@@ -27,8 +29,8 @@ describe("KanbanToolbar", () => {
         expect(props.onSearchChange).toHaveBeenCalledWith("deploy");
     });
 
-    it("renders priority filter select trigger", () => {
+    it("renders priority and lane mode select triggers", () => {
         renderToolbar();
-        expect(screen.getByRole("combobox")).toBeInTheDocument();
+        expect(screen.getAllByRole("combobox")).toHaveLength(2);
     });
 });

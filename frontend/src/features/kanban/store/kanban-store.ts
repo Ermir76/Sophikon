@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { KanbanWipLimits, PriorityFilter, TaskStatus } from "../types";
+import type { KanbanLaneMode, KanbanWipLimits, PriorityFilter, TaskStatus } from "../types";
 
 interface KanbanState {
     /** Collapsed column IDs keyed by projectId and persisted per project */
     collapsedByProject: Record<string, TaskStatus[]>;
+    laneModeByProject: Record<string, KanbanLaneMode>;
     searchQuery: string;
     priorityFilter: PriorityFilter;
     selectedTaskId: string | null;
     wipLimitsByProject: Record<string, KanbanWipLimits>;
     toggleCollapse: (projectId: string, col: TaskStatus) => void;
+    setProjectLaneMode: (projectId: string, laneMode: KanbanLaneMode) => void;
     setSearch: (q: string) => void;
     setPriorityFilter: (f: PriorityFilter) => void;
     setSelectedTaskId: (taskId: string) => void;
@@ -26,6 +28,7 @@ export const useKanbanStore = create<KanbanState>()(
     persist(
         (set, get) => ({
             collapsedByProject: {},
+            laneModeByProject: {},
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
@@ -43,6 +46,14 @@ export const useKanbanStore = create<KanbanState>()(
                     },
                 });
             },
+
+            setProjectLaneMode: (projectId, laneMode) =>
+                set({
+                    laneModeByProject: {
+                        ...get().laneModeByProject,
+                        [projectId]: laneMode,
+                    },
+                }),
 
             setSearch: (q) => set({ searchQuery: q }),
 
@@ -78,7 +89,10 @@ export const useKanbanStore = create<KanbanState>()(
         }),
         {
             name: "sophikon-kanban-storage",
-            partialize: (state) => ({ collapsedByProject: state.collapsedByProject }),
+            partialize: (state) => ({
+                collapsedByProject: state.collapsedByProject,
+                laneModeByProject: state.laneModeByProject,
+            }),
         },
     ),
 );

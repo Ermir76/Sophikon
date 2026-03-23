@@ -47,7 +47,7 @@ Points scale:
 | KB-01 | FR | Kanban: task detail panel from card (FR-KB-008) | P1 | 2 | TECH-04-A..F | V1.0 | DONE | - | S04 |
 | KB-02 | FR | Kanban: card reordering within column (FR-KB-009) | P2 | 2 | KB-01 | V1.0 | DONE | - | S05 |
 | KB-03 | FR | Kanban: WIP limits per column (FR-KB-010) | P2 | 2 | - | V1.0 | DONE | - | S04 |
-| KB-04 | FR | Kanban: swimlanes by assignee/priority (FR-KB-011) | P2 | 3 | - | V1.0 | READY | - | S05 |
+| KB-04 | FR | Kanban: swimlanes by assignee/priority (FR-KB-011) | P2 | 3 | - | V1.0 | DONE | - | S05 |
 | KB-05 | FR | Kanban: keyboard shortcuts (FR-KB-012) | P2 | 2 | KB-01 | V1.0 | READY | - | S05 |
 | KB-06 | FR | Kanban: bulk select and move cards (FR-KB-013) | P2 | 2 | - | V1.0 | READY | - | - |
 | KB-07 | FR | Kanban: assignee avatar on card (FR-KB-014) | P2 | 1 | - | V1.0 | DONE | - | S04 |
@@ -80,6 +80,7 @@ Points scale:
 | KB-01     | Kanban: task detail panel from card (FR-KB-008)                                                     | 2      | S04    |
 | KB-02     | Kanban: card reordering within column (FR-KB-009)                                                   | 2      | S05    |
 | KB-03     | Kanban: WIP limits per column (FR-KB-010)                                                           | 2      | S04    |
+| KB-04     | Kanban: swimlanes by assignee/priority (FR-KB-011)                                                  | 3      | S05    |
 | KB-07     | Kanban: assignee avatar on card (FR-KB-014)                                                         | 1      | S04    |
 | KB-08     | Kanban: dependency indicator on card (FR-KB-015)                                                    | 1      | S04    |
 
@@ -87,7 +88,6 @@ Points scale:
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011) | 3      | READY  | -                            |
 | KB-05   | Kanban: keyboard shortcuts (FR-KB-012)             | 2      | READY  | Dependency `KB-01` complete  |
 | KB-06   | Kanban: bulk select and move cards (FR-KB-013)     | 2      | READY  | -                            |
 | KB-09   | Kanban: AI sprint health summary (FR-KB-016)       | 3      | READY  | Dependency `KB-01` complete  |

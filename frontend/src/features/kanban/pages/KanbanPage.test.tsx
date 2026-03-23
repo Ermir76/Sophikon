@@ -29,15 +29,18 @@ vi.mock("../components/KanbanBoard", () => ({
     KanbanBoard: ({
         tasksByStatus,
         dependencyIndicatorsByTaskId,
+        laneMode,
         onTaskClick,
         onSetColumnWipLimit,
     }: {
         tasksByStatus: Record<string, Task[]>;
         dependencyIndicatorsByTaskId: Record<string, { blockedCount: number; blockingCount: number }>;
+        laneMode: "none" | "assignee" | "priority";
         onTaskClick: (taskId: string) => void;
         onSetColumnWipLimit: (status: TaskStatus, limit: number | null) => void;
     }) => (
         <div data-testid="kanban-board">
+            <span data-testid="lane-mode">{laneMode}</span>
             {Object.values(tasksByStatus)
                 .flat()
                 .map((t) => (
@@ -162,6 +165,7 @@ describe("KanbanPage", () => {
         mockDependencies([]);
         useKanbanStore.setState({
             collapsedByProject: {},
+            laneModeByProject: {},
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
@@ -195,9 +199,17 @@ describe("KanbanPage", () => {
         mockLoaded([...leafTasks, summaryTask]);
         render(<KanbanPage />);
         expect(screen.getByTestId("kanban-board")).toBeInTheDocument();
+        expect(screen.getByTestId("lane-mode")).toHaveTextContent("none");
         expect(screen.getByText("Deploy API")).toBeInTheDocument();
         expect(screen.getByText("Write docs")).toBeInTheDocument();
         expect(screen.getByText("Authentication")).toBeInTheDocument();
+    });
+
+    it("passes project lane mode preference to board", () => {
+        mockLoaded(leafTasks);
+        useKanbanStore.getState().setProjectLaneMode("proj-1", "assignee");
+        render(<KanbanPage />);
+        expect(screen.getByTestId("lane-mode")).toHaveTextContent("assignee");
     });
 
     it("filters out summary tasks", () => {

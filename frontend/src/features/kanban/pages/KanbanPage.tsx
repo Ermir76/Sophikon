@@ -77,15 +77,18 @@ export default function KanbanPage() {
 
     const searchQuery = useKanbanStore((s) => s.searchQuery);
     const priorityFilter = useKanbanStore((s) => s.priorityFilter);
+    const laneModeByProject = useKanbanStore((s) => s.laneModeByProject);
     const selectedTaskId = useKanbanStore((s) => s.selectedTaskId);
     const wipLimitsByProject = useKanbanStore((s) => s.wipLimitsByProject);
     const setSearch = useKanbanStore((s) => s.setSearch);
     const setPriorityFilter = useKanbanStore((s) => s.setPriorityFilter);
+    const setProjectLaneMode = useKanbanStore((s) => s.setProjectLaneMode);
     const setSelectedTaskId = useKanbanStore((s) => s.setSelectedTaskId);
     const clearSelectedTaskId = useKanbanStore((s) => s.clearSelectedTaskId);
     const setProjectWipLimits = useKanbanStore((s) => s.setProjectWipLimits);
 
     const wipLimits = projectId ? (wipLimitsByProject[projectId] ?? {}) : {};
+    const laneMode = projectId ? (laneModeByProject[projectId] ?? "none") : "none";
 
     useEffect(() => {
         if (!projectId || !project) return;
@@ -205,6 +208,11 @@ export default function KanbanPage() {
                     onSearchChange={setSearch}
                     priorityFilter={priorityFilter}
                     onPriorityFilterChange={setPriorityFilter}
+                    laneMode={laneMode}
+                    onLaneModeChange={(nextMode) => {
+                        if (!projectId) return;
+                        setProjectLaneMode(projectId, nextMode);
+                    }}
                 />
             </div>
             <div className="flex-1 overflow-hidden min-h-0">
@@ -215,6 +223,7 @@ export default function KanbanPage() {
                     dependencyIndicatorsByTaskId={dependencyIndicatorsByTaskId}
                     projectId={projectId}
                     wipLimits={wipLimits}
+                    laneMode={laneMode}
                     onTaskClick={setSelectedTaskId}
                     onSetColumnWipLimit={handleSetColumnWipLimit}
                 />

@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import type { Task } from "@/features/tasks";
 import {
     KANBAN_COLUMNS,
+    type KanbanLaneMode,
     type KanbanDependencyIndicatorsByTaskId,
     type KanbanWipLimits,
     type TaskStatus,
@@ -17,6 +18,7 @@ interface KanbanBoardProps {
     dependencyIndicatorsByTaskId: KanbanDependencyIndicatorsByTaskId;
     projectId: string | undefined;
     wipLimits: KanbanWipLimits;
+    laneMode: KanbanLaneMode;
     onTaskClick: (taskId: string) => void;
     onSetColumnWipLimit: (column: TaskStatus, limit: number | null) => void;
 }
@@ -28,6 +30,7 @@ export function KanbanBoard({
     dependencyIndicatorsByTaskId,
     projectId,
     wipLimits,
+    laneMode,
     onTaskClick,
     onSetColumnWipLimit,
 }: KanbanBoardProps) {
@@ -57,6 +60,7 @@ export function KanbanBoard({
                         dependencyIndicatorsByTaskId={dependencyIndicatorsByTaskId}
                         projectId={projectId}
                         wipLimit={wipLimits[col.id]}
+                        laneMode={laneMode}
                         onTaskClick={onTaskClick}
                         onSetWipLimit={(limit) => onSetColumnWipLimit(col.id, limit)}
                     />

@@ -7,6 +7,7 @@ describe("useKanbanStore", () => {
     beforeEach(() => {
         useKanbanStore.setState({
             collapsedByProject: {},
+            laneModeByProject: {},
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
@@ -17,10 +18,19 @@ describe("useKanbanStore", () => {
     it("initial state has no collapsed columns and empty search", () => {
         const state = useKanbanStore.getState();
         expect(state.collapsedByProject).toEqual({});
+        expect(state.laneModeByProject).toEqual({});
         expect(state.searchQuery).toBe("");
         expect(state.priorityFilter).toBe("all");
         expect(state.selectedTaskId).toBeNull();
         expect(state.wipLimitsByProject).toEqual({});
+    });
+
+    it("setProjectLaneMode stores lane mode by project", () => {
+        useKanbanStore.getState().setProjectLaneMode(PROJECT, "assignee");
+        useKanbanStore.getState().setProjectLaneMode("proj-2", "priority");
+
+        expect(useKanbanStore.getState().laneModeByProject[PROJECT]).toBe("assignee");
+        expect(useKanbanStore.getState().laneModeByProject["proj-2"]).toBe("priority");
     });
 
     it("toggleCollapse adds column to the project's collapsed list", () => {

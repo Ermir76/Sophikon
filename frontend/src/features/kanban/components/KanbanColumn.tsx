@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { format } from "date-fns";
@@ -7,10 +7,11 @@ import { ChevronsRight, LayoutList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateTask } from "@/features/tasks";
 import { Input } from "@/shared/ui/input";
-import type { Task } from "@/features/tasks";
+import type { Task, TaskAssignmentSummary } from "@/features/tasks";
 import type {
     KanbanColumn as KanbanColumnType,
     KanbanDependencyIndicatorsByTaskId,
+    KanbanLaneMode,
 } from "../types";
 import { useKanbanStore } from "../store/kanban-store";
 import { KanbanCard } from "./KanbanCard";
@@ -22,8 +23,88 @@ interface KanbanColumnProps {
     dependencyIndicatorsByTaskId: KanbanDependencyIndicatorsByTaskId;
     projectId: string | undefined;
     wipLimit?: number;
+    laneMode: KanbanLaneMode;
     onTaskClick?: (taskId: string) => void;
     onSetWipLimit?: (limit: number | null) => void;
+}
+
+interface KanbanLane {
+    id: string;
+    label: string;
+    tasks: Task[];
+}
+
+const PRIORITY_LANE_ORDER = ["priority:high", "priority:medium", "priority:low", "priority:minimal"] as const;
+
+const PRIORITY_LANE_LABEL: Record<(typeof PRIORITY_LANE_ORDER)[number], string> = {
+    "priority:high": "High priority",
+    "priority:medium": "Medium priority",
+    "priority:low": "Low priority",
+    "priority:minimal": "Minimal priority",
+};
+
+const ASSIGNEE_UNASSIGNED_LANE_ID = "assignee:unassigned";
+
+function getPriorityLaneId(priority: number): (typeof PRIORITY_LANE_ORDER)[number] {
+    if (priority >= 750) return "priority:high";
+    if (priority >= 500) return "priority:medium";
+    if (priority >= 250) return "priority:low";
+    return "priority:minimal";
+}
+
+function getPrimaryAssignee(task: Task): TaskAssignmentSummary | null {
+    const assignments = task.assignments ?? [];
+    if (assignments.length === 0) return null;
+
+    return assignments.reduce((best, current) => {
+        const byName = current.resource_name.localeCompare(best.resource_name);
+        if (byName !== 0) return byName < 0 ? current : best;
+        return current.resource_id.localeCompare(best.resource_id) < 0 ? current : best;
+    });
+}
+
+function buildAssigneeLanes(tasks: Task[]): KanbanLane[] {
+    const byId: Record<string, KanbanLane> = {};
+
+    for (const task of tasks) {
+        const assignee = getPrimaryAssignee(task);
+        const laneId = assignee ? `assignee:${assignee.resource_id}` : ASSIGNEE_UNASSIGNED_LANE_ID;
+        const laneLabel = assignee ? assignee.resource_name : "Unassigned";
+
+        if (!byId[laneId]) {
+            byId[laneId] = { id: laneId, label: laneLabel, tasks: [] };
+        }
+
+        byId[laneId].tasks.push(task);
+    }
+
+    return Object.values(byId).sort((left, right) => {
+        if (left.id === ASSIGNEE_UNASSIGNED_LANE_ID) return -1;
+        if (right.id === ASSIGNEE_UNASSIGNED_LANE_ID) return 1;
+        return left.label.localeCompare(right.label);
+    });
+}
+
+function buildPriorityLanes(tasks: Task[]): KanbanLane[] {
+    const byId: Record<(typeof PRIORITY_LANE_ORDER)[number], KanbanLane> = {
+        "priority:high": { id: "priority:high", label: PRIORITY_LANE_LABEL["priority:high"], tasks: [] },
+        "priority:medium": { id: "priority:medium", label: PRIORITY_LANE_LABEL["priority:medium"], tasks: [] },
+        "priority:low": { id: "priority:low", label: PRIORITY_LANE_LABEL["priority:low"], tasks: [] },
+        "priority:minimal": { id: "priority:minimal", label: PRIORITY_LANE_LABEL["priority:minimal"], tasks: [] },
+    };
+
+    for (const task of tasks) {
+        byId[getPriorityLaneId(task.priority)].tasks.push(task);
+    }
+
+    return PRIORITY_LANE_ORDER.map((laneId) => byId[laneId]).filter((lane) => lane.tasks.length > 0);
+}
+
+function buildLanes(tasks: Task[], laneMode: KanbanLaneMode): KanbanLane[] {
+    if (laneMode === "assignee") return buildAssigneeLanes(tasks);
+    if (laneMode === "priority") return buildPriorityLanes(tasks);
+
+    return [{ id: "none", label: "All tasks", tasks }];
 }
 
 export function KanbanColumn({
@@ -32,6 +113,7 @@ export function KanbanColumn({
     dependencyIndicatorsByTaskId,
     projectId,
     wipLimit,
+    laneMode,
     onTaskClick,
     onSetWipLimit,
 }: KanbanColumnProps) {
@@ -50,6 +132,8 @@ export function KanbanColumn({
     const createTask = useCreateTask(projectId);
     const isSubmitting = useRef(false);
     const isMounted = useRef(true);
+
+    const lanes = useMemo(() => buildLanes(tasks, laneMode), [tasks, laneMode]);
 
     useEffect(() => {
         return () => {
@@ -150,7 +234,7 @@ export function KanbanColumn({
                         <LayoutList className="size-6 mb-2 opacity-40" />
                         <p className="text-xs">No tasks</p>
                     </div>
-                ) : (
+                ) : laneMode === "none" ? (
                     <SortableContext id={column.id} items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-2">
                             {tasks.map((task) => (
@@ -160,6 +244,31 @@ export function KanbanColumn({
                                     dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                     onClick={onTaskClick}
                                 />
+                            ))}
+                        </div>
+                    </SortableContext>
+                ) : (
+                    <SortableContext id={column.id} items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-3">
+                            {lanes.map((lane) => (
+                                <section key={lane.id} className="space-y-2">
+                                    <header className="flex items-center justify-between rounded-md border border-border/60 bg-background/60 px-2 py-1">
+                                        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                                            {lane.label}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground">{lane.tasks.length}</span>
+                                    </header>
+                                    <div className="space-y-2">
+                                        {lane.tasks.map((task) => (
+                                            <KanbanCard
+                                                key={task.id}
+                                                task={task}
+                                                dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
+                                                onClick={onTaskClick}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
                             ))}
                         </div>
                     </SortableContext>

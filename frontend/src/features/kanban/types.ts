@@ -3,6 +3,7 @@ import type { TaskStatus } from "@/features/tasks";
 export type { TaskStatus };
 
 export type PriorityFilter = "all" | "high" | "medium" | "low" | "minimal";
+export type KanbanLaneMode = "none" | "assignee" | "priority";
 export type KanbanWipLimits = Partial<Record<TaskStatus, number>>;
 export interface KanbanDependencyIndicator {
     blockedCount: number;
@@ -16,6 +17,17 @@ export interface KanbanColumn {
     label: string;
     color: string;
 }
+
+export interface KanbanLaneModeOption {
+    value: KanbanLaneMode;
+    label: string;
+}
+
+export const KANBAN_LANE_MODE_OPTIONS: KanbanLaneModeOption[] = [
+    { value: "none", label: "No swimlanes" },
+    { value: "assignee", label: "Swimlanes: assignee" },
+    { value: "priority", label: "Swimlanes: priority" },
+];
 
 export const KANBAN_COLUMNS: KanbanColumn[] = [
     { id: "BACKLOG", label: "Backlog", color: "text-muted-foreground" },

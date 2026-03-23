@@ -92,6 +92,7 @@ describe("KanbanBoard", () => {
     beforeEach(() => {
         useKanbanStore.setState({
             collapsedByProject: {},
+            laneModeByProject: {},
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
@@ -108,6 +109,7 @@ describe("KanbanBoard", () => {
                 dependencyIndicatorsByTaskId={{}}
                 projectId="proj-1"
                 wipLimits={{}}
+                laneMode="none"
                 onTaskClick={vi.fn()}
                 onSetColumnWipLimit={vi.fn()}
             />
@@ -133,6 +135,7 @@ describe("KanbanBoard", () => {
                 dependencyIndicatorsByTaskId={{}}
                 projectId="proj-1"
                 wipLimits={{}}
+                laneMode="none"
                 onTaskClick={vi.fn()}
                 onSetColumnWipLimit={vi.fn()}
             />

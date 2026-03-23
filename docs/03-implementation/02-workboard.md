@@ -38,16 +38,16 @@ Status: `DONE`
 
 ### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Define lane mode model (`none`/`assignee`/`priority`) and where it lives (kanban store + persisted preference)
-- [ ] Add toolbar control to switch lane mode
-- [ ] Render per-column swimlane groups with stable lane ordering and clear headers
-- [ ] Handle unassigned/unknown bucket explicitly for assignee mode
-- [ ] Ensure drag/drop still works across lanes and within a lane
-- [ ] Add tests for lane grouping + drag behavior under lane modes
+- [x] Define lane mode model (`none`/`assignee`/`priority`) and where it lives (kanban store + persisted preference)
+- [x] Add toolbar control to switch lane mode
+- [x] Render per-column swimlane groups with stable lane ordering and clear headers
+- [x] Handle unassigned/unknown bucket explicitly for assignee mode
+- [x] Ensure drag/drop still works across lanes and within a lane
+- [x] Add tests for lane grouping + drag behavior under lane modes
 
 #### Notes
 
@@ -56,6 +56,9 @@ Status: `NOT_STARTED`
 - Decisions:
   - Keep first implementation client-side using already fetched task fields
   - Do not introduce backend grouping endpoints unless profiling proves necessary
+  - Persist lane mode per project in `useKanbanStore` (`laneModeByProject`) via local storage
+  - Assignee lane uses a deterministic primary assignee (lexicographically smallest name/id); no assignee goes to an explicit `Unassigned` lane
+  - Keep one sortable context per column so existing drag/drop behavior remains valid with lane rendering enabled
 
 ---
 
