@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { KanbanCard } from "./KanbanCard";
 import { TooltipProvider } from "@/shared/ui/tooltip";
@@ -123,5 +124,14 @@ describe("KanbanCard", () => {
     it("renders nothing when task has no assignments", () => {
         render(<KanbanCard task={{ ...baseTask, assignments: [] }} />);
         expect(screen.queryByText("AS")).not.toBeInTheDocument();
+    });
+
+    it("calls onClick with task id when clicked", async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        render(<KanbanCard task={baseTask} onClick={onClick} />);
+
+        await user.click(screen.getByText("Build Auth System"));
+        expect(onClick).toHaveBeenCalledWith("task-1");
     });
 });

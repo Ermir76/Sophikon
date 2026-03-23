@@ -9,6 +9,7 @@ describe("useKanbanStore", () => {
             collapsedByProject: {},
             searchQuery: "",
             priorityFilter: "all",
+            selectedTaskId: null,
         });
     });
 
@@ -17,6 +18,7 @@ describe("useKanbanStore", () => {
         expect(state.collapsedByProject).toEqual({});
         expect(state.searchQuery).toBe("");
         expect(state.priorityFilter).toBe("all");
+        expect(state.selectedTaskId).toBeNull();
     });
 
     it("toggleCollapse adds column to the project's collapsed list", () => {
@@ -58,5 +60,13 @@ describe("useKanbanStore", () => {
     it("setPriorityFilter updates priorityFilter", () => {
         useKanbanStore.getState().setPriorityFilter("high");
         expect(useKanbanStore.getState().priorityFilter).toBe("high");
+    });
+
+    it("setSelectedTaskId and clearSelectedTaskId manage detail panel selection", () => {
+        useKanbanStore.getState().setSelectedTaskId("task-1");
+        expect(useKanbanStore.getState().selectedTaskId).toBe("task-1");
+
+        useKanbanStore.getState().clearSelectedTaskId();
+        expect(useKanbanStore.getState().selectedTaskId).toBeNull();
     });
 });

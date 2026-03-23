@@ -69,11 +69,16 @@ function makeTask(id: string, name: string, status: TaskStatus): Task {
 
 describe("KanbanBoard", () => {
     beforeEach(() => {
-        useKanbanStore.setState({ collapsedByProject: {}, searchQuery: "", priorityFilter: "all" });
+        useKanbanStore.setState({
+            collapsedByProject: {},
+            searchQuery: "",
+            priorityFilter: "all",
+            selectedTaskId: null,
+        });
     });
 
     it("renders all 5 column headers", () => {
-        render(<KanbanBoard tasksByStatus={makeEmptyBoard()} projectId="proj-1" />);
+        render(<KanbanBoard tasksByStatus={makeEmptyBoard()} projectId="proj-1" onTaskClick={vi.fn()} />);
         expect(screen.getByText("Backlog")).toBeInTheDocument();
         expect(screen.getByText("To Do")).toBeInTheDocument();
         expect(screen.getByText("In Progress")).toBeInTheDocument();
@@ -87,7 +92,7 @@ describe("KanbanBoard", () => {
         board.IN_PROGRESS = [makeTask("t2", "Implement API", "IN_PROGRESS")];
         board.DONE = [makeTask("t3", "Deploy v1", "DONE")];
 
-        render(<KanbanBoard tasksByStatus={board} projectId="proj-1" />);
+        render(<KanbanBoard tasksByStatus={board} projectId="proj-1" onTaskClick={vi.fn()} />);
         expect(screen.getByText("Write spec")).toBeInTheDocument();
         expect(screen.getByText("Implement API")).toBeInTheDocument();
         expect(screen.getByText("Deploy v1")).toBeInTheDocument();

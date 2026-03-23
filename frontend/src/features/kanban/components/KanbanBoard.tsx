@@ -8,9 +8,10 @@ import { useKanbanDrag } from "../hooks/useKanbanDrag";
 interface KanbanBoardProps {
     tasksByStatus: Record<TaskStatus, Task[]>;
     projectId: string | undefined;
+    onTaskClick: (taskId: string) => void;
 }
 
-export function KanbanBoard({ tasksByStatus, projectId }: KanbanBoardProps) {
+export function KanbanBoard({ tasksByStatus, projectId, onTaskClick }: KanbanBoardProps) {
     const { sensors, activeTaskId, handleDragStart, handleDragCancel, handleDragEnd } =
         useKanbanDrag(projectId);
 
@@ -34,6 +35,7 @@ export function KanbanBoard({ tasksByStatus, projectId }: KanbanBoardProps) {
                         column={col}
                         tasks={tasksByStatus[col.id]}
                         projectId={projectId}
+                        onTaskClick={onTaskClick}
                     />
                 ))}
             </div>

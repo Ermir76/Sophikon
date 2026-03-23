@@ -16,9 +16,10 @@ interface KanbanColumnProps {
     column: KanbanColumnType;
     tasks: Task[];
     projectId: string | undefined;
+    onTaskClick?: (taskId: string) => void;
 }
 
-export function KanbanColumn({ column, tasks, projectId }: KanbanColumnProps) {
+export function KanbanColumn({ column, tasks, projectId, onTaskClick }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const collapsedByProject = useKanbanStore((s) => s.collapsedByProject);
     const toggleCollapse = useKanbanStore((s) => s.toggleCollapse);
@@ -130,7 +131,7 @@ export function KanbanColumn({ column, tasks, projectId }: KanbanColumnProps) {
                 ) : (
                     <div className="space-y-2">
                         {tasks.map((task) => (
-                            <KanbanCard key={task.id} task={task} />
+                            <KanbanCard key={task.id} task={task} onClick={onTaskClick} />
                         ))}
                     </div>
                 )}

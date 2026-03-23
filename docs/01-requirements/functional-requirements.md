@@ -236,7 +236,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-005 | Search and filter cards                                                         | Should | DONE    |
 | FR-KB-006 | Collapse column to icon strip                                                   | Should | DONE    |
 | FR-KB-007 | Quick-add card from column header                                               | Should | DONE    |
-| FR-KB-008 | Open task detail panel from card without leaving the board                      | Must   | PENDING |
+| FR-KB-008 | Open task detail panel from card without leaving the board                      | Must   | DONE    |
 | FR-KB-009 | Drag to reorder cards within a column                                           | Should | PENDING |
 | FR-KB-010 | WIP limits — set max cards per column with visual warning when exceeded         | Should | PENDING |
 | FR-KB-011 | Swimlanes — group cards by assignee or priority within each column              | Should | PENDING |

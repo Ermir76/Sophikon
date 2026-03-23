@@ -34,6 +34,8 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | KB-07   | Kanban: assignee avatar on card (FR-KB-014)                  | 1      | Independent; 1-liner; high visibility improvement    | -            | Assignee avatar rendered on card; falls back to initials if no avatar; tooltip shows full name          |
 | KB-08   | Kanban: dependency indicator on card (FR-KB-015)             | 1      | Independent; 1-liner; unblocks team visibility       | -            | Card shows blocked/blocking badge when active dependencies exist; badge links to dependency list        |
 
+Progress update (2026-03-23): `KB-01` completed.
+
 **Total committed points:** `6`
 
 ### Stretch (Optional)

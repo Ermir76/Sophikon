@@ -126,7 +126,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | ------- | ----------------------------------------------------------------------------------------------------------------------------- | ------- |
 | US-12.1 | As a TM, I want to see my tasks on a Kanban board so that I can manage daily work without reading a Gantt chart.              | DONE    |
 | US-12.2 | As a TM, I want to drag a card to a different column so that I can update task status directly on the board.                  | DONE    |
-| US-12.3 | As a TM, I want to open a task detail panel from a card so that I can view and edit details without leaving the board.        | PENDING |
+| US-12.3 | As a TM, I want to open a task detail panel from a card so that I can view and edit details without leaving the board.        | DONE    |
 | US-12.4 | As a TL, I want to reorder cards within a column so that I can prioritize work visually.                                      | PENDING |
 | US-12.5 | As a TL, I want to set WIP limits per column so that the team does not take on more than it can complete.                     | PENDING |
 | US-12.6 | As a TL, I want to group cards into swimlanes by assignee or priority so that workload distribution is visible at a glance.   | PENDING |

@@ -28,9 +28,10 @@ function isOverdue(task: Task): boolean {
 interface KanbanCardProps {
     task: Task;
     isDragOverlay?: boolean;
+    onClick?: (taskId: string) => void;
 }
 
-export function KanbanCard({ task, isDragOverlay = false }: KanbanCardProps) {
+export function KanbanCard({ task, isDragOverlay = false, onClick }: KanbanCardProps) {
     const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
         id: task.id,
         data: { status: task.status },
@@ -46,6 +47,7 @@ export function KanbanCard({ task, isDragOverlay = false }: KanbanCardProps) {
             ref={isDragOverlay ? undefined : setNodeRef}
             {...(isDragOverlay ? {} : listeners)}
             {...(isDragOverlay ? {} : attributes)}
+            onClick={isDragOverlay ? undefined : () => onClick?.(task.id)}
             className={`flex rounded-lg border border-border bg-card shadow-sm cursor-grab active:cursor-grabbing select-none overflow-hidden hover:shadow-md transition-shadow ${
                 !isDragOverlay && isDragging ? "opacity-40" : ""
             }`}

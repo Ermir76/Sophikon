@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KanbanPage from "./KanbanPage";
 import { useTasks } from "@/features/tasks";
@@ -13,15 +14,25 @@ vi.mock("react-router", async () => {
 
 vi.mock("@/features/tasks", () => ({
     useTasks: vi.fn(),
+    TaskDetailPanel: ({ isOpen }: { isOpen: boolean }) =>
+        isOpen ? <div data-testid="task-detail-panel">task detail</div> : null,
 }));
 
 vi.mock("../components/KanbanBoard", () => ({
-    KanbanBoard: ({ tasksByStatus }: { tasksByStatus: Record<string, Task[]> }) => (
+    KanbanBoard: ({
+        tasksByStatus,
+        onTaskClick,
+    }: {
+        tasksByStatus: Record<string, Task[]>;
+        onTaskClick: (taskId: string) => void;
+    }) => (
         <div data-testid="kanban-board">
             {Object.values(tasksByStatus)
                 .flat()
                 .map((t) => (
-                    <div key={t.id}>{t.name}</div>
+                    <button type="button" key={t.id} onClick={() => onTaskClick(t.id)}>
+                        {t.name}
+                    </button>
                 ))}
         </div>
     ),
@@ -89,7 +100,12 @@ function mockLoaded(tasks: Task[]) {
 describe("KanbanPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        useKanbanStore.setState({ collapsedByProject: {}, searchQuery: "", priorityFilter: "all" });
+        useKanbanStore.setState({
+            collapsedByProject: {},
+            searchQuery: "",
+            priorityFilter: "all",
+            selectedTaskId: null,
+        });
     });
 
     it("renders loading state", () => {
@@ -146,5 +162,28 @@ describe("KanbanPage", () => {
         expect(screen.getByText("Deploy API")).toBeInTheDocument();
         expect(screen.queryByText("Write docs")).not.toBeInTheDocument();
         expect(screen.queryByText("Authentication")).not.toBeInTheDocument();
+    });
+
+    it("opens task detail panel when a card is clicked", async () => {
+        const user = userEvent.setup();
+        mockLoaded(leafTasks);
+        render(<KanbanPage />);
+
+        await user.click(screen.getByRole("button", { name: "Deploy API" }));
+        expect(screen.getByTestId("task-detail-panel")).toBeInTheDocument();
+        expect(useKanbanStore.getState().selectedTaskId).toBe("t1");
+    });
+
+    it("keeps board mounted and interactive while detail panel is open", async () => {
+        const user = userEvent.setup();
+        mockLoaded(leafTasks);
+        render(<KanbanPage />);
+
+        await user.click(screen.getByRole("button", { name: "Deploy API" }));
+        expect(screen.getByTestId("task-detail-panel")).toBeInTheDocument();
+        expect(screen.getByTestId("kanban-board")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Write docs" }));
+        expect(useKanbanStore.getState().selectedTaskId).toBe("t2");
     });
 });

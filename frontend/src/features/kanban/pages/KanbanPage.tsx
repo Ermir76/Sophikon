@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams } from "react-router";
-import { useTasks } from "@/features/tasks";
+import { TaskDetailPanel, useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
 import { PageLoading } from "@/shared/components/state/PageLoading";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
@@ -28,8 +28,11 @@ export default function KanbanPage() {
 
     const searchQuery = useKanbanStore((s) => s.searchQuery);
     const priorityFilter = useKanbanStore((s) => s.priorityFilter);
+    const selectedTaskId = useKanbanStore((s) => s.selectedTaskId);
     const setSearch = useKanbanStore((s) => s.setSearch);
     const setPriorityFilter = useKanbanStore((s) => s.setPriorityFilter);
+    const setSelectedTaskId = useKanbanStore((s) => s.setSelectedTaskId);
+    const clearSelectedTaskId = useKanbanStore((s) => s.clearSelectedTaskId);
 
     const filteredLeafTasks = useMemo(() => {
         return (taskData?.items ?? EMPTY).filter((t) => {
@@ -71,8 +74,18 @@ export default function KanbanPage() {
                 />
             </div>
             <div className="flex-1 overflow-hidden min-h-0">
-                <KanbanBoard tasksByStatus={tasksByStatus} projectId={projectId} />
+                <KanbanBoard
+                    tasksByStatus={tasksByStatus}
+                    projectId={projectId}
+                    onTaskClick={setSelectedTaskId}
+                />
             </div>
+            <TaskDetailPanel
+                projectId={projectId ?? ""}
+                taskId={selectedTaskId}
+                isOpen={!!selectedTaskId}
+                onClose={clearSelectedTaskId}
+            />
         </div>
     );
 }

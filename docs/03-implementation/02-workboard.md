@@ -14,22 +14,26 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
-- [ ] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
-- [ ] Wire card click to set `selectedTaskId` (replace current no-op)
-- [ ] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
-- [ ] Ensure panel is closeable (Escape key + close button)
-- [ ] Verify board stays mounted and interactive while panel is open
+- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
+- [x] Wire card click to set `selectedTaskId` (replace current no-op)
+- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Ensure panel is closeable (Escape key + close button)
+- [x] Verify board stays mounted and interactive while panel is open
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+- Decisions:
+  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
+  - Open panel on kanban card click; keep drag behavior unchanged
+  - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
