@@ -242,8 +242,10 @@ This document records what is evidenced by the current codebase review.
 | FR-KB-006 | Implemented   | A9, A10  | `KanbanColumn.tsx` renders a collapsed icon-strip (12-wide, vertical label, task count badge, expand button) when `collapsedByProject[projectId]` includes the column id; `KanbanColumnHeader` collapse button toggles via `useKanbanStore.toggleCollapse`. |
 | FR-KB-007 | Implemented   | A4, A9, A10 | `KanbanColumnHeader` exposes a `+` icon button (`onAdd` prop); `KanbanColumn` sets `isAdding=true` on click and renders an inline `Input` at the column footer that calls `useCreateTask.mutateAsync` with the column's status on Enter/blur. |
 | FR-KB-008 | Implemented   | A4, A10  | Kanban cards now open `TaskDetailPanel` inline via kanban store `selectedTaskId` state; board remains mounted and interactive while the panel is open, and the panel closes via built-in close controls (including Escape). |
+| FR-KB-009 | Implemented   | A4, A10  | Kanban columns use sortable card contexts and `useKanbanDrag` calls task reorder API with optimistic rollback; in-column drag reorder persists across reloads without regressing status drag between columns. |
 | FR-KB-010 | Implemented   | A3, A10  | Kanban column headers expose WIP limit set/clear controls and over-limit warning state; limits persist through `project.settings.kanban_wip_limits` via project PATCH and restore on page load. |
 | FR-KB-014 | Implemented   | A4, A10  | Task list API embeds `assignments` summaries (`resource_id`, `resource_name`, `resource_initials`) and `KanbanCard` renders assignee avatar initials with tooltip plus empty-state handling. |
+| FR-KB-015 | Implemented   | A4, A10  | Kanban cards derive active dependency state from `useDependencies` and show distinct blocked/blocking badges; clicking a badge opens the task detail panel dependency section context. |
 
 ### 3.14 Import/Export
 

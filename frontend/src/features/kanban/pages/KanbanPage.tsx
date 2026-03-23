@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { useProject, useUpdateProject } from "@/features/projects";
-import { TaskDetailPanel, useTasks } from "@/features/tasks";
+import { TaskDetailPanel, useDependencies, useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { PageLoading } from "@/shared/components/state/PageLoading";
@@ -10,7 +10,12 @@ import { getErrorMessage } from "@/shared/lib/errors";
 import { KanbanBoard } from "../components/KanbanBoard";
 import { KanbanToolbar, type PriorityFilter } from "../components/KanbanToolbar";
 import { useKanbanStore } from "../store/kanban-store";
-import { KANBAN_COLUMNS, type KanbanWipLimits, type TaskStatus } from "../types";
+import {
+    KANBAN_COLUMNS,
+    type KanbanDependencyIndicatorsByTaskId,
+    type KanbanWipLimits,
+    type TaskStatus,
+} from "../types";
 import type { ProjectUpdate } from "@/features/projects";
 import type { Task } from "@/features/tasks";
 
@@ -66,6 +71,7 @@ function buildProjectSettingsPatch(
 export default function KanbanPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const { data: taskData, isLoading, error, refetch } = useTasks(projectId);
+    const { data: dependencyData } = useDependencies(projectId);
     const { data: project } = useProject(projectId);
     const updateProject = useUpdateProject(projectId);
 
@@ -89,14 +95,58 @@ export default function KanbanPage() {
         );
     }, [projectId, project, setProjectWipLimits]);
 
+    const allTasks = taskData?.items ?? EMPTY;
+
+    const leafTasks = useMemo(() => {
+        return allTasks.filter((t) => !t.is_summary);
+    }, [allTasks]);
+
     const filteredLeafTasks = useMemo(() => {
-        return (taskData?.items ?? EMPTY).filter((t) => {
-            if (t.is_summary) return false;
+        return leafTasks.filter((t) => {
             if (searchQuery && !t.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
             if (!matchesPriority(t.priority, priorityFilter)) return false;
             return true;
         });
-    }, [taskData, searchQuery, priorityFilter]);
+    }, [leafTasks, searchQuery, priorityFilter]);
+
+    const dependencyIndicatorsByTaskId = useMemo<KanbanDependencyIndicatorsByTaskId>(() => {
+        const indicators: KanbanDependencyIndicatorsByTaskId = {};
+        const statusByTaskId: Record<string, TaskStatus> = {};
+
+        for (const task of leafTasks) {
+            indicators[task.id] = { blockedCount: 0, blockingCount: 0 };
+            statusByTaskId[task.id] = task.status;
+        }
+
+        for (const dependency of dependencyData?.items ?? []) {
+            if (dependency.is_disabled) continue;
+
+            const predecessorIndicator = indicators[dependency.predecessor_id];
+            if (predecessorIndicator) {
+                predecessorIndicator.blockingCount += 1;
+            }
+
+            const successorIndicator = indicators[dependency.successor_id];
+            if (!successorIndicator) continue;
+
+            const predecessorStatus = statusByTaskId[dependency.predecessor_id];
+            if (predecessorStatus && predecessorStatus !== "DONE") {
+                successorIndicator.blockedCount += 1;
+            }
+        }
+
+        return indicators;
+    }, [leafTasks, dependencyData]);
+
+    const allLeafTasksByStatus = useMemo(() => {
+        const map = Object.fromEntries(
+            KANBAN_COLUMNS.map((col) => [col.id, [] as Task[]])
+        ) as Record<TaskStatus, Task[]>;
+        for (const task of leafTasks) {
+            (map[task.status] ?? map["BACKLOG"]).push(task);
+        }
+        return map;
+    }, [leafTasks]);
 
     const tasksByStatus = useMemo(() => {
         const map = Object.fromEntries(
@@ -160,6 +210,9 @@ export default function KanbanPage() {
             <div className="flex-1 overflow-hidden min-h-0">
                 <KanbanBoard
                     tasksByStatus={tasksByStatus}
+                    allLeafTasksByStatus={allLeafTasksByStatus}
+                    allTasks={allTasks}
+                    dependencyIndicatorsByTaskId={dependencyIndicatorsByTaskId}
                     projectId={projectId}
                     wipLimits={wipLimits}
                     onTaskClick={setSelectedTaskId}

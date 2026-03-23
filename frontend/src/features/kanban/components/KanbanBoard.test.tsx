@@ -13,11 +13,32 @@ vi.mock("@/features/tasks/hooks/useTasks", () => ({
 vi.mock("@dnd-kit/core", () => ({
     DndContext: ({ children }: { children: ReactNode }) => <>{children}</>,
     DragOverlay: ({ children }: { children: ReactNode }) => <>{children ?? null}</>,
+    closestCenter: vi.fn(),
     useSensors: () => [],
     useSensor: vi.fn(),
     PointerSensor: class {},
     useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
-    useDraggable: () => ({ setNodeRef: vi.fn(), listeners: {}, attributes: {}, isDragging: false }),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+    SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
+    verticalListSortingStrategy: vi.fn(),
+    useSortable: () => ({
+        setNodeRef: vi.fn(),
+        listeners: {},
+        attributes: {},
+        transform: null,
+        transition: undefined,
+        isDragging: false,
+    }),
+}));
+
+vi.mock("@dnd-kit/utilities", () => ({
+    CSS: {
+        Transform: {
+            toString: () => undefined,
+        },
+    },
 }));
 
 vi.mock("../hooks/useKanbanDrag", () => ({
@@ -82,6 +103,9 @@ describe("KanbanBoard", () => {
         render(
             <KanbanBoard
                 tasksByStatus={makeEmptyBoard()}
+                allLeafTasksByStatus={makeEmptyBoard()}
+                allTasks={[]}
+                dependencyIndicatorsByTaskId={{}}
                 projectId="proj-1"
                 wipLimits={{}}
                 onTaskClick={vi.fn()}
@@ -104,6 +128,9 @@ describe("KanbanBoard", () => {
         render(
             <KanbanBoard
                 tasksByStatus={board}
+                allLeafTasksByStatus={board}
+                allTasks={Object.values(board).flat()}
+                dependencyIndicatorsByTaskId={{}}
                 projectId="proj-1"
                 wipLimits={{}}
                 onTaskClick={vi.fn()}

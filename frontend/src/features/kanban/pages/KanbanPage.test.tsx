@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KanbanPage from "./KanbanPage";
 import { useProject, useUpdateProject } from "@/features/projects";
-import { useTasks } from "@/features/tasks";
+import { useDependencies, useTasks } from "@/features/tasks";
 import { useKanbanStore } from "../store/kanban-store";
 import type { Task } from "@/features/tasks";
 import type { TaskStatus } from "../types";
@@ -15,6 +15,7 @@ vi.mock("react-router", async () => {
 
 vi.mock("@/features/tasks", () => ({
     useTasks: vi.fn(),
+    useDependencies: vi.fn(),
     TaskDetailPanel: ({ isOpen }: { isOpen: boolean }) =>
         isOpen ? <div data-testid="task-detail-panel">task detail</div> : null,
 }));
@@ -27,10 +28,12 @@ vi.mock("@/features/projects", () => ({
 vi.mock("../components/KanbanBoard", () => ({
     KanbanBoard: ({
         tasksByStatus,
+        dependencyIndicatorsByTaskId,
         onTaskClick,
         onSetColumnWipLimit,
     }: {
         tasksByStatus: Record<string, Task[]>;
+        dependencyIndicatorsByTaskId: Record<string, { blockedCount: number; blockingCount: number }>;
         onTaskClick: (taskId: string) => void;
         onSetColumnWipLimit: (status: TaskStatus, limit: number | null) => void;
     }) => (
@@ -38,9 +41,12 @@ vi.mock("../components/KanbanBoard", () => ({
             {Object.values(tasksByStatus)
                 .flat()
                 .map((t) => (
-                    <button type="button" key={t.id} onClick={() => onTaskClick(t.id)}>
-                        {t.name}
-                    </button>
+                    <div key={t.id}>
+                        <button type="button" onClick={() => onTaskClick(t.id)}>
+                            {t.name}
+                        </button>
+                        <span>{`${dependencyIndicatorsByTaskId[t.id]?.blockedCount ?? 0}/${dependencyIndicatorsByTaskId[t.id]?.blockingCount ?? 0}`}</span>
+                    </div>
                 ))}
             <button type="button" onClick={() => onSetColumnWipLimit("BACKLOG", 3)}>
                 set backlog limit
@@ -108,6 +114,27 @@ function mockLoaded(tasks: Task[]) {
     } as never);
 }
 
+function mockDependencies(items: Array<{
+    id: string;
+    predecessor_id: string;
+    successor_id: string;
+    type: "FS" | "FF" | "SS" | "SF";
+    lag: number;
+    lag_format: "DURATION" | "PERCENT";
+    is_disabled: boolean;
+    created_at: string;
+}>) {
+    vi.mocked(useDependencies).mockReturnValue({
+        data: {
+            items,
+            total: items.length,
+            page: 1,
+            per_page: 10000,
+            total_pages: 1,
+        },
+    } as never);
+}
+
 describe("KanbanPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -132,6 +159,7 @@ describe("KanbanPage", () => {
         vi.mocked(useUpdateProject).mockReturnValue({
             mutateAsync: vi.fn().mockResolvedValue(undefined),
         } as never);
+        mockDependencies([]);
         useKanbanStore.setState({
             collapsedByProject: {},
             searchQuery: "",
@@ -229,5 +257,26 @@ describe("KanbanPage", () => {
 
         await user.click(screen.getByRole("button", { name: "set backlog limit" }));
         expect(mutateAsync).toHaveBeenCalled();
+    });
+
+    it("derives blocked and blocking counts from active dependencies", () => {
+        mockLoaded(leafTasks);
+        mockDependencies([
+            {
+                id: "dep-1",
+                predecessor_id: "t1",
+                successor_id: "t2",
+                type: "FS",
+                lag: 0,
+                lag_format: "DURATION",
+                is_disabled: false,
+                created_at: "2025-01-01T00:00:00Z",
+            },
+        ]);
+
+        render(<KanbanPage />);
+
+        expect(screen.getByText("0/1")).toBeInTheDocument();
+        expect(screen.getByText("1/0")).toBeInTheDocument();
     });
 });

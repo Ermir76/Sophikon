@@ -1,14 +1,49 @@
 import { useState, useCallback } from "react";
 import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
 import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
-import { useUpdateTask } from "@/features/tasks";
+import { useReorderTask, useUpdateTask } from "@/features/tasks";
 import { getErrorMessage } from "@/shared/lib/errors";
+import type { Task } from "@/features/tasks";
 import type { TaskStatus } from "../types";
 
-export function useKanbanDrag(projectId: string | undefined) {
+const TASK_STATUS_VALUES: readonly TaskStatus[] = [
+    "BACKLOG",
+    "TODO",
+    "IN_PROGRESS",
+    "IN_REVIEW",
+    "DONE",
+];
+
+function isTaskStatus(value: string): value is TaskStatus {
+    return TASK_STATUS_VALUES.includes(value as TaskStatus);
+}
+
+function buildOptimisticTaskList(
+    allTasks: Task[],
+    status: TaskStatus,
+    reorderedStatusTasks: Task[],
+): Task[] {
+    const queue = [...reorderedStatusTasks];
+
+    return allTasks.map((task) => {
+        if (task.is_summary || task.status !== status) return task;
+        const next = queue.shift();
+        return next ?? task;
+    });
+}
+
+interface KanbanDragParams {
+    projectId: string | undefined;
+    allTasks: Task[];
+    allLeafTasksByStatus: Record<TaskStatus, Task[]>;
+}
+
+export function useKanbanDrag({ projectId, allTasks, allLeafTasksByStatus }: KanbanDragParams) {
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
     const { mutate } = useUpdateTask(projectId);
+    const reorderTask = useReorderTask(projectId);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -29,17 +64,60 @@ export function useKanbanDrag(projectId: string | undefined) {
 
             if (!over) return;
 
-            const newStatus = over.id as TaskStatus;
+            const activeId = active.id as string;
             const currentStatus = active.data.current?.status as TaskStatus;
+            const overId = over.id as string;
+            const newStatus = isTaskStatus(overId)
+                ? overId
+                : (over.data.current?.status as TaskStatus | undefined);
 
-            if (newStatus === currentStatus) return;
+            if (!newStatus) return;
 
-            mutate(
-                { taskId: active.id as string, data: { status: newStatus } },
+            if (newStatus !== currentStatus) {
+                mutate(
+                    { taskId: activeId, data: { status: newStatus } },
+                    { onError: (error) => toast.error(getErrorMessage(error)) },
+                );
+                return;
+            }
+
+            // Same-column drop on column container (not on another card): no-op.
+            if (isTaskStatus(overId)) return;
+
+            const statusTasks = allLeafTasksByStatus[currentStatus] ?? [];
+            const oldIndex = statusTasks.findIndex((task) => task.id === activeId);
+            const newIndex = statusTasks.findIndex((task) => task.id === overId);
+            if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+
+            const activeTask = statusTasks[oldIndex];
+            const overTask = statusTasks[newIndex];
+            const activeParent = activeTask.parent_task_id ?? null;
+            const overParent = overTask.parent_task_id ?? null;
+            if (activeParent !== overParent) {
+                toast.error("Can only reorder cards within the same task group");
+                return;
+            }
+
+            const reorderedStatusTasks = arrayMove(statusTasks, oldIndex, newIndex);
+            const optimisticData = buildOptimisticTaskList(
+                allTasks,
+                currentStatus,
+                reorderedStatusTasks,
+            );
+
+            const afterTaskId = newIndex > 0 ? reorderedStatusTasks[newIndex - 1]?.id ?? null : null;
+            const beforeTaskId = newIndex === 0 ? reorderedStatusTasks[1]?.id ?? null : null;
+
+            reorderTask.mutate(
+                {
+                    taskId: activeId,
+                    data: { after_task_id: afterTaskId, before_task_id: beforeTaskId },
+                    optimisticData,
+                },
                 { onError: (error) => toast.error(getErrorMessage(error)) },
             );
         },
-        [mutate],
+        [allLeafTasksByStatus, allTasks, mutate, reorderTask],
     );
 
     return { sensors, activeTaskId, handleDragStart, handleDragCancel, handleDragEnd };

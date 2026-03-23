@@ -2,15 +2,87 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S04
-**Dates:** 2026-03-23 -> 2026-04-06
+**Sprint ID:** S05
+**Dates:** 2026-03-24 -> 2026-04-07
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S04
+## Active Items — S05
+
+### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Verify current ordering source of truth (task order/index field + API shape) for kanban view
+- [x] Define reorder behavior boundaries (within-column reorder only; status changes handled separately)
+- [x] Implement drag/drop reorder interactions within a column
+- [x] Persist reordered positions to backend and add optimistic rollback on failure
+- [x] Ensure reload preserves the same order and does not regress existing status drag behavior
+- [x] Add tests for reorder success + failure rollback
+
+#### Notes
+
+- Dependencies: `KB-01` complete
+- Blockers: -
+- Decisions:
+  - Reuse existing task reorder contract if it can represent kanban order cleanly
+  - Avoid introducing one-off ordering abstractions used only by kanban
+  - Restrict reorder to cards in the same `parent_task_id` group to avoid implicit hierarchy changes
+
+---
+
+### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Define lane mode model (`none`/`assignee`/`priority`) and where it lives (kanban store + persisted preference)
+- [ ] Add toolbar control to switch lane mode
+- [ ] Render per-column swimlane groups with stable lane ordering and clear headers
+- [ ] Handle unassigned/unknown bucket explicitly for assignee mode
+- [ ] Ensure drag/drop still works across lanes and within a lane
+- [ ] Add tests for lane grouping + drag behavior under lane modes
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions:
+  - Keep first implementation client-side using already fetched task fields
+  - Do not introduce backend grouping endpoints unless profiling proves necessary
+
+---
+
+### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Define shortcut map for MVP (`n` quick-add, arrow navigation between cards, Enter to open detail)
+- [ ] Implement board-focus and roving-focus model for card navigation
+- [ ] Implement quick-add shortcut targeting the currently focused column
+- [ ] Guard shortcuts when text inputs or editors are focused
+- [ ] Add visible shortcut hints in board UI/help tooltip
+- [ ] Add tests for keyboard navigation and quick-add behaviors
+
+#### Notes
+
+- Dependencies: `KB-01` complete
+- Blockers: -
+- Decisions:
+  - Shortcuts are active only when kanban board has focus context
+  - Browser/reserved combos are out of scope for this sprint
+
+---
+
+## Previous Sprint Items — S04
 
 ### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
 
@@ -87,20 +159,24 @@ Status: `DONE`
 
 ### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Check if dependency data is available in current task query response
-- [ ] Add blocked/blocking badge to `KanbanCard` when active dependencies exist
-- [ ] Blocked = has predecessor with unfinished status; Blocking = has successor
-- [ ] Badge should be visually distinct (e.g. icon + count)
+- [x] Check if dependency data is available in current task query response
+- [x] Add blocked/blocking badge to `KanbanCard` when active dependencies exist
+- [x] Blocked = has predecessor with unfinished status; Blocking = has successor
+- [x] Badge should be visually distinct (e.g. icon + count)
 
 #### Notes
 
 - Dependencies: -
-- Blockers: Depends on whether dependency data is included in task list API response
-- Decisions: TBD — if not in response, decide whether to add to query or use separate fetch
+- Blockers: -
+- Decisions:
+  - Keep task list API unchanged; load dependency edges via existing `useDependencies(projectId)` query
+  - Compute per-task `blockedCount`/`blockingCount` in `KanbanPage` from active dependencies (`is_disabled === false`)
+  - `Blocked` count increments only when predecessor task status is not `DONE`
+  - Dependency badge click opens the existing task detail panel, which contains the dependency list section
 
 ---
 

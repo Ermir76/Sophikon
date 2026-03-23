@@ -4,6 +4,12 @@ export type { TaskStatus };
 
 export type PriorityFilter = "all" | "high" | "medium" | "low" | "minimal";
 export type KanbanWipLimits = Partial<Record<TaskStatus, number>>;
+export interface KanbanDependencyIndicator {
+    blockedCount: number;
+    blockingCount: number;
+}
+
+export type KanbanDependencyIndicatorsByTaskId = Record<string, KanbanDependencyIndicator>;
 
 export interface KanbanColumn {
     id: TaskStatus;

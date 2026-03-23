@@ -127,13 +127,13 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | US-12.1 | As a TM, I want to see my tasks on a Kanban board so that I can manage daily work without reading a Gantt chart.              | DONE    |
 | US-12.2 | As a TM, I want to drag a card to a different column so that I can update task status directly on the board.                  | DONE    |
 | US-12.3 | As a TM, I want to open a task detail panel from a card so that I can view and edit details without leaving the board.        | DONE    |
-| US-12.4 | As a TL, I want to reorder cards within a column so that I can prioritize work visually.                                      | PENDING |
+| US-12.4 | As a TL, I want to reorder cards within a column so that I can prioritize work visually.                                      | DONE    |
 | US-12.5 | As a TL, I want to set WIP limits per column so that the team does not take on more than it can complete.                     | DONE    |
 | US-12.6 | As a TL, I want to group cards into swimlanes by assignee or priority so that workload distribution is visible at a glance.   | PENDING |
 | US-12.7 | As a TM, I want keyboard shortcuts on the board so that I can navigate and create cards without reaching for the mouse.       | PENDING |
 | US-12.8 | As a TL, I want to select multiple cards and move them at once so that bulk status changes are fast.                          | PENDING |
 | US-12.9 | As a TM, I want to see the assignee avatar on each card so that I know who owns each task without opening it.                 | PENDING |
-| US-12.10 | As a TM, I want to see a dependency indicator on a card so that I know when a task is blocked before I start work on it.    | PENDING |
+| US-12.10 | As a TM, I want to see a dependency indicator on a card so that I know when a task is blocked before I start work on it.    | DONE    |
 | US-12.11 | As a PM, I want an AI sprint health summary so that I can see which cards are at risk without reading every card individually. | PENDING |
 | US-12.12 | As a TM, I want AI to fill in card details from a title so that creating a well-specified task takes seconds.                 | PENDING |
 | US-12.13 | As a TL, I want AI to highlight cards with unresolved blockers or no recent activity so that stalled work is visible.         | PENDING |
@@ -152,9 +152,9 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 | Status  | Count |
 | ------- | ----- |
-| DONE    | 28    |
+| DONE    | 29    |
 | PARTIAL | 7     |
-| PENDING | 20    |
+| PENDING | 19    |
 
 ---
 
@@ -167,3 +167,5 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 4.1     | 2026-03-20 | Codex  | Consistency pass with FR/design docs: aligned US-8.2 export format from PDF to PNG to match current functional requirement and API design surface. |
 | 4.2     | 2026-03-20 | Codex  | Consistency pass with FR status matrix: aligned US-2.4, US-2.6, and US-4.4 to DONE where mapped FRs are DONE and design/code evidence is present. |
 | 5.0     | 2026-03-23 | wwwer  | Added Epic 12 (Kanban Board) with US-12.1–12.13 covering board basics, task detail panel, card reordering, WIP limits, swimlanes, keyboard shortcuts, bulk operations, assignee avatar, dependency indicators, and AI board features. Renumbered former Epic 12 to Epic 13. |
+| 5.1     | 2026-03-23 | Codex  | Marked US-12.10 as DONE after shipping Kanban dependency indicators (blocked/blocking badges) on cards. |
+| 5.2     | 2026-03-23 | Codex  | Marked US-12.4 as DONE after shipping in-column Kanban card reorder with backend persistence and optimistic rollback. |

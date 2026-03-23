@@ -1,13 +1,17 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { format } from "date-fns";
 import { ChevronsRight, LayoutList, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateTask } from "@/features/tasks";
 import { Input } from "@/shared/ui/input";
 import type { Task } from "@/features/tasks";
-import type { KanbanColumn as KanbanColumnType } from "../types";
+import type {
+    KanbanColumn as KanbanColumnType,
+    KanbanDependencyIndicatorsByTaskId,
+} from "../types";
 import { useKanbanStore } from "../store/kanban-store";
 import { KanbanCard } from "./KanbanCard";
 import { KanbanColumnHeader } from "./KanbanColumnHeader";
@@ -15,6 +19,7 @@ import { KanbanColumnHeader } from "./KanbanColumnHeader";
 interface KanbanColumnProps {
     column: KanbanColumnType;
     tasks: Task[];
+    dependencyIndicatorsByTaskId: KanbanDependencyIndicatorsByTaskId;
     projectId: string | undefined;
     wipLimit?: number;
     onTaskClick?: (taskId: string) => void;
@@ -24,12 +29,16 @@ interface KanbanColumnProps {
 export function KanbanColumn({
     column,
     tasks,
+    dependencyIndicatorsByTaskId,
     projectId,
     wipLimit,
     onTaskClick,
     onSetWipLimit,
 }: KanbanColumnProps) {
-    const { setNodeRef, isOver } = useDroppable({ id: column.id });
+    const { setNodeRef, isOver } = useDroppable({
+        id: column.id,
+        data: { type: "kanban-column", status: column.id },
+    });
     const collapsedByProject = useKanbanStore((s) => s.collapsedByProject);
     const toggleCollapse = useKanbanStore((s) => s.toggleCollapse);
     const isCollapsed = projectId
@@ -142,11 +151,18 @@ export function KanbanColumn({
                         <p className="text-xs">No tasks</p>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {tasks.map((task) => (
-                            <KanbanCard key={task.id} task={task} onClick={onTaskClick} />
-                        ))}
-                    </div>
+                    <SortableContext id={column.id} items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-2">
+                            {tasks.map((task) => (
+                                <KanbanCard
+                                    key={task.id}
+                                    task={task}
+                                    dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
+                                    onClick={onTaskClick}
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
                 )}
             </div>
 

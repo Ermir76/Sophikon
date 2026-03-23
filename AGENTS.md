@@ -41,6 +41,18 @@ cd frontend && npm run lint && npm run format
 
 ## Hard Rules — Never Break These
 
+### SDLC Autopilot Closure Gate
+- "Autopilot" means full SDLC completion, not just build + tests.
+- Never end a feature task after BUILD only. You must run REVIEW and SYNC phases.
+- Manual checks do not replace required close-out skills.
+- Required close-out skills by change type:
+  - Backend changed: `/review` then `/phase-reviewer`
+  - Backend schema changed: `/pydantic-audit` also
+  - Frontend changed: `/phase-reviewer` then `/consistency-review`
+  - After review passes: `/done`
+  - Commit with `/cc` when user asked to finalize with commit
+- Before final handoff, include a short closure receipt listing which close-out skills ran (or why a step was intentionally skipped).
+
 ### General
 - Never delete models that have no endpoints yet — they are planned for future phases.
 - Never remove dependencies (redis, celery, fastapi-mail, recharts, etc.) without checking `docs/ROADMAP.md` first.

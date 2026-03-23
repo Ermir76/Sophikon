@@ -6,12 +6,25 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import type { Task } from "@/features/tasks";
 
 vi.mock("@dnd-kit/core", () => ({
-    useDraggable: () => ({
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+    useSortable: () => ({
         setNodeRef: vi.fn(),
         listeners: {},
         attributes: {},
+        transform: null,
+        transition: undefined,
         isDragging: false,
     }),
+}));
+
+vi.mock("@dnd-kit/utilities", () => ({
+    CSS: {
+        Transform: {
+            toString: () => undefined,
+        },
+    },
 }));
 
 const baseTask: Task = {
@@ -106,6 +119,30 @@ describe("KanbanCard", () => {
         expect(screen.getByText("3")).toBeInTheDocument();
     });
 
+    it("shows blocked and blocking badges when dependency indicators are present", () => {
+        render(
+            <KanbanCard
+                task={baseTask}
+                dependencyIndicator={{ blockedCount: 2, blockingCount: 1 }}
+            />
+        );
+
+        expect(screen.getByRole("button", { name: "Blocked dependencies: 2" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Blocking dependencies: 1" })).toBeInTheDocument();
+    });
+
+    it("does not render dependency badges when there are no active dependencies", () => {
+        render(
+            <KanbanCard
+                task={baseTask}
+                dependencyIndicator={{ blockedCount: 0, blockingCount: 0 }}
+            />
+        );
+
+        expect(screen.queryByRole("button", { name: "Blocked dependencies: 0" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Blocking dependencies: 0" })).not.toBeInTheDocument();
+    });
+
     it("does not apply opacity class when isDragOverlay is true", () => {
         const { container } = render(<KanbanCard task={baseTask} isDragOverlay />);
         expect(container.firstChild).not.toHaveClass("opacity-40");
@@ -132,6 +169,21 @@ describe("KanbanCard", () => {
         render(<KanbanCard task={baseTask} onClick={onClick} />);
 
         await user.click(screen.getByText("Build Auth System"));
+        expect(onClick).toHaveBeenCalledWith("task-1");
+    });
+
+    it("opens task detail when blocked badge is clicked", async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        render(
+            <KanbanCard
+                task={baseTask}
+                dependencyIndicator={{ blockedCount: 1, blockingCount: 0 }}
+                onClick={onClick}
+            />
+        );
+
+        await user.click(screen.getByRole("button", { name: "Blocked dependencies: 1" }));
         expect(onClick).toHaveBeenCalledWith("task-1");
     });
 });

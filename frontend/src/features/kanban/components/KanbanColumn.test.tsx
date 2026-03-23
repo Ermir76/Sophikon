@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanColumn } from "./KanbanColumn";
 import { useKanbanStore } from "../store/kanban-store";
@@ -7,7 +8,27 @@ import type { KanbanColumn as KanbanColumnType } from "../types";
 
 vi.mock("@dnd-kit/core", () => ({
     useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
-    useDraggable: () => ({ setNodeRef: vi.fn(), listeners: {}, attributes: {}, isDragging: false }),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+    SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
+    verticalListSortingStrategy: vi.fn(),
+    useSortable: () => ({
+        setNodeRef: vi.fn(),
+        listeners: {},
+        attributes: {},
+        transform: null,
+        transition: undefined,
+        isDragging: false,
+    }),
+}));
+
+vi.mock("@dnd-kit/utilities", () => ({
+    CSS: {
+        Transform: {
+            toString: () => undefined,
+        },
+    },
 }));
 
 vi.mock("@/features/tasks/hooks/useTasks", () => ({
@@ -63,32 +84,32 @@ const makeTask = (id: string, name: string): Task => ({
 
 describe("KanbanColumn", () => {
     it("renders empty state when no tasks", () => {
-        render(<KanbanColumn column={backlogCol} tasks={[]} projectId="proj-1" />);
+        render(<KanbanColumn column={backlogCol} tasks={[]} dependencyIndicatorsByTaskId={{}} projectId="proj-1" />);
         expect(screen.getByText("No tasks")).toBeInTheDocument();
     });
 
     it("renders task cards when tasks are provided", () => {
         const tasks = [makeTask("t1", "Deploy API"), makeTask("t2", "Write tests")];
-        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" />);
+        render(<KanbanColumn column={backlogCol} tasks={tasks} dependencyIndicatorsByTaskId={{}} projectId="proj-1" />);
         expect(screen.getByText("Deploy API")).toBeInTheDocument();
         expect(screen.getByText("Write tests")).toBeInTheDocument();
     });
 
     it("renders column header with correct count", () => {
         const tasks = [makeTask("t1", "Task A"), makeTask("t2", "Task B")];
-        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" />);
+        render(<KanbanColumn column={backlogCol} tasks={tasks} dependencyIndicatorsByTaskId={{}} projectId="proj-1" />);
         expect(screen.getByText("Backlog")).toBeInTheDocument();
         expect(screen.getByText("2")).toBeInTheDocument();
     });
 
     it("does not render 'No tasks' when tasks are present", () => {
-        render(<KanbanColumn column={backlogCol} tasks={[makeTask("t1", "Task A")]} projectId="proj-1" />);
+        render(<KanbanColumn column={backlogCol} tasks={[makeTask("t1", "Task A")]} dependencyIndicatorsByTaskId={{}} projectId="proj-1" />);
         expect(screen.queryByText("No tasks")).not.toBeInTheDocument();
     });
 
     it("shows warning indicator when task count exceeds WIP limit", () => {
         const tasks = [makeTask("t1", "Task A"), makeTask("t2", "Task B")];
-        render(<KanbanColumn column={backlogCol} tasks={tasks} projectId="proj-1" wipLimit={1} />);
+        render(<KanbanColumn column={backlogCol} tasks={tasks} dependencyIndicatorsByTaskId={{}} projectId="proj-1" wipLimit={1} />);
         expect(screen.getByText("2/1")).toBeInTheDocument();
         expect(screen.getByLabelText("Backlog WIP limit exceeded")).toBeInTheDocument();
     });

@@ -6,9 +6,9 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
-**Sprint ID:** S04
-**Dates:** 2026-03-23 -> 2026-04-06
-**Goal:** Kanban enhancement — task detail panel, WIP limits, assignee avatar, dependency indicator
+**Sprint ID:** S05
+**Dates:** 2026-03-24 -> 2026-04-07
+**Goal:** Kanban execution controls — in-column reorder, swimlanes, and keyboard-first board navigation
 **Owner(s):** wwwer
 
 ### Capacity
@@ -29,33 +29,33 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Item ID | Title                                                        | Points | Why now                                              | Dependencies | Done criteria                                                                                           |
 | ------- | ------------------------------------------------------------ | ------ | ---------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
-| KB-01   | Kanban: task detail panel from card (FR-KB-008)              | 2      | P1; unblocks KB-02, KB-05, KB-09                    | -            | Clicking a card opens the existing task detail panel inline; board stays mounted; panel is closeable    |
-| KB-03   | Kanban: WIP limits per column (FR-KB-010)                    | 2      | Independent; high value; no deps                     | -            | Per-column limit configurable; column header shows warning indicator when limit exceeded                |
-| KB-07   | Kanban: assignee avatar on card (FR-KB-014)                  | 1      | Independent; 1-liner; high visibility improvement    | -            | Assignee avatar rendered on card; falls back to initials if no avatar; tooltip shows full name          |
-| KB-08   | Kanban: dependency indicator on card (FR-KB-015)             | 1      | Independent; 1-liner; unblocks team visibility       | -            | Card shows blocked/blocking badge when active dependencies exist; badge links to dependency list        |
+| KB-02   | Kanban: card reordering within column (FR-KB-009)            | 2      | Core prioritization gap; dependency `KB-01` already done | KB-01     | Dragging within a column reorders cards and persists order across reloads                               |
+| KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011)           | 3      | Highest visibility improvement for team-level workload balancing | -    | Board can group cards by assignee or priority within each status column, with clear lane headers        |
+| KB-05   | Kanban: keyboard shortcuts (FR-KB-012)                       | 2      | Improves execution speed and accessibility without backend risk | KB-01 | Quick-add and keyboard navigation work end-to-end on the board with documented shortcut hints            |
 
-Progress update (2026-03-23): `KB-01` and `KB-03` completed.
+Progress update (2026-03-23): `KB-02` completed.
 
-**Total committed points:** `6`
+**Total committed points:** `7`
 
 ### Stretch (Optional)
 
 | Item ID | Title                                         | Points | Trigger to pull in           |
 | ------- | --------------------------------------------- | ------ | ---------------------------- |
-| KB-02   | Kanban: card reordering within column (FR-KB-009) | 2  | Pull in if KB-01 ships early |
+| KB-06   | Kanban: bulk select and move cards (FR-KB-013) | 2  | Pull in if KB-04 ships with no carry-over risk |
 
 ### Risks and Blockers
 
 | Risk/Blocker                                                        | Impact                              | Mitigation                                                              | Owner |
 | ------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- | ----- |
-| Task detail panel integration may need new barrel exports           | Scope creep into tasks feature      | Read tasks barrel first; add exports cleanly without touching internals | wwwer |
-| WIP limit storage (localStorage vs backend) requires design decision | Architecture choice before coding  | Resolved in ADR-008: persist in backend `project.settings.kanban_wip_limits` | wwwer |
+| Reorder persistence may conflict with existing task tree ordering semantics | Wrong order after refresh           | Reuse existing task reorder API semantics where possible; add explicit kanban-order tests | wwwer |
+| Swimlane grouping may degrade drag/drop clarity in dense columns    | UX confusion and regression risk    | Keep lane model explicit (`none/assignee/priority`) and test lane-cross + lane-internal drag paths | wwwer |
+| Keyboard shortcuts can conflict with text inputs and browser defaults | Unexpected key behavior             | Scope shortcuts to board focus context and ignore when any editable input has focus | wwwer |
 
 ---
 
 ## Sprint Review (Fill at end)
 
-- Planned points: `6`
+- Planned points: `7`
 - Completed points: `-`
 - Carry-over points: `-`
 - Main wins:
@@ -67,6 +67,33 @@ Progress update (2026-03-23): `KB-01` and `KB-03` completed.
 ---
 
 ## Previous Sprint
+
+**Sprint ID:** S04
+**Dates:** 2026-03-23 -> 2026-04-06
+**Goal:** Kanban enhancement — task detail panel, WIP limits, assignee avatar, dependency indicator
+**Owner(s):** wwwer
+
+### Committed Items
+
+| Item ID | Title                                                        | Points | Outcome |
+| ------- | ------------------------------------------------------------ | ------ | ------- |
+| KB-01   | Kanban: task detail panel from card (FR-KB-008)              | 2      | DONE    |
+| KB-03   | Kanban: WIP limits per column (FR-KB-010)                    | 2      | DONE    |
+| KB-07   | Kanban: assignee avatar on card (FR-KB-014)                  | 1      | DONE    |
+| KB-08   | Kanban: dependency indicator on card (FR-KB-015)             | 1      | DONE    |
+
+### Sprint Review
+
+- Planned points: `6`
+- Completed points: `6`
+- Carry-over points: `0`
+- Main wins: Shipped all four committed S04 items in one session; task detail panel integration and WIP limits persistence closed end-to-end.
+- Main misses: -
+- Process changes for next sprint: Keep autopilot closure gate strict (REVIEW + SYNC + `/done` before handoff).
+
+---
+
+## Sprint Archive — S03
 
 **Sprint ID:** S03
 **Dates:** 2026-03-22 -> 2026-04-05
@@ -128,7 +155,7 @@ Progress update (2026-03-23): `KB-01` and `KB-03` completed.
 
 ---
 
-## Previous Sprint
+## Sprint Archive — S02
 
 **Sprint ID:** S02
 **Dates:** 2026-03-21 -> 2026-04-04
@@ -247,6 +274,8 @@ Progress update (2026-03-23): `KB-01` and `KB-03` completed.
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S03    | 2026-03-22 -> 2026-04-05 | 7       | -         | -          | P2 bug fixes — error states, hook anti-patterns, Gantt UX, AI contract              |
+| S05    | 2026-03-24 -> 2026-04-07 | 7       | -         | -          | Planned: KB-02 reorder, KB-04 swimlanes, KB-05 keyboard shortcuts                  |
+| S04    | 2026-03-23 -> 2026-04-06 | 6       | 6         | 0          | Kanban enhancements — task detail panel, WIP limits, assignee avatar, dependency indicator shipped |
+| S03    | 2026-03-22 -> 2026-04-05 | 7       | 7         | 0          | P2 bug fixes — error states, hook anti-patterns, Gantt UX, AI contract              |
 | S02    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend cleanup — dead code, cross-feature imports, query keys, failing tests      |
 | S01    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend audit sprint — full tsc/eslint/test + 13-feature standards review complete |

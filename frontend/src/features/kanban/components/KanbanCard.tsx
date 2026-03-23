@@ -1,8 +1,11 @@
-import { useDraggable } from "@dnd-kit/core";
-import { AlertTriangle, MessageSquare } from "lucide-react";
+import type { MouseEvent, PointerEvent } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { AlertTriangle, Link2, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import type { Task } from "@/features/tasks";
+import type { KanbanDependencyIndicator } from "../types";
 
 function getPriorityBadge(priority: number) {
     if (priority >= 750) return { label: "HIGH", cls: "bg-orange-500/15 text-orange-600 dark:text-orange-400" };
@@ -27,24 +30,48 @@ function isOverdue(task: Task): boolean {
 
 interface KanbanCardProps {
     task: Task;
+    dependencyIndicator?: KanbanDependencyIndicator;
     isDragOverlay?: boolean;
     onClick?: (taskId: string) => void;
 }
 
-export function KanbanCard({ task, isDragOverlay = false, onClick }: KanbanCardProps) {
-    const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
+export function KanbanCard({ task, dependencyIndicator, isDragOverlay = false, onClick }: KanbanCardProps) {
+    const { setNodeRef, listeners, attributes, transform, transition, isDragging } = useSortable({
         id: task.id,
-        data: { status: task.status },
+        data: {
+            type: "kanban-card",
+            status: task.status,
+            parentTaskId: task.parent_task_id ?? null,
+        },
         disabled: isDragOverlay,
     });
+    const style = isDragOverlay
+        ? undefined
+        : {
+            transform: CSS.Transform.toString(transform),
+            transition,
+        };
 
     const badge = getPriorityBadge(task.priority);
     const overdue = isOverdue(task);
     const progress = Math.round(Number(task.percent_complete));
+    const blockedCount = dependencyIndicator?.blockedCount ?? 0;
+    const blockingCount = dependencyIndicator?.blockingCount ?? 0;
+
+    const handleDependencyClick = (event: MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.(task.id);
+    };
+
+    const handleDependencyPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+    };
 
     return (
         <div
             ref={isDragOverlay ? undefined : setNodeRef}
+            style={style}
             {...(isDragOverlay ? {} : listeners)}
             {...(isDragOverlay ? {} : attributes)}
             onClick={isDragOverlay ? undefined : () => onClick?.(task.id)}
@@ -83,6 +110,35 @@ export function KanbanCard({ task, isDragOverlay = false, onClick }: KanbanCardP
                                 <MessageSquare className="size-3" />
                                 {task.comments_count}
                             </span>
+                        )}
+                    </div>
+                )}
+
+                {(blockedCount > 0 || blockingCount > 0) && (
+                    <div className="flex items-center gap-1.5 pt-0.5">
+                        {blockedCount > 0 && (
+                            <button
+                                type="button"
+                                aria-label={`Blocked dependencies: ${blockedCount}`}
+                                onPointerDown={handleDependencyPointerDown}
+                                onClick={handleDependencyClick}
+                                className="inline-flex items-center gap-1 rounded-sm bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive hover:bg-destructive/20"
+                            >
+                                <Link2 className="size-3" />
+                                Blocked {blockedCount}
+                            </button>
+                        )}
+                        {blockingCount > 0 && (
+                            <button
+                                type="button"
+                                aria-label={`Blocking dependencies: ${blockingCount}`}
+                                onPointerDown={handleDependencyPointerDown}
+                                onClick={handleDependencyClick}
+                                className="inline-flex items-center gap-1 rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-500/25"
+                            >
+                                <Link2 className="size-3" />
+                                Blocking {blockingCount}
+                            </button>
                         )}
                     </div>
                 )}
