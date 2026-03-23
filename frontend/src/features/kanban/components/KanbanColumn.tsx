@@ -25,6 +25,8 @@ interface KanbanColumnProps {
     projectId: string | undefined;
     wipLimit?: number;
     laneMode: KanbanLaneMode;
+    selectionMode?: boolean;
+    selectedTaskIds?: Set<string>;
     onTaskClick?: (taskId: string) => void;
     onSetWipLimit?: (limit: number | null) => void;
     focusedTaskId?: string | null;
@@ -119,6 +121,8 @@ export function KanbanColumn({
     projectId,
     wipLimit,
     laneMode,
+    selectionMode = false,
+    selectedTaskIds,
     onTaskClick,
     onSetWipLimit,
     focusedTaskId,
@@ -259,6 +263,8 @@ export function KanbanColumn({
                                     task={task}
                                     dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                     onClick={onTaskClick}
+                                    selectionMode={selectionMode}
+                                    isSelected={selectedTaskIds?.has(task.id) ?? false}
                                     isKeyboardFocused={focusedTaskId === task.id}
                                     onFocus={onCardFocus}
                                     cardRef={getCardRef?.(task.id)}
@@ -284,6 +290,8 @@ export function KanbanColumn({
                                                 task={task}
                                                 dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                                 onClick={onTaskClick}
+                                                selectionMode={selectionMode}
+                                                isSelected={selectedTaskIds?.has(task.id) ?? false}
                                                 isKeyboardFocused={focusedTaskId === task.id}
                                                 onFocus={onCardFocus}
                                                 cardRef={getCardRef?.(task.id)}

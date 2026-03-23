@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KanbanPage from "./KanbanPage";
 import { useProject, useUpdateProject } from "@/features/projects";
-import { useDependencies, useTasks } from "@/features/tasks";
+import { useBulkUpdateTasks, useDependencies, useTasks } from "@/features/tasks";
 import { useKanbanStore } from "../store/kanban-store";
 import type { Task } from "@/features/tasks";
 import type { TaskStatus } from "../types";
@@ -16,6 +16,7 @@ vi.mock("react-router", async () => {
 vi.mock("@/features/tasks", () => ({
     useTasks: vi.fn(),
     useDependencies: vi.fn(),
+    useBulkUpdateTasks: vi.fn(),
     TaskDetailPanel: ({ isOpen }: { isOpen: boolean }) =>
         isOpen ? <div data-testid="task-detail-panel">task detail</div> : null,
 }));
@@ -30,22 +31,31 @@ vi.mock("../components/KanbanBoard", () => ({
         tasksByStatus,
         dependencyIndicatorsByTaskId,
         laneMode,
+        selectionMode,
+        selectedTaskIds,
         onTaskClick,
         onSetColumnWipLimit,
     }: {
         tasksByStatus: Record<string, Task[]>;
         dependencyIndicatorsByTaskId: Record<string, { blockedCount: number; blockingCount: number }>;
         laneMode: "none" | "assignee" | "priority";
+        selectionMode: boolean;
+        selectedTaskIds: Set<string>;
         onTaskClick: (taskId: string) => void;
         onSetColumnWipLimit: (status: TaskStatus, limit: number | null) => void;
     }) => (
         <div data-testid="kanban-board">
             <span data-testid="lane-mode">{laneMode}</span>
+            <span data-testid="selection-mode">{selectionMode ? "on" : "off"}</span>
             {Object.values(tasksByStatus)
                 .flat()
                 .map((t) => (
                     <div key={t.id}>
-                        <button type="button" onClick={() => onTaskClick(t.id)}>
+                        <button
+                            type="button"
+                            onClick={() => onTaskClick(t.id)}
+                            aria-pressed={selectedTaskIds.has(t.id)}
+                        >
                             {t.name}
                         </button>
                         <span>{`${dependencyIndicatorsByTaskId[t.id]?.blockedCount ?? 0}/${dependencyIndicatorsByTaskId[t.id]?.blockingCount ?? 0}`}</span>
@@ -59,7 +69,32 @@ vi.mock("../components/KanbanBoard", () => ({
 }));
 
 vi.mock("../components/KanbanToolbar", () => ({
-    KanbanToolbar: () => <div data-testid="kanban-toolbar" />,
+    KanbanToolbar: ({
+        selectionMode,
+        selectedCount,
+        onSelectionModeChange,
+        onBulkMoveTargetChange,
+        onBulkMove,
+    }: {
+        selectionMode: boolean;
+        selectedCount: number;
+        onSelectionModeChange: (enabled: boolean) => void;
+        onBulkMoveTargetChange: (status: TaskStatus) => void;
+        onBulkMove: () => void;
+    }) => (
+        <div data-testid="kanban-toolbar">
+            <span data-testid="selection-count">{selectedCount}</span>
+            <button type="button" onClick={() => onSelectionModeChange(!selectionMode)}>
+                {selectionMode ? "disable selection" : "enable selection"}
+            </button>
+            <button type="button" onClick={() => onBulkMoveTargetChange("DONE")}>
+                target done
+            </button>
+            <button type="button" onClick={onBulkMove}>
+                bulk move
+            </button>
+        </div>
+    ),
 }));
 
 const baseTask = {
@@ -117,6 +152,16 @@ function mockLoaded(tasks: Task[]) {
     } as never);
 }
 
+function mockBulkUpdate(overrides?: {
+    mutateAsync?: ReturnType<typeof vi.fn>;
+    isPending?: boolean;
+}) {
+    vi.mocked(useBulkUpdateTasks).mockReturnValue({
+        mutateAsync: overrides?.mutateAsync ?? vi.fn().mockResolvedValue({ succeeded: 0, failed: 0, errors: [] }),
+        isPending: overrides?.isPending ?? false,
+    } as never);
+}
+
 function mockDependencies(items: Array<{
     id: string;
     predecessor_id: string;
@@ -163,6 +208,7 @@ describe("KanbanPage", () => {
             mutateAsync: vi.fn().mockResolvedValue(undefined),
         } as never);
         mockDependencies([]);
+        mockBulkUpdate();
         useKanbanStore.setState({
             collapsedByProject: {},
             laneModeByProject: {},
@@ -269,6 +315,32 @@ describe("KanbanPage", () => {
 
         await user.click(screen.getByRole("button", { name: "set backlog limit" }));
         expect(mutateAsync).toHaveBeenCalled();
+    });
+
+    it("supports selection mode and bulk move via bulk update API", async () => {
+        const user = userEvent.setup();
+        const mutateAsync = vi.fn().mockResolvedValue({ succeeded: 2, failed: 0, errors: [] });
+        mockBulkUpdate({ mutateAsync });
+        mockLoaded(leafTasks);
+        render(<KanbanPage />);
+
+        await user.click(screen.getByRole("button", { name: "enable selection" }));
+        expect(screen.getByTestId("selection-mode")).toHaveTextContent("on");
+
+        await user.click(screen.getByRole("button", { name: "Deploy API" }));
+        await user.click(screen.getByRole("button", { name: "Write docs" }));
+        expect(screen.getByTestId("selection-count")).toHaveTextContent("2");
+
+        await user.click(screen.getByRole("button", { name: "target done" }));
+        await user.click(screen.getByRole("button", { name: "bulk move" }));
+
+        expect(mutateAsync).toHaveBeenCalledWith({
+            tasks: [
+                { id: "t1", data: { status: "DONE" } },
+                { id: "t2", data: { status: "DONE" } },
+            ],
+        });
+        expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
     });
 
     it("derives blocked and blocking counts from active dependencies", () => {

@@ -1,7 +1,7 @@
 import type { MouseEvent, PointerEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AlertTriangle, Link2, MessageSquare } from "lucide-react";
+import { AlertTriangle, Check, Link2, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import type { Task } from "@/features/tasks";
@@ -32,6 +32,8 @@ interface KanbanCardProps {
     task: Task;
     dependencyIndicator?: KanbanDependencyIndicator;
     isDragOverlay?: boolean;
+    selectionMode?: boolean;
+    isSelected?: boolean;
     onClick?: (taskId: string) => void;
     isKeyboardFocused?: boolean;
     onFocus?: (taskId: string) => void;
@@ -42,11 +44,14 @@ export function KanbanCard({
     task,
     dependencyIndicator,
     isDragOverlay = false,
+    selectionMode = false,
+    isSelected = false,
     onClick,
     isKeyboardFocused = false,
     onFocus,
     cardRef,
 }: KanbanCardProps) {
+    const isDragEnabled = !isDragOverlay && !selectionMode;
     const { setNodeRef, listeners, attributes, transform, transition, isDragging } = useSortable({
         id: task.id,
         data: {
@@ -54,7 +59,7 @@ export function KanbanCard({
             status: task.status,
             parentTaskId: task.parent_task_id ?? null,
         },
-        disabled: isDragOverlay,
+        disabled: !isDragEnabled,
     });
     const style = isDragOverlay
         ? undefined
@@ -91,15 +96,18 @@ export function KanbanCard({
                 cardRef?.(node);
             }}
             style={style}
-            {...(isDragOverlay ? {} : listeners)}
-            {...(isDragOverlay ? {} : attributes)}
+            {...(isDragEnabled ? listeners : {})}
+            {...(isDragEnabled ? attributes : {})}
             onClick={isDragOverlay ? undefined : () => onClick?.(task.id)}
             onFocus={handleFocus}
             tabIndex={isDragOverlay ? undefined : (isKeyboardFocused ? 0 : -1)}
+            aria-selected={selectionMode ? isSelected : undefined}
             data-task-id={task.id}
-            className={`flex rounded-lg border border-border bg-card shadow-sm cursor-grab active:cursor-grabbing select-none overflow-hidden hover:shadow-md transition-shadow ${
-                !isDragOverlay && isDragging ? "opacity-40" : ""
-            } ${isKeyboardFocused ? "ring-2 ring-primary/40" : ""}`}
+            className={`flex rounded-lg border border-border bg-card shadow-sm select-none overflow-hidden hover:shadow-md transition-shadow ${
+                selectionMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
+            } ${!isDragOverlay && isDragging ? "opacity-40" : ""} ${
+                isKeyboardFocused ? "ring-2 ring-primary/40" : ""
+            } ${selectionMode && isSelected ? "ring-2 ring-primary/60" : ""}`}
         >
             {/* Left color strip — inline style required for dynamic task.color */}
             <div className="w-[3px] shrink-0" style={{ backgroundColor: task.color ?? "transparent" }} />
@@ -111,6 +119,18 @@ export function KanbanCard({
                     {badge && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-sm ${badge.cls}`}>
                             {badge.label}
+                        </span>
+                    )}
+                    {selectionMode && (
+                        <span
+                            className={`ml-auto inline-flex size-4 items-center justify-center rounded-sm border ${
+                                isSelected
+                                    ? "border-primary bg-primary/15 text-primary"
+                                    : "border-border text-transparent"
+                            }`}
+                            aria-hidden="true"
+                        >
+                            <Check className="size-3" />
                         </span>
                     )}
                 </div>

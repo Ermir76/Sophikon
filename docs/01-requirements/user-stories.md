@@ -1,7 +1,7 @@
 # Sophikon V1 - User Stories
 
-**Version:** 4.0
-**Date:** 2026-03-20
+**Version:** 5.3
+**Date:** 2026-03-23
 **Scope:** User stories only (user intent and business value)
 
 ---
@@ -130,9 +130,9 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | US-12.4 | As a TL, I want to reorder cards within a column so that I can prioritize work visually.                                      | DONE    |
 | US-12.5 | As a TL, I want to set WIP limits per column so that the team does not take on more than it can complete.                     | DONE    |
 | US-12.6 | As a TL, I want to group cards into swimlanes by assignee or priority so that workload distribution is visible at a glance.   | DONE    |
-| US-12.7 | As a TM, I want keyboard shortcuts on the board so that I can navigate and create cards without reaching for the mouse.       | PENDING |
-| US-12.8 | As a TL, I want to select multiple cards and move them at once so that bulk status changes are fast.                          | PENDING |
-| US-12.9 | As a TM, I want to see the assignee avatar on each card so that I know who owns each task without opening it.                 | PENDING |
+| US-12.7 | As a TM, I want keyboard shortcuts on the board so that I can navigate and create cards without reaching for the mouse.       | DONE    |
+| US-12.8 | As a TL, I want to select multiple cards and move them at once so that bulk status changes are fast.                          | DONE    |
+| US-12.9 | As a TM, I want to see the assignee avatar on each card so that I know who owns each task without opening it.                 | DONE    |
 | US-12.10 | As a TM, I want to see a dependency indicator on a card so that I know when a task is blocked before I start work on it.    | DONE    |
 | US-12.11 | As a PM, I want an AI sprint health summary so that I can see which cards are at risk without reading every card individually. | PENDING |
 | US-12.12 | As a TM, I want AI to fill in card details from a title so that creating a well-specified task takes seconds.                 | PENDING |
@@ -152,9 +152,9 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 | Status  | Count |
 | ------- | ----- |
-| DONE    | 29    |
+| DONE    | 32    |
 | PARTIAL | 7     |
-| PENDING | 19    |
+| PENDING | 16    |
 
 ---
 
@@ -169,3 +169,4 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 5.0     | 2026-03-23 | wwwer  | Added Epic 12 (Kanban Board) with US-12.1–12.13 covering board basics, task detail panel, card reordering, WIP limits, swimlanes, keyboard shortcuts, bulk operations, assignee avatar, dependency indicators, and AI board features. Renumbered former Epic 12 to Epic 13. |
 | 5.1     | 2026-03-23 | Codex  | Marked US-12.10 as DONE after shipping Kanban dependency indicators (blocked/blocking badges) on cards. |
 | 5.2     | 2026-03-23 | Codex  | Marked US-12.4 as DONE after shipping in-column Kanban card reorder with backend persistence and optimistic rollback. |
+| 5.3     | 2026-03-23 | Codex  | Marked US-12.7, US-12.8, and US-12.9 as DONE after shipping keyboard shortcuts, bulk move, and assignee-avatar kanban capabilities. |

@@ -87,6 +87,30 @@ Status: `DONE`
 
 ---
 
+### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Confirm backend bulk update endpoint/hook support for status updates from kanban
+- [x] Add kanban selection mode state (multi-card selection across columns)
+- [x] Add toolbar controls for bulk move target and apply action
+- [x] Execute bulk status move via existing `PATCH /tasks/bulk` flow with success/error feedback
+- [x] Ensure drag interactions are disabled while selection mode is active
+- [x] Add/update tests for selection toggling and bulk move behavior
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions:
+  - Reuse existing tasks bulk update API/hook; no backend changes for KB-06
+  - Keep selection state local to kanban page (UI state), not persisted
+  - Clear selection after successful bulk move; keep only failed IDs selected on partial failure
+
+---
+
 ## Previous Sprint Items — S04
 
 ### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)

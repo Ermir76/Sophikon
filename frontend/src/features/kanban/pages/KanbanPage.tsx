@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { useProject, useUpdateProject } from "@/features/projects";
-import { TaskDetailPanel, useDependencies, useTasks } from "@/features/tasks";
+import { TaskDetailPanel, useBulkUpdateTasks, useDependencies, useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
 import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { PageLoading } from "@/shared/components/state/PageLoading";
@@ -74,6 +74,7 @@ export default function KanbanPage() {
     const { data: dependencyData } = useDependencies(projectId);
     const { data: project } = useProject(projectId);
     const updateProject = useUpdateProject(projectId);
+    const bulkUpdateTasks = useBulkUpdateTasks(projectId);
 
     const searchQuery = useKanbanStore((s) => s.searchQuery);
     const priorityFilter = useKanbanStore((s) => s.priorityFilter);
@@ -86,6 +87,9 @@ export default function KanbanPage() {
     const setSelectedTaskId = useKanbanStore((s) => s.setSelectedTaskId);
     const clearSelectedTaskId = useKanbanStore((s) => s.clearSelectedTaskId);
     const setProjectWipLimits = useKanbanStore((s) => s.setProjectWipLimits);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+    const [bulkMoveTarget, setBulkMoveTarget] = useState<TaskStatus>("TODO");
 
     const wipLimits = projectId ? (wipLimitsByProject[projectId] ?? {}) : {};
     const laneMode = projectId ? (laneModeByProject[projectId] ?? "none") : "none";
@@ -111,6 +115,12 @@ export default function KanbanPage() {
             return true;
         });
     }, [leafTasks, searchQuery, priorityFilter]);
+    const leafTaskIdSet = useMemo(() => new Set(leafTasks.map((task) => task.id)), [leafTasks]);
+    const validSelectedTaskIds = useMemo(
+        () => selectedTaskIds.filter((taskId) => leafTaskIdSet.has(taskId)),
+        [leafTaskIdSet, selectedTaskIds],
+    );
+    const selectedTaskIdSet = useMemo(() => new Set(validSelectedTaskIds), [validSelectedTaskIds]);
 
     const dependencyIndicatorsByTaskId = useMemo<KanbanDependencyIndicatorsByTaskId>(() => {
         const indicators: KanbanDependencyIndicatorsByTaskId = {};
@@ -190,6 +200,52 @@ export default function KanbanPage() {
         }
     }, [projectId, project, setProjectWipLimits, updateProject, wipLimitsByProject]);
 
+    const handleTaskClick = useCallback((taskId: string) => {
+        if (selectionMode) {
+            setSelectedTaskIds((previous) => (
+                previous.includes(taskId)
+                    ? previous.filter((id) => id !== taskId)
+                    : [...previous, taskId]
+            ));
+            return;
+        }
+        setSelectedTaskId(taskId);
+    }, [selectionMode, setSelectedTaskId]);
+
+    const handleBulkMove = useCallback(async () => {
+        if (!projectId || validSelectedTaskIds.length === 0) return;
+
+        try {
+            const result = await bulkUpdateTasks.mutateAsync({
+                tasks: validSelectedTaskIds.map((taskId) => ({
+                    id: taskId,
+                    data: { status: bulkMoveTarget },
+                })),
+            });
+
+            if (result.failed > 0) {
+                const failedTaskIds = new Set(
+                    result.errors
+                        .map((errorItem) => errorItem.task_id)
+                        .filter((taskId): taskId is string => typeof taskId === "string"),
+                );
+                if (failedTaskIds.size > 0) {
+                    setSelectedTaskIds((previous) => previous.filter((taskId) => failedTaskIds.has(taskId)));
+                } else {
+                    setSelectedTaskIds([]);
+                }
+                toast.error(`Moved ${result.succeeded} task(s), ${result.failed} failed`);
+                return;
+            }
+
+            const targetColumn = KANBAN_COLUMNS.find((column) => column.id === bulkMoveTarget)?.label ?? bulkMoveTarget;
+            toast.success(`${result.succeeded} task(s) moved to ${targetColumn}`);
+            setSelectedTaskIds([]);
+        } catch (bulkError) {
+            toast.error(getErrorMessage(bulkError));
+        }
+    }, [bulkMoveTarget, bulkUpdateTasks, projectId, validSelectedTaskIds]);
+
     if (isLoading) return <PageLoading message="Loading tasks..." />;
     if (error) {
         return (
@@ -213,6 +269,21 @@ export default function KanbanPage() {
                         if (!projectId) return;
                         setProjectLaneMode(projectId, nextMode);
                     }}
+                    selectionMode={selectionMode}
+                    selectedCount={validSelectedTaskIds.length}
+                    bulkMoveTarget={bulkMoveTarget}
+                    isBulkMovePending={bulkUpdateTasks.isPending}
+                    onSelectionModeChange={(enabled) => {
+                        setSelectionMode(enabled);
+                        if (enabled) {
+                            clearSelectedTaskId();
+                            return;
+                        }
+                        setSelectedTaskIds([]);
+                    }}
+                    onBulkMoveTargetChange={setBulkMoveTarget}
+                    onBulkMove={handleBulkMove}
+                    onClearSelection={() => setSelectedTaskIds([])}
                 />
             </div>
             <div className="flex-1 overflow-hidden min-h-0">
@@ -224,7 +295,9 @@ export default function KanbanPage() {
                     projectId={projectId}
                     wipLimits={wipLimits}
                     laneMode={laneMode}
-                    onTaskClick={setSelectedTaskId}
+                    selectionMode={selectionMode}
+                    selectedTaskIds={selectedTaskIdSet}
+                    onTaskClick={handleTaskClick}
                     onSetColumnWipLimit={handleSetColumnWipLimit}
                 />
             </div>

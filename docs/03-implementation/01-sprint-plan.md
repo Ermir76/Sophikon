@@ -33,7 +33,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011)           | 3      | Highest visibility improvement for team-level workload balancing | -    | Board can group cards by assignee or priority within each status column, with clear lane headers        |
 | KB-05   | Kanban: keyboard shortcuts (FR-KB-012)                       | 2      | Improves execution speed and accessibility without backend risk | KB-01 | Quick-add and keyboard navigation work end-to-end on the board with documented shortcut hints            |
 
-Progress update (2026-03-23): `KB-02`, `KB-04`, and `KB-05` completed.
+Progress update (2026-03-23): `KB-02`, `KB-04`, `KB-05`, and pulled-in stretch item `KB-06` completed.
 
 **Total committed points:** `7`
 
@@ -42,6 +42,8 @@ Progress update (2026-03-23): `KB-02`, `KB-04`, and `KB-05` completed.
 | Item ID | Title                                         | Points | Trigger to pull in           |
 | ------- | --------------------------------------------- | ------ | ---------------------------- |
 | KB-06   | Kanban: bulk select and move cards (FR-KB-013) | 2  | Pull in if KB-04 ships with no carry-over risk |
+
+Stretch activation (2026-03-23): `KB-06` completed after all committed S05 items shipped.
 
 ### Risks and Blockers
 
@@ -274,7 +276,7 @@ Progress update (2026-03-23): `KB-02`, `KB-04`, and `KB-05` completed.
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S05    | 2026-03-24 -> 2026-04-07 | 7       | -         | -          | Planned: KB-02 reorder, KB-04 swimlanes, KB-05 keyboard shortcuts                  |
+| S05    | 2026-03-24 -> 2026-04-07 | 7       | -         | -          | Planned: KB-02 reorder, KB-04 swimlanes, KB-05 keyboard shortcuts; stretch KB-06 also shipped |
 | S04    | 2026-03-23 -> 2026-04-06 | 6       | 6         | 0          | Kanban enhancements — task detail panel, WIP limits, assignee avatar, dependency indicator shipped |
 | S03    | 2026-03-22 -> 2026-04-05 | 7       | 7         | 0          | P2 bug fixes — error states, hook anti-patterns, Gantt UX, AI contract              |
 | S02    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend cleanup — dead code, cross-feature imports, query keys, failing tests      |

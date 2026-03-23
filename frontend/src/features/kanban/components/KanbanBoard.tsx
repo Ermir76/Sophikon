@@ -21,6 +21,8 @@ interface KanbanBoardProps {
     projectId: string | undefined;
     wipLimits: KanbanWipLimits;
     laneMode: KanbanLaneMode;
+    selectionMode: boolean;
+    selectedTaskIds: Set<string>;
     onTaskClick: (taskId: string) => void;
     onSetColumnWipLimit: (column: TaskStatus, limit: number | null) => void;
 }
@@ -67,6 +69,8 @@ export function KanbanBoard({
     projectId,
     wipLimits,
     laneMode,
+    selectionMode,
+    selectedTaskIds,
     onTaskClick,
     onSetColumnWipLimit,
 }: KanbanBoardProps) {
@@ -200,6 +204,8 @@ export function KanbanBoard({
                         projectId={projectId}
                         wipLimit={wipLimits[col.id]}
                         laneMode={laneMode}
+                        selectionMode={selectionMode}
+                        selectedTaskIds={selectedTaskIds}
                         onTaskClick={onTaskClick}
                         onSetWipLimit={(limit) => onSetColumnWipLimit(col.id, limit)}
                         focusedTaskId={resolvedFocusedTaskId}

@@ -1,7 +1,7 @@
 # Sophikon V1 - Functional Requirements
 
-**Version:** 9.0
-**Date:** 2026-03-20
+**Version:** 10.3
+**Date:** 2026-03-23
 **Scope:** V1 product requirements only (what the system must do)
 
 ---
@@ -241,7 +241,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-010 | WIP limits — set max cards per column with visual warning when exceeded            | Should   | DONE    |
 | FR-KB-011 | Swimlanes — group cards by assignee or priority within each column                 | Should   | DONE    |
 | FR-KB-012 | Keyboard shortcuts — quick-add card, arrow navigation between cards                | Should   | DONE    |
-| FR-KB-013 | Bulk select and move multiple cards across columns                                 | Should   | PENDING |
+| FR-KB-013 | Bulk select and move multiple cards across columns                                 | Should   | DONE    |
 | FR-KB-014 | Show assignee avatar on card                                                       | Should   | DONE    |
 | FR-KB-015 | Show dependency indicator on card — blocked and blocking states                    | Should   | DONE    |
 | FR-KB-016 | AI sprint health summary — surface cards at risk based on board state              | Should   | PENDING |
@@ -310,3 +310,4 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 10.0    | 2026-03-23 | wwwer  | Kanban section expanded: added FR-KB-008 through FR-KB-018 covering task detail panel, card reordering, WIP limits, swimlanes, keyboard shortcuts, bulk operations, assignee avatar, dependency indicators, and AI-powered board features. |
 | 10.1    | 2026-03-23 | Codex  | Marked FR-KB-015 as DONE after implementing blocked/blocking dependency indicators on Kanban cards.                                                                                                                                        |
 | 10.2    | 2026-03-23 | Codex  | Marked FR-KB-009 as DONE after shipping in-column Kanban card reorder with persisted backend ordering and optimistic rollback.                                                                                                             |
+| 10.3    | 2026-03-23 | Codex  | Marked FR-KB-013 as DONE after shipping kanban bulk select mode with multi-card move via existing bulk task update API.                                                                                                                   |

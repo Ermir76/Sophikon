@@ -111,6 +111,8 @@ describe("KanbanBoard", () => {
                 projectId="proj-1"
                 wipLimits={{}}
                 laneMode="none"
+                selectionMode={false}
+                selectedTaskIds={new Set()}
                 onTaskClick={vi.fn()}
                 onSetColumnWipLimit={vi.fn()}
             />
@@ -137,6 +139,8 @@ describe("KanbanBoard", () => {
                 projectId="proj-1"
                 wipLimits={{}}
                 laneMode="none"
+                selectionMode={false}
+                selectedTaskIds={new Set()}
                 onTaskClick={vi.fn()}
                 onSetColumnWipLimit={vi.fn()}
             />
@@ -162,6 +166,8 @@ describe("KanbanBoard", () => {
                 projectId="proj-1"
                 wipLimits={{}}
                 laneMode="none"
+                selectionMode={false}
+                selectedTaskIds={new Set()}
                 onTaskClick={onTaskClick}
                 onSetColumnWipLimit={vi.fn()}
             />
@@ -195,6 +201,8 @@ describe("KanbanBoard", () => {
                 projectId="proj-1"
                 wipLimits={{}}
                 laneMode="none"
+                selectionMode={false}
+                selectedTaskIds={new Set()}
                 onTaskClick={onTaskClick}
                 onSetColumnWipLimit={vi.fn()}
             />
