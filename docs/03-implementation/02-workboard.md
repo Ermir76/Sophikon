@@ -68,14 +68,14 @@ Status: `DONE`
 
 ### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Read `useCollapsedTree.ts` and determine intent of the `useLayoutEffect` at line 38
-- [ ] If truly mount-only: add `// eslint-disable-next-line react-hooks/exhaustive-deps` with explicit rationale comment
-- [ ] If should re-run on changes: add all 5 missing deps (`data`, `defaultCollapseAll`, `getParentId`, `setValue`, `storageKey`); ensure `getParentId` is stable (wrapped in `useCallback` at call sites if needed)
-- [ ] Verify gantt and task tree views still behave correctly after change
+- [x] Read `useCollapsedTree.ts` and determine intent of the `useLayoutEffect` at line 38
+- [x] If truly mount-only: add `// eslint-disable-next-line react-hooks/exhaustive-deps` with explicit rationale comment
+- [x] If should re-run on changes: add all 5 missing deps (`data`, `defaultCollapseAll`, `getParentId`, `setValue`, `storageKey`); ensure `getParentId` is stable (wrapped in `useCallback` at call sites if needed)
+- [x] Verify gantt and task tree views still behave correctly after change
 
 #### Notes
 

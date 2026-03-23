@@ -35,7 +35,10 @@ export function useCollapsedTree<T extends { id: string }>(
             data.map(t => getParentId(t)).filter((id): id is string => id != null)
         );
         if (parentIds.size > 0) setValue(parentIds);
-    }, [data.length]);
+    // Intentional: runs once when data first arrives ([] → non-empty). The initializedRef guard
+    // prevents re-runs; adding the full dep list would be semantically wrong — not a reactive effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.length]); // data.length dep: retries until data loads, then ref-guards against re-runs
 
     // Snapshot of each node's parent so we can detect hierarchy changes.
     const prevParentsRef = useRef<Map<string, string | undefined | null>>(
