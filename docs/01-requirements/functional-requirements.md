@@ -229,13 +229,24 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 
 | ID        | Requirement                        | Priority | Status |
 | --------- | ---------------------------------- | -------- | ------ |
-| FR-KB-001 | Display 5-column Kanban board      | Must     | DONE   |
-| FR-KB-002 | Group leaf tasks by status         | Must     | DONE   |
-| FR-KB-003 | Drag card to change status         | Must     | DONE   |
-| FR-KB-004 | Card shows key task summary fields | Must     | DONE   |
-| FR-KB-005 | Search and filter cards            | Should   | DONE   |
-| FR-KB-006 | Collapse column to icon strip      | Should   | DONE   |
-| FR-KB-007 | Quick-add card from column header  | Should   | DONE   |
+| FR-KB-001 | Display 5-column Kanban board                                                   | Must   | DONE    |
+| FR-KB-002 | Group leaf tasks by status                                                      | Must   | DONE    |
+| FR-KB-003 | Drag card to change status                                                      | Must   | DONE    |
+| FR-KB-004 | Card shows key task summary fields                                              | Must   | DONE    |
+| FR-KB-005 | Search and filter cards                                                         | Should | DONE    |
+| FR-KB-006 | Collapse column to icon strip                                                   | Should | DONE    |
+| FR-KB-007 | Quick-add card from column header                                               | Should | DONE    |
+| FR-KB-008 | Open task detail panel from card without leaving the board                      | Must   | PENDING |
+| FR-KB-009 | Drag to reorder cards within a column                                           | Should | PENDING |
+| FR-KB-010 | WIP limits — set max cards per column with visual warning when exceeded         | Should | PENDING |
+| FR-KB-011 | Swimlanes — group cards by assignee or priority within each column              | Should | PENDING |
+| FR-KB-012 | Keyboard shortcuts — quick-add card, arrow navigation between cards             | Should | PENDING |
+| FR-KB-013 | Bulk select and move multiple cards across columns                              | Should | PENDING |
+| FR-KB-014 | Show assignee avatar on card                                                    | Should | PENDING |
+| FR-KB-015 | Show dependency indicator on card — blocked and blocking states                 | Should | PENDING |
+| FR-KB-016 | AI sprint health summary — surface cards at risk based on board state           | Should | PENDING |
+| FR-KB-017 | AI quick-fill — generate card fields from title only                            | Could  | PENDING |
+| FR-KB-018 | AI-detected blockers — highlight cards with unresolved dependencies or no activity | Could | PENDING |
 
 ---
 
@@ -296,3 +307,4 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 8.0     | 2026-03-20 | Codex  | Cleaned to requirements-only content, added explicit DONE/PARTIAL/PENDING Status columns, synced with traceability and targeted code verification, retained FR-AI requirements in this file.           |
 | 9.0     | 2026-03-20 | Codex  | Coverage hardening pass: added traced requirements for organization management, account settings extras, AI conversation/plan-approval flows, notification settings, and reporting workspace surfaces. |
 | 9.1     | 2026-03-20 | Codex  | Consistency pass with phase-2 design docs: adjusted FR-AI-006 from DONE to PARTIAL to match current design/code evidence (reasoning stream path not fully evidenced).                                  |
+| 10.0    | 2026-03-23 | wwwer  | Kanban section expanded: added FR-KB-008 through FR-KB-018 covering task detail panel, card reordering, WIP limits, swimlanes, keyboard shortcuts, bulk operations, assignee avatar, dependency indicators, and AI-powered board features. |
