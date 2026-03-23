@@ -242,7 +242,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-011 | Swimlanes — group cards by assignee or priority within each column              | Should | PENDING |
 | FR-KB-012 | Keyboard shortcuts — quick-add card, arrow navigation between cards             | Should | PENDING |
 | FR-KB-013 | Bulk select and move multiple cards across columns                              | Should | PENDING |
-| FR-KB-014 | Show assignee avatar on card                                                    | Should | PENDING |
+| FR-KB-014 | Show assignee avatar on card                                                    | Should | DONE    |
 | FR-KB-015 | Show dependency indicator on card — blocked and blocking states                 | Should | PENDING |
 | FR-KB-016 | AI sprint health summary — surface cards at risk based on board state           | Should | PENDING |
 | FR-KB-017 | AI quick-fill — generate card fields from title only                            | Could  | PENDING |

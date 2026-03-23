@@ -241,6 +241,7 @@ This document records what is evidenced by the current codebase review.
 | FR-KB-005 | Implemented   | A10      | `KanbanToolbar` provides text search and priority-filter dropdown; `KanbanPage` filters before grouping. |
 | FR-KB-006 | Implemented   | A9, A10  | `KanbanColumn.tsx` renders a collapsed icon-strip (12-wide, vertical label, task count badge, expand button) when `collapsedByProject[projectId]` includes the column id; `KanbanColumnHeader` collapse button toggles via `useKanbanStore.toggleCollapse`. |
 | FR-KB-007 | Implemented   | A4, A9, A10 | `KanbanColumnHeader` exposes a `+` icon button (`onAdd` prop); `KanbanColumn` sets `isAdding=true` on click and renders an inline `Input` at the column footer that calls `useCreateTask.mutateAsync` with the column's status on Enter/blur. |
+| FR-KB-014 | Implemented   | A4, A10  | Task list API embeds `assignments` summaries (`resource_id`, `resource_name`, `resource_initials`) and `KanbanCard` renders assignee avatar initials with tooltip plus empty-state handling. |
 
 ### 3.14 Import/Export
 

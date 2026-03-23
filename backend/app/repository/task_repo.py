@@ -11,6 +11,7 @@ from app.models.assignment import Assignment
 from app.models.comment import Comment
 from app.models.dependency import Dependency
 from app.models.project import Project
+from app.models.resource import Resource
 from app.models.task import Task
 
 
@@ -54,6 +55,30 @@ async def count_comments_for_tasks(
         .group_by(Comment.entity_id)
     )
     return {entity_id: count for entity_id, count in result.tuples().all()}
+
+
+async def list_assignments_for_tasks(
+    db: AsyncSession,
+    *,
+    task_ids: list[UUID],
+) -> dict[UUID, list[dict]]:
+    if not task_ids:
+        return {}
+    result = await db.execute(
+        select(Assignment.task_id, Resource.id, Resource.name, Resource.initials)
+        .join(Resource, Assignment.resource_id == Resource.id)
+        .where(Assignment.task_id.in_(task_ids))
+    )
+    out: dict[UUID, list[dict]] = {}
+    for task_id, resource_id, resource_name, resource_initials in result.tuples().all():
+        out.setdefault(task_id, []).append(
+            {
+                "resource_id": resource_id,
+                "resource_name": resource_name,
+                "resource_initials": resource_initials,
+            }
+        )
+    return out
 
 
 async def get_task_with_comment_count(

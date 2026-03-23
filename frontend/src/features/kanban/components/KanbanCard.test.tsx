@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { KanbanCard } from "./KanbanCard";
+import { TooltipProvider } from "@/shared/ui/tooltip";
 import type { Task } from "@/features/tasks";
 
 vi.mock("@dnd-kit/core", () => ({
@@ -107,5 +108,20 @@ describe("KanbanCard", () => {
     it("does not apply opacity class when isDragOverlay is true", () => {
         const { container } = render(<KanbanCard task={baseTask} isDragOverlay />);
         expect(container.firstChild).not.toHaveClass("opacity-40");
+    });
+
+    it("renders assignee initials when task has assignments", () => {
+        render(<TooltipProvider><KanbanCard task={{ ...baseTask, assignments: [{ resource_id: "r-1", resource_name: "Alice Smith", resource_initials: "AS" }] }} /></TooltipProvider>);
+        expect(screen.getByText("AS")).toBeInTheDocument();
+    });
+
+    it("falls back to first two letters of name when initials are null", () => {
+        render(<TooltipProvider><KanbanCard task={{ ...baseTask, assignments: [{ resource_id: "r-1", resource_name: "Bob Jones", resource_initials: null }] }} /></TooltipProvider>);
+        expect(screen.getByText("BO")).toBeInTheDocument();
+    });
+
+    it("renders nothing when task has no assignments", () => {
+        render(<KanbanCard task={{ ...baseTask, assignments: [] }} />);
+        expect(screen.queryByText("AS")).not.toBeInTheDocument();
     });
 });

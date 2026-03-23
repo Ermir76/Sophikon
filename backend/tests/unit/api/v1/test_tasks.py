@@ -52,6 +52,100 @@ async def test_list_tasks_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_list_tasks_includes_assignment_summaries(client: AsyncClient):
+    """List — assignment summaries are returned on the task card payload."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "list_t_asn@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "List T Asn",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org List T Asn", "slug": "org-list-t-asn"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj List T Asn",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    task_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "Task 1", "start_date": "2024-01-01", "duration": 480},
+    )
+    task_id = task_resp.json()["id"]
+    resource_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/resources",
+        json={"name": "Alice Jones", "type": "WORK"},
+    )
+    resource_data = resource_resp.json()
+    resource_id = resource_data["id"]
+
+    assign_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks/{task_id}/assignments",
+        json={
+            "resource_id": resource_id,
+            "units": 1.0,
+            "start_date": "2024-01-01",
+            "finish_date": "2024-01-02",
+        },
+    )
+    assert assign_resp.status_code == 201
+
+    resp = await client.get(f"/api/v1/projects/{proj_id}/tasks")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) == 1
+    assert len(items[0]["assignments"]) == 1
+    assignment = items[0]["assignments"][0]
+    assert assignment["resource_id"] == resource_id
+    assert assignment["resource_name"] == "Alice Jones"
+    assert assignment["resource_initials"] == resource_data.get("initials")
+
+
+@pytest.mark.asyncio
+async def test_create_task_response_includes_empty_assignments(client: AsyncClient):
+    """Create — response includes `assignments: []` when no assignment summary is set."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "create_t_asn_empty@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Create T Asn Empty",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Create T Asn Empty", "slug": "org-create-t-asn-empty"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Create T Asn Empty",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={"name": "Task 1", "start_date": "2024-01-01", "duration": 480},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["assignments"] == []
+
+
+@pytest.mark.asyncio
 async def test_create_task_inclusive_finish_date_when_auto_calculate_disabled(
     client: AsyncClient,
 ):

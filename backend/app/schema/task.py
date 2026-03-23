@@ -112,6 +112,16 @@ class TaskBulkDelete(BaseModel):
 # Response Schemas
 
 
+class TaskAssignmentSummary(BaseModel):
+    """Minimal assignment info embedded in task list responses."""
+
+    model_config = {"from_attributes": True}
+
+    resource_id: uuid.UUID
+    resource_name: str
+    resource_initials: str | None
+
+
 class TaskResponse(BaseModel):
     """Task response with all details."""
 
@@ -154,6 +164,10 @@ class TaskResponse(BaseModel):
     color: str | None
     status: TaskStatus
     comments_count: int = 0
+    assignments: list[TaskAssignmentSummary] = Field(
+        default_factory=list,
+        validation_alias="assignment_summaries",
+    )
     created_at: datetime
     updated_at: datetime
 

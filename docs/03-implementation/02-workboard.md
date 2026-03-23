@@ -4,7 +4,7 @@ Purpose: execution checklist for currently committed sprint items.
 
 **Sprint ID:** S04
 **Dates:** 2026-03-23 -> 2026-04-06
-**References:** `docs/03-implementation/sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/requirements-traceability.md`
+**References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
@@ -55,20 +55,27 @@ Status: `NOT_STARTED`
 
 ### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Read assignment data available on task card (check if `assignments` is already in task query response)
-- [ ] Render assignee avatar on `KanbanCard` — use shared avatar component; fallback to initials
-- [ ] Add tooltip with full assignee name on hover
-- [ ] Handle unassigned state gracefully (no avatar rendered)
+**Backend**
+- [x] Add `TaskAssignmentSummary` schema: `resource_id`, `resource_name`, `resource_initials`
+- [x] Extend `TaskRead` schema with `assignments: list[TaskAssignmentSummary]`
+- [x] Update task list service/repository to JOIN and embed assignments in the task list response
+
+**Frontend**
+- [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
+- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Add tooltip with full resource name on hover
+- [x] Handle unassigned state gracefully (no avatar rendered)
+- [x] Write tests: avatar renders when assigned, nothing renders when unassigned
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Use existing shared avatar/initials pattern — do not introduce new component
+- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 

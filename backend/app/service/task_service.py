@@ -96,9 +96,12 @@ async def list_tasks(
         per_page=per_page,
         include_deleted=include_deleted,
     )
-    comment_counts = await _load_task_comment_counts(db, [task.id for task in tasks])
+    task_ids = [task.id for task in tasks]
+    comment_counts = await _load_task_comment_counts(db, task_ids)
+    assignment_map = await task_repo.list_assignments_for_tasks(db, task_ids=task_ids)
     for task in tasks:
         task.comments_count = comment_counts.get(task.id, 0)
+        task.assignment_summaries = assignment_map.get(task.id, [])
 
     return tasks, total
 

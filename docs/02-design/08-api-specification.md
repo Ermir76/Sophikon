@@ -1277,10 +1277,9 @@ Get all tasks.
       "total_cost": 5000.00,
       "assignments": [
         {
-          "id": "uuid",
           "resource_id": "uuid",
           "resource_name": "John Doe",
-          "units": 1.0
+          "resource_initials": "JD"
         }
       ],
       "children": [...],

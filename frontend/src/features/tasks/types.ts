@@ -1,5 +1,11 @@
 export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 
+export interface TaskAssignmentSummary {
+    resource_id: string;
+    resource_name: string;
+    resource_initials: string | null;
+}
+
 export interface Task {
     id: string;
     project_id: string;
@@ -38,6 +44,7 @@ export interface Task {
     color?: string | null;
     status: TaskStatus;
     comments_count?: number;
+    assignments?: TaskAssignmentSummary[];
     created_at: string;
     updated_at: string;
 }

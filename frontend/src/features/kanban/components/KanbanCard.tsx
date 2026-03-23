@@ -1,5 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { AlertTriangle, MessageSquare } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import type { Task } from "@/features/tasks";
 
 function getPriorityBadge(priority: number) {
@@ -92,6 +94,24 @@ export function KanbanCard({ task, isDragOverlay = false }: KanbanCardProps) {
                         <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">
                             {progress}%
                         </span>
+                    </div>
+                )}
+
+                {/* Assignee avatars */}
+                {(task.assignments ?? []).length > 0 && (
+                    <div className="flex items-center gap-1 pt-0.5">
+                        {(task.assignments ?? []).map((a) => (
+                            <Tooltip key={a.resource_id}>
+                                <TooltipTrigger asChild>
+                                    <Avatar size="sm">
+                                        <AvatarFallback>
+                                            {a.resource_initials ?? a.resource_name.slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>{a.resource_name}</TooltipContent>
+                            </Tooltip>
+                        ))}
                     </div>
                 )}
             </div>
