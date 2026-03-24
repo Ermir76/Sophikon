@@ -83,15 +83,15 @@
 
 #### Kanban Board
 
-| Feature                               | Priority | Status  |
-| ------------------------------------- | -------- | ------- |
-| 5-column board (Backlog→Done)         | Must     | Done    |
-| Group leaf tasks by `status` field    | Must     | Done    |
-| Drag card to change status            | Must     | Done    |
-| Card: name, WBS, priority, date, progress | Must | Done    |
-| Search and filter cards               | Should   | Done    |
-| Column collapse to icon strip         | Should   | Done    |
-| Quick-add card from column header     | Should   | Done    |
+| Feature                                   | Priority | Status |
+| ----------------------------------------- | -------- | ------ |
+| 5-column board (Backlog→Done)             | Must     | Done   |
+| Group leaf tasks by `status` field        | Must     | Done   |
+| Drag card to change status                | Must     | Done   |
+| Card: name, WBS, priority, date, progress | Must     | Done   |
+| Search and filter cards                   | Should   | Done   |
+| Column collapse to icon strip             | Should   | Done   |
+| Quick-add card from column header         | Should   | Done   |
 
 #### Scheduling Engine
 
@@ -381,19 +381,19 @@
 
 Features considered but not scheduled:
 
-| Feature                           | Reason         | Reconsider When         |
-| --------------------------------- | -------------- | ----------------------- |
+| Feature                           | Reason         | Reconsider When                                                                                                                   |
+| --------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Project archiving                 | Post-MVP       | V1.1 — backend needs `ARCHIVED` status in `ProjectStatus` enum + filter in `list_projects()`; frontend types already reference it |
-| Time tracking                     | Scope creep    | V3+ if requested        |
-| Invoicing                         | Out of scope   | Never (use integration) |
-| Native mobile apps                | Web-first      | V3+ if PWA insufficient |
-| Desktop app (Electron)            | Web-first      | V3+ if requested        |
-| Gantt baseline bars               | Complexity     | V2.1                    |
-| Earned Value (EVM)                | Complex, niche | V3+                     |
-| Custom fields                     | Complexity     | V2.2                    |
-| Task dependencies across projects | Complexity     | V4                      |
-| Recurring tasks                   | Complexity     | V2.2                    |
-| Task splitting                    | Complexity     | V3+                     |
+| Time tracking                     | Scope creep    | V3+ if requested                                                                                                                  |
+| Invoicing                         | Out of scope   | Never (use integration)                                                                                                           |
+| Native mobile apps                | Web-first      | V3+ if PWA insufficient                                                                                                           |
+| Desktop app (Electron)            | Web-first      | V3+ if requested                                                                                                                  |
+| Gantt baseline bars               | Complexity     | V2.1                                                                                                                              |
+| Earned Value (EVM)                | Complex, niche | V3+                                                                                                                               |
+| Custom fields                     | Complexity     | V2.2                                                                                                                              |
+| Task dependencies across projects | Complexity     | V4                                                                                                                                |
+| Recurring tasks                   | Complexity     | V2.2                                                                                                                              |
+| Task splitting                    | Complexity     | V3+                                                                                                                               |
 
 ---
 

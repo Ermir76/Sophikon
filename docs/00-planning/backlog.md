@@ -52,7 +52,7 @@ Points scale:
 | KB-06 | FR | Kanban: bulk select and move cards (FR-KB-013) | P2 | 2 | - | V1.0 | DONE | - | S05 |
 | KB-07 | FR | Kanban: assignee avatar on card (FR-KB-014) | P2 | 1 | - | V1.0 | DONE | - | S04 |
 | KB-08 | FR | Kanban: dependency indicator on card (FR-KB-015) | P2 | 1 | - | V1.0 | DONE | - | S04 |
-| KB-09 | FR | Kanban: AI sprint health summary (FR-KB-016) | P2 | 3 | KB-01 | V1.0 | READY | - | - |
+| KB-09 | FR | Kanban: AI sprint health summary (FR-KB-016) | P2 | 3 | KB-01 | V1.0 | IN_PROGRESS | wwwer | Planned in S06 |
 | KB-10 | FR | Kanban: AI quick-fill from title (FR-KB-017) | P3 | 2 | KB-01 | V1.1 | NOT_READY | - | - |
 | KB-11 | FR | Kanban: AI-detected blockers highlight (FR-KB-018) | P3 | 2 | KB-09 | V1.1 | NOT_READY | - | - |
 
@@ -90,7 +90,7 @@ Points scale:
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| KB-09   | Kanban: AI sprint health summary (FR-KB-016)       | 3      | READY  | Dependency `KB-01` complete  |
+| KB-09   | Kanban: AI sprint health summary (FR-KB-016)       | 3      | IN_PROGRESS  | Active in S06; dependency `KB-01` complete  |
 
 ### V1.1 (Planned)
 

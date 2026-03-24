@@ -20,6 +20,8 @@ function renderToolbar(overrides?: Partial<Parameters<typeof KanbanToolbar>[0]>)
         onBulkMoveTargetChange: vi.fn(),
         onBulkMove: vi.fn(),
         onClearSelection: vi.fn(),
+        onSprintHealthClick: vi.fn(),
+        isSprintHealthLoading: false,
         ...overrides,
     };
     return { ...render(<TooltipProvider><KanbanToolbar {...props} /></TooltipProvider>), props };
@@ -46,6 +48,12 @@ describe("KanbanToolbar", () => {
     it("renders keyboard shortcuts help control", () => {
         renderToolbar();
         expect(screen.getByRole("button", { name: "Keyboard shortcuts help" })).toBeInTheDocument();
+    });
+
+    it("triggers sprint health refresh", () => {
+        const { props } = renderToolbar();
+        fireEvent.click(screen.getByRole("button", { name: "Refresh sprint health summary" }));
+        expect(props.onSprintHealthClick).toHaveBeenCalled();
     });
 
     it("calls onSelectionModeChange when toggle button is clicked", () => {

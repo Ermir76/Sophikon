@@ -249,6 +249,7 @@ This document records what is evidenced by the current codebase review.
 | FR-KB-013 | Implemented   | A4, A10  | Kanban toolbar enables multi-card selection mode and bulk target-column move; selected cards are updated through existing task bulk update API (`PATCH /tasks/bulk`) with success/error feedback and drag interactions disabled while selection mode is active. |
 | FR-KB-014 | Implemented   | A4, A10  | Task list API embeds `assignments` summaries (`resource_id`, `resource_name`, `resource_initials`) and `KanbanCard` renders assignee avatar initials with tooltip plus empty-state handling. |
 | FR-KB-015 | Implemented   | A4, A10  | Kanban cards derive active dependency state from `useDependencies` and show distinct blocked/blocking badges; clicking a badge opens the task detail panel dependency section context. |
+| FR-KB-016 | Implemented   | A7, A10  | Kanban toolbar now triggers manual AI suggestions refresh (`useAiSuggestions(..., enabled=false)` + `refetch`) and renders `KanbanHealthSummary` with HIGH/MEDIUM grouped risk signals and task-detail drill-in by `affected_task_id`. |
 
 ### 3.14 Import/Export
 

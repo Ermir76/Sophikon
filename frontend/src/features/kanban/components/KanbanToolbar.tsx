@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { RefreshCcw, Search, Sparkles } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import {
     Select,
@@ -33,6 +33,8 @@ interface KanbanToolbarProps {
     onBulkMoveTargetChange: (value: TaskStatus) => void;
     onBulkMove: () => void;
     onClearSelection: () => void;
+    onSprintHealthClick: () => void;
+    isSprintHealthLoading: boolean;
 }
 
 export function KanbanToolbar({
@@ -50,6 +52,8 @@ export function KanbanToolbar({
     onBulkMoveTargetChange,
     onBulkMove,
     onClearSelection,
+    onSprintHealthClick,
+    isSprintHealthLoading,
 }: KanbanToolbarProps) {
     return (
         <div className="flex items-center gap-3">
@@ -158,6 +162,25 @@ export function KanbanToolbar({
                     <p><kbd className="rounded border border-border bg-muted px-1 py-0.5">Enter</kbd> Open focused card</p>
                 </TooltipContent>
             </Tooltip>
+            <button
+                type="button"
+                className="h-9 rounded-md border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={onSprintHealthClick}
+                disabled={isSprintHealthLoading}
+                aria-label="Refresh sprint health summary"
+            >
+                {isSprintHealthLoading ? (
+                    <>
+                        <RefreshCcw className="mr-1 inline size-3.5 animate-spin" />
+                        Refreshing...
+                    </>
+                ) : (
+                    <>
+                        <Sparkles className="mr-1 inline size-3.5" />
+                        Sprint Health
+                    </>
+                )}
+            </button>
         </div>
     );
 }

@@ -2,15 +2,44 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S05
-**Dates:** 2026-03-24 -> 2026-04-07
+**Sprint ID:** S06
+**Dates:** 2026-04-08 -> 2026-04-21
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S05
+## Active Items — S06
+
+### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
+- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Add loading spinner and error fallback (with retry) that do not block board interactions
+- [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
+
+#### Notes
+
+- Dependencies: `KB-01` complete
+- Blockers: -
+- Decisions:
+  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
+  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Keep V1 project-scoped and board-context only (no cross-project aggregation)
+
+---
+
+## Previous Sprint Items — S05
 
 ### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
 

@@ -244,7 +244,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-013 | Bulk select and move multiple cards across columns                                 | Should   | DONE    |
 | FR-KB-014 | Show assignee avatar on card                                                       | Should   | DONE    |
 | FR-KB-015 | Show dependency indicator on card — blocked and blocking states                    | Should   | DONE    |
-| FR-KB-016 | AI sprint health summary — surface cards at risk based on board state              | Should   | PENDING |
+| FR-KB-016 | AI sprint health summary — surface cards at risk based on board state              | Should   | DONE    |
 | FR-KB-017 | AI quick-fill — generate card fields from title only                               | Could    | PENDING |
 | FR-KB-018 | AI-detected blockers — highlight cards with unresolved dependencies or no activity | Could    | PENDING |
 
@@ -311,3 +311,4 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 10.1    | 2026-03-23 | Codex  | Marked FR-KB-015 as DONE after implementing blocked/blocking dependency indicators on Kanban cards.                                                                                                                                        |
 | 10.2    | 2026-03-23 | Codex  | Marked FR-KB-009 as DONE after shipping in-column Kanban card reorder with persisted backend ordering and optimistic rollback.                                                                                                             |
 | 10.3    | 2026-03-23 | Codex  | Marked FR-KB-013 as DONE after shipping kanban bulk select mode with multi-card move via existing bulk task update API.                                                                                                                   |
+| 10.4    | 2026-03-24 | Codex  | Marked FR-KB-016 as DONE after shipping kanban Sprint Health summary with manual AI refresh, grouped risk surfacing, and task-detail drill-in from affected risk entries.                                                                  |

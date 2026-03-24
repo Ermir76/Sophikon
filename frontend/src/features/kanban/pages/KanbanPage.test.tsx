@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useAiSuggestions } from "@/features/ai";
 import KanbanPage from "./KanbanPage";
 import { useProject, useUpdateProject } from "@/features/projects";
 import { useBulkUpdateTasks, useDependencies, useTasks } from "@/features/tasks";
@@ -24,6 +25,10 @@ vi.mock("@/features/tasks", () => ({
 vi.mock("@/features/projects", () => ({
     useProject: vi.fn(),
     useUpdateProject: vi.fn(),
+}));
+
+vi.mock("@/features/ai", () => ({
+    useAiSuggestions: vi.fn(),
 }));
 
 vi.mock("../components/KanbanBoard", () => ({
@@ -75,17 +80,22 @@ vi.mock("../components/KanbanToolbar", () => ({
         onSelectionModeChange,
         onBulkMoveTargetChange,
         onBulkMove,
+        onSprintHealthClick,
     }: {
         selectionMode: boolean;
         selectedCount: number;
         onSelectionModeChange: (enabled: boolean) => void;
         onBulkMoveTargetChange: (status: TaskStatus) => void;
         onBulkMove: () => void;
+        onSprintHealthClick: () => void;
     }) => (
         <div data-testid="kanban-toolbar">
             <span data-testid="selection-count">{selectedCount}</span>
             <button type="button" onClick={() => onSelectionModeChange(!selectionMode)}>
                 {selectionMode ? "disable selection" : "enable selection"}
+            </button>
+            <button type="button" onClick={onSprintHealthClick}>
+                sprint health
             </button>
             <button type="button" onClick={() => onBulkMoveTargetChange("DONE")}>
                 target done
@@ -152,6 +162,17 @@ function mockLoaded(tasks: Task[]) {
     } as never);
 }
 
+function mockSuggestions(overrides?: Partial<ReturnType<typeof useAiSuggestions>>) {
+    vi.mocked(useAiSuggestions).mockReturnValue({
+        data: { suggestions: [], usage: { tokens_in: 0, tokens_out: 0 } },
+        isLoading: false,
+        isFetching: false,
+        isError: false,
+        refetch: vi.fn(),
+        ...overrides,
+    } as never);
+}
+
 function mockBulkUpdate(overrides?: {
     mutateAsync?: ReturnType<typeof vi.fn>;
     isPending?: boolean;
@@ -209,6 +230,7 @@ describe("KanbanPage", () => {
         } as never);
         mockDependencies([]);
         mockBulkUpdate();
+        mockSuggestions();
         useKanbanStore.setState({
             collapsedByProject: {},
             laneModeByProject: {},
@@ -341,6 +363,46 @@ describe("KanbanPage", () => {
             ],
         });
         expect(screen.getByTestId("selection-count")).toHaveTextContent("0");
+    });
+
+    it("requests sprint health summary on demand", async () => {
+        const user = userEvent.setup();
+        const refetch = vi.fn();
+        mockSuggestions({ refetch });
+        mockLoaded(leafTasks);
+
+        render(<KanbanPage />);
+        await user.click(screen.getByRole("button", { name: "sprint health" }));
+
+        expect(refetch).toHaveBeenCalled();
+        expect(screen.getByText("No HIGH or MEDIUM risk signals right now.")).toBeInTheDocument();
+    });
+
+    it("opens task detail from sprint health risk entry", async () => {
+        const user = userEvent.setup();
+        mockSuggestions({
+            data: {
+                suggestions: [
+                    {
+                        id: "risk-1",
+                        type: "RISK",
+                        severity: "HIGH",
+                        title: "Blocked by predecessor",
+                        description: "Task is blocked by unresolved predecessor",
+                        affected_task_id: "t2",
+                        suggested_action: null,
+                    },
+                ],
+                usage: { tokens_in: 10, tokens_out: 20 },
+            },
+        });
+        mockLoaded(leafTasks);
+
+        render(<KanbanPage />);
+        await user.click(screen.getByRole("button", { name: /Blocked by predecessor/i }));
+
+        expect(useKanbanStore.getState().selectedTaskId).toBe("t2");
+        expect(screen.getByTestId("task-detail-panel")).toBeInTheDocument();
     });
 
     it("derives blocked and blocking counts from active dependencies", () => {

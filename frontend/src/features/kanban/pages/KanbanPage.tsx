@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
+import { useAiSuggestions } from "@/features/ai";
 import { useProject, useUpdateProject } from "@/features/projects";
 import { TaskDetailPanel, useBulkUpdateTasks, useDependencies, useTasks } from "@/features/tasks";
 import { QueryError } from "@/shared/components/QueryError";
@@ -8,6 +9,7 @@ import { PageHeader } from "@/shared/components/layout/PageHeader";
 import { PageLoading } from "@/shared/components/state/PageLoading";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { KanbanBoard } from "../components/KanbanBoard";
+import { KanbanHealthSummary } from "../components/KanbanHealthSummary";
 import { KanbanToolbar, type PriorityFilter } from "../components/KanbanToolbar";
 import { useKanbanStore } from "../store/kanban-store";
 import {
@@ -72,6 +74,13 @@ export default function KanbanPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const { data: taskData, isLoading, error, refetch } = useTasks(projectId);
     const { data: dependencyData } = useDependencies(projectId);
+    const {
+        data: suggestionsResponse,
+        isLoading: isSuggestionsLoading,
+        isFetching: isSuggestionsFetching,
+        isError: isSuggestionsError,
+        refetch: refetchSuggestions,
+    } = useAiSuggestions(projectId, 8, false);
     const { data: project } = useProject(projectId);
     const updateProject = useUpdateProject(projectId);
     const bulkUpdateTasks = useBulkUpdateTasks(projectId);
@@ -90,6 +99,7 @@ export default function KanbanPage() {
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
     const [bulkMoveTarget, setBulkMoveTarget] = useState<TaskStatus>("TODO");
+    const [hasRequestedHealthSummary, setHasRequestedHealthSummary] = useState(false);
 
     const wipLimits = projectId ? (wipLimitsByProject[projectId] ?? {}) : {};
     const laneMode = projectId ? (laneModeByProject[projectId] ?? "none") : "none";
@@ -121,6 +131,10 @@ export default function KanbanPage() {
         [leafTaskIdSet, selectedTaskIds],
     );
     const selectedTaskIdSet = useMemo(() => new Set(validSelectedTaskIds), [validSelectedTaskIds]);
+    const taskNameById = useMemo(
+        () => Object.fromEntries(leafTasks.map((task) => [task.id, task.name])),
+        [leafTasks],
+    );
 
     const dependencyIndicatorsByTaskId = useMemo<KanbanDependencyIndicatorsByTaskId>(() => {
         const indicators: KanbanDependencyIndicatorsByTaskId = {};
@@ -246,6 +260,17 @@ export default function KanbanPage() {
         }
     }, [bulkMoveTarget, bulkUpdateTasks, projectId, validSelectedTaskIds]);
 
+    const handleSprintHealthRefresh = useCallback(() => {
+        setHasRequestedHealthSummary(true);
+        void refetchSuggestions();
+    }, [refetchSuggestions]);
+
+    const handleHealthRiskClick = useCallback((taskId: string) => {
+        setSelectionMode(false);
+        setSelectedTaskIds([]);
+        setSelectedTaskId(taskId);
+    }, [setSelectedTaskId]);
+
     if (isLoading) return <PageLoading message="Loading tasks..." />;
     if (error) {
         return (
@@ -284,6 +309,17 @@ export default function KanbanPage() {
                     onBulkMoveTargetChange={setBulkMoveTarget}
                     onBulkMove={handleBulkMove}
                     onClearSelection={() => setSelectedTaskIds([])}
+                    onSprintHealthClick={handleSprintHealthRefresh}
+                    isSprintHealthLoading={isSuggestionsFetching}
+                />
+                <KanbanHealthSummary
+                    suggestions={suggestionsResponse?.suggestions ?? []}
+                    hasRequested={hasRequestedHealthSummary}
+                    isLoading={isSuggestionsLoading || isSuggestionsFetching}
+                    isError={isSuggestionsError}
+                    taskNameById={taskNameById}
+                    onRetry={handleSprintHealthRefresh}
+                    onRiskClick={handleHealthRiskClick}
                 />
             </div>
             <div className="flex-1 overflow-hidden min-h-0">

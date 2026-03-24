@@ -6,9 +6,9 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
-**Sprint ID:** S05
-**Dates:** 2026-03-24 -> 2026-04-07
-**Goal:** Kanban execution controls — in-column reorder, swimlanes, and keyboard-first board navigation
+**Sprint ID:** S06
+**Dates:** 2026-04-08 -> 2026-04-21
+**Goal:** Kanban AI risk visibility — sprint health summary with actionable risk surfacing
 **Owner(s):** wwwer
 
 ### Capacity
@@ -29,46 +29,67 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Item ID | Title                                                        | Points | Why now                                              | Dependencies | Done criteria                                                                                           |
 | ------- | ------------------------------------------------------------ | ------ | ---------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
-| KB-02   | Kanban: card reordering within column (FR-KB-009)            | 2      | Core prioritization gap; dependency `KB-01` already done | KB-01     | Dragging within a column reorders cards and persists order across reloads                               |
-| KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011)           | 3      | Highest visibility improvement for team-level workload balancing | -    | Board can group cards by assignee or priority within each status column, with clear lane headers        |
-| KB-05   | Kanban: keyboard shortcuts (FR-KB-012)                       | 2      | Improves execution speed and accessibility without backend risk | KB-01 | Quick-add and keyboard navigation work end-to-end on the board with documented shortcut hints            |
+| KB-09   | Kanban: AI sprint health summary (FR-KB-016)                 | 3      | Only remaining `READY` V1.0 backlog item; unlocks AI-assisted risk triage on the board | KB-01 | Kanban shows AI-generated risk summary with at-risk cards, clear rationale per card, and refresh behavior validated by tests |
 
-Progress update (2026-03-23): `KB-02`, `KB-04`, `KB-05`, and pulled-in stretch item `KB-06` completed.
-
-**Total committed points:** `7`
+**Total committed points:** `3`
 
 ### Stretch (Optional)
 
 | Item ID | Title                                         | Points | Trigger to pull in           |
 | ------- | --------------------------------------------- | ------ | ---------------------------- |
-| KB-06   | Kanban: bulk select and move cards (FR-KB-013) | 2  | Pull in if KB-04 ships with no carry-over risk |
-
-Stretch activation (2026-03-23): `KB-06` completed after all committed S05 items shipped.
+| -       | -                                             | -      | Pull in only after a new item is marked `READY` in backlog |
 
 ### Risks and Blockers
 
 | Risk/Blocker                                                        | Impact                              | Mitigation                                                              | Owner |
 | ------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------- | ----- |
-| Reorder persistence may conflict with existing task tree ordering semantics | Wrong order after refresh           | Reuse existing task reorder API semantics where possible; add explicit kanban-order tests | wwwer |
-| Swimlane grouping may degrade drag/drop clarity in dense columns    | UX confusion and regression risk    | Keep lane model explicit (`none/assignee/priority`) and test lane-cross + lane-internal drag paths | wwwer |
-| Keyboard shortcuts can conflict with text inputs and browser defaults | Unexpected key behavior             | Scope shortcuts to board focus context and ignore when any editable input has focus | wwwer |
+| LLM risk summary quality may be noisy in early implementation        | False positives reduce trust        | Reuse existing structured AI suggestions contract (typed schema + validation) and surface rationale in UI text | wwwer |
+| Summary refresh timing may cause stale risk signals                  | PM decisions made on stale board view | Tie summary refresh to explicit user action plus query invalidation events | wwwer |
+| AI summary generation latency can degrade board responsiveness       | Perceived slowness in kanban workflow | Keep summary request isolated from core board rendering and show independent loading state | wwwer |
 
 ---
 
 ## Sprint Review (Fill at end)
 
-- Planned points: `7`
-- Completed points: `-`
-- Carry-over points: `-`
-- Main wins:
+- Planned points: `3`
+- Completed points: `3`
+- Carry-over points: `0`
+- Main wins: Shipped `KB-09` with manual Sprint Health fetch, grouped HIGH/MEDIUM risk summary, and card-level drill-in to existing task detail panel.
 - Main misses:
-- Process changes for next sprint:
+- Process changes for next sprint: Keep AI summary interactions opt-in (`enabled=false` + explicit refresh) to avoid background fetch noise on board load.
 
 ---
 
 ---
 
 ## Previous Sprint
+
+**Sprint ID:** S05
+**Dates:** 2026-03-24 -> 2026-04-07
+**Goal:** Kanban execution controls — in-column reorder, swimlanes, and keyboard-first board navigation
+**Owner(s):** wwwer
+
+### Committed Items
+
+| Item ID | Title                                                        | Points | Outcome |
+| ------- | ------------------------------------------------------------ | ------ | ------- |
+| KB-02   | Kanban: card reordering within column (FR-KB-009)            | 2      | DONE    |
+| KB-04   | Kanban: swimlanes by assignee/priority (FR-KB-011)           | 3      | DONE    |
+| KB-05   | Kanban: keyboard shortcuts (FR-KB-012)                       | 2      | DONE    |
+| KB-06   | Kanban: bulk select and move cards (FR-KB-013, stretch)      | 2      | DONE    |
+
+### Sprint Review
+
+- Planned points: `7`
+- Completed points: `9`
+- Carry-over points: `0`
+- Main wins: Shipped all committed S05 items and activated stretch `KB-06` with end-to-end delivery, test coverage, and synchronized planning docs.
+- Main misses: -
+- Process changes for next sprint: Under-commit when backlog has only one `READY` item and preserve buffer for unplanned review fallout.
+
+---
+
+## Sprint Archive — S04
 
 **Sprint ID:** S04
 **Dates:** 2026-03-23 -> 2026-04-06
@@ -276,7 +297,8 @@ Stretch activation (2026-03-23): `KB-06` completed after all committed S05 items
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S05    | 2026-03-24 -> 2026-04-07 | 7       | -         | -          | Planned: KB-02 reorder, KB-04 swimlanes, KB-05 keyboard shortcuts; stretch KB-06 also shipped |
+| S06    | 2026-04-08 -> 2026-04-21 | 3       | 3         | 0          | Shipped KB-09 AI sprint health summary with manual refresh and kanban card drill-in |
+| S05    | 2026-03-24 -> 2026-04-07 | 7       | 9         | 0          | Shipped KB-02/KB-04/KB-05 and activated stretch KB-06 with full closeout |
 | S04    | 2026-03-23 -> 2026-04-06 | 6       | 6         | 0          | Kanban enhancements — task detail panel, WIP limits, assignee avatar, dependency indicator shipped |
 | S03    | 2026-03-22 -> 2026-04-05 | 7       | 7         | 0          | P2 bug fixes — error states, hook anti-patterns, Gantt UX, AI contract              |
 | S02    | 2026-03-21 -> 2026-04-04 | 7       | 7         | 0          | Frontend cleanup — dead code, cross-feature imports, query keys, failing tests      |
