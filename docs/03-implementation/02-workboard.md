@@ -2,15 +2,71 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S06
-**Dates:** 2026-04-08 -> 2026-04-21
+**Sprint ID:** S07
+**Dates:** 2026-03-24 -> 2026-03-24
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S06
+## Active Items — S07
+
+### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Find the avatar upload mutation error handler in `ProfilePage.tsx`
+- [x] Fix avatar upload transport so the frontend sends real `multipart/form-data`
+- [x] Wrap upload failure with `getErrorMessage()` and show via `toast.error()`
+- [x] Ensure returned avatar media URLs resolve in local dev and render in both profile and sidebar UI
+
+#### Notes
+
+- Files: `frontend/src/features/auth/pages/ProfilePage.tsx`, `frontend/src/shared/api/api.ts`, `frontend/vite.config.ts`, `frontend/src/shared/layout/NavUser.tsx`
+- The error object `{type, loc, msg, input}` is a raw Pydantic 422 response being rendered as a React child
+- Root cause was broader than the original crash: the shared API client was forcing `application/json` on `FormData`, Vite was not proxying `/media`, and the sidebar user menu never rendered `AvatarImage`
+
+---
+
+### FIX-02 — Deleted org slug not released (#31)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
+- [x] Verify: delete an org, recreate with the same slug — succeeds
+
+#### Notes
+
+- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
+
+---
+
+### FIX-03 — Sidebar no fallback after org deletion (#32)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Find where org deletion success is handled in the frontend store/page
+- [x] After deletion, find the user's personal org and set it as active
+- [x] Verify: delete active org → app switches to personal org automatically
+
+#### Notes
+
+- Depends on FIX-02 being stable first
+- Personal org is identifiable by `is_personal: true` on the org object
+
+---
+
+## Previous Sprint Items — S06
 
 ### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
 

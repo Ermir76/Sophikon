@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 
@@ -27,6 +28,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/features/auth/store/auth-store", () => ({
   useAuthStore: vi.fn((selector: (state: unknown) => unknown) =>
     selector(mocks.authState)),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -128,5 +135,44 @@ describe("ProfilePage", () => {
       "href",
       "/forgot-password",
     );
+  });
+
+  it("shows a safe avatar upload error message when the API returns validation details", async () => {
+    const user = userEvent.setup();
+
+    mocks.uploadAvatarMutate.mockImplementation(
+      (_file: File, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.({
+          isAxiosError: true,
+          response: {
+            data: {
+              detail: [{ msg: "Input should be a valid image" }],
+            },
+          },
+        });
+      },
+    );
+
+    const { container } = render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    );
+
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+
+    await user.upload(
+      fileInput as HTMLInputElement,
+      new File(["avatar"], "avatar.png", { type: "image/png" }),
+    );
+
+    expect(mocks.uploadAvatarMutate).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Avatar upload failed. Please try a different image.",
+    );
+    expect(
+      await screen.findByText("Avatar upload failed. Please try a different image."),
+    ).toBeInTheDocument();
   });
 });

@@ -53,6 +53,27 @@ This document records what is evidenced by the current codebase review.
 | FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; avatar upload/remove and change-password are also mounted. |
 | FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI. |
 | FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
+| FR-AU-009 | Implemented   | A1, A8   | Email verification route/page are mounted in backend and frontend.            |
+| FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI.          |
+| FR-AU-011 | Implemented   | A1, A8   | Authenticated change-password flow is mounted in backend and profile UI.      |
+| FR-AU-012 | Implemented   | A1, A8   | Avatar upload/remove routes are mounted, the frontend now sends real multipart uploads, profile UI handles client-side validation, upload failures surface safe user-facing errors, and returned avatar URLs render in both profile and sidebar UI. |
+| FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI. |
+
+### 3.1b Organization Management
+
+| ID        | Status        | Evidence | Note                                                                                                                  |
+| --------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| FR-OR-001 | Implemented   | A2       | Organization list route and switcher flow are mounted.                                                               |
+| FR-OR-002 | Implemented   | A2       | Organization create route and dialog flow are mounted.                                                               |
+| FR-OR-003 | Implemented   | A2       | Organization settings page and update route are mounted.                                                             |
+| FR-OR-004 | Implemented   | A2, A9   | Soft-delete route is mounted; deleting the active org now falls back to the personal org in frontend state.         |
+| FR-OR-005 | Implemented   | A2       | Organization members list route/page are mounted.                                                                    |
+| FR-OR-006 | Implemented   | A2       | Existing-user invite flow by email is mounted in backend and frontend.                                               |
+| FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted.                                                                     |
+| FR-OR-008 | Implemented   | A2       | Organization member removal flow is mounted.                                                                         |
+| FR-OR-009 | Implemented   | A2       | Current-user organization membership resolution is mounted at `/organizations/{org_id}/members/me`.                 |
+| FR-OR-010 | Implemented   | A2, A3   | Organization dashboard insights endpoint and dashboard page flow are mounted via active-org context.                |
+| FR-OR-011 | Not evidenced | A2, A8   | Invite-unregistered-user onboarding flow was not evidenced in the current mounted backend/frontend surface.         |
 
 ### 3.2 Project Management
 
@@ -144,12 +165,12 @@ This document records what is evidenced by the current codebase review.
 | ID        | Status        | Evidence | Note                                                                                                    |
 | --------- | ------------- | -------- | ------------------------------------------------------------------------------------------------------- |
 | FR-CA-001 | Implemented   | A5       | Calendar create route exists.                                                                           |
-| FR-CA-002 | Partial       | A5       | Calendar patch route exists; full work-week UI parity was not audited.                                  |
+| FR-CA-002 | Implemented   | A5       | Calendar page supports editing per-day work-week settings in the calendar dialog, persists them through calendar PATCH, and backend/API tests cover custom work-week payloads. |
 | FR-CA-003 | Implemented   | A5       | Calendar-exception create route exists.                                                                 |
 | FR-CA-004 | Implemented   | A5       | Calendar-exception delete route exists.                                                                 |
-| FR-CA-005 | Partial       | A5       | Base-calendar/inheritance fields exist and scheduler now resolves effective base+child overlays; frontend assignment workflows still need broader runtime verification. |
-| FR-CA-006 | Partial       | A4, A5   | Task `calendar_id` is mounted in task create/update surfaces and used by scheduling runtime; dedicated frontend task-calendar assignment UX is not fully audited.       |
-| FR-CA-007 | Partial       | A5, A6   | Resource `calendar_id` is mounted in resource create/update surfaces; dedicated frontend resource-calendar assignment UX is not fully audited.                          |
+| FR-CA-005 | Implemented   | A5       | Calendar create/edit UI supports `base_calendar_id`; backend stores inheritance references, scheduling resolves effective base+child work-week and exception overlays, and integration/unit tests cover inherited calendar runtime behavior. |
+| FR-CA-006 | Implemented   | A4, A5   | Task detail UI exposes a calendar selector, task create/update APIs accept `calendar_id`, and scheduling integration tests verify task-level calendar overrides affect dates. |
+| FR-CA-007 | Implemented   | A5, A6   | Resource create and detail flows expose calendar selection, and resource create/update APIs persist `calendar_id` within project/global calendar scope.                          |
 
 ### 3.8 Resource Management
 

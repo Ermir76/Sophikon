@@ -52,9 +52,7 @@ class Organization(Base):
     )
     slug: Mapped[str] = mapped_column(
         String(255),
-        unique=True,
         nullable=False,
-        index=True,
         comment="URL-friendly identifier",
     )
 
@@ -100,10 +98,10 @@ class Organization(Base):
 
     # Indexes
     __table_args__ = (
-        # Index for active organizations
         Index(
-            "idx_organization_slug",
+            "uq_organization_slug_active",
             slug,
+            unique=True,
             postgresql_where=(text("NOT is_deleted")),
         ),
     )

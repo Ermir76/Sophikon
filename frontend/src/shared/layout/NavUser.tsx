@@ -11,7 +11,7 @@ import { useTheme } from "next-themes";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "@/features/auth";
 
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +56,9 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
+                {user.avatar_url ? (
+                  <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                ) : null}
                 <AvatarFallback className="rounded-lg">
                   {getInitials(user.full_name)}
                 </AvatarFallback>
@@ -76,6 +79,9 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
+                  {user.avatar_url ? (
+                    <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                  ) : null}
                   <AvatarFallback className="rounded-lg">
                     {getInitials(user.full_name)}
                   </AvatarFallback>

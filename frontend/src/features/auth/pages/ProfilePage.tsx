@@ -164,6 +164,16 @@ export default function ProfilePage() {
     });
   }, [profileForm, user]);
 
+  const handleAvatarUploadError = (error: unknown) => {
+    const rawMessage: unknown = getErrorMessage(error);
+    const message =
+      typeof rawMessage === "string" && rawMessage.trim().length > 0
+        ? rawMessage
+        : "Avatar upload failed. Please try a different image.";
+    setAvatarUploadError(message);
+    toast.error(message);
+  };
+
   if (!user) {
     return null;
   }
@@ -206,10 +216,10 @@ export default function ProfilePage() {
                 </Alert>
               ) : null}
 
-              {(uploadAvatarMutation.isError || deleteAvatarMutation.isError) ? (
+              {deleteAvatarMutation.isError ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {getErrorMessage(uploadAvatarMutation.error ?? deleteAvatarMutation.error)}
+                    {getErrorMessage(deleteAvatarMutation.error)}
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -238,7 +248,12 @@ export default function ProfilePage() {
                         return;
                       }
                       setAvatarUploadError(null);
-                      uploadAvatarMutation.mutate(selected);
+                      uploadAvatarMutation.mutate(selected, {
+                        onSuccess: () => {
+                          setAvatarUploadError(null);
+                        },
+                        onError: handleAvatarUploadError,
+                      });
                     }}
                   />
                   <Button
@@ -262,7 +277,10 @@ export default function ProfilePage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => deleteAvatarMutation.mutate()}
+                    onClick={() => {
+                      setAvatarUploadError(null);
+                      deleteAvatarMutation.mutate();
+                    }}
                     disabled={!user.avatar_url || deleteAvatarMutation.isPending}
                   >
                     {deleteAvatarMutation.isPending ? (

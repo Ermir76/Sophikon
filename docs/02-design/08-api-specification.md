@@ -517,6 +517,8 @@ Upload avatar image for the authenticated user.
 - field: `file`
 - allowed types: `image/png`, `image/jpeg`, `image/webp`
 - max size: `2MB`
+- successful upload replaces the user's previously managed local avatar file
+- response returns the updated user profile with `avatar_url` under `/media/avatars/...`
 
 **Response:** `200 OK` (updated user profile)
 
@@ -526,7 +528,7 @@ Upload avatar image for the authenticated user.
 
 Remove avatar for the authenticated user.
 
-**Response:** `200 OK` (updated user profile)
+**Response:** `200 OK` (updated user profile with `avatar_url: null`)
 
 ---
 

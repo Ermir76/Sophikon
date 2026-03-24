@@ -6,6 +6,50 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S07
+**Dates:** 2026-03-24 -> 2026-03-24
+**Goal:** QA bug fixes — close confirmed ❌ bugs found in Authentication and Organizations QA pass
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2 hours`
+- Planned points capacity: `3`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| FIX-01 | Avatar upload crashes with raw Pydantic error in UI (#27) | 1 | ❌ Confirmed crash | — | Upload succeeds end-to-end; avatar renders from returned media URL; on failure error shown via `getErrorMessage()` + toast |
+| FIX-02 | Deleted org slug not released (#31) | 1 | ❌ Confirmed bug — blocks org slug reuse | — | After deletion, the same slug can be reused immediately |
+| FIX-03 | Sidebar no fallback after org deletion (#32) | 1 | ⚠️ Leaves user in blank broken state | FIX-02 | After deleting active org, app switches to personal org automatically |
+
+**Total committed points:** `3`
+
+### Stretch (Optional)
+
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| FIX-04 | Change password missing toast (#29) | If time allows |
+| FIX-05 | AI preferences toggle glitch (#30) | If time allows |
+
+---
+
+## Sprint Review (Fill at end)
+
+- Planned points: `3`
+- Completed points: `3`
+- Carry-over points: `0`
+- Main wins: Fixed the avatar flow end-to-end by sending real multipart uploads, surfacing safe user-facing failures, proxying returned `/media` avatar URLs in local dev, and rendering the uploaded avatar in both profile and sidebar UI; deleting an active organization now falls back to the personal organization automatically; and soft-deleted organization slugs can be reused.
+- Main misses: `FIX-04` and `FIX-05` were not pulled in.
+- Process changes for next sprint: Treat schema-level uniqueness bugs as explicit design decisions before accepting a workboard fix at face value; review the matching design doc/ADR state before changing DB constraints.
+
+---
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S06
 **Dates:** 2026-04-08 -> 2026-04-21
 **Goal:** Kanban AI risk visibility — sprint health summary with actionable risk surfacing
@@ -297,6 +341,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
+| S07    | 2026-03-24 -> 2026-03-24 | 3       | 3         | 0          | Closed three QA fixes: end-to-end avatar upload/render flow, reusable soft-deleted org slugs, and personal-org fallback after deleting the active org |
 | S06    | 2026-04-08 -> 2026-04-21 | 3       | 3         | 0          | Shipped KB-09 AI sprint health summary with manual refresh and kanban card drill-in |
 | S05    | 2026-03-24 -> 2026-04-07 | 7       | 9         | 0          | Shipped KB-02/KB-04/KB-05 and activated stretch KB-06 with full closeout |
 | S04    | 2026-03-23 -> 2026-04-06 | 6       | 6         | 0          | Kanban enhancements — task detail panel, WIP limits, assignee avatar, dependency indicator shipped |

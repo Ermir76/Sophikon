@@ -45,7 +45,10 @@ async def slug_exists(
     slug: str,
     exclude_organization_id: UUID | None = None,
 ) -> bool:
-    query = select(Organization.id).where(Organization.slug == slug)
+    query = select(Organization.id).where(
+        Organization.slug == slug,
+        Organization.is_deleted.is_(False),
+    )
     if exclude_organization_id is not None:
         query = query.where(Organization.id != exclude_organization_id)
     result = await db.execute(query)
@@ -57,7 +60,12 @@ async def get_by_slug(
     *,
     slug: str,
 ) -> Organization | None:
-    result = await db.execute(select(Organization).where(Organization.slug == slug))
+    result = await db.execute(
+        select(Organization).where(
+            Organization.slug == slug,
+            Organization.is_deleted.is_(False),
+        )
+    )
     return result.scalar_one_or_none()
 
 

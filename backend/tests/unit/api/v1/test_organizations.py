@@ -183,9 +183,10 @@ async def test_create_organization_duplicate_slug(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClient):
-    """Create - soft-deleted slug reuse still returns 409 (no 500)."""
+    """Create - soft-deleted org name and slug can be reused."""
     suffix = uuid4().hex[:8]
     slug = f"dup-deleted-slug-{suffix}"
+    name = "Org To Delete"
     email = f"dupdeletedslug{suffix}@example.com"
 
     register_resp = await client.post(
@@ -200,7 +201,7 @@ async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClie
 
     create_resp = await client.post(
         "/api/v1/organizations",
-        json={"name": "Org To Delete", "slug": slug},
+        json={"name": name, "slug": slug},
     )
     assert create_resp.status_code == 201
     org_id = create_resp.json()["id"]
@@ -210,11 +211,12 @@ async def test_create_organization_duplicate_soft_deleted_slug(client: AsyncClie
 
     response = await client.post(
         "/api/v1/organizations",
-        json={"name": "Org Recreate", "slug": slug},
+        json={"name": name, "slug": slug},
     )
-    assert response.status_code == 409
-    assert "error" in response.json()
-    assert response.json()["error"]["code"] == "RESOURCE_CONFLICT"
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == name
+    assert data["slug"] == slug
 
 
 @pytest.mark.asyncio

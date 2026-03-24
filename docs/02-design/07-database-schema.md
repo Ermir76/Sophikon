@@ -238,7 +238,7 @@ Top-level tenant container for multi-tenancy. Users belong to organizations, and
 | --------------- | ------------ | ---------------- | ------------------ | ----------------------------------- |
 | **id**          | UUID         | PK               | uuid_generate_v7() | Primary key                         |
 | **name**        | VARCHAR(255) | NOT NULL         | -                  | Organization name                   |
-| **slug**        | VARCHAR(255) | NOT NULL, UNIQUE | -                  | URL-friendly identifier             |
+| **slug**        | VARCHAR(255) | NOT NULL         | -                  | URL-friendly identifier             |
 | **is_personal** | BOOLEAN      | NOT NULL         | FALSE              | True for auto-created personal orgs |
 | **settings**    | JSONB        | NOT NULL         | {}                 | Organization settings               |
 | **is_deleted**  | BOOLEAN      | NOT NULL         | FALSE              | Soft delete flag                    |
@@ -248,8 +248,7 @@ Top-level tenant container for multi-tenancy. Users belong to organizations, and
 
 **Indexes:**
 
-- `idx_organization_slug` - (slug) WHERE NOT is_deleted
-- `ix_organization_slug` - UNIQUE(slug)
+- `uq_organization_slug_active` - UNIQUE(slug) WHERE NOT is_deleted
 
 ---
 

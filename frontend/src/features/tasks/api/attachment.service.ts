@@ -22,11 +22,6 @@ export const attachmentService = {
     const response = await api.post<TaskAttachment>(
       `/projects/${projectId}/tasks/${taskId}/attachments`,
       formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
     );
     return response.data;
   },

@@ -25,6 +25,7 @@ import { Input } from "@/shared/ui/input";
 import { toast } from "sonner";
 import { useOrgStore } from "@/features/organizations/store/org-store";
 import {
+  useOrganizations,
   useOrganization,
   useUpdateOrganization,
   useDeleteOrganization,
@@ -61,15 +62,17 @@ import { PageLoading } from "@/shared/components/state/PageLoading";
 
 export default function OrgSettingsPage() {
   const shellClassName = "h-full overflow-y-auto";
-  const navigate = useNavigate(); // Add hook
+  const navigate = useNavigate();
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
-  const clearOrg = useOrgStore((state) => state.clear); // Add clear action
+  const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
+  const clearOrg = useOrgStore((state) => state.clear);
   const {
     data: activeOrganization,
     isLoading,
     isError,
     refetch,
   } = useOrganization(activeOrgId);
+  const { data: organizationsData } = useOrganizations();
   const updateOrgMutation = useUpdateOrganization(activeOrgId);
 
   const form = useForm<OrgFormValues>({
@@ -105,8 +108,10 @@ export default function OrgSettingsPage() {
 
   // Add Delete Mutation
   const deleteOrgMutation = useDeleteOrganization();
-
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const fallbackOrganization = organizationsData?.items.find(
+    (organization) => organization.id !== activeOrgId && organization.is_personal,
+  );
 
   if (isLoading) {
     return (
@@ -231,7 +236,11 @@ export default function OrgSettingsPage() {
                 if (!activeOrgId) return;
                 deleteOrgMutation.mutate(activeOrgId, {
                   onSuccess: () => {
-                    clearOrg();
+                    if (fallbackOrganization) {
+                      setActiveOrg(fallbackOrganization.id);
+                    } else {
+                      clearOrg();
+                    }
                     toast.success("Organization deleted", {
                       description: "The organization has been permanently deleted.",
                     });
