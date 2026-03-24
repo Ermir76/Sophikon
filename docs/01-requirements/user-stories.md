@@ -100,6 +100,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | ------ | ----------------------------------------------------------------------------------------------- | ------ |
 | US-9.1 | As an organization owner/admin, I want to edit organization settings so that org metadata stays accurate. | DONE |
 | US-9.2 | As an organization owner/admin, I want to invite members and manage roles so that access is controlled. | DONE |
+| US-9.5 | As an organization admin, I want to invite someone who doesn't have an account yet so that I can onboard new team members without asking them to register first. | PENDING |
 | US-9.3 | As a user in multiple organizations, I want to switch active organization context so I work in the right workspace. | DONE |
 | US-9.4 | As an organization stakeholder, I want an organization dashboard so that I can monitor overall execution and risk. | DONE |
 

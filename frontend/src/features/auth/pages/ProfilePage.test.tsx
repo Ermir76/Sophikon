@@ -11,6 +11,16 @@ const mocks = vi.hoisted(() => ({
   changePasswordMutate: vi.fn(),
   uploadAvatarMutate: vi.fn(),
   deleteAvatarMutate: vi.fn(),
+  updateAiPreferencesMutate: vi.fn(),
+  aiPreferencesData: {
+    auto_approve: {
+      create_task: true,
+    },
+    provider: null,
+    model: null,
+    providers: [],
+    defaults: null,
+  },
   authState: {
     user: {
       id: "u1",
@@ -33,6 +43,7 @@ vi.mock("@/features/auth/store/auth-store", () => ({
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
@@ -64,11 +75,14 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
     error: null,
   })),
   useAiPreferences: vi.fn(() => ({
-    data: undefined,
+    data: mocks.aiPreferencesData,
     isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
   })),
   useUpdateAiPreferences: vi.fn(() => ({
-    mutate: vi.fn(),
+    mutate: mocks.updateAiPreferencesMutate,
     isPending: false,
   })),
 }));
@@ -76,6 +90,15 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.aiPreferencesData = {
+      auto_approve: {
+        create_task: true,
+      },
+      provider: null,
+      model: null,
+      providers: [],
+      defaults: null,
+    };
     globalThis.ResizeObserver = class ResizeObserver {
       observe() {}
       unobserve() {}
@@ -109,6 +132,14 @@ describe("ProfilePage", () => {
 
   it("submits change-password form and keeps recovery route visible", async () => {
     const user = userEvent.setup();
+    mocks.changePasswordMutate.mockImplementation(
+      (
+        _data: unknown,
+        options?: { onSuccess?: () => void },
+      ) => {
+        options?.onSuccess?.();
+      },
+    );
 
     render(
       <MemoryRouter>
@@ -130,11 +161,60 @@ describe("ProfilePage", () => {
       current_password: "StrongPassword123!",
       new_password: "StrongPassword456!",
     });
+    expect(toast.success).toHaveBeenCalledWith("Password changed successfully");
+    expect(screen.getByLabelText("Current Password")).toHaveValue("");
+    expect(screen.getByLabelText("New Password")).toHaveValue("");
+    expect(screen.getByLabelText("Confirm New Password")).toHaveValue("");
 
     expect(screen.getByRole("link", { name: "Go to password reset" })).toHaveAttribute(
       "href",
       "/forgot-password",
     );
+  });
+
+  it("shows a success toast and updates the AI toggle state after saving preferences", async () => {
+    const user = userEvent.setup();
+    mocks.updateAiPreferencesMutate.mockImplementation(
+      (
+        _data: unknown,
+        options?: {
+          onSuccess?: (data: typeof mocks.aiPreferencesData) => void;
+        },
+      ) => {
+        options?.onSuccess?.({
+          ...mocks.aiPreferencesData,
+          auto_approve: {
+            ...mocks.aiPreferencesData.auto_approve,
+            create_task: false,
+          },
+        });
+      },
+    );
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("tab", { name: "AI Settings" }));
+
+    const createTaskSwitch = screen.getByRole("switch", { name: "Create task" });
+    expect(createTaskSwitch).toBeChecked();
+
+    await user.click(createTaskSwitch);
+
+    await waitFor(() => {
+      expect(mocks.updateAiPreferencesMutate).toHaveBeenCalledWith(
+        { auto_approve: { create_task: false } },
+        expect.objectContaining({
+          onError: expect.any(Function),
+          onSuccess: expect.any(Function),
+        }),
+      );
+    });
+    expect(toast.success).toHaveBeenCalledWith("Preferences saved");
+    expect(createTaskSwitch).not.toBeChecked();
   });
 
   it("shows a safe avatar upload error message when the API returns validation details", async () => {

@@ -124,12 +124,12 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | ID        | Requirement                 | Priority | Status  |
 | --------- | --------------------------- | -------- | ------- |
 | FR-CA-001 | Create calendar             | Must     | DONE    |
-| FR-CA-002 | Edit work week              | Must     | PARTIAL |
+| FR-CA-002 | Edit work week              | Must     | DONE    |
 | FR-CA-003 | Add exception (holiday)     | Must     | DONE    |
 | FR-CA-004 | Delete exception            | Must     | DONE    |
-| FR-CA-005 | Calendar inheritance        | Should   | PARTIAL |
-| FR-CA-006 | Assign calendar to task     | Should   | PARTIAL |
-| FR-CA-007 | Assign calendar to resource | Should   | PARTIAL |
+| FR-CA-005 | Calendar inheritance        | Should   | DONE    |
+| FR-CA-006 | Assign calendar to task     | Should   | DONE    |
+| FR-CA-007 | Assign calendar to resource | Should   | DONE    |
 
 ## 8. Resource Management
 
@@ -259,11 +259,12 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-OR-003 | Update organization settings                        | Should   | DONE   |
 | FR-OR-004 | Delete organization                                 | Should   | DONE   |
 | FR-OR-005 | List organization members                           | Must     | DONE   |
-| FR-OR-006 | Invite organization member                          | Must     | DONE   |
+| FR-OR-006 | Invite organization member (existing user by email) | Must     | DONE   |
 | FR-OR-007 | Update organization member role                     | Must     | DONE   |
 | FR-OR-008 | Remove organization member                          | Must     | DONE   |
 | FR-OR-009 | Resolve current user's organization role/membership | Should   | DONE   |
 | FR-OR-010 | Show organization-level dashboard insights          | Should   | DONE   |
+| FR-OR-011 | Invite unregistered user to organization via email — send invite link, user registers and lands in org automatically | Should   | PENDING |
 
 ## 17. Reporting Workspace
 
@@ -312,3 +313,4 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 10.2    | 2026-03-23 | Codex  | Marked FR-KB-009 as DONE after shipping in-column Kanban card reorder with persisted backend ordering and optimistic rollback.                                                                                                             |
 | 10.3    | 2026-03-23 | Codex  | Marked FR-KB-013 as DONE after shipping kanban bulk select mode with multi-card move via existing bulk task update API.                                                                                                                   |
 | 10.4    | 2026-03-24 | Codex  | Marked FR-KB-016 as DONE after shipping kanban Sprint Health summary with manual AI refresh, grouped risk surfacing, and task-detail drill-in from affected risk entries.                                                                  |
+| 10.5    | 2026-03-24 | Codex  | Reclassified FR-CA-002 and FR-CA-005 through FR-CA-007 from PARTIAL to DONE after verifying mounted calendar edit/inheritance/task assignment/resource assignment flows in frontend, backend, and scheduling tests.                          |

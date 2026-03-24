@@ -2,7 +2,7 @@
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
-**Last updated:** 2026-03-23
+**Last updated:** 2026-03-24
 **Status source:** `docs/03-implementation/03-requirements-traceability.md` + `docs/03-implementation/01-sprint-plan.md` + `docs/03-implementation/02-workboard.md`
 **Roadmap source:** `docs/ROADMAP.md`
 
@@ -52,9 +52,17 @@ Points scale:
 | KB-06 | FR | Kanban: bulk select and move cards (FR-KB-013) | P2 | 2 | - | V1.0 | DONE | - | S05 |
 | KB-07 | FR | Kanban: assignee avatar on card (FR-KB-014) | P2 | 1 | - | V1.0 | DONE | - | S04 |
 | KB-08 | FR | Kanban: dependency indicator on card (FR-KB-015) | P2 | 1 | - | V1.0 | DONE | - | S04 |
-| KB-09 | FR | Kanban: AI sprint health summary (FR-KB-016) | P2 | 3 | KB-01 | V1.0 | IN_PROGRESS | wwwer | Planned in S06 |
+| KB-09 | FR | Kanban: AI sprint health summary (FR-KB-016) | P2 | 3 | KB-01 | V1.0 | DONE | wwwer | S06 |
 | KB-10 | FR | Kanban: AI quick-fill from title (FR-KB-017) | P3 | 2 | KB-01 | V1.1 | NOT_READY | - | - |
 | KB-11 | FR | Kanban: AI-detected blockers highlight (FR-KB-018) | P3 | 2 | KB-09 | V1.1 | NOT_READY | - | - |
+| FIX-01 | TECH | Avatar upload crashes with raw Pydantic error in UI (#27) | P0 | 1 | - | V1.0 | DONE | wwwer | S07 |
+| FIX-02 | TECH | Deleted org name/slug not released after soft delete (#31) | P0 | 1 | - | V1.0 | DONE | wwwer | S07 |
+| FIX-03 | TECH | Sidebar no fallback to personal org after deletion (#32) | P1 | 1 | FIX-02 | V1.0 | DONE | wwwer | S07 |
+| FIX-04 | TECH | Change password success not using Sonner toast (#29) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
+| FIX-05 | TECH | AI preferences toggle glitch — no confirmation + icon flash (#30) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
+| FIX-06 | TECH | Silent token refresh not proactive — user kicked to /login after idle (#26) | P1 | 2 | - | V1.0 | READY | - | - |
+| FIX-07 | TECH | Password reset allows reuse of previous password (#28) | P2 | 1 | - | V1.0 | READY | - | - |
+| FIX-08 | TECH | Org member role change shows layout glitch (#33) | P2 | 1 | - | V1.0 | READY | - | - |
 
 ---
 
@@ -85,12 +93,13 @@ Points scale:
 | KB-06     | Kanban: bulk select and move cards (FR-KB-013)                                                      | 2      | S05    |
 | KB-07     | Kanban: assignee avatar on card (FR-KB-014)                                                         | 1      | S04    |
 | KB-08     | Kanban: dependency indicator on card (FR-KB-015)                                                    | 1      | S04    |
+| KB-09     | Kanban: AI sprint health summary (FR-KB-016)                                                        | 3      | S06    |
 
 ### V1.0 (Remaining Backlog)
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| KB-09   | Kanban: AI sprint health summary (FR-KB-016)       | 3      | IN_PROGRESS  | Active in S06; dependency `KB-01` complete  |
+| -       | -                                                | -      | -      | No remaining V1.0 backlog items |
 
 ### V1.1 (Planned)
 

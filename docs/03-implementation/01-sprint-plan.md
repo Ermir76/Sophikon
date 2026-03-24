@@ -30,18 +30,18 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Item ID | Title | Trigger to pull in |
 | ------- | ----- | ------------------ |
-| FIX-04 | Change password missing toast (#29) | If time allows |
-| FIX-05 | AI preferences toggle glitch (#30) | If time allows |
+| FIX-04 | Change password missing toast (#29) | Pulled in after committed fixes shipped cleanly |
+| FIX-05 | AI preferences toggle glitch (#30) | Pulled in after committed fixes shipped cleanly |
 
 ---
 
 ## Sprint Review (Fill at end)
 
 - Planned points: `3`
-- Completed points: `3`
+- Completed points: `5`
 - Carry-over points: `0`
-- Main wins: Fixed the avatar flow end-to-end by sending real multipart uploads, surfacing safe user-facing failures, proxying returned `/media` avatar URLs in local dev, and rendering the uploaded avatar in both profile and sidebar UI; deleting an active organization now falls back to the personal organization automatically; and soft-deleted organization slugs can be reused.
-- Main misses: `FIX-04` and `FIX-05` were not pulled in.
+- Main wins: Fixed the avatar flow end-to-end by sending real multipart uploads, surfacing safe user-facing failures, proxying returned `/media` avatar URLs in local dev, and rendering the uploaded avatar in both profile and sidebar UI; deleting an active organization now falls back to the personal organization automatically; soft-deleted organization slugs can be reused; change-password success now uses the standard Sonner toast; and AI preference toggles now show save confirmation without the switch flash during save.
+- Main misses: -
 - Process changes for next sprint: Treat schema-level uniqueness bugs as explicit design decisions before accepting a workboard fix at face value; review the matching design doc/ADR state before changing DB constraints.
 
 ---
@@ -341,7 +341,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S07    | 2026-03-24 -> 2026-03-24 | 3       | 3         | 0          | Closed three QA fixes: end-to-end avatar upload/render flow, reusable soft-deleted org slugs, and personal-org fallback after deleting the active org |
+| S07    | 2026-03-24 -> 2026-03-24 | 3       | 5         | 0          | Closed three committed QA fixes plus stretch `FIX-04` and `FIX-05`: avatar upload/render flow, reusable soft-deleted org slugs, personal-org fallback after deleting the active org, password-change success toast, and stable AI preference save feedback |
 | S06    | 2026-04-08 -> 2026-04-21 | 3       | 3         | 0          | Shipped KB-09 AI sprint health summary with manual refresh and kanban card drill-in |
 | S05    | 2026-03-24 -> 2026-04-07 | 7       | 9         | 0          | Shipped KB-02/KB-04/KB-05 and activated stretch KB-06 with full closeout |
 | S04    | 2026-03-23 -> 2026-04-06 | 6       | 6         | 0          | Kanban enhancements — task detail panel, WIP limits, assignee avatar, dependency indicator shipped |

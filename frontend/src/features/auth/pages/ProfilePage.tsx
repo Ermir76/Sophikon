@@ -126,14 +126,37 @@ export default function ProfilePage() {
   const updateAiPreferencesMutation = useUpdateAiPreferences();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+  const [aiAutoApproveDraft, setAiAutoApproveDraft] = useState<Record<string, boolean>>({});
+  const [pendingAiToolName, setPendingAiToolName] = useState<string | null>(null);
 
-  const aiAutoApprove = aiPreferencesQuery.data?.auto_approve ?? {};
+  const aiAutoApprove = {
+    ...(aiPreferencesQuery.data?.auto_approve ?? {}),
+    ...aiAutoApproveDraft,
+  };
 
   const handleAiToggle = (toolName: string, value: boolean) => {
+    if (pendingAiToolName) {
+      return;
+    }
+
+    const previousValue =
+      aiAutoApproveDraft[toolName] ?? aiPreferencesQuery.data?.auto_approve?.[toolName] ?? true;
+
+    setPendingAiToolName(toolName);
+    setAiAutoApproveDraft((current) => ({ ...current, [toolName]: value }));
     updateAiPreferencesMutation.mutate(
       { auto_approve: { [toolName]: value } },
       {
-        onError: (error) => toast.error(getErrorMessage(error)),
+        onSuccess: (updatedPreferences) => {
+          setAiAutoApproveDraft(updatedPreferences.auto_approve);
+          setPendingAiToolName(null);
+          toast.success("Preferences saved");
+        },
+        onError: (error) => {
+          setAiAutoApproveDraft((current) => ({ ...current, [toolName]: previousValue }));
+          setPendingAiToolName(null);
+          toast.error(getErrorMessage(error));
+        },
       },
     );
   };
@@ -163,6 +186,10 @@ export default function ProfilePage() {
       locale: user?.locale ?? "en-US",
     });
   }, [profileForm, user]);
+
+  useEffect(() => {
+    setAiAutoApproveDraft(aiPreferencesQuery.data?.auto_approve ?? {});
+  }, [aiPreferencesQuery.data?.auto_approve]);
 
   const handleAvatarUploadError = (error: unknown) => {
     const rawMessage: unknown = getErrorMessage(error);
@@ -448,12 +475,6 @@ export default function ProfilePage() {
                 </Alert>
               ) : null}
 
-              {changePasswordMutation.isSuccess ? (
-                <Alert className="mb-5">
-                  <AlertDescription>Password changed successfully.</AlertDescription>
-                </Alert>
-              ) : null}
-
               <Form {...securityForm}>
                 <form
                   className="space-y-5"
@@ -470,6 +491,7 @@ export default function ProfilePage() {
                             new_password: "",
                             confirm_password: "",
                           });
+                          toast.success("Password changed successfully");
                         },
                       },
                     );
@@ -583,7 +605,7 @@ export default function ProfilePage() {
                         id={`ai-tool-${toolName}`}
                         checked={aiAutoApprove[toolName] ?? true}
                         onCheckedChange={(checked) => handleAiToggle(toolName, checked)}
-                        disabled={updateAiPreferencesMutation.isPending}
+                        aria-busy={pendingAiToolName === toolName}
                       />
                     </div>
                   ))}

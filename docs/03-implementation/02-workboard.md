@@ -66,6 +66,40 @@ Status: `DONE`
 
 ---
 
+### FIX-04 — Change password missing toast (#29)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Replace inline-only success feedback with standard Sonner success toast
+- [x] Keep the form reset behavior after successful password change
+- [x] Verify with focused `ProfilePage` test coverage
+
+#### Notes
+
+- File: `frontend/src/features/auth/pages/ProfilePage.tsx`
+- Follow the existing mutation feedback pattern used in settings pages that already use `toast.success(...)`
+
+---
+
+### FIX-05 — AI preferences toggle glitch (#30)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add visible success feedback after AI preference save
+- [x] Remove the switch flash caused by pending-state handling on save
+- [x] Verify toggle behavior with focused `ProfilePage` test coverage
+
+#### Notes
+
+- Files: `frontend/src/features/auth/pages/ProfilePage.tsx`, `frontend/src/features/auth/pages/ProfilePage.test.tsx`
+- Implemented with page-local optimistic toggle state plus success/error reconciliation from the mutation response
+
+---
+
 ## Previous Sprint Items — S06
 
 ### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
