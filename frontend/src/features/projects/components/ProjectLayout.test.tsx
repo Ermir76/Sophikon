@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProjectLayout } from "./ProjectLayout";
 import { useAiPanelStore } from "@/features/ai/store/ai-panel-store";
+import { useProject } from "@/features/projects/hooks/useProjects";
 import { useProjectWebSocket } from "@/features/projects/hooks/useProjectWebSocket";
 
 vi.mock("@/features/ai", async () => {
@@ -39,6 +40,10 @@ vi.mock("@/features/projects/hooks/useProjectWebSocket", () => ({
   useProjectWebSocket: vi.fn(),
 }));
 
+vi.mock("@/features/projects/hooks/useProjects", () => ({
+  useProject: vi.fn(),
+}));
+
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 function renderLayout() {
@@ -58,6 +63,9 @@ describe("ProjectLayout", () => {
     vi.clearAllMocks();
     useAiPanelStore.setState({ projects: {} });
     vi.mocked(useIsMobile).mockReturnValue(false);
+    vi.mocked(useProject).mockReturnValue({
+      error: null,
+    } as never);
   });
 
   it("renders only the project outlet when the AI panel is closed", () => {
@@ -75,5 +83,22 @@ describe("ProjectLayout", () => {
 
     expect(screen.getByText("PROJECT CONTENT")).toBeInTheDocument();
     expect(screen.getByText("AI PANEL docked")).toBeInTheDocument();
+  });
+
+  it("renders a clear message when the user no longer has project access", () => {
+    vi.mocked(useProject).mockReturnValue({
+      error: {
+        isAxiosError: true,
+        response: { status: 403 },
+      },
+    } as never);
+
+    renderLayout();
+
+    expect(screen.getByText("You no longer have access to this project.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Projects" })).toHaveAttribute(
+      "href",
+      "/projects",
+    );
   });
 });

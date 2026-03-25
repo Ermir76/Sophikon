@@ -1,19 +1,26 @@
-import { Navigate, Outlet, useParams } from "react-router";
+import { isAxiosError } from "axios";
+import { Link, Navigate, Outlet, useParams } from "react-router";
 
 import { AiDockedPanel, useAiPanelStore } from "@/features/ai";
+import { useProject } from "@/features/projects/hooks/useProjects";
 import { useProjectWebSocket } from "@/features/projects/hooks/useProjectWebSocket";
+import { QueryError } from "@/shared/components/QueryError";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shared/ui/resizable";
+import { Button } from "@/shared/ui/button";
 import { Drawer, DrawerContent } from "@/shared/ui/drawer";
 
 export function ProjectLayout() {
   const { projectId } = useParams<{ projectId: string }>();
   const isMobile = useIsMobile();
   const resolvedProjectId = projectId ?? "";
+  const projectQuery = useProject(projectId);
+  const hasProjectAccessError = isAxiosError(projectQuery.error)
+    && projectQuery.error.response?.status === 403;
 
   useProjectWebSocket(projectId);
 
@@ -28,6 +35,19 @@ export function ProjectLayout() {
 
   if (!projectId) {
     return <Navigate to="/projects" replace />;
+  }
+
+  if (hasProjectAccessError) {
+    return (
+      <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center gap-4 px-6 py-8">
+        <QueryError message="You no longer have access to this project." />
+        <div>
+          <Button asChild variant="outline">
+            <Link to="/projects">Back to Projects</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (isMobile) {

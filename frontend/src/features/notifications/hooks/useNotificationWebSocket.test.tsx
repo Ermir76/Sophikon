@@ -146,4 +146,17 @@ describe("useNotificationWebSocket", () => {
       expect(state.reconnectAttempt).toBe(0);
     });
   });
+
+  it("does not reconnect on rerender while auth state is unchanged", () => {
+    const queryClient = new QueryClient();
+    const { rerender } = renderHook(() => useNotificationWebSocket(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    rerender();
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+  });
 });

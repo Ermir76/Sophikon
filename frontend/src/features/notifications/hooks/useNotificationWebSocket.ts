@@ -36,6 +36,17 @@ export function useNotificationWebSocket() {
   const reconnectTimerRef = useRef<number | null>(null);
   const shouldReconnectRef = useRef(true);
   const reconnectAttemptRef = useRef(0);
+  const queryClientRef = useRef(queryClient);
+  const setStatusRef = useRef(setStatus);
+  const setReconnectAttemptRef = useRef(setReconnectAttempt);
+  const setUnreadCountRef = useRef(setUnreadCount);
+  const resetRef = useRef(reset);
+
+  queryClientRef.current = queryClient;
+  setStatusRef.current = setStatus;
+  setReconnectAttemptRef.current = setReconnectAttempt;
+  setUnreadCountRef.current = setUnreadCount;
+  resetRef.current = reset;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -48,13 +59,13 @@ export function useNotificationWebSocket() {
         socketRef.current.close();
         socketRef.current = null;
       }
-      reset();
+      resetRef.current();
       return;
     }
 
     shouldReconnectRef.current = true;
     reconnectAttemptRef.current = 0;
-    setReconnectAttempt(0);
+    setReconnectAttemptRef.current(0);
 
     function cleanupSocket() {
       if (reconnectTimerRef.current !== null) {
@@ -68,14 +79,14 @@ export function useNotificationWebSocket() {
     }
 
     function connect(mode: "connecting" | "reconnecting") {
-      setStatus(mode);
+      setStatusRef.current(mode);
       const socket = new WebSocket(buildNotificationWebSocketUrl());
       socketRef.current = socket;
 
       socket.addEventListener("open", () => {
         reconnectAttemptRef.current = 0;
-        setReconnectAttempt(0);
-        setStatus("connected");
+        setReconnectAttemptRef.current(0);
+        setStatusRef.current("connected");
       });
 
       socket.addEventListener("message", (event) => {
@@ -91,32 +102,32 @@ export function useNotificationWebSocket() {
         }
 
         if (message.type === "error") {
-          setStatus("error");
+          setStatusRef.current("error");
           return;
         }
 
         if ("unread_count" in message) {
-          setUnreadCount(message.unread_count);
+          setUnreadCountRef.current(message.unread_count);
         }
-        queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+        queryClientRef.current.invalidateQueries({ queryKey: notificationKeys.all });
       });
 
       socket.addEventListener("close", (event) => {
         socketRef.current = null;
         if (!shouldReconnectRef.current) {
-          setStatus("idle");
+          setStatusRef.current("idle");
           return;
         }
 
         if (TERMINAL_CLOSE_CODES.has(event.code)) {
-          setStatus("error");
+          setStatusRef.current("error");
           return;
         }
 
         const attempt = reconnectAttemptRef.current + 1;
         reconnectAttemptRef.current = attempt;
-        setReconnectAttempt(attempt);
-        setStatus("reconnecting");
+        setReconnectAttemptRef.current(attempt);
+        setStatusRef.current("reconnecting");
 
         const delay = RECONNECT_DELAYS_MS[Math.min(attempt - 1, RECONNECT_DELAYS_MS.length - 1)];
         reconnectTimerRef.current = window.setTimeout(() => {
@@ -125,7 +136,7 @@ export function useNotificationWebSocket() {
       });
 
       socket.addEventListener("error", () => {
-        setStatus("error");
+        setStatusRef.current("error");
       });
     }
 
@@ -134,14 +145,7 @@ export function useNotificationWebSocket() {
     return () => {
       shouldReconnectRef.current = false;
       cleanupSocket();
-      reset();
+      resetRef.current();
     };
-  }, [
-    isAuthenticated,
-    queryClient,
-    reset,
-    setReconnectAttempt,
-    setStatus,
-    setUnreadCount,
-  ]);
+  }, [isAuthenticated]);
 }

@@ -165,6 +165,21 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
   const reconnectTimerRef = useRef<number | null>(null);
   const shouldReconnectRef = useRef(true);
   const reconnectAttemptRef = useRef(0);
+  const queryClientRef = useRef(queryClient);
+  const navigateRef = useRef(navigate);
+  const setStatusRef = useRef(setStatus);
+  const setUsersRef = useRef(setUsers);
+  const setSubscribedChannelsRef = useRef(setSubscribedChannels);
+  const setReconnectAttemptRef = useRef(setReconnectAttempt);
+  const clearProjectRef = useRef(clearProject);
+
+  queryClientRef.current = queryClient;
+  navigateRef.current = navigate;
+  setStatusRef.current = setStatus;
+  setUsersRef.current = setUsers;
+  setSubscribedChannelsRef.current = setSubscribedChannels;
+  setReconnectAttemptRef.current = setReconnectAttempt;
+  clearProjectRef.current = clearProject;
 
   useEffect(() => {
     if (!projectId) {
@@ -174,7 +189,7 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
 
     shouldReconnectRef.current = true;
     reconnectAttemptRef.current = 0;
-    setSubscribedChannels(activeProjectId, DEFAULT_CHANNELS);
+    setSubscribedChannelsRef.current(activeProjectId, DEFAULT_CHANNELS);
 
     function cleanupSocket() {
       if (reconnectTimerRef.current !== null) {
@@ -190,20 +205,20 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
     function handleProjectExit() {
       shouldReconnectRef.current = false;
       cleanupSocket();
-      clearProject(activeProjectId);
-      navigate("/projects", { replace: true });
+      clearProjectRef.current(activeProjectId);
+      navigateRef.current("/projects", { replace: true });
     }
 
     function connect(mode: "connecting" | "reconnecting") {
-      setStatus(activeProjectId, mode);
+      setStatusRef.current(activeProjectId, mode);
 
       const socket = new WebSocket(buildProjectWebSocketUrl(activeProjectId));
       socketRef.current = socket;
 
       socket.addEventListener("open", () => {
         reconnectAttemptRef.current = 0;
-        setReconnectAttempt(activeProjectId, 0);
-        setStatus(activeProjectId, "connected");
+        setReconnectAttemptRef.current(activeProjectId, 0);
+        setStatusRef.current(activeProjectId, "connected");
         socket.send(
           JSON.stringify({
             type: "subscribe",
@@ -227,16 +242,16 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
         }
 
         if (message.type === "presence_snapshot" || message.type === "presence_update") {
-          setUsers(activeProjectId, message.users);
+          setUsersRef.current(activeProjectId, message.users);
           return;
         }
 
         if (message.type === "error") {
-          setStatus(activeProjectId, "error");
+          setStatusRef.current(activeProjectId, "error");
           return;
         }
 
-        invalidateProjectEventQueries(queryClient, activeProjectId, message);
+        invalidateProjectEventQueries(queryClientRef.current, activeProjectId, message);
 
         if (message.type === "project_deleted") {
           handleProjectExit();
@@ -255,22 +270,22 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
 
       socket.addEventListener("close", (event) => {
         socketRef.current = null;
-        setUsers(activeProjectId, []);
+        setUsersRef.current(activeProjectId, []);
 
         if (!shouldReconnectRef.current) {
-          setStatus(activeProjectId, "idle");
+          setStatusRef.current(activeProjectId, "idle");
           return;
         }
 
         if (TERMINAL_CLOSE_CODES.has(event.code)) {
-          setStatus(activeProjectId, "error");
+          setStatusRef.current(activeProjectId, "error");
           return;
         }
 
         const attempt = reconnectAttemptRef.current + 1;
         reconnectAttemptRef.current = attempt;
-        setReconnectAttempt(activeProjectId, attempt);
-        setStatus(activeProjectId, "reconnecting");
+        setReconnectAttemptRef.current(activeProjectId, attempt);
+        setStatusRef.current(activeProjectId, "reconnecting");
 
         const delay = RECONNECT_DELAYS_MS[Math.min(attempt - 1, RECONNECT_DELAYS_MS.length - 1)];
         reconnectTimerRef.current = window.setTimeout(() => {
@@ -279,7 +294,7 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
       });
 
       socket.addEventListener("error", () => {
-        setStatus(activeProjectId, "error");
+        setStatusRef.current(activeProjectId, "error");
       });
     }
 
@@ -288,17 +303,7 @@ export function useProjectWebSocket(projectId: string | null | undefined) {
     return () => {
       shouldReconnectRef.current = false;
       cleanupSocket();
-      clearProject(activeProjectId);
+      clearProjectRef.current(activeProjectId);
     };
-  }, [
-    clearProject,
-    currentUserId,
-    navigate,
-    projectId,
-    queryClient,
-    setReconnectAttempt,
-    setStatus,
-    setSubscribedChannels,
-    setUsers,
-  ]);
+  }, [currentUserId, projectId]);
 }

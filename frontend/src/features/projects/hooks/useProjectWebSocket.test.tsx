@@ -186,4 +186,21 @@ describe("useProjectWebSocket", () => {
       queryKey: commentKeys.byEntity("task", "task-1"),
     });
   });
+
+  it("does not reconnect on rerender with the same project id", () => {
+    const queryClient = new QueryClient();
+    const { rerender } = renderHook(
+      ({ projectId }: { projectId: string }) => useProjectWebSocket(projectId),
+      {
+        initialProps: { projectId: "project-1" },
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    rerender({ projectId: "project-1" });
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+  });
 });
