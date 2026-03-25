@@ -377,6 +377,16 @@
 
 ---
 
+## Considered
+
+Features evaluated during development — not scheduled, but worth revisiting in future versions.
+
+| Feature | Context | Reconsider When |
+| ------- | ------- | --------------- |
+| GET invitation details endpoint (`GET /api/v1/projects/members/invitations/{id}`) | ADR-009: currently passing invitation data via route state, which is lost on refresh. A dedicated endpoint would let the accept page fetch details for any entry point (email, direct URL, notification). | When enhancing the email invitation flow or if refresh-loss becomes a UX complaint. |
+
+---
+
 ## Feature Parking Lot
 
 Features considered but not scheduled:

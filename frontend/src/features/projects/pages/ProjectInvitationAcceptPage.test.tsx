@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
+import { useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProjectInvitationAcceptPage from "@/features/projects/pages/ProjectInvitationAcceptPage";
@@ -33,6 +35,23 @@ import { useAcceptProjectInvitation } from "@/features/projects/hooks/useProject
 import { projectService } from "@/features/projects/api/project.service";
 import { useOrganizations, useOrgStore } from "@/features/organizations";
 import { toast } from "sonner";
+
+function ReviewModeRedirect() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate("/project-invitations/accept?invitation_id=review-invite-1", {
+      state: {
+        review: true,
+        title: "Invited to Project Alpha",
+        message: "Owner invited you as a member.",
+      },
+      replace: true,
+    });
+  }, [navigate]);
+
+  return null;
+}
 
 describe("ProjectInvitationAcceptPage", () => {
   beforeEach(() => {
@@ -208,6 +227,37 @@ describe("ProjectInvitationAcceptPage", () => {
       expect(mutateAsync).toHaveBeenCalledWith({ invitation_id: "invite-1" });
     });
     expect(screen.getByText("Invitation Accepted")).toBeInTheDocument();
+  });
+
+  it("shows review details and waits for explicit confirmation before accepting", async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn().mockResolvedValue({
+      project_id: "project-1",
+      member_id: "member-1",
+    });
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync,
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={["/review"]}>
+        <Routes>
+          <Route path="/review" element={<ReviewModeRedirect />} />
+          <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Invited to Project Alpha")).toBeInTheDocument();
+    expect(screen.getByText("Owner invited you as a member.")).toBeInTheDocument();
+    expect(mutateAsync).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Accept Invitation" }));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith({ invitation_id: "review-invite-1" });
+      expect(screen.getByText("Invitation Accepted")).toBeInTheDocument();
+    });
   });
 
   it("renders accepted state from navigation state without re-accepting", async () => {

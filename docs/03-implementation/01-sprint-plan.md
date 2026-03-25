@@ -6,6 +6,47 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S09
+**Dates:** 2026-03-25 -> 2026-03-25
+**Goal:** Close the invitation review UX and the remaining related auth/org QA regressions
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~1 day`
+- Planned points capacity: `5`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| FIX-14 | Invitation review page UX overhaul | 2 | ❌ "Review" button auto-accepts and shows no details — broken UX found in live QA | FIX-10 | Notification card shows no message; "Review" navigates to page showing invitation details (project, role, inviter, message) from route state; user must click Accept explicitly; "Accept" on notification auto-accepts as before; email link falls back to minimal view |
+| FIX-06 | Silent token refresh not proactive (#26) | 2 | ⚠️ Users are redirected to `/login` after idle despite a valid refresh token | - | Authenticated sessions refresh proactively before access-token expiry while the app is mounted and idle |
+| FIX-08 | Org member role change layout glitch (#33) | 1 | ⚠️ Role saves show unstable visual movement instead of a clean pending state | - | Org members page shows a stable pending indicator and disables role actions cleanly during role updates |
+
+**Total committed points:** `5`
+
+### Stretch (Optional)
+
+None.
+
+---
+
+## Sprint Review (Fill at end)
+
+- Planned points: `5`
+- Completed points: `5`
+- Carry-over points: `0`
+- Main wins: Finished FIX-14 with explicit review-mode coverage, added proactive auth refresh to keep idle sessions alive, stabilized the org-member role update pending state, and closed the stale invitation notification lifecycle by resolving/hiding non-actionable invite notifications after acceptance.
+- Main misses: Full browser-level manual QA was not run; release evidence is the focused frontend and backend automated suites for the changed flows.
+- Process changes for next sprint: When a UX fix depends on temporary route state, verify the full notification lifecycle in the same pass so stale follow-up states do not slip behind the initial frontend fix.
+
+---
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S08
 **Dates:** 2026-03-25 -> 2026-03-25
 **Goal:** QA fix pass #2 — close Project Management and WebSocket issues found during QA domains 3–4
@@ -28,16 +69,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 **Total committed points:** `5`
 
-### Stretch (Optional)
-
-| Item ID | Title | Trigger to pull in |
-| ------- | ----- | ------------------ |
-| FIX-06 | Silent token refresh not proactive (#26) | If committed items finish early |
-| FIX-08 | Org member role change layout glitch (#33) | If committed items finish early |
-
----
-
-## Sprint Review (Fill at end)
+### Sprint Review
 
 - Planned points: `5`
 - Completed points: `5`
@@ -385,6 +417,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
+| S08    | 2026-03-25 -> 2026-03-25 | 5       | 5         | 0          | Closed all five S08 QA fixes: Vite WS proxy, invite accept page, org switcher invalidation, removed-member error state, and WebSocket hook stabilization |
 | S07    | 2026-03-24 -> 2026-03-24 | 3       | 5         | 0          | Closed three committed QA fixes plus stretch `FIX-04` and `FIX-05`: avatar upload/render flow, reusable soft-deleted org slugs, personal-org fallback after deleting the active org, password-change success toast, and stable AI preference save feedback |
 | S06    | 2026-04-08 -> 2026-04-21 | 3       | 3         | 0          | Shipped KB-09 AI sprint health summary with manual refresh and kanban card drill-in |
 | S05    | 2026-03-24 -> 2026-04-07 | 7       | 9         | 0          | Shipped KB-02/KB-04/KB-05 and activated stretch KB-06 with full closeout |

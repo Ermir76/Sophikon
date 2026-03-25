@@ -2,7 +2,7 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S08
+**Sprint ID:** S09
 **Dates:** 2026-03-25 -> 2026-03-25
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
@@ -10,7 +10,70 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S08
+## Active Items — S09
+
+### FIX-14 — Invitation review page UX overhaul
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Write ADR-009 for route-state decision (done during planning)
+- [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
+- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
+- [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
+- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
+- [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
+
+#### Notes
+
+- Dependencies: FIX-10 (accept page foundation)
+- Blockers: -
+- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
+
+---
+
+### FIX-06 — Silent token refresh not proactive (#26)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Confirm the app only refreshed auth reactively after a 401 and had no proactive idle-session timer
+- [x] Add an authenticated app-level refresh timer before access-token expiry
+- [x] Verify the timer path with focused frontend coverage
+
+#### Notes
+
+- Files: `frontend/src/app/App.tsx`, `frontend/src/app/App.test.tsx`
+- The refresh remains cookie-based through `POST /auth/refresh`; no new backend contract was needed
+
+---
+
+### FIX-08 — Org member role change layout glitch (#33)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Investigate the role-update pending-state rendering in the org members page
+- [x] Add a stable per-row saving indicator and freeze role actions while a role update is in flight
+- [x] Verify the pending state with focused frontend coverage
+
+#### Notes
+
+- Files: `frontend/src/features/organizations/pages/OrgMembersPage.tsx`, `frontend/src/features/organizations/components/MembersTable.tsx`, `frontend/src/features/organizations/components/MemberActions.tsx`
+- The fix keeps the active row visually stable and prevents overlapping role updates from multiple menus
+
+---
+
+## Previous Sprint Items — S08
 
 ### FIX-09 — Finalize Vite WS proxy fix (#39)
 

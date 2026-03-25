@@ -57,6 +57,7 @@ export default function OrgMembersPage() {
 
   const [memberToRemove, setMemberToRemove] =
     useState<OrganizationMember | null>(null);
+  const [updatingRoleMemberId, setUpdatingRoleMemberId] = useState<string | null>(null);
 
   const onInvite = async (data: InviteFormValues) => {
     try {
@@ -87,6 +88,7 @@ export default function OrgMembersPage() {
   };
 
   const onUpdateRole = async (member: OrganizationMember, newRole: OrgRole) => {
+    setUpdatingRoleMemberId(member.id);
     try {
       await updateRoleMutation.mutateAsync({
         memberId: member.id,
@@ -99,6 +101,8 @@ export default function OrgMembersPage() {
       toast.error("Error", {
         description: getErrorMessage(error),
       });
+    } finally {
+      setUpdatingRoleMemberId(null);
     }
   };
 
@@ -170,6 +174,8 @@ export default function OrgMembersPage() {
           onUpdateRole={onUpdateRole}
           onRemove={setMemberToRemove}
           canManage={canManage}
+          roleActionsDisabled={updatingRoleMemberId !== null}
+          updatingRoleMemberId={updatingRoleMemberId}
         />
       )}
 

@@ -51,7 +51,7 @@ This document records what is evidenced by the current codebase review.
 | FR-AU-004 | Implemented   | A1       | Logout flow exists in backend and auth store.                                 |
 | FR-AU-005 | Implemented   | A1, A8   | Password-reset request/confirm routes are mounted and covered by API/service/concurrency tests. |
 | FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; avatar upload/remove and change-password are also mounted. |
-| FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI. |
+| FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI, and the mounted app now refreshes authenticated sessions proactively while idle. |
 | FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
 | FR-AU-009 | Implemented   | A1, A8   | Email verification route/page are mounted in backend and frontend.            |
 | FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI.          |
@@ -69,7 +69,7 @@ This document records what is evidenced by the current codebase review.
 | FR-OR-004 | Implemented   | A2, A9   | Soft-delete route is mounted; deleting the active org now falls back to the personal org in frontend state.         |
 | FR-OR-005 | Implemented   | A2       | Organization members list route/page are mounted.                                                                    |
 | FR-OR-006 | Implemented   | A2       | Existing-user invite flow by email is mounted in backend and frontend.                                               |
-| FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted.                                                                     |
+| FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted, with a stable pending indicator that disables overlapping role actions during save.                            |
 | FR-OR-008 | Implemented   | A2       | Organization member removal flow is mounted.                                                                         |
 | FR-OR-009 | Implemented   | A2       | Current-user organization membership resolution is mounted at `/organizations/{org_id}/members/me`.                 |
 | FR-OR-010 | Implemented   | A2, A3   | Organization dashboard insights endpoint and dashboard page flow are mounted via active-org context.                |
@@ -239,7 +239,7 @@ This document records what is evidenced by the current codebase review.
 
 | ID        | Status        | Evidence   | Note                                                                                                                                                                                            |
 | --------- | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FR-CO-001 | Implemented   | A3, A8, A9 | Project invite flow is mounted in backend and frontend, including email invitation acceptance routing, bell notifications for invited users who already belong to the organization, stable accept-page success handling, immediate org-list invalidation after acceptance, and active-org switching when the user opens the invited project. |
+| FR-CO-001 | Implemented   | A3, A8, A9 | Project invite flow is mounted in backend and frontend, including email invitation acceptance routing, bell notifications for invited users who already belong to the organization, explicit review-before-accept routing from the bell, stable accept-page success handling, immediate org-list invalidation after acceptance, resolved invite notifications after acceptance, and active-org switching when the user opens the invited project. |
 | FR-CO-002 | Implemented   | A3, A8, A9 | Project member role change flow is mounted for owners via project member endpoints and settings UI.                                                                                             |
 | FR-CO-003 | Implemented   | A3, A8, A9 | Project member removal flow is mounted with role-aware enforcement and settings UI actions.                                                                                                     |
 | FR-CO-004 | Implemented   | A3, A8, A9 | Project member list flow is mounted in backend and displayed in the project settings members tab.                                                                                               |
@@ -249,7 +249,7 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-008 | Implemented   | A3, A8, A9 | Comments are mounted via `/comments` endpoints, exposed in the task detail panel, and synchronized through websocket comment events.                                                           |
 | FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
 | FR-CO-010 | Implemented   | A3, A8, A9 | Task attachment flow is mounted end-to-end (`/projects/{project_id}/tasks/{task_id}/attachments` upload/list/download/delete) with private storage and task-detail UI integration. |
-| FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline/project-invitation triggers create rows when applicable, and header bell UI consumes live user websocket updates through a stabilized auth-scoped notification websocket hook. |
+| FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline/project-invitation triggers create rows when applicable, accepted/revoked/expired invitation notifications no longer remain actionable in the inbox, and header bell UI consumes live user websocket updates through a stabilized auth-scoped notification websocket hook. |
 
 ### 3.15 Kanban Board
 

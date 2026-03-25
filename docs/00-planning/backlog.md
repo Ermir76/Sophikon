@@ -2,7 +2,7 @@
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-03-25
 **Status source:** `docs/03-implementation/03-requirements-traceability.md` + `docs/03-implementation/01-sprint-plan.md` + `docs/03-implementation/02-workboard.md`
 **Roadmap source:** `docs/ROADMAP.md`
 
@@ -60,14 +60,15 @@ Points scale:
 | FIX-03 | TECH | Sidebar no fallback to personal org after deletion (#32) | P1 | 1 | FIX-02 | V1.0 | DONE | wwwer | S07 |
 | FIX-04 | TECH | Change password success not using Sonner toast (#29) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
 | FIX-05 | TECH | AI preferences toggle glitch — no confirmation + icon flash (#30) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
-| FIX-06 | TECH | Silent token refresh not proactive — user kicked to /login after idle (#26) | P1 | 2 | - | V1.0 | READY | - | S08 stretch |
+| FIX-06 | TECH | Silent token refresh not proactive — user kicked to /login after idle (#26) | P1 | 2 | - | V1.0 | DONE | wwwer | S09 |
 | FIX-07 | TECH | Password reset allows reuse of previous password (#28) | P2 | 1 | - | V1.0 | READY | - | - |
-| FIX-08 | TECH | Org member role change shows layout glitch (#33) | P2 | 1 | - | V1.0 | READY | - | S08 stretch |
-| FIX-09 | TECH | Commit Vite WS proxy fix — add ws:true to /api proxy (#39) | P0 | 1 | - | V1.0 | IN_PROGRESS | wwwer | S08 |
-| FIX-10 | TECH | Project invite accept page stuck on "Accepting invitation..." (#35) | P0 | 1 | - | V1.0 | IN_PROGRESS | wwwer | S08 |
-| FIX-11 | TECH | Org switcher not updated after project invite accept (#36) | P1 | 1 | FIX-10 | V1.0 | IN_PROGRESS | wwwer | S08 |
-| FIX-12 | TECH | Removed project member sees generic error instead of clear message (#37) | P1 | 1 | - | V1.0 | IN_PROGRESS | wwwer | S08 |
-| FIX-13 | TECH | WebSocket hooks unstable effect dependencies — double-connect (#40) | P1 | 1 | - | V1.0 | IN_PROGRESS | wwwer | S08 |
+| FIX-08 | TECH | Org member role change shows layout glitch (#33) | P2 | 1 | - | V1.0 | DONE | wwwer | S09 |
+| FIX-09 | TECH | Commit Vite WS proxy fix — add ws:true to /api proxy (#39) | P0 | 1 | - | V1.0 | DONE | wwwer | S08 |
+| FIX-10 | TECH | Project invite accept page stuck on "Accepting invitation..." (#35) | P0 | 1 | - | V1.0 | DONE | wwwer | S08 |
+| FIX-11 | TECH | Org switcher not updated after project invite accept (#36) | P1 | 1 | FIX-10 | V1.0 | DONE | wwwer | S08 |
+| FIX-12 | TECH | Removed project member sees generic error instead of clear message (#37) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
+| FIX-13 | TECH | WebSocket hooks unstable effect dependencies — double-connect (#40) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
+| FIX-14 | TECH | Invitation review page UX — review-before-accept flow with invitation details | P1 | 2 | FIX-10 | V1.0 | DONE | wwwer | S09 |
 
 ---
 

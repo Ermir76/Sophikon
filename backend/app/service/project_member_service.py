@@ -499,6 +499,11 @@ async def accept_invitation(
         role_id=role_id,
     )
     invitation.accepted_at = now
+    await notification_service.resolve_project_invitation_notifications(
+        db,
+        user_id=user.id,
+        invitation_id=invitation.id,
+    )
     await db.flush()
     realtime_service.queue_entity_event(
         db,

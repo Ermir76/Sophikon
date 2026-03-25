@@ -18,6 +18,9 @@ type AcceptedInvitationData = {
 
 type InvitationAcceptLocationState = {
   acceptedInvitation?: AcceptedInvitationData;
+  review?: boolean;
+  title?: string;
+  message?: string;
 };
 
 const invitationAcceptSuccessCache = new Map<string, AcceptedInvitationData>();
@@ -33,9 +36,11 @@ export default function ProjectInvitationAcceptPage() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId);
   const setActiveOrg = useOrgStore((state) => state.setActiveOrg);
   const { data: organizationsData } = useOrganizations();
-  const routeAcceptedInvitation = (
-    (location.state as InvitationAcceptLocationState | null)?.acceptedInvitation ?? null
-  );
+  const locationState = location.state as InvitationAcceptLocationState | null;
+  const routeAcceptedInvitation = locationState?.acceptedInvitation ?? null;
+  const isReviewMode = locationState?.review === true;
+  const reviewTitle = locationState?.title ?? null;
+  const reviewMessage = locationState?.message ?? null;
   const acceptPayload = useMemo<AcceptProjectInvitationRequest | null>(() => {
     if (token) {
       return { token };
@@ -62,12 +67,18 @@ export default function ProjectInvitationAcceptPage() {
         return routeAcceptedInvitation;
       }
 
+      // In review mode, don't restore from cache — let the user review first
+      if (isReviewMode) {
+        return null;
+      }
+
       return cacheKey ? invitationAcceptSuccessCache.get(cacheKey) ?? null : null;
     },
   );
   const [acceptError, setAcceptError] = useState<unknown>(null);
   const [isAccepting, setIsAccepting] = useState(() => (
     Boolean(cacheKey)
+      && !isReviewMode
       && routeAcceptedInvitation === null
       && !invitationAcceptSuccessCache.has(cacheKey)
   ));
@@ -146,6 +157,11 @@ export default function ProjectInvitationAcceptPage() {
       return;
     }
 
+    // In review mode, don't auto-accept — wait for the user to click Accept
+    if (isReviewMode) {
+      return;
+    }
+
     const cachedSuccess = invitationAcceptSuccessCache.get(cacheKey);
     if (cachedSuccess) {
       setAcceptedInvitation(cachedSuccess);
@@ -160,7 +176,7 @@ export default function ProjectInvitationAcceptPage() {
 
     autoAttemptedKeysRef.current.add(cacheKey);
     startAcceptance(acceptPayload, cacheKey);
-  }, [acceptPayload, cacheKey, routeAcceptedInvitation, startAcceptance]);
+  }, [acceptPayload, cacheKey, isReviewMode, routeAcceptedInvitation, startAcceptance]);
 
   function handleRetry() {
     if (!acceptPayload || !cacheKey) {
@@ -173,10 +189,20 @@ export default function ProjectInvitationAcceptPage() {
     startAcceptance(acceptPayload, cacheKey);
   }
 
+  function handleReviewAccept() {
+    if (!acceptPayload || !cacheKey) {
+      return;
+    }
+
+    startAcceptance(acceptPayload, cacheKey);
+  }
+
   const cardTitle = acceptedInvitation ? "Invitation Accepted" : "Project Invitation";
   const cardDescription = acceptedInvitation
     ? "You have accepted the invitation. Go to the project page."
-    : "Accept your project invitation to continue.";
+    : isReviewMode
+      ? "Review the invitation details below."
+      : "Accept your project invitation to continue.";
 
   const openAcceptedProject = useEffectEvent(async (projectId: string) => {
     if (openedProjectRef.current === projectId) {
@@ -242,6 +268,31 @@ export default function ProjectInvitationAcceptPage() {
               <Button variant="outline" onClick={handleRetry}>
                 Try Again
               </Button>
+            </div>
+          ) : isReviewMode ? (
+            <div className="space-y-4">
+              <div className="space-y-2 rounded-md border bg-muted/30 p-4">
+                <p className="text-sm font-medium">
+                  {reviewTitle ?? "Project invitation"}
+                </p>
+                {reviewMessage ? (
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                    {reviewMessage}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No personal message was included with this invitation.
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button onClick={handleReviewAccept}>
+                  Accept Invitation
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Back
+                </Button>
+              </div>
             </div>
           ) : null}
         </CardContent>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { notificationKeys } from "@/features/notifications";
 import { orgKeys } from "@/features/organizations";
 import { projectMembersService } from "@/features/projects/api/project-members.service";
 import { projectKeys } from "@/features/projects/hooks/useProjects";
@@ -120,6 +121,7 @@ export function useAcceptProjectInvitation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.list });
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }

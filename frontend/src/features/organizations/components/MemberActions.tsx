@@ -1,4 +1,4 @@
-import { MoreHorizontal } from "lucide-react";
+import { Loader2, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import {
@@ -23,6 +23,8 @@ interface MemberActionsProps {
   onUpdateRole: (member: OrganizationMember, newRole: OrgRole) => void;
   onRemove: (member: OrganizationMember) => void;
   canManage: boolean;
+  actionsDisabled?: boolean;
+  isRoleUpdatePending?: boolean;
 }
 
 export function MemberActions({
@@ -31,13 +33,28 @@ export function MemberActions({
   onUpdateRole,
   onRemove,
   canManage,
+  actionsDisabled = false,
+  isRoleUpdatePending = false,
 }: MemberActionsProps) {
+  const isDisabled = actionsDisabled || isRoleUpdatePending;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="size-7 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="size-4" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="size-7 p-0"
+          disabled={isDisabled}
+        >
+          <span className="sr-only">
+            {isRoleUpdatePending ? "Saving role" : "Open menu"}
+          </span>
+          {isRoleUpdatePending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <MoreHorizontal className="size-4" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

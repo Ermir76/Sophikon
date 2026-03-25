@@ -230,6 +230,48 @@ async def mark_all_read(
     return len(notifications), unread_count
 
 
+async def resolve_project_invitation_notifications(
+    db: AsyncSession,
+    *,
+    user_id: UUID,
+    invitation_id: UUID,
+) -> None:
+    notifications = await notification_repo.list_for_entity(
+        db,
+        user_id=user_id,
+        type=NotificationType.INVITATION_RECEIVED,
+        entity_type="project_invitation",
+        entity_id=invitation_id,
+    )
+    unread_notifications = [
+        notification for notification in notifications if not notification.is_read
+    ]
+    if not unread_notifications:
+        return
+
+    read_at = datetime.now(UTC)
+    for notification in unread_notifications:
+        notification.is_read = True
+        notification.read_at = read_at
+    await db.flush()
+
+    unread_count = await get_unread_count(db, user_id=user_id)
+    for notification in unread_notifications:
+        realtime_service.queue_user_notification_event(
+            db,
+            user_id=user_id,
+            payload=_encode_payload(
+                {
+                    "type": "notification_updated",
+                    "notification_id": notification.id,
+                    "is_read": notification.is_read,
+                    "read_at": notification.read_at,
+                    "unread_count": unread_count,
+                }
+            ),
+        )
+
+
 def get_settings(user: User) -> dict[str, bool]:
     preferences = user.preferences if isinstance(user.preferences, dict) else {}
     raw = preferences.get(_SETTINGS_KEY, {})

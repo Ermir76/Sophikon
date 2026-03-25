@@ -3,13 +3,15 @@ Notification repository helpers.
 """
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, and_, exists, func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import NotificationType
 from app.models.notification import Notification
+from app.models.project_invitation import ProjectInvitation
 from app.models.user import User
 
 
@@ -25,6 +27,30 @@ def query_for_user(user_id: UUID) -> Select[tuple[Notification]]:
     return select(Notification).where(Notification.user_id == user_id)
 
 
+def _active_notification_filters(user_id: UUID) -> list:
+    now = datetime.now(UTC)
+    invitation_notification = and_(
+        Notification.type == NotificationType.INVITATION_RECEIVED,
+        Notification.entity_type == "project_invitation",
+    )
+    actionable_invitation = and_(
+        Notification.entity_id.is_not(None),
+        exists(
+            select(ProjectInvitation.id).where(
+                ProjectInvitation.id == Notification.entity_id,
+                ProjectInvitation.accepted_at.is_(None),
+                ProjectInvitation.is_revoked == False,  # noqa: E712
+                ProjectInvitation.expires_at >= now,
+            )
+        ),
+    )
+
+    return [
+        Notification.user_id == user_id,
+        or_(not_(invitation_notification), actionable_invitation),
+    ]
+
+
 async def count_unread(
     db: AsyncSession,
     *,
@@ -32,7 +58,7 @@ async def count_unread(
 ) -> int:
     result = await db.execute(
         select(func.count(Notification.id)).where(
-            Notification.user_id == user_id,
+            *_active_notification_filters(user_id),
             Notification.is_read == False,  # noqa: E712
         )
     )
@@ -47,7 +73,7 @@ async def list_with_actor(
     per_page: int,
     unread_only: bool,
 ) -> tuple[list[NotificationRow], int]:
-    filters = [Notification.user_id == user_id]
+    filters = _active_notification_filters(user_id)
     if unread_only:
         filters.append(Notification.is_read == False)  # noqa: E712
 
@@ -123,7 +149,28 @@ async def list_unread_for_user(
     user_id: UUID,
 ) -> list[Notification]:
     result = await db.execute(
-        query_for_user(user_id).where(Notification.is_read == False)  # noqa: E712
+        query_for_user(user_id).where(
+            *_active_notification_filters(user_id)[1:],
+            Notification.is_read == False,  # noqa: E712
+        )
+    )
+    return list(result.scalars().all())
+
+
+async def list_for_entity(
+    db: AsyncSession,
+    *,
+    user_id: UUID,
+    type: NotificationType,
+    entity_type: str,
+    entity_id: UUID,
+) -> list[Notification]:
+    result = await db.execute(
+        query_for_user(user_id).where(
+            Notification.type == type,
+            Notification.entity_type == entity_type,
+            Notification.entity_id == entity_id,
+        )
     )
     return list(result.scalars().all())
 

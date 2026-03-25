@@ -9,6 +9,7 @@ import {
   useMarkNotificationRead,
   useNotifications,
   useNotificationSettings,
+  notificationKeys,
   useNotificationWebSocketStore,
   useUpdateNotificationSettings,
 } from "@/features/notifications";
@@ -39,6 +40,7 @@ import {
 import { Separator } from "@/shared/ui/separator";
 import { SidebarTrigger } from "@/shared/ui/sidebar";
 import { Switch } from "@/shared/ui/switch";
+import { useQueryClient } from "@tanstack/react-query";
 
 const segmentLabels: Record<string, string> = {
   tasks: "Tasks",
@@ -50,6 +52,7 @@ const segmentLabels: Record<string, string> = {
 };
 
 export function AppHeader() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const projectWildcardMatch = useMatch("/projects/:projectId/*");
@@ -71,6 +74,7 @@ export function AppHeader() {
   const acceptInvitation = useAcceptProjectInvitation();
   const [acceptingNotificationId, setAcceptingNotificationId] = useState<string | null>(null);
   const [acceptErrors, setAcceptErrors] = useState<Record<string, string>>({});
+  const [hiddenNotificationIds, setHiddenNotificationIds] = useState<Record<string, true>>({});
   const visibleUsers = projectSocketState?.users.slice(0, 4) ?? [];
   const extraUsers = Math.max((projectSocketState?.users.length ?? 0) - visibleUsers.length, 0);
   const unreadCount =
@@ -123,12 +127,39 @@ export function AppHeader() {
     });
   };
 
-  const openNotificationTarget = (notification: NotificationItem, target: string) => {
+  const hideNotification = (notificationId: string) => {
+    setHiddenNotificationIds((current) => {
+      if (current[notificationId]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [notificationId]: true,
+      };
+    });
+  };
+
+  const isTerminalInvitationError = (message: string) => {
+    const normalized = message.toLowerCase();
+    return (
+      normalized.includes("already accepted")
+      || normalized.includes("expired")
+      || normalized.includes("invalid")
+      || normalized.includes("revoked")
+    );
+  };
+
+  const openNotificationTarget = (
+    notification: NotificationItem,
+    target: string,
+    state?: Record<string, unknown>,
+  ) => {
     clearAcceptError(notification.id);
     if (!notification.is_read) {
       markRead.mutate(notification.id);
     }
-    navigate(target);
+    navigate(target, state ? { state } : undefined);
   };
 
   const acceptInvitationFromNotification = async (
@@ -153,12 +184,17 @@ export function AppHeader() {
       if (!notification.is_read) {
         markRead.mutate(notification.id);
       }
+      hideNotification(notification.id);
       toast.success("Invitation accepted", {
         description: "Opening the project invitation.",
       });
       navigate(target, { state: { acceptedInvitation } });
     } catch (error) {
       const message = getErrorMessage(error);
+      if (isTerminalInvitationError(message)) {
+        hideNotification(notification.id);
+        void queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      }
       setAcceptErrors((current) => ({
         ...current,
         [notification.id]: message,
@@ -257,8 +293,12 @@ export function AppHeader() {
                 <p className="text-xs text-muted-foreground">Loading notifications...</p>
               ) : notificationsQuery.isError ? (
                 <p className="text-xs text-muted-foreground">Failed to load notifications.</p>
-              ) : notificationsQuery.data?.items.length ? (
-                notificationsQuery.data.items.map((notification) => {
+              ) : notificationsQuery.data?.items.some(
+                (notification) => !hiddenNotificationIds[notification.id],
+              ) ? (
+                notificationsQuery.data.items
+                  .filter((notification) => !hiddenNotificationIds[notification.id])
+                  .map((notification) => {
                   const target = getNotificationTarget(notification);
                   const isInviteNotification = target !== null;
                   const isAccepting = acceptingNotificationId === notification.id;
@@ -275,7 +315,7 @@ export function AppHeader() {
                             onClick={() => openNotificationTarget(notification, target)}
                           >
                             <p className="text-xs font-medium">{notification.title}</p>
-                            {notification.message ? (
+                            {notification.message && !isInviteNotification ? (
                               <p className="text-xs text-muted-foreground">{notification.message}</p>
                             ) : null}
                             <p className="text-[11px] text-muted-foreground">
@@ -325,7 +365,11 @@ export function AppHeader() {
                             variant="ghost"
                             className="h-7 px-2 text-[11px]"
                             disabled={isAccepting}
-                            onClick={() => openNotificationTarget(notification, target)}
+                            onClick={() => openNotificationTarget(notification, target, {
+                              review: true,
+                              title: notification.title,
+                              message: notification.message,
+                            })}
                           >
                             Review
                           </Button>

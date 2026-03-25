@@ -171,6 +171,14 @@ async def test_invite_existing_org_member_creates_bell_notification_and_accepts_
     assert accept_response.status_code == 200, accept_response.text
     assert accept_response.json()["project_id"] == project_id
 
+    notifications_after_accept_response = await client.get("/api/v1/notifications")
+    assert notifications_after_accept_response.status_code == 200, (
+        notifications_after_accept_response.text
+    )
+    notifications_after_accept_payload = notifications_after_accept_response.json()
+    assert notifications_after_accept_payload["total"] == 0
+    assert notifications_after_accept_payload["unread_count"] == 0
+
     project_access_response = await client.get(f"/api/v1/projects/{project_id}")
     assert project_access_response.status_code == 200, project_access_response.text
 

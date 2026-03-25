@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -16,6 +18,8 @@ interface MembersTableProps {
   onUpdateRole: (member: OrganizationMember, newRole: OrgRole) => void;
   onRemove: (member: OrganizationMember) => void;
   canManage: boolean;
+  roleActionsDisabled?: boolean;
+  updatingRoleMemberId?: string | null;
 }
 
 export function MembersTable({
@@ -24,6 +28,8 @@ export function MembersTable({
   onUpdateRole,
   onRemove,
   canManage,
+  roleActionsDisabled,
+  updatingRoleMemberId,
 }: MembersTableProps) {
   const getRoleBadgeClass = (role: OrgRole) => {
     if (role === "owner") return "border-destructive/45 bg-destructive/12 text-destructive";
@@ -62,9 +68,17 @@ export function MembersTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={getRoleBadgeClass(member.role)}>
-                    {member.role}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={getRoleBadgeClass(member.role)}>
+                      {member.role}
+                    </Badge>
+                    {updatingRoleMemberId === member.id ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Loader2 className="size-3 animate-spin" />
+                        Saving...
+                      </span>
+                    ) : null}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <MemberActions
@@ -73,6 +87,8 @@ export function MembersTable({
                     onUpdateRole={onUpdateRole}
                     onRemove={onRemove}
                     canManage={canManage}
+                    actionsDisabled={roleActionsDisabled}
+                    isRoleUpdatePending={updatingRoleMemberId === member.id}
                   />
                 </TableCell>
               </TableRow>

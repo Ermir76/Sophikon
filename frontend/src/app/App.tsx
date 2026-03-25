@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useEffectEvent, useRef } from "react";
 import { Route, Routes } from "react-router";
 
 import { AppLayout } from "@/shared/layout/AppLayout";
@@ -61,14 +61,52 @@ const VerifyEmailPage = lazy(
 );
 
 import { useAuthStore } from "@/features/auth";
-import { useEffect } from "react";
+
+const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 25 * 60 * 1000;
 
 function App() {
   const checkSession = useAuthStore((state) => state.checkSession);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+  const login = useAuthStore((state) => state.login);
+  const refreshInFlightRef = useRef(false);
 
   useEffect(() => {
-    checkSession();
+    void checkSession();
   }, [checkSession]);
+
+  const refreshSession = useEffectEvent(async () => {
+    if (refreshInFlightRef.current) {
+      return;
+    }
+
+    refreshInFlightRef.current = true;
+
+    try {
+      const { authService } = await import("@/features/auth/api/auth.service");
+      const response = await authService.refresh();
+      login(response.user);
+    } catch {
+      // Let normal auth error handling deal with revoked/expired sessions on the next request.
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  });
+
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated) {
+      refreshInFlightRef.current = false;
+      return;
+    }
+
+    const refreshTimer = window.setInterval(() => {
+      void refreshSession();
+    }, ACCESS_TOKEN_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(refreshTimer);
+    };
+  }, [isAuthenticated, isInitialized, refreshSession]);
 
   return (
     <Suspense fallback={<PageLoader />}>

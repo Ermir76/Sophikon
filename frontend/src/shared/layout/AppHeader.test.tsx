@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -47,14 +48,22 @@ vi.mock("sonner", () => ({
 }));
 
 function renderHeader(pathname: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
   return render(
-    <MemoryRouter initialEntries={[pathname]}>
-      <AppHeader />
-      <Routes>
-        <Route path="/project-invitations/accept" element={<div>INVITE ACCEPT PAGE</div>} />
-        <Route path="*" element={null} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[pathname]}>
+        <AppHeader />
+        <Routes>
+          <Route path="/project-invitations/accept" element={<div>INVITE ACCEPT PAGE</div>} />
+          <Route path="*" element={null} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -281,5 +290,129 @@ describe("AppHeader", () => {
     await waitFor(() => {
       expect(screen.getByText("INVITE ACCEPT PAGE")).toBeInTheDocument();
     });
+  });
+
+  it("hides an invitation notification after successful inline acceptance", async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn().mockResolvedValue({
+      project_id: "project-1",
+      member_id: "member-1",
+    });
+
+    vi.mocked(useNotifications).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "notification-1",
+            type: "invitation_received",
+            title: "Invited to Project Alpha",
+            message: "Owner invited you.",
+            entity_type: "project_invitation",
+            entity_id: "invitation-1",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+        unread_count: 1,
+      },
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as never);
+
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Invited to Project Alpha")).not.toBeInTheDocument();
+      expect(screen.getByText("No notifications yet.")).toBeInTheDocument();
+    });
+  });
+
+  it("hides stale invitation notifications after a terminal accept error", async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn().mockRejectedValue(new Error("Invitation already accepted"));
+
+    vi.mocked(useNotifications).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "notification-1",
+            type: "invitation_received",
+            title: "Invited to Project Alpha",
+            message: "Owner invited you.",
+            entity_type: "project_invitation",
+            entity_id: "invitation-1",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+        unread_count: 1,
+      },
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as never);
+
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Invited to Project Alpha")).not.toBeInTheDocument();
+      expect(screen.getByText("No notifications yet.")).toBeInTheDocument();
+    });
+  });
+
+  it("hides the message preview on invitation notifications", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(useNotifications).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "notification-1",
+            type: "invitation_received",
+            title: "Invited to Project Alpha",
+            message: "Owner invited you.",
+            entity_type: "project_invitation",
+            entity_id: "invitation-1",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+        unread_count: 1,
+      },
+      isLoading: false,
+      isError: false,
+    } as never);
+
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+
+    expect(screen.queryByText("Owner invited you.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review" })).toBeInTheDocument();
   });
 });
