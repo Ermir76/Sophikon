@@ -282,5 +282,6 @@ export interface InviteProjectMemberRequest {
 }
 
 export interface AcceptProjectInvitationRequest {
-  token: string;
+  token?: string;
+  invitation_id?: string;
 }

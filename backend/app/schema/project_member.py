@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 ProjectMemberRole = Literal["owner", "manager", "member", "viewer"]
 
@@ -28,7 +28,14 @@ class ProjectMemberRoleUpdate(BaseModel):
 class ProjectInvitationAccept(BaseModel):
     """Accept a project invitation token."""
 
-    token: str = Field(min_length=1, max_length=512)
+    token: str | None = Field(default=None, min_length=1, max_length=512)
+    invitation_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_lookup_key(self) -> "ProjectInvitationAccept":
+        if (self.token is None) == (self.invitation_id is None):
+            raise ValueError("Provide exactly one of token or invitation_id")
+        return self
 
 
 class ProjectMemberListItem(BaseModel):

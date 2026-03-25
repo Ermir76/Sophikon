@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { orgKeys } from "@/features/organizations";
 import { projectMembersService } from "@/features/projects/api/project-members.service";
+import { projectKeys } from "@/features/projects/hooks/useProjects";
 import type {
   AcceptProjectInvitationRequest,
   InviteProjectMemberRequest,
@@ -110,8 +112,14 @@ export function useRemoveProjectMember(projectId?: string | null) {
 }
 
 export function useAcceptProjectInvitation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (data: AcceptProjectInvitationRequest) =>
       projectMembersService.acceptInvitation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orgKeys.list });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+    },
   });
 }

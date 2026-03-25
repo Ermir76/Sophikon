@@ -222,7 +222,7 @@ async def accept_project_invitation(
     user: Annotated[User, Depends(get_current_active_user)],
     request: Request,
 ):
-    """Accept an invitation token for the authenticated user."""
+    """Accept a project invitation for the authenticated user."""
     project_id, member_id = await project_member_service.accept_invitation(
         db,
         user,

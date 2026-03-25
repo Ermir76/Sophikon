@@ -2,7 +2,7 @@
 Service contracts for project membership and invitations.
 """
 
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 type ProjectRoleName = Literal["owner", "manager", "member", "viewer"]
 
@@ -18,4 +18,5 @@ class ProjectMemberRolePatchInput(TypedDict):
 
 
 class ProjectInvitationAcceptInput(TypedDict):
-    token: str
+    token: NotRequired[str]
+    invitation_id: NotRequired[str]

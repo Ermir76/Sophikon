@@ -1,10 +1,12 @@
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import NotificationType
 from app.models.organization_member import OrganizationMember
 from app.models.project_invitation import ProjectInvitation
 from app.models.user import User
@@ -118,6 +120,104 @@ async def test_invite_creates_pending_invitation_and_enqueues_email(
     )
     assert list_response.status_code == 200, list_response.text
     assert list_response.json()["total"] == 1
+
+
+@pytest.mark.asyncio
+async def test_invite_existing_org_member_creates_bell_notification_and_accepts_by_invitation_id(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    owner_email = "pm_owner_invite_notification@example.com"
+    invitee_email = "pm_invitee_invite_notification@example.com"
+    await _register_user(client, owner_email, "Owner Invite Notification")
+    org_id, project_id = await _create_project(
+        client,
+        owner_email=owner_email,
+        org_slug="org-pm-invite-notification",
+    )
+    await _register_user(client, invitee_email, "Invitee Notification")
+
+    user_result = await session.execute(select(User).where(User.email == invitee_email))
+    invitee_user = user_result.scalar_one()
+    session.add(
+        OrganizationMember(
+            organization_id=org_id,
+            user_id=invitee_user.id,
+            role="member",
+        )
+    )
+    await session.commit()
+
+    await _login_user(client, owner_email)
+    invite_response = await client.post(
+        f"/api/v1/projects/{project_id}/members/invite",
+        json={"email": invitee_email, "role": "member"},
+    )
+    assert invite_response.status_code == 201, invite_response.text
+
+    await _login_user(client, invitee_email)
+    notifications_response = await client.get("/api/v1/notifications")
+    assert notifications_response.status_code == 200, notifications_response.text
+    notifications_payload = notifications_response.json()
+    assert notifications_payload["total"] == 1
+    notification = notifications_payload["items"][0]
+    assert notification["type"] == NotificationType.INVITATION_RECEIVED.value
+    assert notification["entity_type"] == "project_invitation"
+
+    accept_response = await client.post(
+        "/api/v1/projects/members/invitations/accept",
+        json={"invitation_id": notification["entity_id"]},
+    )
+    assert accept_response.status_code == 200, accept_response.text
+    assert accept_response.json()["project_id"] == project_id
+
+    project_access_response = await client.get(f"/api/v1/projects/{project_id}")
+    assert project_access_response.status_code == 200, project_access_response.text
+
+
+@pytest.mark.asyncio
+async def test_accept_invitation_rejects_invalid_invitation_id_inputs(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    owner_email = "pm_owner_accept_invalid_id@example.com"
+    invitee_email = "pm_invitee_accept_invalid_id@example.com"
+    token = "pm-invite-token-accept-invalid-id"
+
+    await _register_user(client, owner_email, "Owner Accept Invalid Id")
+    _, project_id = await _create_project(
+        client,
+        owner_email=owner_email,
+        org_slug="org-pm-accept-invalid-id",
+    )
+    await _register_user(client, invitee_email, "Invitee Accept Invalid Id")
+    await _login_user(client, owner_email)
+
+    monkeypatch.setattr(
+        "app.service.project_member_service.secrets.token_urlsafe",
+        lambda _: token,
+    )
+    invite_response = await client.post(
+        f"/api/v1/projects/{project_id}/members/invite",
+        json={"email": invitee_email, "role": "member"},
+    )
+    assert invite_response.status_code == 201, invite_response.text
+    invitation_id = invite_response.json()["invitation"]["id"]
+
+    await _login_user(client, invitee_email)
+
+    both_lookup_keys_response = await client.post(
+        "/api/v1/projects/members/invitations/accept",
+        json={"token": token, "invitation_id": invitation_id},
+    )
+    assert both_lookup_keys_response.status_code == 422
+
+    unknown_invitation_response = await client.post(
+        "/api/v1/projects/members/invitations/accept",
+        json={"invitation_id": str(uuid4())},
+    )
+    assert unknown_invitation_response.status_code == 400
+    assert unknown_invitation_response.json()["error"]["code"] == "INVALID_OPERATION"
 
 
 @pytest.mark.asyncio

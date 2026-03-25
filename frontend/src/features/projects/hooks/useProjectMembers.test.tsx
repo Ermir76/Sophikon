@@ -9,6 +9,8 @@ import {
   useInviteProjectMember,
   useProjectMembers,
 } from "@/features/projects/hooks/useProjectMembers";
+import { orgKeys } from "@/features/organizations";
+import { projectKeys } from "@/features/projects/hooks/useProjects";
 
 vi.mock("@/features/projects/api/project-members.service", () => ({
   projectMembersService: {
@@ -102,7 +104,8 @@ describe("useProjectMembers hooks", () => {
       member_id: "m1",
     });
 
-    const { wrapper } = createWrapper();
+    const { queryClient, wrapper } = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useAcceptProjectInvitation(), { wrapper });
 
     await act(async () => {
@@ -111,6 +114,12 @@ describe("useProjectMembers hooks", () => {
 
     expect(projectMembersService.acceptInvitation).toHaveBeenCalledWith({
       token: "abc",
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: orgKeys.list,
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: projectKeys.all,
     });
   });
 });

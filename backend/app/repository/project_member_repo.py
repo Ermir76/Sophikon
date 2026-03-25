@@ -247,6 +247,43 @@ async def get_invitation_with_project_and_role_by_token_hash(
     )
 
 
+async def get_invitation_with_project_and_role_by_id(
+    db: AsyncSession,
+    *,
+    invitation_id: UUID,
+) -> tuple[ProjectInvitation, UUID, UUID, bool, UUID, str] | None:
+    from app.models.project import Project
+
+    result = await db.execute(
+        select(
+            ProjectInvitation,
+            Project.id,
+            Project.organization_id,
+            Project.is_deleted,
+            Role.id,
+            Role.name,
+        )
+        .join(Project, Project.id == ProjectInvitation.project_id)
+        .join(Role, Role.id == ProjectInvitation.role_id)
+        .where(ProjectInvitation.id == invitation_id)
+        .with_for_update(of=ProjectInvitation)
+    )
+    row = result.one_or_none()
+    if row is None:
+        return None
+    invitation, project_id, organization_id, project_is_deleted, role_id, role_name = (
+        row
+    )
+    return (
+        invitation,
+        project_id,
+        organization_id,
+        project_is_deleted,
+        role_id,
+        role_name,
+    )
+
+
 async def get_organization_member(
     db: AsyncSession,
     *,

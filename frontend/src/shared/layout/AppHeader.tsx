@@ -1,7 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Link, useLocation, useMatch } from "react-router";
+import { Link, useLocation, useMatch, useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import {
   useMarkAllNotificationsRead,
@@ -11,7 +12,9 @@ import {
   useNotificationWebSocketStore,
   useUpdateNotificationSettings,
 } from "@/features/notifications";
-import { useProjectWebSocketStore } from "@/features/projects";
+import type { NotificationItem } from "@/features/notifications";
+import { useAcceptProjectInvitation, useProjectWebSocketStore } from "@/features/projects";
+import { getErrorMessage } from "@/shared/lib/errors";
 import {
   Avatar,
   AvatarFallback,
@@ -47,6 +50,7 @@ const segmentLabels: Record<string, string> = {
 };
 
 export function AppHeader() {
+  const navigate = useNavigate();
   const location = useLocation();
   const projectWildcardMatch = useMatch("/projects/:projectId/*");
   const projectRootMatch = useMatch("/projects/:projectId");
@@ -64,6 +68,9 @@ export function AppHeader() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const updateSettings = useUpdateNotificationSettings();
+  const acceptInvitation = useAcceptProjectInvitation();
+  const [acceptingNotificationId, setAcceptingNotificationId] = useState<string | null>(null);
+  const [acceptErrors, setAcceptErrors] = useState<Record<string, string>>({});
   const visibleUsers = projectSocketState?.users.slice(0, 4) ?? [];
   const extraUsers = Math.max((projectSocketState?.users.length ?? 0) - visibleUsers.length, 0);
   const unreadCount =
@@ -91,6 +98,78 @@ export function AppHeader() {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() ?? "")
       .join("");
+
+  const getNotificationTarget = (notification: NotificationItem) => {
+    if (
+      notification.type === "invitation_received"
+      && notification.entity_type === "project_invitation"
+      && notification.entity_id
+    ) {
+      return `/project-invitations/accept?invitation_id=${notification.entity_id}`;
+    }
+
+    return null;
+  };
+
+  const clearAcceptError = (notificationId: string) => {
+    setAcceptErrors((current) => {
+      if (!(notificationId in current)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[notificationId];
+      return next;
+    });
+  };
+
+  const openNotificationTarget = (notification: NotificationItem, target: string) => {
+    clearAcceptError(notification.id);
+    if (!notification.is_read) {
+      markRead.mutate(notification.id);
+    }
+    navigate(target);
+  };
+
+  const acceptInvitationFromNotification = async (
+    notification: NotificationItem,
+    target: string,
+  ) => {
+    if (
+      notification.type !== "invitation_received"
+      || notification.entity_type !== "project_invitation"
+      || !notification.entity_id
+    ) {
+      return;
+    }
+
+    setAcceptingNotificationId(notification.id);
+    clearAcceptError(notification.id);
+
+    try {
+      const acceptedInvitation = await acceptInvitation.mutateAsync({
+        invitation_id: notification.entity_id,
+      });
+      if (!notification.is_read) {
+        markRead.mutate(notification.id);
+      }
+      toast.success("Invitation accepted", {
+        description: "Opening the project invitation.",
+      });
+      navigate(target, { state: { acceptedInvitation } });
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setAcceptErrors((current) => ({
+        ...current,
+        [notification.id]: message,
+      }));
+      toast.error("Failed to accept invitation", {
+        description: message,
+      });
+    } finally {
+      setAcceptingNotificationId(null);
+    }
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4 shadow-md shadow-black/40 bg-background backdrop-blur">
@@ -179,36 +258,85 @@ export function AppHeader() {
               ) : notificationsQuery.isError ? (
                 <p className="text-xs text-muted-foreground">Failed to load notifications.</p>
               ) : notificationsQuery.data?.items.length ? (
-                notificationsQuery.data.items.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="space-y-1 rounded-md border p-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-medium">{notification.title}</p>
-                      {!notification.is_read ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-2 text-[11px]"
-                          disabled={markRead.isPending}
-                          onClick={() => {
-                            markRead.mutate(notification.id);
-                          }}
-                        >
-                          Read
-                        </Button>
+                notificationsQuery.data.items.map((notification) => {
+                  const target = getNotificationTarget(notification);
+                  const isInviteNotification = target !== null;
+                  const isAccepting = acceptingNotificationId === notification.id;
+                  const acceptError = acceptErrors[notification.id];
+
+                  return (
+                    <div key={notification.id} className="space-y-2 rounded-md border p-2">
+                      <div className="flex items-start justify-between gap-2">
+                        {target ? (
+                          <button
+                            type="button"
+                            aria-label={notification.title}
+                            className="flex-1 space-y-1 text-left"
+                            onClick={() => openNotificationTarget(notification, target)}
+                          >
+                            <p className="text-xs font-medium">{notification.title}</p>
+                            {notification.message ? (
+                              <p className="text-xs text-muted-foreground">{notification.message}</p>
+                            ) : null}
+                            <p className="text-[11px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </p>
+                          </button>
+                        ) : (
+                          <div className="flex-1 space-y-1">
+                            <p className="text-xs font-medium">{notification.title}</p>
+                            {notification.message ? (
+                              <p className="text-xs text-muted-foreground">{notification.message}</p>
+                            ) : null}
+                            <p className="text-[11px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                        )}
+                        {!notification.is_read ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-[11px]"
+                            disabled={markRead.isPending || isAccepting}
+                            onClick={() => {
+                              markRead.mutate(notification.id);
+                            }}
+                          >
+                            Read
+                          </Button>
+                        ) : null}
+                      </div>
+                      {isInviteNotification ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 px-2 text-[11px]"
+                            disabled={isAccepting}
+                            onClick={() => void acceptInvitationFromNotification(notification, target)}
+                          >
+                            {isAccepting ? "Accepting..." : "Accept"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-[11px]"
+                            disabled={isAccepting}
+                            onClick={() => openNotificationTarget(notification, target)}
+                          >
+                            Review
+                          </Button>
+                        </div>
+                      ) : null}
+                      {acceptError ? (
+                        <p className="text-xs text-destructive">{acceptError}</p>
                       ) : null}
                     </div>
-                    {notification.message ? (
-                      <p className="text-xs text-muted-foreground">{notification.message}</p>
-                    ) : null}
-                    <p className="text-[11px] text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-xs text-muted-foreground">No notifications yet.</p>
               )}

@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,6 +11,7 @@ import {
   useNotificationWebSocketStore,
   useUpdateNotificationSettings,
 } from "@/features/notifications";
+import { useAcceptProjectInvitation } from "@/features/projects";
 import { useProjectWebSocketStore } from "@/features/projects/store/websocket-store";
 import { AppHeader } from "@/shared/layout/AppHeader";
 
@@ -29,10 +31,29 @@ vi.mock("@/features/notifications", async (importOriginal) => {
   };
 });
 
+vi.mock("@/features/projects", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/projects")>();
+  return {
+    ...actual,
+    useAcceptProjectInvitation: vi.fn(),
+  };
+});
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 function renderHeader(pathname: string) {
   return render(
     <MemoryRouter initialEntries={[pathname]}>
       <AppHeader />
+      <Routes>
+        <Route path="/project-invitations/accept" element={<div>INVITE ACCEPT PAGE</div>} />
+        <Route path="*" element={null} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -77,6 +98,10 @@ describe("AppHeader", () => {
     } as never);
     vi.mocked(useUpdateNotificationSettings).mockReturnValue({
       mutate: vi.fn(),
+      isPending: false,
+    } as never);
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync: vi.fn(),
       isPending: false,
     } as never);
   });
@@ -163,5 +188,98 @@ describe("AppHeader", () => {
 
     renderHeader("/");
     expect(screen.getByText("5")).toBeInTheDocument();
+  });
+
+  it("opens the invitation accept page from an invitation notification", async () => {
+    const user = userEvent.setup();
+    const markRead = vi.fn();
+
+    vi.mocked(useNotifications).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "notification-1",
+            type: "invitation_received",
+            title: "Invited to Project Alpha",
+            message: "Owner invited you.",
+            entity_type: "project_invitation",
+            entity_id: "invitation-1",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+        unread_count: 1,
+      },
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(useMarkNotificationRead).mockReturnValue({
+      mutate: markRead,
+      isPending: false,
+    } as never);
+
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+    await user.click(screen.getByRole("button", { name: "Invited to Project Alpha" }));
+
+    expect(markRead).toHaveBeenCalledWith("notification-1");
+    expect(screen.getByText("INVITE ACCEPT PAGE")).toBeInTheDocument();
+  });
+
+  it("accepts an invitation directly from the notification card", async () => {
+    const user = userEvent.setup();
+    const markRead = vi.fn();
+    const mutateAsync = vi.fn().mockResolvedValue({
+      project_id: "project-1",
+      member_id: "member-1",
+    });
+
+    vi.mocked(useNotifications).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: "notification-1",
+            type: "invitation_received",
+            title: "Invited to Project Alpha",
+            message: "Owner invited you.",
+            entity_type: "project_invitation",
+            entity_id: "invitation-1",
+            is_read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+        unread_count: 1,
+      },
+      isLoading: false,
+      isError: false,
+    } as never);
+    vi.mocked(useMarkNotificationRead).mockReturnValue({
+      mutate: markRead,
+      isPending: false,
+    } as never);
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as never);
+
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({ invitation_id: "invitation-1" });
+    expect(markRead).toHaveBeenCalledWith("notification-1");
+    await waitFor(() => {
+      expect(screen.getByText("INVITE ACCEPT PAGE")).toBeInTheDocument();
+    });
   });
 });

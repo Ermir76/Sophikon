@@ -1163,6 +1163,16 @@ Accept a project invitation for the authenticated user.
 }
 ```
 
+Or for in-app notification acceptance:
+
+```json
+{
+  "invitation_id": "project-invitation-uuid"
+}
+```
+
+Exactly one lookup key must be provided: `token` or `invitation_id`.
+
 **Response:** `200 OK`
 
 ```json

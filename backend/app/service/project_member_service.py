@@ -19,14 +19,19 @@ from app.core.exceptions import (
     ResourceConflictError,
 )
 from app.core.security import hash_token
-from app.models.enums import AuditAction
+from app.models.enums import AuditAction, NotificationType
 from app.models.project import Project
 from app.models.project_invitation import ProjectInvitation
 from app.models.project_member import ProjectMember
 from app.models.role import Role
 from app.models.user import User
 from app.repository import project_member_repo
-from app.service import activity_log_service, email_service, realtime_service
+from app.service import (
+    activity_log_service,
+    email_service,
+    notification_service,
+    realtime_service,
+)
 from app.service.activity_log_service import ActivityContext
 from app.service.contracts.project_member import (
     ProjectInvitationAcceptInput,
@@ -246,6 +251,31 @@ async def invite_member(
         expires_at=now + timedelta(days=7),
     )
 
+    should_create_notification = False
+    if existing_user is not None and existing_user.id != inviter.id:
+        org_member = await project_member_repo.get_organization_member(
+            db,
+            organization_id=project.organization_id,
+            user_id=existing_user.id,
+        )
+        should_create_notification = org_member is not None
+
+    if should_create_notification and existing_user is not None:
+        inviter_name = inviter.full_name or inviter.email
+        message = f"{inviter_name} invited you to {project.name} as {role.name}."
+        if payload.get("message"):
+            message = f"{message} Message: {payload['message']}"
+        await notification_service.create_notification(
+            db,
+            user_id=existing_user.id,
+            type=NotificationType.INVITATION_RECEIVED,
+            title=f"Invited to {project.name}",
+            message=message,
+            entity_type="project_invitation",
+            entity_id=invitation.id,
+            actor_id=inviter.id,
+        )
+
     entity_name = (
         existing_user.full_name or existing_user.email
         if existing_user is not None
@@ -286,6 +316,30 @@ async def invite_member(
             inviter.full_name,
         ),
         raw_token,
+    )
+
+
+async def _get_accept_invitation_row(
+    db: AsyncSession,
+    payload: ProjectInvitationAcceptInput,
+) -> tuple[ProjectInvitation, UUID, UUID, bool, UUID, str] | None:
+    token = payload.get("token")
+    if token is not None:
+        return await project_member_repo.get_invitation_with_project_and_role_by_token_hash(
+            db,
+            token_hash=hash_token(token),
+        )
+
+    invitation_id = payload.get("invitation_id")
+    if invitation_id is None:
+        return None
+
+    invitation_uuid = (
+        invitation_id if isinstance(invitation_id, UUID) else UUID(str(invitation_id))
+    )
+    return await project_member_repo.get_invitation_with_project_and_role_by_id(
+        db,
+        invitation_id=invitation_uuid,
     )
 
 
@@ -397,12 +451,9 @@ async def accept_invitation(
     activity_context: ActivityContext | None = None,
 ) -> tuple[UUID, UUID]:
     """Accept a project invitation token."""
-    row = await project_member_repo.get_invitation_with_project_and_role_by_token_hash(
-        db,
-        token_hash=hash_token(payload["token"]),
-    )
+    row = await _get_accept_invitation_row(db, payload)
     if row is None:
-        raise InvalidOperationError("Invalid or expired invitation token")
+        raise InvalidOperationError("Invalid or expired invitation")
 
     invitation, project_id, organization_id, project_is_deleted, role_id, role_name = (
         row
@@ -410,7 +461,7 @@ async def accept_invitation(
     now = datetime.now(UTC)
 
     if invitation.is_revoked:
-        raise InvalidOperationError("Invalid or expired invitation token")
+        raise InvalidOperationError("Invalid or expired invitation")
     if invitation.accepted_at is not None:
         raise InvalidOperationError("Invitation already accepted")
     if invitation.expires_at < now:
