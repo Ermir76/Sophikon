@@ -2,15 +2,112 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S07
-**Dates:** 2026-03-24 -> 2026-03-24
+**Sprint ID:** S08
+**Dates:** 2026-03-25 -> 2026-03-25
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S07
+## Active Items — S08
+
+### FIX-09 — Finalize Vite WS proxy fix (#39)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Verify `ws: true` is present in `frontend/vite.config.ts` proxy for `/api`
+- [x] Keep the verified proxy change in the working tree for the current sprint fix pass
+- [x] Cover the downstream WebSocket behavior with focused frontend websocket-hook tests
+
+#### Notes
+
+- File: `frontend/vite.config.ts`
+- Already applied in working tree before this sprint execution; verified and retained
+- This unblocks all realtime features (notifications push, presence, live updates)
+
+---
+
+### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Confirm the accept page was relying on transient mutation state and could get stuck after the backend returned success
+- [x] Make the accept page render from resolved invitation result state instead of the raw mutation status flags
+- [x] Preserve a single in-flight accept request/result per token so the page survives dev remounts and renders the "Open Project" success state
+- [x] Keep the success card after acceptance; on `Go to Project`, resolve the invited project's organization, switch the active org context, and navigate into the project
+- [x] Route bell notifications for existing org-member invites into the same acceptance page by invitation id
+- [x] Verify the flow with focused frontend coverage for success, error, and missing-token paths
+
+#### Notes
+
+- Files: `frontend/src/features/projects/pages/ProjectInvitationAcceptPage.tsx`, `frontend/src/features/projects/hooks/useProjectMembers.ts`, `frontend/src/features/projects/api/project-members.service.ts`
+- Files also touched for the notification-backed path: `backend/app/service/project_member_service.py`, `backend/app/repository/project_member_repo.py`, `backend/app/schema/project_member.py`, `frontend/src/shared/layout/AppHeader.tsx`
+- Backend accept endpoint: `POST /api/v1/projects/members/invitations/accept` now accepts either `token` or `invitation_id`
+- Existing organization members get both the email invite and a user-scoped `invitation_received` bell notification; users outside the org still get email only
+
+---
+
+### FIX-11 — Org switcher not updated after project invite accept (#36)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] In the accept mutation's `onSuccess`, invalidate the organizations query so the sidebar org list refetches
+- [x] Export organization query keys through the feature barrel so the cross-feature invalidation stays within public API rules
+- [x] Verify the invalidation behavior and auto-switch follow-through with focused hook/page coverage
+
+#### Notes
+
+- File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
+- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- Depends on FIX-10 being resolved first
+
+---
+
+### FIX-12 — Removed project member sees generic error (#37)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Catch the project-access 403 at the shared project layout boundary
+- [x] Show a clear "You no longer have access to this project" state with a path back to `/projects`
+- [x] Verify the access-loss UI with focused project-layout coverage
+
+#### Notes
+
+- Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
+- Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
+- The fix should handle 403 specifically — don't mask other errors
+
+---
+
+### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] In `useProjectWebSocket.ts`, move store actions plus `navigate`/`queryClient` access behind refs
+- [x] Remove unstable non-input references from the effect dependency array so the hook only reconnects when project/auth inputs actually change
+- [x] Apply the same stabilization pattern to `useNotificationWebSocket.ts`
+- [x] Verify the stable-connection behavior with focused rerender coverage for both websocket hooks
+
+#### Notes
+
+- Files: `frontend/src/features/projects/hooks/useProjectWebSocket.ts`, `frontend/src/features/notifications/hooks/useNotificationWebSocket.ts`
+- The pattern: `const setStatusRef = useRef(setStatus); setStatusRef.current = setStatus;` then use `setStatusRef.current(...)` inside the effect
+- Also move `navigate` and `queryClient` into refs if they appear in deps and cause re-runs
+
+---
+
+## Previous Sprint Items — S07
 
 ### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
 

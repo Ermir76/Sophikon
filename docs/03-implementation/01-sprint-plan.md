@@ -6,6 +6,52 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S08
+**Dates:** 2026-03-25 -> 2026-03-25
+**Goal:** QA fix pass #2 — close Project Management and WebSocket issues found during QA domains 3–4
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2 hours`
+- Planned points capacity: `5`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| FIX-09 | Finalize Vite WS proxy fix (#39) | 1 | ❌ Already applied in working tree, needs sprint verification | — | `ws: true` retained in `frontend/vite.config.ts`; focused websocket-hook coverage passes against the dev-proxy configuration |
+| FIX-10 | Project invite accept page stuck on "Accepting invitation..." (#35) | 1 | ❌ Accept succeeds server-side but UI never shows success | — | Accept page transitions to success state with "Open Project" button after backend returns 200 |
+| FIX-11 | Org switcher not updated after project invite accept (#36) | 1 | ⚠️ User must refresh to see new org | FIX-10 | Org list refetches automatically after invite accept; new org appears in switcher without refresh |
+| FIX-12 | Removed project member sees generic error (#37) | 1 | ⚠️ User sees raw error instead of explanation | — | Non-member navigating to project URL sees clear "no access" message or redirect with toast |
+| FIX-13 | WebSocket hooks unstable effect dependencies (#40) | 1 | ⚠️ Double-connect on every page load, console warnings | — | WS hooks connect once per project/page; no "closed before established" console warnings |
+
+**Total committed points:** `5`
+
+### Stretch (Optional)
+
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| FIX-06 | Silent token refresh not proactive (#26) | If committed items finish early |
+| FIX-08 | Org member role change layout glitch (#33) | If committed items finish early |
+
+---
+
+## Sprint Review (Fill at end)
+
+- Planned points: `5`
+- Completed points: `5`
+- Carry-over points: `0`
+- Main wins: Closed all five S08 QA fixes in one frontend pass: the Vite `/api` proxy now explicitly keeps WebSocket upgrades enabled, project invite acceptance renders a stable success state and switches into the invited organization when the user clicks `Go to Project`, org-switcher data invalidates immediately after invite acceptance, removed members now see a clear no-access state instead of a generic error, both websocket hooks were hardened to avoid reconnect churn from unstable effect dependencies, and existing organization members now also receive a bell notification for new project invites that routes into the same accept flow.
+- Main misses: End-to-end browser verification through Mailpit/devtools was not run in this session; verification evidence is the focused Vitest coverage for the changed flows and hooks.
+- Process changes for next sprint: When a sprint item says "commit" but the user did not ask for commit finalization, normalize the sprint wording to the actual requested deliverable and keep `/cc` explicitly opt-in.
+
+---
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S07
 **Dates:** 2026-03-24 -> 2026-03-24
 **Goal:** QA bug fixes — close confirmed ❌ bugs found in Authentication and Organizations QA pass
@@ -33,9 +79,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | FIX-04 | Change password missing toast (#29) | Pulled in after committed fixes shipped cleanly |
 | FIX-05 | AI preferences toggle glitch (#30) | Pulled in after committed fixes shipped cleanly |
 
----
-
-## Sprint Review (Fill at end)
+### Sprint Review
 
 - Planned points: `3`
 - Completed points: `5`
