@@ -108,6 +108,14 @@ describe("ProfilePage", () => {
 
   it("renders profile/security tabs and submits profile patch", async () => {
     const user = userEvent.setup();
+    mocks.updateProfileMutate.mockImplementation(
+      (
+        _data: unknown,
+        options?: { onSuccess?: () => void },
+      ) => {
+        options?.onSuccess?.();
+      },
+    );
 
     render(
       <MemoryRouter>
@@ -124,10 +132,17 @@ describe("ProfilePage", () => {
     await user.click(screen.getByRole("button", { name: "Save Changes" }));
 
     await waitFor(() => {
-      expect(mocks.updateProfileMutate).toHaveBeenCalledWith({
-        full_name: "Updated Name",
-      });
+      expect(mocks.updateProfileMutate).toHaveBeenCalledWith(
+        {
+          full_name: "Updated Name",
+        },
+        expect.objectContaining({
+          onSuccess: expect.any(Function),
+        }),
+      );
     });
+    expect(toast.success).toHaveBeenCalledWith("Profile updated successfully");
+    expect(screen.queryByText("Profile updated successfully.")).not.toBeInTheDocument();
   });
 
   it("submits change-password form and keeps recovery route visible", async () => {

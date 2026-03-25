@@ -341,12 +341,6 @@ export default function ProfilePage() {
                 </Alert>
               ) : null}
 
-              {updateProfileMutation.isSuccess ? (
-                <Alert className="mb-5">
-                  <AlertDescription>Profile updated successfully.</AlertDescription>
-                </Alert>
-              ) : null}
-
               <Form {...profileForm}>
                 <form
                   className="space-y-5"
@@ -370,7 +364,11 @@ export default function ProfilePage() {
                     if (Object.keys(patch).length === 0) {
                       return;
                     }
-                    updateProfileMutation.mutate(patch);
+                    updateProfileMutation.mutate(patch, {
+                      onSuccess: () => {
+                        toast.success("Profile updated successfully");
+                      },
+                    });
                   })}
                 >
                   <FormField
