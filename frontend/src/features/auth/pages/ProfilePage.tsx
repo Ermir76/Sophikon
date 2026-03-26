@@ -116,28 +116,6 @@ const AI_TOOL_LABELS: Record<string, string> = {
   filter_view: "Filter view",
 };
 
-const AI_TOOL_GROUPS: Array<{ title: string; description: string; tools: string[] }> = [
-  {
-    title: "Task creation and updates",
-    description: "Decide whether AI can create and edit task work without a manual approval step.",
-    tools: [
-      "create_task",
-      "update_task",
-      "bulk_create_tasks",
-      "add_dependency",
-      "indent_task",
-      "outdent_task",
-      "reorder_task",
-      "calculate_schedule",
-    ],
-  },
-  {
-    title: "Navigation and focus",
-    description: "Control whether AI can move around your project views and focus specific tasks.",
-    tools: ["navigate", "highlight_tasks", "open_task", "filter_view"],
-  },
-];
-
 export default function ProfilePage() {
   const user = useAuthStore((state) => state.user);
   const updateProfileMutation = useUpdateProfile();
@@ -230,8 +208,8 @@ export default function ProfilePage() {
   return (
     <PageShell className="h-full overflow-y-auto">
       <PageHeader
-        title="Account settings"
-        description="Manage your profile, security, and AI assistant preferences."
+        title="Profile"
+        description="Manage your account profile and security settings."
       />
 
       <Tabs defaultValue="profile" className="space-y-4">
@@ -300,7 +278,6 @@ export default function ProfilePage() {
                       uploadAvatarMutation.mutate(selected, {
                         onSuccess: () => {
                           setAvatarUploadError(null);
-                          toast.success("Profile photo updated");
                         },
                         onError: handleAvatarUploadError,
                       });
@@ -329,17 +306,7 @@ export default function ProfilePage() {
                     variant="ghost"
                     onClick={() => {
                       setAvatarUploadError(null);
-                      const confirmed = window.confirm(
-                        "Remove your profile photo? This can be uploaded again anytime.",
-                      );
-                      if (!confirmed) {
-                        return;
-                      }
-                      deleteAvatarMutation.mutate(undefined, {
-                        onSuccess: () => {
-                          toast.success("Profile photo removed");
-                        },
-                      });
+                      deleteAvatarMutation.mutate();
                     }}
                     disabled={!user.avatar_url || deleteAvatarMutation.isPending}
                   >
@@ -376,7 +343,7 @@ export default function ProfilePage() {
 
               <Form {...profileForm}>
                 <form
-                  className="space-y-5"
+                  className="space-y-6"
                   onSubmit={profileForm.handleSubmit((data) => {
                     const patch: {
                       full_name?: string;
@@ -418,13 +385,13 @@ export default function ProfilePage() {
                     )}
                   />
 
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={profileForm.control}
                       name="timezone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Time zone</FormLabel>
+                          <FormLabel>Timezone</FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger className="w-full">
@@ -449,7 +416,7 @@ export default function ProfilePage() {
                       name="locale"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Language</FormLabel>
+                          <FormLabel>Locale</FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger className="w-full">
@@ -471,10 +438,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={updateProfileMutation.isPending || !profileForm.formState.isDirty}
-                    >
+                    <Button type="submit" disabled={updateProfileMutation.isPending}>
                       {updateProfileMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -488,11 +452,6 @@ export default function ProfilePage() {
                       )}
                     </Button>
                   </div>
-                  {!profileForm.formState.isDirty ? (
-                    <p className="text-right text-xs text-muted-foreground">
-                      Make a change to enable Save Changes.
-                    </p>
-                  ) : null}
                 </form>
               </Form>
             </CardContent>
@@ -516,7 +475,7 @@ export default function ProfilePage() {
 
               <Form {...securityForm}>
                 <form
-                  className="space-y-5"
+                  className="space-y-6"
                   onSubmit={securityForm.handleSubmit((data) => {
                     changePasswordMutation.mutate(
                       {
@@ -550,7 +509,7 @@ export default function ProfilePage() {
                     )}
                   />
 
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={securityForm.control}
                       name="new_password"
@@ -558,15 +517,11 @@ export default function ProfilePage() {
                         <FormItem>
                           <FormLabel>New Password</FormLabel>
                           <FormControl>
-                          <Input type="password" autoComplete="new-password" {...field} />
-                        </FormControl>
-                        <p className="text-xs text-muted-foreground">
-                          Use at least 8 characters with one uppercase letter, one number, and one
-                          special character.
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                            <Input type="password" autoComplete="new-password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
@@ -608,7 +563,7 @@ export default function ProfilePage() {
                 If you cannot remember your current password, use the reset flow.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <Separator />
               <p className="text-sm text-muted-foreground">
                 Recovery sends a reset link to your email and is intended for locked-out scenarios.
@@ -638,26 +593,18 @@ export default function ProfilePage() {
                   onRetry={() => aiPreferencesQuery.refetch()}
                 />
               ) : (
-                <div className="space-y-3">
-                  {AI_TOOL_GROUPS.map((group) => (
-                    <div key={group.title} className="space-y-3 rounded-lg border p-4">
-                      <div className="space-y-1">
-                        <h3 className="text-sm font-medium">{group.title}</h3>
-                        <p className="text-xs text-muted-foreground">{group.description}</p>
-                      </div>
-                      {group.tools.map((toolName) => (
-                        <div key={toolName} className="flex items-center justify-between">
-                          <Label htmlFor={`ai-tool-${toolName}`} className="text-sm font-normal">
-                            {AI_TOOL_LABELS[toolName]}
-                          </Label>
-                          <Switch
-                            id={`ai-tool-${toolName}`}
-                            checked={aiAutoApprove[toolName] ?? true}
-                            onCheckedChange={(checked) => handleAiToggle(toolName, checked)}
-                            aria-busy={pendingAiToolName === toolName}
-                          />
-                        </div>
-                      ))}
+                <div className="space-y-4">
+                  {Object.entries(AI_TOOL_LABELS).map(([toolName, label]) => (
+                    <div key={toolName} className="flex items-center justify-between">
+                      <Label htmlFor={`ai-tool-${toolName}`} className="text-sm font-normal">
+                        {label}
+                      </Label>
+                      <Switch
+                        id={`ai-tool-${toolName}`}
+                        checked={aiAutoApprove[toolName] ?? true}
+                        onCheckedChange={(checked) => handleAiToggle(toolName, checked)}
+                        aria-busy={pendingAiToolName === toolName}
+                      />
                     </div>
                   ))}
                 </div>

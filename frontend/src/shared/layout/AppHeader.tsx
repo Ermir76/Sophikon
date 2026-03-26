@@ -259,14 +259,14 @@ export function AppHeader() {
             >
               <Bell className="size-4" />
               {unreadCount > 0 ? (
-                <span className="absolute right-1 top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white" aria-live="polite">
+                <span className="absolute right-1 top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold text-white" aria-live="polite">
                   {unreadCount > 99 ? "99+" : unreadCount}
                   <span className="sr-only">{`${unreadCount} unread notifications`}</span>
                 </span>
               ) : null}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-96 space-y-3 p-3">
+          <DropdownMenuContent align="end" className="w-80 space-y-3 p-3 sm:w-96">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">Notifications</p>
               <Button
@@ -314,7 +314,7 @@ export function AppHeader() {
                             {notification.message && !isInviteNotification ? (
                               <p className="text-xs text-muted-foreground">{notification.message}</p>
                             ) : null}
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </p>
                           </button>
@@ -324,7 +324,7 @@ export function AppHeader() {
                             {notification.message ? (
                               <p className="text-xs text-muted-foreground">{notification.message}</p>
                             ) : null}
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </p>
                           </div>

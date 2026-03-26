@@ -32,9 +32,9 @@ export function MembersTable({
   updatingRoleMemberId,
 }: MembersTableProps) {
   const getRoleBadgeClass = (role: OrgRole) => {
-    if (role === "owner") return "border-destructive/45 bg-destructive/12 text-destructive";
-    if (role === "admin") return "border-primary/45 bg-primary/12 text-primary";
-    return "border-muted-foreground/30 bg-muted/35 text-muted-foreground";
+    if (role === "owner") return "border-destructive/40 bg-destructive/15 text-destructive";
+    if (role === "admin") return "border-primary/40 bg-primary/15 text-primary";
+    return "border-muted-foreground/40 bg-muted/15 text-muted-foreground";
   };
 
   return (
