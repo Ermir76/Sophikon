@@ -13,14 +13,23 @@ Frontend does not call this service directly. Backend is the control plane and c
 
 ## Local Run
 
+> For full step-by-step instructions, see the [root README](../README.md#step-5-optional-set-up-the-ai-service).
+
 From `ai-service/`:
 
 ```bash
-uv venv .venv
-.venv\Scripts\activate
 uv sync
-uv run uvicorn app.main:app --reload --port 8010
+uvicorn app.main:app --reload --port 8010
 ```
+
+Create a `.env` file with at minimum:
+
+```ini
+AI_MODE=mock
+AI_SERVICE_SHARED_SECRET=dev-ai-shared-secret
+```
+
+The app works without this service — AI features will just show as unavailable.
 
 ## Dependency Management
 

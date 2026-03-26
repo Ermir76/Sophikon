@@ -44,12 +44,14 @@ Authoritative docs:
 
 ## Setup
 
+> For full step-by-step instructions including backend and Docker setup, see the [root README](../README.md).
+
 ```bash
 npm install
 npm run dev       # starts Vite dev server at http://localhost:5173
 ```
 
-The Vite dev server proxies `/api` requests to `localhost:8000` (backend).
+The Vite dev server proxies `/api` requests to `localhost:8000` (backend). No frontend `.env` file is needed for local development — the defaults work out of the box.
 
 ## Scripts
 

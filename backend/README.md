@@ -33,12 +33,16 @@ Swagger docs available at `/docs` in development mode (`ENV=development`).
 
 ## Setup
 
+> For full step-by-step instructions including Docker and environment setup, see the [root README](../README.md).
+
 ```bash
 cp .env.example .env    # configure DATABASE_URL, SECRET_KEY, MAIL_* settings
 uv sync                 # install dependencies (uses uv.lock)
 alembic upgrade head    # apply migrations
 uvicorn app.main:app --reload
 ```
+
+The database must be running first (`docker compose up postgres redis -d` from the project root). See `.env.example` for all available settings.
 
 ## Running Tests
 
