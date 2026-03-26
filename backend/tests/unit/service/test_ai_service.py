@@ -742,7 +742,7 @@ async def test_estimate_for_project_with_mock_provider(
     session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Integration test: calls real AI service with mock provider."""
+    """Mock-provider test: verifies estimation pipeline without live AI service."""
     user, project, task = await _seed_project_with_task(
         client,
         session,
@@ -765,7 +765,31 @@ async def test_estimate_for_project_with_mock_provider(
             "defaults": {"provider": "mock", "model": "mock"},
         }
 
+    async def fake_complete(request):
+        estimate_payload = json.dumps(
+            {
+                "estimates": [
+                    {
+                        "task_id": str(task.id),
+                        "task_name": "Prepare launch notes",
+                        "optimistic_minutes": 480,
+                        "likely_minutes": 960,
+                        "pessimistic_minutes": 1440,
+                        "recommended_minutes": 960,
+                        "confidence": 0.72,
+                        "reasoning": "Based on similar release prep tasks.",
+                    }
+                ]
+            }
+        )
+        yield AIChatEvent(type="chunk", content=estimate_payload)
+        yield AIChatEvent(
+            type="done",
+            usage=AIUsageMeta(tokens_in=5, tokens_out=10, model="mock"),
+        )
+
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
 
     result = await ai_service.estimate_for_project(
         session,
@@ -786,7 +810,7 @@ async def test_suggestions_for_project_with_mock_provider(
     session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Integration test: calls real AI service with mock provider."""
+    """Mock-provider test: verifies suggestions pipeline without live AI service."""
     user, project, _ = await _seed_project_with_task(
         client,
         session,
@@ -809,7 +833,30 @@ async def test_suggestions_for_project_with_mock_provider(
             "defaults": {"provider": "mock", "model": "mock"},
         }
 
+    async def fake_complete(request):
+        suggestions_payload = json.dumps(
+            {
+                "suggestions": [
+                    {
+                        "id": "sug-001",
+                        "type": "schedule_risk",
+                        "severity": "HIGH",
+                        "title": "Task may exceed deadline",
+                        "description": "Prepare launch notes has no buffer.",
+                        "affected_task_id": None,
+                        "suggested_action": {"type": "NONE", "payload": {}},
+                    }
+                ]
+            }
+        )
+        yield AIChatEvent(type="chunk", content=suggestions_payload)
+        yield AIChatEvent(
+            type="done",
+            usage=AIUsageMeta(tokens_in=8, tokens_out=12, model="mock"),
+        )
+
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
+    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
 
     result = await ai_service.suggestions_for_project(
         session,
