@@ -57,6 +57,10 @@ export default function OrgMembersPage() {
 
   const [memberToRemove, setMemberToRemove] =
     useState<OrganizationMember | null>(null);
+  const [pendingRoleChange, setPendingRoleChange] = useState<{
+    member: OrganizationMember;
+    newRole: OrgRole;
+  } | null>(null);
   const [updatingRoleMemberId, setUpdatingRoleMemberId] = useState<string | null>(null);
 
   const onInvite = async (data: InviteFormValues) => {
@@ -87,7 +91,7 @@ export default function OrgMembersPage() {
     }
   };
 
-  const onUpdateRole = async (member: OrganizationMember, newRole: OrgRole) => {
+  const applyRoleChange = async (member: OrganizationMember, newRole: OrgRole) => {
     setUpdatingRoleMemberId(member.id);
     try {
       await updateRoleMutation.mutateAsync({
@@ -104,6 +108,15 @@ export default function OrgMembersPage() {
     } finally {
       setUpdatingRoleMemberId(null);
     }
+  };
+
+  const confirmRoleChange = async () => {
+    if (!pendingRoleChange) {
+      return;
+    }
+    const { member, newRole } = pendingRoleChange;
+    await applyRoleChange(member, newRole);
+    setPendingRoleChange(null);
   };
 
   const members = membersData?.items || [];
@@ -151,7 +164,7 @@ export default function OrgMembersPage() {
       <div className="flex items-center justify-between">
         <Separator className="flex-1" />
         <Badge variant="outline" className="ml-3 h-7 px-2.5 text-[11px] text-muted-foreground">
-          Access list
+          Organization members
         </Badge>
       </div>
 
@@ -171,7 +184,12 @@ export default function OrgMembersPage() {
         <MembersTable
           members={members}
           currentUserId={currentUser?.id}
-          onUpdateRole={onUpdateRole}
+          onUpdateRole={(member, newRole) => {
+            if (member.role === newRole) {
+              return;
+            }
+            setPendingRoleChange({ member, newRole });
+          }}
           onRemove={setMemberToRemove}
           canManage={canManage}
           roleActionsDisabled={updatingRoleMemberId !== null}
@@ -185,7 +203,9 @@ export default function OrgMembersPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Remove {memberToRemove?.user_full_name || memberToRemove?.user_email} from organization?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will remove{" "}
               {memberToRemove?.user_full_name || memberToRemove?.user_email}{" "}
@@ -201,6 +221,32 @@ export default function OrgMembersPage() {
               className="bg-destructive hover:bg-destructive/90"
             >
               {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingRoleChange !== null}
+        onOpenChange={(open) => !open && setPendingRoleChange(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Change role for {pendingRoleChange?.member.user_full_name || pendingRoleChange?.member.user_email}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will update their access level to{" "}
+              <span className="font-medium text-foreground">{pendingRoleChange?.newRole}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRoleChange}
+              disabled={updateRoleMutation.isPending}
+            >
+              {updateRoleMutation.isPending ? "Updating..." : "Confirm role change"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

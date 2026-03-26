@@ -8,9 +8,7 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
-  useNotificationSettings,
   useNotificationWebSocketStore,
-  useUpdateNotificationSettings,
 } from "@/features/notifications";
 import { useAcceptProjectInvitation } from "@/features/projects";
 import { useProjectWebSocketStore } from "@/features/projects/store/websocket-store";
@@ -95,20 +93,6 @@ describe("AppHeader", () => {
       mutate: vi.fn(),
       isPending: false,
     } as never);
-    vi.mocked(useNotificationSettings).mockReturnValue({
-      data: {
-        email_task_assigned: true,
-        email_mentioned: true,
-        email_deadline_approaching: true,
-        push_enabled: false,
-      },
-      isLoading: false,
-      isError: false,
-    } as never);
-    vi.mocked(useUpdateNotificationSettings).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: false,
-    } as never);
     vi.mocked(useAcceptProjectInvitation).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
@@ -170,7 +154,7 @@ describe("AppHeader", () => {
 
     renderHeader("/projects/project-1/tasks");
 
-    expect(screen.getByText("Live")).toBeInTheDocument();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
     expect(screen.getByText("JD")).toBeInTheDocument();
     expect(screen.getByText("JS")).toBeInTheDocument();
     expect(screen.getByText("+1")).toBeInTheDocument();
@@ -186,6 +170,18 @@ describe("AppHeader", () => {
     renderHeader("/");
     expect(screen.getByRole("button", { name: "Notifications" })).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("provides a dedicated notification settings destination from the dropdown", async () => {
+    const user = userEvent.setup();
+    renderHeader("/");
+
+    await user.click(screen.getByRole("button", { name: "Notifications" }));
+
+    expect(screen.getByRole("link", { name: "Manage notification settings" })).toHaveAttribute(
+      "href",
+      "/profile",
+    );
   });
 
   it("prefers websocket unread count over query unread count", () => {
@@ -413,6 +409,6 @@ describe("AppHeader", () => {
     await user.click(screen.getByRole("button", { name: "Notifications" }));
 
     expect(screen.queryByText("Owner invited you.")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review invitation" })).toBeInTheDocument();
   });
 });

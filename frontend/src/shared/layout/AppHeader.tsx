@@ -8,10 +8,8 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
-  useNotificationSettings,
   notificationKeys,
   useNotificationWebSocketStore,
-  useUpdateNotificationSettings,
 } from "@/features/notifications";
 import type { NotificationItem } from "@/features/notifications";
 import { useAcceptProjectInvitation, useProjectWebSocketStore } from "@/features/projects";
@@ -39,7 +37,6 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Separator } from "@/shared/ui/separator";
 import { SidebarTrigger } from "@/shared/ui/sidebar";
-import { Switch } from "@/shared/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
 
 const segmentLabels: Record<string, string> = {
@@ -67,10 +64,8 @@ export function AppHeader() {
     (state) => state.unreadCount,
   );
   const notificationsQuery = useNotifications({ page: 1, per_page: 8 });
-  const notificationSettingsQuery = useNotificationSettings();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
-  const updateSettings = useUpdateNotificationSettings();
   const acceptInvitation = useAcceptProjectInvitation();
   const [acceptingNotificationId, setAcceptingNotificationId] = useState<string | null>(null);
   const [acceptErrors, setAcceptErrors] = useState<Record<string, string>>({});
@@ -258,14 +253,15 @@ export function AppHeader() {
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="relative h-9 w-9 p-0"
+              size="icon"
+              className="relative size-11"
               aria-label="Notifications"
             >
               <Bell className="size-4" />
               {unreadCount > 0 ? (
-                <span className="absolute right-0.5 top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">
+                <span className="absolute right-1 top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white" aria-live="polite">
                   {unreadCount > 99 ? "99+" : unreadCount}
+                  <span className="sr-only">{`${unreadCount} unread notifications`}</span>
                 </span>
               ) : null}
             </Button>
@@ -277,7 +273,7 @@ export function AppHeader() {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-7 px-2 text-xs"
+                className="h-9 px-3 text-xs"
                 disabled={markAllRead.isPending || unreadCount === 0}
                 onClick={() => {
                   markAllRead.mutate();
@@ -338,13 +334,14 @@ export function AppHeader() {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="h-6 px-2 text-[11px]"
+                            className="h-9 px-3 text-xs"
                             disabled={markRead.isPending || isAccepting}
+                            aria-label={`Mark ${notification.title} as read`}
                             onClick={() => {
                               markRead.mutate(notification.id);
                             }}
                           >
-                            Read
+                            Mark as read
                           </Button>
                         ) : null}
                       </div>
@@ -353,7 +350,7 @@ export function AppHeader() {
                           <Button
                             type="button"
                             size="sm"
-                            className="h-7 px-2 text-[11px]"
+                            className="h-9 px-3 text-xs"
                             disabled={isAccepting}
                             onClick={() => void acceptInvitationFromNotification(notification, target)}
                           >
@@ -363,7 +360,7 @@ export function AppHeader() {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-[11px]"
+                            className="h-9 px-3 text-xs"
                             disabled={isAccepting}
                             onClick={() => openNotificationTarget(notification, target, {
                               review: true,
@@ -371,7 +368,7 @@ export function AppHeader() {
                               message: notification.message,
                             })}
                           >
-                            Review
+                            Review invitation
                           </Button>
                         </div>
                       ) : null}
@@ -386,58 +383,10 @@ export function AppHeader() {
               )}
             </div>
 
-            <div className="space-y-2 border-t pt-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Notification Settings
-              </p>
-              {notificationSettingsQuery.isLoading ? (
-                <p className="text-xs text-muted-foreground">Loading settings...</p>
-              ) : notificationSettingsQuery.isError || !notificationSettingsQuery.data ? (
-                <p className="text-xs text-muted-foreground">Settings unavailable.</p>
-              ) : (
-                <div className="space-y-2">
-                  <label className="flex items-center justify-between text-xs">
-                    <span>Email task assigned</span>
-                    <Switch
-                      checked={notificationSettingsQuery.data.email_task_assigned}
-                      disabled={updateSettings.isPending}
-                      onCheckedChange={(checked) => {
-                        updateSettings.mutate({ email_task_assigned: checked });
-                      }}
-                    />
-                  </label>
-                  <label className="flex items-center justify-between text-xs">
-                    <span>Email mentioned</span>
-                    <Switch
-                      checked={notificationSettingsQuery.data.email_mentioned}
-                      disabled={updateSettings.isPending}
-                      onCheckedChange={(checked) => {
-                        updateSettings.mutate({ email_mentioned: checked });
-                      }}
-                    />
-                  </label>
-                  <label className="flex items-center justify-between text-xs">
-                    <span>Email deadline approaching</span>
-                    <Switch
-                      checked={notificationSettingsQuery.data.email_deadline_approaching}
-                      disabled={updateSettings.isPending}
-                      onCheckedChange={(checked) => {
-                        updateSettings.mutate({ email_deadline_approaching: checked });
-                      }}
-                    />
-                  </label>
-                  <label className="flex items-center justify-between text-xs">
-                    <span>Push enabled</span>
-                    <Switch
-                      checked={notificationSettingsQuery.data.push_enabled}
-                      disabled={updateSettings.isPending}
-                      onCheckedChange={(checked) => {
-                        updateSettings.mutate({ push_enabled: checked });
-                      }}
-                    />
-                  </label>
-                </div>
-              )}
+            <div className="border-t pt-2">
+              <Button asChild type="button" variant="ghost" className="h-9 w-full justify-start px-2 text-xs">
+                <Link to="/profile">Manage notification settings</Link>
+              </Button>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -445,11 +394,11 @@ export function AppHeader() {
           <>
             <span className="text-xs text-muted-foreground">
               {projectSocketState?.status === "connected"
-                ? "Live"
+                ? "Connected"
                 : projectSocketState?.status === "reconnecting"
-                  ? "Reconnecting"
+                  ? "Reconnecting..."
                   : projectSocketState?.status === "connecting"
-                    ? "Connecting"
+                    ? "Connecting..."
                     : "Offline"}
             </span>
             <AvatarGroup>

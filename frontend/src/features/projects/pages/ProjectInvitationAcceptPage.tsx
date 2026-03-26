@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuthStore } from "@/features/auth";
@@ -197,11 +198,15 @@ export default function ProjectInvitationAcceptPage() {
     startAcceptance(acceptPayload, cacheKey);
   }
 
+  function handleReviewCancel() {
+    navigate("/", { replace: true });
+  }
+
   const cardTitle = acceptedInvitation ? "Invitation Accepted" : "Project Invitation";
   const cardDescription = acceptedInvitation
     ? "You have accepted the invitation. Go to the project page."
     : isReviewMode
-      ? "Review the invitation details below."
+      ? "Review the invitation details before accepting."
       : "Accept your project invitation to continue.";
 
   const openAcceptedProject = useEffectEvent(async (projectId: string) => {
@@ -238,7 +243,7 @@ export default function ProjectInvitationAcceptPage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-6">
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-xl flex-col justify-center gap-4 px-4 py-6">
       <Card className="bg-card/70">
         <CardHeader>
           <CardTitle>{cardTitle}</CardTitle>
@@ -246,13 +251,23 @@ export default function ProjectInvitationAcceptPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!acceptPayload ? (
-            <p className="text-sm text-destructive">Missing invitation details.</p>
+            <div className="space-y-3">
+              <p className="text-sm text-destructive" role="alert">
+                This invitation link is missing required details. It may be invalid or expired.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/">Back to Dashboard</Link>
+              </Button>
+            </div>
           ) : isAccepting ? (
-            <p className="text-sm text-muted-foreground">Accepting invitation...</p>
+            <div aria-live="polite" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <span>Accepting your invitation...</span>
+            </div>
           ) : acceptedInvitation ? (
             <div className="space-y-3">
               {openProjectError ? (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-destructive" role="alert">
                   {getErrorMessage(openProjectError)}
                 </p>
               ) : null}
@@ -262,7 +277,7 @@ export default function ProjectInvitationAcceptPage() {
             </div>
           ) : acceptError ? (
             <div className="space-y-3">
-              <p className="text-sm text-destructive">
+              <p className="text-sm text-destructive" role="alert">
                 {getErrorMessage(acceptError)}
               </p>
               <Button variant="outline" onClick={handleRetry}>
@@ -289,8 +304,8 @@ export default function ProjectInvitationAcceptPage() {
                 <Button onClick={handleReviewAccept}>
                   Accept Invitation
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/")}>
-                  Back
+                <Button variant="outline" onClick={handleReviewCancel}>
+                  Cancel
                 </Button>
               </div>
             </div>

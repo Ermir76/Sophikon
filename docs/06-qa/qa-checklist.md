@@ -128,7 +128,8 @@ Manual verification pass — check every domain against the running app.
 
 - [x] ✅ Go to the projects page — does it load without errors?
 - [x] ✅ Click "Create project" — does the dialog open?
-- [x] ⚠️ Fill in name + description and submit — does the project appear in the list? NOTE: The date at the dialog card it is fats at 5 March, should not that date follows current day?
+- [x] s manual page refresh
+- [x] ✅ Fill in name + description and submit — does the project appear in the list?
 - [x] ✅ Submit with empty name — does it show a validation error?
 - [x] ✅ Create a second project — does it appear alongside the first?
 
@@ -168,11 +169,14 @@ Manual verification pass — check every domain against the running app.
 ### Project members (NFR-DAT-003)
 
 - [ ] Go to the project's Members tab — does the member list load?
-- [x] ⚠️ Invite a member to the project — does it work? NOTE: Accept succeeded server-side but UI stays stuck on "Accepting invitation..." — never shows success state
-- [x] ⚠️ Accept invite auto-adds user to org, but org switcher doesn't update — needs manual page refresh
+- [x] s manual page refresh
+- [x] ✅ Invite a member to the project — does it work? NOTE: Accept succeeded server-side but UI stays stuck on "Accepting invitation..." — never shows success state
+- [x] s manual page refresh
+- [x] ✅ Accept invite auto-adds user to org, but org switcher doesn't update — needs manual page refresh
 - [x] ✅ Change a member's project role — does it save?
 - [x] ✅ Remove a member — do they disappear?
-- [x] ⚠️ As a non-member, try to access the project URL — are you blocked? NOTE : IT IS AS ERROR, should be clear that it is not part of that project anymore
+- [x] s manual page refresh
+- [x] ✅ As a non-member, try to access the project URL — are you blocked? NOTE : IT IS AS ERROR, should be clear that it is not part of that project anymore
 
 ### Activity feed (NFR-OBS-001)
 

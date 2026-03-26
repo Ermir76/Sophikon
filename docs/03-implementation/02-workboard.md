@@ -2,15 +2,116 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S09
-**Dates:** 2026-03-25 -> 2026-03-25
+**Sprint ID:** S10
+**Dates:** 2026-03-26 -> 2026-03-28
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S09
+## Active Items — S10
+
+### UX-01 — Invitation flow blockers + recovery
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Fix invalid invitation dead-end copy and add explicit "Back to dashboard" recovery CTA
+- [x] Update invitation page loading state with spinner + `aria-live="polite"` and user-facing wording
+- [x] Add invitation-page error `role="alert"` and vertically center invitation card states
+- [x] Replace misleading review-mode "Back" behavior with actual back navigation or explicit "Cancel"
+- [x] Add focused tests for invalid token/missing payload/review-mode navigation states
+
+#### Notes
+
+- Dependencies: FIX-14
+- Blockers: -
+- Decisions: Keep invitation token contract unchanged; this sprint is UX-only unless a blocker appears.
+
+---
+
+### UX-02 — Notification center IA + accessibility baseline
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Move notification settings controls out of bell dropdown into dedicated settings destination
+- [x] Add explicit notification settings entry-point link from the dropdown
+- [x] Normalize bell and notification action hit targets to mobile-safe minimums
+- [x] Add screen-reader labels for unread counts and per-notification read actions
+- [x] Rename ambiguous copy ("Read", "Review", websocket status labels) to user-facing language
+
+#### Notes
+
+- Dependencies: UX-01
+- Blockers: Destination route for notification settings if `/settings/notifications` is not ready
+- Decisions: Keep notification feed focused on triage actions only.
+
+---
+
+### UX-03 — Membership actions safety + copy clarity
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add role-change confirmation or undo affordance before finalizing member role mutations
+- [x] Improve member-removal confirmation title to include affected member name
+- [x] Remove or rewrite decorative/unclear labels (for example "Access list")
+- [x] Add accessible header labeling for actions column in members table
+- [x] Verify role/action buttons keep consistent min sizes and copy semantics
+
+#### Notes
+
+- Dependencies: FIX-08
+- Blockers: -
+- Decisions: Prefer undo flow where fast/low-risk; use confirm dialog for destructive actions.
+
+---
+
+### UX-04 — Profile settings usability batch
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Disable profile save button when form is pristine, with clear state cue
+- [ ] Show password requirements before submit; align validation message wording
+- [ ] Add avatar update success feedback and avatar delete confirmation
+- [ ] Group AI tool toggles by intent with section labels
+- [ ] Replace technical wording (for example "Locale") with user-facing labels
+
+#### Notes
+
+- Dependencies: FIX-04, FIX-05
+- Blockers: -
+- Decisions: Keep this batch in existing profile page architecture; no route split in this sprint.
+
+---
+
+### UX-05 — Visual consistency polish pass (Stretch)
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Normalize non-standard tiny text values to design-scale tokens
+- [ ] Unify spacing rhythm in profile/member pages
+- [ ] Rationalize badge/stat opacity and color usage
+- [ ] Ensure notification dropdown width is responsive on narrow screens
+
+#### Notes
+
+- Dependencies: UX-01, UX-02, UX-03, UX-04
+- Blockers: -
+- Decisions: Pull in only after committed items pass review.
+
+---
+
+## Previous Sprint Items — S09
 
 ### FIX-14 — Invitation review page UX overhaul
 

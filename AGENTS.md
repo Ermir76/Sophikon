@@ -45,10 +45,10 @@ cd frontend && npm run lint && npm run format
 - "Autopilot" means full SDLC completion, not just build + tests.
 - Never end a feature task after BUILD only. You must run REVIEW and SYNC phases.
 - Manual checks do not replace required close-out skills.
-- Required close-out skills by change type:
-  - Backend changed: `/review` then `/phase-reviewer`
+- Required close-out skills by change type (spawned as parallel agents from dev-lifecycle):
+  - Backend changed: agent loads `dev-lifecycle/phases/review-backend.md` checklist → `/phase-reviewer`
   - Backend schema changed: `/pydantic-audit` also
-  - Frontend changed: `/phase-reviewer` then `/consistency-review`
+  - Frontend changed: agent loads `dev-lifecycle/phases/review-frontend.md` checklist → `/consistency-review`
   - After review passes: `/done`
   - Commit with `/cc` when user asked to finalize with commit
 - Before final handoff, include a short closure receipt listing which close-out skills ran (or why a step was intentionally skipped).

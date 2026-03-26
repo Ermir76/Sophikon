@@ -142,8 +142,10 @@ describe("ProjectInvitationAcceptPage", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByText("Accepting your invitation...")).toBeInTheDocument();
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ token: "abc-error" }));
-    expect(screen.getByText("Invalid token")).toBeInTheDocument();
+    const tokenAlert = screen.getByRole("alert");
+    expect(tokenAlert).toHaveTextContent("Invalid token");
     expect(mutateAsync).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Try Again" }));
@@ -190,7 +192,8 @@ describe("ProjectInvitationAcceptPage", () => {
     });
   });
 
-  it("shows missing token message", () => {
+  it("shows missing invitation details with dashboard recovery action", async () => {
+    const user = userEvent.setup();
     vi.mocked(useAcceptProjectInvitation).mockReturnValue({
       mutateAsync: vi.fn(),
     } as never);
@@ -199,11 +202,15 @@ describe("ProjectInvitationAcceptPage", () => {
       <MemoryRouter initialEntries={["/project-invitations/accept"]}>
         <Routes>
           <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
+          <Route path="/" element={<div>DASHBOARD</div>} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Missing invitation details.")).toBeInTheDocument();
+    const missingDetailsAlert = screen.getByRole("alert");
+    expect(missingDetailsAlert).toHaveTextContent("missing required details");
+    await user.click(screen.getByRole("link", { name: "Back to Dashboard" }));
+    expect(screen.getByText("DASHBOARD")).toBeInTheDocument();
   });
 
   it("accepts invitations opened from bell notifications by invitation id", async () => {
@@ -258,6 +265,29 @@ describe("ProjectInvitationAcceptPage", () => {
       expect(mutateAsync).toHaveBeenCalledWith({ invitation_id: "review-invite-1" });
       expect(screen.getByText("Invitation Accepted")).toBeInTheDocument();
     });
+  });
+
+  it("uses explicit cancel navigation from review mode", async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn();
+    vi.mocked(useAcceptProjectInvitation).mockReturnValue({
+      mutateAsync,
+    } as never);
+
+    render(
+      <MemoryRouter initialEntries={["/review"]}>
+        <Routes>
+          <Route path="/" element={<div>DASHBOARD</div>} />
+          <Route path="/review" element={<ReviewModeRedirect />} />
+          <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Invited to Project Alpha")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByText("DASHBOARD")).toBeInTheDocument();
+    expect(mutateAsync).not.toHaveBeenCalled();
   });
 
   it("renders accepted state from navigation state without re-accepting", async () => {

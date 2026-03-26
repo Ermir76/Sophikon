@@ -39,6 +39,7 @@ describe("MembersTable", () => {
       />,
     );
 
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toBeInTheDocument();
     expect(screen.getByText("Saving...")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open menu" })).toBeDisabled();
   });

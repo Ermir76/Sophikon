@@ -44,7 +44,7 @@ export function MembersTable({
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead className="w-[76px]"></TableHead>
+            <TableHead className="w-[120px] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,7 +80,7 @@ export function MembersTable({
                     ) : null}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <MemberActions
                     member={member}
                     isCurrentUser={member.user_id === currentUserId}

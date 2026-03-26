@@ -43,12 +43,14 @@ export function MemberActions({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="icon-sm"
-          className="size-7 p-0"
+          size="icon"
+          className="size-9 p-0"
           disabled={isDisabled}
         >
           <span className="sr-only">
-            {isRoleUpdatePending ? "Saving role" : "Open menu"}
+            {isRoleUpdatePending
+              ? `Saving role for ${member.user_full_name || member.user_email}`
+              : `Open actions for ${member.user_full_name || member.user_email}`}
           </span>
           {isRoleUpdatePending ? (
             <Loader2 className="size-4 animate-spin" />
@@ -75,7 +77,7 @@ export function MemberActions({
             <DropdownMenuSeparator />
 
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>Change role</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuRadioGroup
                   value={member.role}
@@ -95,7 +97,7 @@ export function MemberActions({
               onClick={() => onRemove(member)}
               disabled={isCurrentUser}
             >
-              Remove Member
+              Remove from organization
             </DropdownMenuItem>
           </>
         )}

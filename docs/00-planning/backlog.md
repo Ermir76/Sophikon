@@ -2,7 +2,7 @@
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
-**Last updated:** 2026-03-25
+**Last updated:** 2026-03-26
 **Status source:** `docs/03-implementation/03-requirements-traceability.md` + `docs/03-implementation/01-sprint-plan.md` + `docs/03-implementation/02-workboard.md`
 **Roadmap source:** `docs/ROADMAP.md`
 
@@ -69,6 +69,11 @@ Points scale:
 | FIX-12 | TECH | Removed project member sees generic error instead of clear message (#37) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
 | FIX-13 | TECH | WebSocket hooks unstable effect dependencies — double-connect (#40) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
 | FIX-14 | TECH | Invitation review page UX — review-before-accept flow with invitation details | P1 | 2 | FIX-10 | V1.0 | DONE | wwwer | S09 |
+| UX-01 | TECH | Invitation flow blockers + recovery | P0 | 2 | FIX-14 | V1.0 | IN_PROGRESS | wwwer | S10 |
+| UX-02 | TECH | Notification center IA + accessibility baseline | P1 | 2 | UX-01 | V1.0 | IN_PROGRESS | wwwer | S10 |
+| UX-03 | TECH | Membership actions safety + copy clarity | P1 | 2 | FIX-08 | V1.0 | IN_PROGRESS | wwwer | S10 |
+| UX-04 | TECH | Profile settings usability batch | P1 | 2 | FIX-04, FIX-05 | V1.0 | IN_PROGRESS | wwwer | S10 |
+| UX-05 | TECH | Visual consistency polish pass (stretch) | P2 | 2 | UX-01, UX-02, UX-03, UX-04 | V1.0 | READY | wwwer | S10 stretch |
 
 ---
 
@@ -100,12 +105,29 @@ Points scale:
 | KB-07     | Kanban: assignee avatar on card (FR-KB-014)                                                         | 1      | S04    |
 | KB-08     | Kanban: dependency indicator on card (FR-KB-015)                                                    | 1      | S04    |
 | KB-09     | Kanban: AI sprint health summary (FR-KB-016)                                                        | 3      | S06    |
+| FIX-01    | Avatar upload crashes with raw Pydantic error in UI (#27)                                           | 1      | S07    |
+| FIX-02    | Deleted org name/slug not released after soft delete (#31)                                          | 1      | S07    |
+| FIX-03    | Sidebar no fallback to personal org after deletion (#32)                                            | 1      | S07    |
+| FIX-04    | Change password success not using Sonner toast (#29)                                                | 1      | S07    |
+| FIX-05    | AI preferences toggle glitch — no confirmation + icon flash (#30)                                   | 1      | S07    |
+| FIX-09    | Commit Vite WS proxy fix — add ws:true to /api proxy (#39)                                          | 1      | S08    |
+| FIX-10    | Project invite accept page stuck on "Accepting invitation..." (#35)                                 | 1      | S08    |
+| FIX-11    | Org switcher not updated after project invite accept (#36)                                          | 1      | S08    |
+| FIX-12    | Removed project member sees generic error instead of clear message (#37)                             | 1      | S08    |
+| FIX-13    | WebSocket hooks unstable effect dependencies — double-connect (#40)                                  | 1      | S08    |
+| FIX-06    | Silent token refresh not proactive — user kicked to /login after idle (#26)                         | 2      | S09    |
+| FIX-08    | Org member role change shows layout glitch (#33)                                                    | 1      | S09    |
+| FIX-14    | Invitation review page UX — review-before-accept flow with invitation details                        | 2      | S09    |
 
 ### V1.0 (Remaining Backlog)
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| -       | -                                                | -      | -      | No remaining V1.0 backlog items |
+| UX-01   | Invitation flow blockers + recovery              | 2      | IN_PROGRESS | S10 |
+| UX-02   | Notification center IA + accessibility baseline  | 2      | IN_PROGRESS | S10 |
+| UX-03   | Membership actions safety + copy clarity         | 2      | IN_PROGRESS | S10 |
+| UX-04   | Profile settings usability batch                 | 2      | IN_PROGRESS | S10 |
+| UX-05   | Visual consistency polish pass (stretch)         | 2      | READY       | S10 stretch |
 
 ### V1.1 (Planned)
 

@@ -6,40 +6,43 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
-**Sprint ID:** S09
-**Dates:** 2026-03-25 -> 2026-03-25
-**Goal:** Close the invitation review UX and the remaining related auth/org QA regressions
+**Sprint ID:** S10
+**Dates:** 2026-03-26 -> 2026-03-28
+**Goal:** Execute grouped UX remediation from `docs/06-qa/ux-review-2026-03-26.md` with focus on flow blockers, accessibility, and action clarity
 **Owner(s):** wwwer
 
 ### Capacity
 
-- Estimated effort: `~1 day`
-- Planned points capacity: `5`
+- Estimated effort: `~2 days`
+- Planned points capacity: `8`
 
 ### Committed Items
 
 | Item ID | Title | Points | Why now | Dependencies | Done criteria |
 | ------- | ----- | ------ | ------- | ------------ | ------------- |
-| FIX-14 | Invitation review page UX overhaul | 2 | ❌ "Review" button auto-accepts and shows no details — broken UX found in live QA | FIX-10 | Notification card shows no message; "Review" navigates to page showing invitation details (project, role, inviter, message) from route state; user must click Accept explicitly; "Accept" on notification auto-accepts as before; email link falls back to minimal view |
-| FIX-06 | Silent token refresh not proactive (#26) | 2 | ⚠️ Users are redirected to `/login` after idle despite a valid refresh token | - | Authenticated sessions refresh proactively before access-token expiry while the app is mounted and idle |
-| FIX-08 | Org member role change layout glitch (#33) | 1 | ⚠️ Role saves show unstable visual movement instead of a clean pending state | - | Org members page shows a stable pending indicator and disables role actions cleanly during role updates |
+| UX-01 | Invitation flow blockers + recovery | 2 | P0 UX debt in invitation accept path creates dead-end and unclear loading/error behavior | FIX-14 | Invalid/missing invitation states provide recovery CTA, centered layout, live status text, spinner, and explicit alert semantics; review-mode back action is no longer misleading |
+| UX-02 | Notification center IA + accessibility baseline | 2 | Notification panel currently mixes settings and feed actions, with weak a11y affordances | UX-01 | Notification settings moved out of bell feed; bell/read actions meet target sizes and accessible labels; unread count and status updates are screen-reader friendly |
+| UX-03 | Membership actions safety + copy clarity | 2 | Role/member actions are high-risk and currently too easy to misfire or misread | FIX-08 | Role changes have confirmation or undo; destructive actions use explicit entity-focused copy; action labels are unambiguous in members and notifications |
+| UX-04 | Profile settings usability batch | 2 | Profile page has clustered medium/high friction (save-state ambiguity, password guidance, ungrouped AI toggles) | FIX-04, FIX-05 | Save button reflects dirty state, password requirements are visible before submit, AI toggles are grouped by intent, and account/settings labels use user-facing language |
 
-**Total committed points:** `5`
+**Total committed points:** `8`
 
 ### Stretch (Optional)
 
-None.
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| UX-05 | Visual consistency polish pass (type scale, spacing, badge/opacity normalization) | Pull in only if UX-01..UX-04 are completed and reviewed |
 
 ---
 
 ## Sprint Review (Fill at end)
 
-- Planned points: `5`
-- Completed points: `5`
+- Planned points: `8`
+- Completed points: `0`
 - Carry-over points: `0`
-- Main wins: Finished FIX-14 with explicit review-mode coverage, added proactive auth refresh to keep idle sessions alive, stabilized the org-member role update pending state, and closed the stale invitation notification lifecycle by resolving/hiding non-actionable invite notifications after acceptance.
-- Main misses: Full browser-level manual QA was not run; release evidence is the focused frontend and backend automated suites for the changed flows.
-- Process changes for next sprint: When a UX fix depends on temporary route state, verify the full notification lifecycle in the same pass so stale follow-up states do not slip behind the initial frontend fix.
+- Main wins: -
+- Main misses: -
+- Process changes for next sprint: -
 
 ---
 
