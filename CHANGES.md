@@ -10,6 +10,14 @@ All code changes are documented here with explanations before they are applied.
 
 ## 2026-03-25 - Sprint S09: Invitation Review, Auth Idle Refresh, and Org Role UX
 
+## 2026-03-26 - Sprint S10: UX-04 Profile Settings Usability Batch
+
+### UX-04 - Improve account settings clarity and safety in ProfilePage
+
+**What:** Updated `ProfilePage` so `Save Changes` stays disabled until profile fields are modified, with an explicit pristine-state hint. Added password requirement guidance directly under the new-password field before submission. Added success feedback for avatar upload/removal and introduced a confirmation dialog before avatar deletion. Renamed technical labels (`Locale` to `Language`, `Timezone` to `Time zone`) and updated page header copy to user-facing account-settings wording. Grouped AI auto-approve toggles into intent-based sections (`Task creation and updates`, `Navigation and focus`) while preserving existing optimistic save behavior. Expanded focused `ProfilePage` test coverage for pristine-save state, password guidance visibility, avatar success/confirmation flow, and the grouped UX behaviors.
+
+**Why:** S10 UX-04 targeted profile settings friction where actions looked available when nothing changed, password rules were only discoverable after validation errors, destructive avatar actions lacked explicit confirmation, and technical labels reduced clarity. The update improves user confidence and reduces accidental actions without changing backend contracts.
+
 ### FIX-14 / FIX-06 / FIX-08 - Finish invitation review flow and close the remaining related QA regressions
 
 **What:** Finished the project-invitation review flow so bell notifications hide the inline message preview, `Review` opens the accept page in explicit review mode, the page renders the invitation title/message before acceptance, and focused tests now cover review mode, fallback mode, and the notification card behavior. Added a proactive authenticated-app refresh timer so idle sessions renew through `/auth/refresh` before the access token expires instead of dropping users to `/login` after inactivity. Stabilized the organization-members role update UX by showing a fixed row-level saving indicator and freezing role actions while a role change is in flight. On the backend, invitation acceptance now resolves the linked `invitation_received` notification and notification listing/unread counts filter out non-actionable invitation rows, so accepted invites disappear cleanly from the bell and the unread badge stays correct. Added focused backend/frontend coverage for all of the above.

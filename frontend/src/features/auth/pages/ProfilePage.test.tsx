@@ -90,6 +90,18 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.authState = {
+      user: {
+        id: "u1",
+        email: "profile@example.com",
+        full_name: "Profile User",
+        email_verified: true,
+        timezone: "UTC",
+        locale: "en-US",
+        preferences: {},
+        avatar_url: null,
+      },
+    };
     mocks.aiPreferencesData = {
       auto_approve: {
         create_task: true,
@@ -126,10 +138,15 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("tab", { name: "Profile" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Security" })).toBeInTheDocument();
 
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
+    expect(saveButton).toBeDisabled();
+    expect(screen.getByText("Make a change to enable Save Changes.")).toBeInTheDocument();
+
     const fullNameInput = screen.getByLabelText("Full Name");
     await user.clear(fullNameInput);
     await user.type(fullNameInput, "Updated Name");
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    expect(saveButton).toBeEnabled();
+    await user.click(saveButton);
 
     await waitFor(() => {
       expect(mocks.updateProfileMutate).toHaveBeenCalledWith(
@@ -163,6 +180,11 @@ describe("ProfilePage", () => {
     );
 
     await user.click(screen.getByRole("tab", { name: "Security" }));
+    expect(
+      screen.getByText(
+        "Use at least 8 characters with one uppercase letter, one number, and one special character.",
+      ),
+    ).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Current Password"), "StrongPassword123!");
     await user.type(screen.getByLabelText("New Password"), "StrongPassword456!");
@@ -269,5 +291,48 @@ describe("ProfilePage", () => {
     expect(
       await screen.findByText("Avatar upload failed. Please try a different image."),
     ).toBeInTheDocument();
+  });
+
+  it("shows success feedback for avatar upload and confirms avatar removal before deleting", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    mocks.authState.user.avatar_url = "https://example.com/avatar.png";
+    mocks.uploadAvatarMutate.mockImplementation(
+      (_file: File, options?: { onSuccess?: () => void }) => {
+        options?.onSuccess?.();
+      },
+    );
+
+    const { container } = render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    );
+
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+
+    await user.upload(
+      fileInput as HTMLInputElement,
+      new File(["avatar"], "avatar.png", { type: "image/png" }),
+    );
+
+    expect(toast.success).toHaveBeenCalledWith("Profile photo updated");
+
+    mocks.deleteAvatarMutate.mockImplementation(
+      (_data: unknown, options?: { onSuccess?: () => void }) => {
+        options?.onSuccess?.();
+      },
+    );
+
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "Remove your profile photo? This can be uploaded again anytime.",
+    );
+    expect(mocks.deleteAvatarMutate).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Profile photo removed");
+    confirmSpy.mockRestore();
   });
 });

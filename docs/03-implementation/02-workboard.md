@@ -74,15 +74,15 @@ Status: `DONE`
 
 ### UX-04 — Profile settings usability batch
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Disable profile save button when form is pristine, with clear state cue
-- [ ] Show password requirements before submit; align validation message wording
-- [ ] Add avatar update success feedback and avatar delete confirmation
-- [ ] Group AI tool toggles by intent with section labels
-- [ ] Replace technical wording (for example "Locale") with user-facing labels
+- [x] Disable profile save button when form is pristine, with clear state cue
+- [x] Show password requirements before submit; align validation message wording
+- [x] Add avatar update success feedback and avatar delete confirmation
+- [x] Group AI tool toggles by intent with section labels
+- [x] Replace technical wording (for example "Locale") with user-facing labels
 
 #### Notes
 

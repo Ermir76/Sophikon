@@ -50,14 +50,14 @@ This document records what is evidenced by the current codebase review.
 | FR-AU-003 | Implemented   | A1, A8   | Google OAuth start/callback routes are mounted and covered by auth API/service tests. |
 | FR-AU-004 | Implemented   | A1       | Logout flow exists in backend and auth store.                                 |
 | FR-AU-005 | Implemented   | A1, A8   | Password-reset request/confirm routes are mounted and covered by API/service/concurrency tests. |
-| FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; avatar upload/remove and change-password are also mounted. |
+| FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; profile save now uses a clear pristine-state guard, password requirements are shown before submit, avatar upload/remove actions provide explicit success feedback, and avatar removal requires confirmation. |
 | FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI, and the mounted app now refreshes authenticated sessions proactively while idle. |
 | FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
 | FR-AU-009 | Implemented   | A1, A8   | Email verification route/page are mounted in backend and frontend.            |
 | FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI.          |
 | FR-AU-011 | Implemented   | A1, A8   | Authenticated change-password flow is mounted in backend and profile UI, with standard success toast feedback on save. |
 | FR-AU-012 | Implemented   | A1, A8   | Avatar upload/remove routes are mounted, the frontend now sends real multipart uploads, profile UI handles client-side validation, upload failures surface safe user-facing errors, and returned avatar URLs render in both profile and sidebar UI. |
-| FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI, with visible save confirmation and stable optimistic toggle behavior. |
+| FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI, with visible save confirmation, stable optimistic toggle behavior, and grouped permission controls by user intent. |
 
 ### 3.1b Organization Management
 
