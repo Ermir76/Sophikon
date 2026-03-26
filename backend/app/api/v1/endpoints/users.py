@@ -2,6 +2,7 @@
 User profile endpoints.
 """
 
+import asyncio
 from pathlib import Path
 from typing import Annotated
 
@@ -52,7 +53,7 @@ def _safe_media_path(relative_path: Path) -> Path | None:
     return candidate
 
 
-def _delete_local_avatar_if_managed(avatar_url: str | None) -> None:
+async def _delete_local_avatar_if_managed(avatar_url: str | None) -> None:
     """
     Delete existing avatar file when it is managed by local media storage.
     """
@@ -62,8 +63,8 @@ def _delete_local_avatar_if_managed(avatar_url: str | None) -> None:
     absolute_path = _safe_media_path(relative_path)
     if absolute_path is None:
         return
-    if absolute_path.exists():
-        absolute_path.unlink(missing_ok=True)
+    if await asyncio.to_thread(absolute_path.exists):
+        await asyncio.to_thread(absolute_path.unlink, True)
 
 
 @router.patch("/me", response_model=UserResponse)
@@ -104,9 +105,9 @@ async def upload_avatar(
     avatar_dir = get_avatar_directory()
     filename = f"{user.id}_{uuid7()}{extension}"
     avatar_path = avatar_dir / filename
-    avatar_path.write_bytes(file_bytes)
+    await asyncio.to_thread(avatar_path.write_bytes, file_bytes)
 
-    _delete_local_avatar_if_managed(user.avatar_url)
+    await _delete_local_avatar_if_managed(user.avatar_url)
     relative_path = avatar_path.relative_to(get_media_root())
     avatar_url = build_media_url(relative_path)
 
@@ -154,7 +155,7 @@ async def delete_avatar(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_active_user)],
 ):
-    _delete_local_avatar_if_managed(user.avatar_url)
+    await _delete_local_avatar_if_managed(user.avatar_url)
     updated = await auth_service.update_user_profile(
         db,
         user=user,

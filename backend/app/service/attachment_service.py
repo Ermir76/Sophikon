@@ -2,6 +2,7 @@
 Task attachment business logic.
 """
 
+import asyncio
 import re
 from pathlib import Path
 from uuid import UUID
@@ -89,7 +90,7 @@ async def create_task_attachment(
         raise InvalidOperationError("Invalid attachment storage path")
 
     absolute_path.parent.mkdir(parents=True, exist_ok=True)
-    absolute_path.write_bytes(file_bytes)
+    await asyncio.to_thread(absolute_path.write_bytes, file_bytes)
 
     try:
         attachment = await attachment_repo.create(
@@ -108,9 +109,8 @@ async def create_task_attachment(
         await db.refresh(attachment)
         return attachment
     except Exception:
-        # Best effort cleanup to avoid orphaned private files on transaction failure.
-        if absolute_path.exists():
-            absolute_path.unlink(missing_ok=True)
+        if await asyncio.to_thread(absolute_path.exists):
+            await asyncio.to_thread(absolute_path.unlink, True)
         raise
 
 
@@ -133,8 +133,8 @@ async def delete_task_attachment(
     attachment: Attachment,
 ) -> None:
     absolute_path = resolve_attachment_path(attachment.storage_path)
-    if absolute_path and absolute_path.exists():
-        absolute_path.unlink(missing_ok=True)
+    if absolute_path and await asyncio.to_thread(absolute_path.exists):
+        await asyncio.to_thread(absolute_path.unlink, True)
 
     await attachment_repo.soft_delete(db, attachment=attachment)
     await db.commit()
