@@ -92,16 +92,34 @@ Status: `DONE`
 
 ---
 
-### UX-05 — Visual consistency polish pass (Stretch)
+### FIX-17 — AI service mock-provider tests fail in live mode (Stretch)
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Normalize non-standard tiny text values to design-scale tokens
-- [ ] Unify spacing rhythm in profile/member pages
-- [ ] Rationalize badge/stat opacity and color usage
-- [ ] Ensure notification dropdown width is responsive on narrow screens
+- [x] Add `fake_complete` monkeypatch for `_complete_from_service` in `test_estimate_for_project_with_mock_provider`
+- [x] Add `fake_complete` monkeypatch for `_complete_from_service` in `test_suggestions_for_project_with_mock_provider`
+- [x] Verify all 17 ai_service tests pass without live AI service
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Fake payloads match `AIEstimateItem` and `AISuggestionItem` schemas exactly; same pattern as existing mocked tests.
+
+---
+
+### UX-05 — Visual consistency polish pass (Stretch)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Normalize non-standard tiny text values to design-scale tokens
+- [x] Unify spacing rhythm in profile/member pages
+- [x] Rationalize badge/stat opacity and color usage
+- [x] Ensure notification dropdown width is responsive on narrow screens
 
 #### Notes
 

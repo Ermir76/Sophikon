@@ -18,6 +18,18 @@ All code changes are documented here with explanations before they are applied.
 
 **Why:** S10 UX-04 targeted profile settings friction where actions looked available when nothing changed, password rules were only discoverable after validation errors, destructive avatar actions lacked explicit confirmation, and technical labels reduced clarity. The update improves user confidence and reduces accidental actions without changing backend contracts.
 
+### UX-05 - Visual consistency polish across profile, members, and notifications
+
+**What:** Normalized tiny one-off text sizes to scale tokens (`text-xs`) in organization/member and notification surfaces. Unified spacing rhythm in `ProfilePage` form sections and settings blocks. Rationalized role badge density/opacity in `MembersTable` and normalized organization stats-card spacing/padding in `OrgMembersPage`. Updated notification dropdown width to be responsive on narrow screens (`w-80 sm:w-96`) while preserving existing interaction behavior.
+
+**Why:** S10 stretch `UX-05` was intended as a visual-consistency pass after core UX blockers were fixed. This pass removes drift from ad-hoc sizing/spacing rules and improves small-screen usability without changing product behavior or backend contracts.
+
+### FIX-17 - Stabilize mock-provider AI service tests in live mode
+
+**What:** Updated AI service mock-provider tests to monkeypatch `_complete_from_service` with deterministic fake responses in both estimation and suggestion test paths, instead of letting tests hit live-mode provider validation. Verified the ai-service unit suite runs without external provider dependencies for these cases.
+
+**Why:** Mock-provider tests were failing in live mode because they patched provider catalog state but still reached `_complete_from_service`, which rejected `provider: "mock"` in real service flow. This fix keeps the tests isolated and removes the push-blocking false failure.
+
 ### FIX-14 / FIX-06 / FIX-08 - Finish invitation review flow and close the remaining related QA regressions
 
 **What:** Finished the project-invitation review flow so bell notifications hide the inline message preview, `Review` opens the accept page in explicit review mode, the page renders the invitation title/message before acceptance, and focused tests now cover review mode, fallback mode, and the notification card behavior. Added a proactive authenticated-app refresh timer so idle sessions renew through `/auth/refresh` before the access token expires instead of dropping users to `/login` after inactivity. Stabilized the organization-members role update UX by showing a fixed row-level saving indicator and freezing role actions while a role change is in flight. On the backend, invitation acceptance now resolves the linked `invitation_received` notification and notification listing/unread counts filter out non-actionable invitation rows, so accepted invites disappear cleanly from the bell and the unread badge stays correct. Added focused backend/frontend coverage for all of the above.

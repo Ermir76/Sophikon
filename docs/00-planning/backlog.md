@@ -69,11 +69,14 @@ Points scale:
 | FIX-12 | TECH | Removed project member sees generic error instead of clear message (#37) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
 | FIX-13 | TECH | WebSocket hooks unstable effect dependencies — double-connect (#40) | P1 | 1 | - | V1.0 | DONE | wwwer | S08 |
 | FIX-14 | TECH | Invitation review page UX — review-before-accept flow with invitation details | P1 | 2 | FIX-10 | V1.0 | DONE | wwwer | S09 |
-| UX-01 | TECH | Invitation flow blockers + recovery | P0 | 2 | FIX-14 | V1.0 | IN_PROGRESS | wwwer | S10 |
-| UX-02 | TECH | Notification center IA + accessibility baseline | P1 | 2 | UX-01 | V1.0 | IN_PROGRESS | wwwer | S10 |
-| UX-03 | TECH | Membership actions safety + copy clarity | P1 | 2 | FIX-08 | V1.0 | IN_PROGRESS | wwwer | S10 |
-| UX-04 | TECH | Profile settings usability batch | P1 | 2 | FIX-04, FIX-05 | V1.0 | IN_PROGRESS | wwwer | S10 |
-| UX-05 | TECH | Visual consistency polish pass (stretch) | P2 | 2 | UX-01, UX-02, UX-03, UX-04 | V1.0 | READY | wwwer | S10 stretch |
+| UX-01 | TECH | Invitation flow blockers + recovery | P0 | 2 | FIX-14 | V1.0 | DONE | wwwer | S10 |
+| UX-02 | TECH | Notification center IA + accessibility baseline | P1 | 2 | UX-01 | V1.0 | DONE | wwwer | S10 |
+| UX-03 | TECH | Membership actions safety + copy clarity | P1 | 2 | FIX-08 | V1.0 | DONE | wwwer | S10 |
+| UX-04 | TECH | Profile settings usability batch | P1 | 2 | FIX-04, FIX-05 | V1.0 | DONE | wwwer | S10 |
+| UX-05 | TECH | Visual consistency polish pass (stretch) | P2 | 2 | UX-01, UX-02, UX-03, UX-04 | V1.0 | DONE | wwwer | S10 stretch |
+| FIX-15 | TECH | Blocking sync file I/O in async handlers — avatars + attachments (#42) | P3 | 1 | - | V1.1 | READY | - | S10 stretch |
+| FIX-16 | TECH | AI preferences update bypasses service layer (#43) | P3 | 1 | - | V1.1 | READY | - | S10 stretch |
+| FIX-17 | TECH | AI service mock-provider tests fail in live mode — mock _complete_from_service | P2 | 1 | - | V1.0 | DONE | wwwer | S10 stretch |
 
 ---
 
@@ -118,16 +121,18 @@ Points scale:
 | FIX-06    | Silent token refresh not proactive — user kicked to /login after idle (#26)                         | 2      | S09    |
 | FIX-08    | Org member role change shows layout glitch (#33)                                                    | 1      | S09    |
 | FIX-14    | Invitation review page UX — review-before-accept flow with invitation details                        | 2      | S09    |
+| UX-01     | Invitation flow blockers + recovery                                                                    | 2      | S10    |
+| UX-02     | Notification center IA + accessibility baseline                                                        | 2      | S10    |
+| UX-03     | Membership actions safety + copy clarity                                                               | 2      | S10    |
+| UX-04     | Profile settings usability batch                                                                       | 2      | S10    |
+| UX-05     | Visual consistency polish pass (stretch)                                                               | 2      | S10    |
+| FIX-17    | AI service mock-provider tests fail in live mode — mock _complete_from_service                        | 1      | S10    |
 
 ### V1.0 (Remaining Backlog)
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| UX-01   | Invitation flow blockers + recovery              | 2      | IN_PROGRESS | S10 |
-| UX-02   | Notification center IA + accessibility baseline  | 2      | IN_PROGRESS | S10 |
-| UX-03   | Membership actions safety + copy clarity         | 2      | IN_PROGRESS | S10 |
-| UX-04   | Profile settings usability batch                 | 2      | IN_PROGRESS | S10 |
-| UX-05   | Visual consistency polish pass (stretch)         | 2      | READY       | S10 stretch |
+| FIX-07   | Password reset allows reuse of previous password (#28) | 1      | READY | - |
 
 ### V1.1 (Planned)
 

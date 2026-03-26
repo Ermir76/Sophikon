@@ -32,17 +32,20 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | Item ID | Title | Trigger to pull in |
 | ------- | ----- | ------------------ |
 | UX-05 | Visual consistency polish pass (type scale, spacing, badge/opacity normalization) | Pull in only if UX-01..UX-04 are completed and reviewed |
+| FIX-15 | Blocking sync file I/O in async handlers — avatars + attachments (#42) | Pull in if stretch capacity remains after UX-05 |
+| FIX-16 | AI preferences update bypasses service layer (#43) | Pull in if stretch capacity remains after UX-05 |
+| FIX-17 | AI service mock-provider tests fail in live mode — need to mock _complete_from_service | Pull in first — blocks git push |
 
 ---
 
-## Sprint Review (Fill at end)
+## Sprint Review
 
 - Planned points: `8`
-- Completed points: `0`
+- Completed points: `11`
 - Carry-over points: `0`
-- Main wins: -
-- Main misses: -
-- Process changes for next sprint: -
+- Main wins: Closed all four committed UX batches (`UX-01..UX-04`) and both stretch items (`UX-05`, `FIX-17`) with focused test coverage and frontend visual/accessibility cleanup in invitation, notifications, members, and profile flows.
+- Main misses: Local pre-commit in `main` currently runs `ProfilePage.test.tsx` with baseline failures unrelated to S10 doc-sync scope, which added friction to final merge choreography.
+- Process changes for next sprint: Finish closeout by syncing `workboard`, `sprint-plan`, and `backlog` in the same pass before final handoff to avoid status drift.
 
 ---
 
@@ -420,6 +423,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
+| S10    | 2026-03-26 -> 2026-03-28 | 8       | 11        | 0          | Shipped UX remediation groups `UX-01..UX-04` plus stretch `UX-05` and `FIX-17`; invitation/notification/member/profile flows were hardened and visual consistency pass completed. |
 | S08    | 2026-03-25 -> 2026-03-25 | 5       | 5         | 0          | Closed all five S08 QA fixes: Vite WS proxy, invite accept page, org switcher invalidation, removed-member error state, and WebSocket hook stabilization |
 | S07    | 2026-03-24 -> 2026-03-24 | 3       | 5         | 0          | Closed three committed QA fixes plus stretch `FIX-04` and `FIX-05`: avatar upload/render flow, reusable soft-deleted org slugs, personal-org fallback after deleting the active org, password-change success toast, and stable AI preference save feedback |
 | S06    | 2026-04-08 -> 2026-04-21 | 3       | 3         | 0          | Shipped KB-09 AI sprint health summary with manual refresh and kanban card drill-in |
