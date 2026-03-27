@@ -11,6 +11,9 @@ vi.mock("@/features/tasks", () => ({
     useUpdateTask: () => ({ mutate: mockUpdateMutate }),
     useReorderTask: () => ({ mutate: mockReorderMutate }),
 }));
+vi.mock("@/features/projects", () => ({
+    useProject: () => ({ data: { settings: { status_thresholds: { IN_REVIEW: 70 } } } }),
+}));
 
 function makeTask(id: string, status: TaskStatus, parentTaskId?: string): Task {
     return {
@@ -142,7 +145,7 @@ describe("useKanbanDrag", () => {
         });
 
         expect(mockUpdateMutate).toHaveBeenCalledWith(
-            { taskId: "task-1", data: { status: "IN_PROGRESS" } },
+            { taskId: "task-1", data: { status: "IN_PROGRESS", percent_complete: 1 } },
             expect.objectContaining({ onError: expect.any(Function) }),
         );
     });

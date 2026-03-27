@@ -49,6 +49,7 @@ const projectSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   color: z.string().nullable().optional(),
+  review_threshold: z.coerce.number().int().min(1).max(99),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -76,6 +77,7 @@ export default function ProjectSettingsPage() {
     defaultValues: {
       name: "",
       description: "",
+      review_threshold: 80,
     },
   });
 
@@ -85,6 +87,10 @@ export default function ProjectSettingsPage() {
         name: project.name,
         description: project.description || "",
         color: project.color ?? null,
+        review_threshold:
+          typeof project.settings?.status_thresholds?.IN_REVIEW === "number"
+            ? project.settings.status_thresholds.IN_REVIEW
+            : 80,
       });
     }
   }, [project, form]);
@@ -92,7 +98,16 @@ export default function ProjectSettingsPage() {
   const onSubmit = async (data: ProjectFormValues) => {
     if (!projectId) return;
     try {
-      await updateProjectMutation.mutateAsync(data);
+      await updateProjectMutation.mutateAsync({
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        settings: {
+          status_thresholds: {
+            IN_REVIEW: data.review_threshold,
+          },
+        },
+      });
       toast.success("Project updated", {
         description: "Your project settings have been saved.",
       });
@@ -204,6 +219,20 @@ export default function ProjectSettingsPage() {
                             value={field.value ?? null}
                             onChange={field.onChange}
                           />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="review_threshold"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Review Threshold (%)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} max={99} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

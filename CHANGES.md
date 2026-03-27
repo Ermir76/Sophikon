@@ -10,6 +10,14 @@ All code changes are documented here with explanations before they are applied.
 
 ## 2026-03-25 - Sprint S09: Invitation Review, Auth Idle Refresh, and Org Role UX
 
+## 2026-03-26 - Sprint S11: FEAT-01 Percent-Driven Task Status
+
+### FEAT-01 - Derive task status from progress percent with project-level review threshold
+
+**What:** Added backend status/percent derivation utilities in `task_service.py` and wired them into both single-task (`update_task`) and bulk (`bulk_update_tasks`) mutation paths so status and `percent_complete` stay consistent. Added `status_thresholds` to project settings schema/model defaults and created Alembic migration `6f2c1d9a8b4e_status_thresholds_and_task_status_backfill.py` to backfill existing task statuses from `percent_complete` and ensure settings include threshold defaults. Updated frontend kanban drag updates to send `percent_complete` with status transitions, preserved `status_thresholds` in kanban settings patch flow, added review-threshold input to project settings UI, and extended focused backend/frontend tests for threshold behavior and settings payloads.
+
+**Why:** S11 FEAT-01 targets contradictory task state where status and progress percentage could drift independently across board/list/gantt flows. Deriving status from percent (with configurable review threshold and explicit BACKLOG↔TODO 0% handling) creates a single progress source of truth.
+
 ## 2026-03-26 - Sprint S10: UX-04 Profile Settings Usability Batch
 
 ### UX-04 - Improve account settings clarity and safety in ProfilePage

@@ -453,6 +453,141 @@ async def test_update_project_accepts_kanban_wip_limits(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_update_project_accepts_status_thresholds(client: AsyncClient):
+    """Update accepts bounded status_thresholds keys in settings payload."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_set_status_threshold@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Set Threshold",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Upd Threshold", "slug": "org-upd-threshold"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Threshold",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={
+            "settings": {
+                "status_thresholds": {
+                    "IN_PROGRESS": 1,
+                    "IN_REVIEW": 85,
+                    "DONE": 100,
+                }
+            }
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["settings"]["status_thresholds"] == {
+        "IN_PROGRESS": 1,
+        "IN_REVIEW": 85,
+        "DONE": 100,
+    }
+
+
+@pytest.mark.asyncio
+async def test_update_project_merges_partial_settings_patch(client: AsyncClient):
+    """Update settings with one key preserves existing settings keys."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_set_merge@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Set Merge",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Upd Merge", "slug": "org-upd-merge"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Merge",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+            "settings": {
+                "auto_calculate": False,
+                "status_thresholds": {
+                    "IN_PROGRESS": 1,
+                    "IN_REVIEW": 85,
+                    "DONE": 100,
+                },
+            },
+        },
+    )
+    assert proj_resp.status_code == 201, proj_resp.text
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"settings": {"auto_calculate": True}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["settings"]["auto_calculate"] is True
+    assert response.json()["settings"]["status_thresholds"] == {
+        "IN_PROGRESS": 1,
+        "IN_REVIEW": 85,
+        "DONE": 100,
+    }
+
+
+@pytest.mark.asyncio
+async def test_update_project_rejects_in_review_threshold_of_100(client: AsyncClient):
+    """Update rejects IN_REVIEW threshold >= 100 (422)."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_set_status_threshold_invalid@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Set Threshold Invalid",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Upd Threshold Invalid", "slug": "org-upd-threshold-invalid"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Threshold Invalid",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={
+            "settings": {
+                "status_thresholds": {
+                    "IN_PROGRESS": 1,
+                    "IN_REVIEW": 100,
+                    "DONE": 100,
+                }
+            }
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_update_project_success_manager(
     client: AsyncClient, session: AsyncSession, setup_roles
 ):

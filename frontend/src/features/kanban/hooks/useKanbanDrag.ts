@@ -3,6 +3,7 @@ import { useSensors, useSensor, PointerSensor } from "@dnd-kit/core";
 import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
+import { useProject } from "@/features/projects";
 import { useReorderTask, useUpdateTask } from "@/features/tasks";
 import { getErrorMessage } from "@/shared/lib/errors";
 import type { Task } from "@/features/tasks";
@@ -18,6 +19,20 @@ const TASK_STATUS_VALUES: readonly TaskStatus[] = [
 
 function isTaskStatus(value: string): value is TaskStatus {
     return TASK_STATUS_VALUES.includes(value as TaskStatus);
+}
+
+function normalizeReviewThreshold(rawThreshold: unknown): number {
+    if (typeof rawThreshold !== "number" || !Number.isFinite(rawThreshold)) {
+        return 80;
+    }
+    return Math.max(1, Math.min(Math.trunc(rawThreshold), 99));
+}
+
+function percentForStatus(status: TaskStatus, reviewThreshold: number): number {
+    if (status === "BACKLOG" || status === "TODO") return 0;
+    if (status === "IN_PROGRESS") return 1;
+    if (status === "IN_REVIEW") return reviewThreshold;
+    return 100;
 }
 
 function buildOptimisticTaskList(
@@ -42,8 +57,10 @@ interface KanbanDragParams {
 
 export function useKanbanDrag({ projectId, allTasks, allLeafTasksByStatus }: KanbanDragParams) {
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const { data: project } = useProject(projectId);
     const { mutate } = useUpdateTask(projectId);
     const reorderTask = useReorderTask(projectId);
+    const reviewThreshold = normalizeReviewThreshold(project?.settings?.status_thresholds?.IN_REVIEW);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -75,7 +92,13 @@ export function useKanbanDrag({ projectId, allTasks, allLeafTasksByStatus }: Kan
 
             if (newStatus !== currentStatus) {
                 mutate(
-                    { taskId: activeId, data: { status: newStatus } },
+                    {
+                        taskId: activeId,
+                        data: {
+                            status: newStatus,
+                            percent_complete: percentForStatus(newStatus, reviewThreshold),
+                        },
+                    },
                     { onError: (error) => toast.error(getErrorMessage(error)) },
                 );
                 return;
@@ -117,7 +140,7 @@ export function useKanbanDrag({ projectId, allTasks, allLeafTasksByStatus }: Kan
                 { onError: (error) => toast.error(getErrorMessage(error)) },
             );
         },
-        [allLeafTasksByStatus, allTasks, mutate, reorderTask],
+        [allLeafTasksByStatus, allTasks, mutate, reorderTask, reviewThreshold],
     );
 
     return { sensors, activeTaskId, handleDragStart, handleDragCancel, handleDragEnd };

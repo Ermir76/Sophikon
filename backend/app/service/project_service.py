@@ -24,6 +24,18 @@ def _sanitize_settings_payload(settings: object) -> object:
     return {key: value for key, value in settings.items() if value is not None}
 
 
+def _merge_settings(
+    current: dict[str, Any], incoming: dict[str, Any]
+) -> dict[str, Any]:
+    merged = {**current}
+    for key, val in incoming.items():
+        if isinstance(val, dict) and isinstance(merged.get(key), dict):
+            merged[key] = {**merged[key], **val}
+        else:
+            merged[key] = val
+    return merged
+
+
 async def list_projects(
     db: AsyncSession,
     user: User,
@@ -116,7 +128,8 @@ async def update_project(
     """Update a project with partial data."""
     before = {field: getattr(project, field) for field in patch}
     if "settings" in patch:
-        patch = {**patch, "settings": _sanitize_settings_payload(patch["settings"])}
+        incoming = _sanitize_settings_payload(patch["settings"])
+        patch = {**patch, "settings": _merge_settings(project.settings, incoming)}
     for field, value in patch.items():
         setattr(project, field, value)
 

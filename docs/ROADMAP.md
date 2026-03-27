@@ -384,6 +384,7 @@ Features evaluated during development — not scheduled, but worth revisiting in
 | Feature | Context | Reconsider When |
 | ------- | ------- | --------------- |
 | GET invitation details endpoint (`GET /api/v1/projects/members/invitations/{id}`) | ADR-009: currently passing invitation data via route state, which is lost on refresh. A dedicated endpoint would let the accept page fetch details for any entry point (email, direct URL, notification). | When enhancing the email invitation flow or if refresh-loss becomes a UX complaint. |
+| Project scheduling settings UI (`hours_per_day`, `hours_per_week`, `days_per_month`, `first_day_of_week`, `default_task_type`, `new_tasks_effort_driven`) | These fields exist in `ProjectSettingsPatch` and are used by the scheduling engine, but have no UI controls. Backend defaults are used. `ProjectSettingsPage` only exposes `review_threshold`. | When adding a "Scheduling" tab to Project Settings — backend schema and merge logic are already ready. |
 
 ---
 

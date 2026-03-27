@@ -5,6 +5,7 @@ Handles listing, creating, updating, and soft-deleting tasks.
 """
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -41,6 +42,12 @@ _SCHEDULE_FIELDS = {
     "calendar_id",
 }
 
+_DEFAULT_STATUS_THRESHOLDS = {
+    TaskStatus.IN_PROGRESS.value: 1,
+    TaskStatus.IN_REVIEW.value: 80,
+    TaskStatus.DONE.value: 100,
+}
+
 
 async def _load_task_comment_counts(
     db: AsyncSession,
@@ -57,6 +64,88 @@ def _resolve_hours_per_day(settings: object) -> int:
     if isinstance(value, int) and value > 0:
         return value
     return 8
+
+
+def _clamp_threshold(value: object, *, fallback: int) -> int:
+    if isinstance(value, int):
+        parsed = value
+    elif isinstance(value, float):
+        parsed = int(value)
+    else:
+        return fallback
+    return max(1, min(parsed, 100))
+
+
+def resolve_status_thresholds(settings: object) -> dict[str, int]:
+    thresholds = dict(_DEFAULT_STATUS_THRESHOLDS)
+    if isinstance(settings, dict):
+        raw_thresholds = settings.get("status_thresholds")
+        if isinstance(raw_thresholds, dict):
+            thresholds[TaskStatus.IN_PROGRESS.value] = _clamp_threshold(
+                raw_thresholds.get(TaskStatus.IN_PROGRESS.value),
+                fallback=thresholds[TaskStatus.IN_PROGRESS.value],
+            )
+            thresholds[TaskStatus.IN_REVIEW.value] = _clamp_threshold(
+                raw_thresholds.get(TaskStatus.IN_REVIEW.value),
+                fallback=thresholds[TaskStatus.IN_REVIEW.value],
+            )
+            thresholds[TaskStatus.DONE.value] = _clamp_threshold(
+                raw_thresholds.get(TaskStatus.DONE.value),
+                fallback=thresholds[TaskStatus.DONE.value],
+            )
+
+    thresholds[TaskStatus.IN_REVIEW.value] = max(
+        thresholds[TaskStatus.IN_PROGRESS.value],
+        thresholds[TaskStatus.IN_REVIEW.value],
+    )
+    thresholds[TaskStatus.IN_REVIEW.value] = min(
+        thresholds[TaskStatus.IN_REVIEW.value],
+        99,
+    )
+    thresholds[TaskStatus.DONE.value] = max(
+        thresholds[TaskStatus.IN_REVIEW.value],
+        thresholds[TaskStatus.DONE.value],
+    )
+    return thresholds
+
+
+def _to_percent(value: Any) -> Decimal:
+    if isinstance(value, Decimal):
+        return value
+    return Decimal(str(value))
+
+
+def derive_status_from_percent(
+    percent_complete: Any,
+    thresholds: dict[str, int],
+    *,
+    current_status: TaskStatus,
+    explicit_zero_status: TaskStatus | None = None,
+) -> TaskStatus:
+    percent = min(max(_to_percent(percent_complete), Decimal("0")), Decimal("100"))
+
+    if percent == 0:
+        if explicit_zero_status in {TaskStatus.BACKLOG, TaskStatus.TODO}:
+            return explicit_zero_status
+        if current_status == TaskStatus.BACKLOG:
+            return TaskStatus.BACKLOG
+        return TaskStatus.TODO
+
+    if percent >= Decimal(thresholds[TaskStatus.DONE.value]):
+        return TaskStatus.DONE
+    if percent >= Decimal(thresholds[TaskStatus.IN_REVIEW.value]):
+        return TaskStatus.IN_REVIEW
+    return TaskStatus.IN_PROGRESS
+
+
+def derive_percent_from_status(status: TaskStatus, thresholds: dict[str, int]) -> float:
+    if status in {TaskStatus.BACKLOG, TaskStatus.TODO}:
+        return 0.0
+    if status == TaskStatus.IN_PROGRESS:
+        return float(thresholds[TaskStatus.IN_PROGRESS.value])
+    if status == TaskStatus.IN_REVIEW:
+        return float(thresholds[TaskStatus.IN_REVIEW.value])
+    return float(thresholds[TaskStatus.DONE.value])
 
 
 def _compute_initial_finish_date(
@@ -298,6 +387,21 @@ async def update_task(
     activity_context: ActivityContext | None = None,
 ) -> Task:
     """Update a task with partial data."""
+    thresholds = resolve_status_thresholds(project.settings if project else {})
+    explicit_zero_status = patch.get("status") if "status" in patch else None
+    if "percent_complete" in patch:
+        patch["status"] = derive_status_from_percent(
+            patch["percent_complete"],
+            thresholds,
+            current_status=task.status,
+            explicit_zero_status=explicit_zero_status,
+        )
+    elif "status" in patch and not task.is_summary:
+        patch["percent_complete"] = derive_percent_from_status(
+            patch["status"],
+            thresholds,
+        )
+
     if "calendar_id" in patch and patch["calendar_id"] is not None:
         await calendar_service.ensure_project_or_global_calendar(
             db,

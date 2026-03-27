@@ -6,6 +6,127 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S11
+**Dates:** 2026-03-27 -> 2026-03-29
+**Goal:** Percent-driven status — unify task status as a derived view of percent_complete with configurable review threshold per project
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2 days`
+- Planned points capacity: `7`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| FEAT-01 | Percent-driven status: derive task status from percent_complete with configurable review threshold | 5 | Status and percent_complete are fully independent — kanban, Gantt, and task list can show contradictory state; no competitor unifies these | - | `update_task` auto-derives status from percent using project-level thresholds; kanban drag sets `percent_complete` to column entry value; project settings UI exposes review threshold (default 80%); BACKLOG↔TODO remains manual; Gantt tooltip and task list badge read derived status; tests cover all threshold transitions |
+| FEAT-02 | Percent-driven status: summary task status auto-derived from rolled-up percent | 2 | Summary tasks already roll up percent from children but status stays stale | FEAT-01 | `apply_summary_rollup` derives status from rolled-up percent using same thresholds; parent card on kanban auto-moves when children complete; tests cover rollup-driven status transitions |
+
+**Total committed points:** `7`
+
+### Execution Update
+
+- FEAT-01: `DONE` (status/percent derivation, project thresholds, migration backfill, and focused backend/frontend tests complete)
+- FEAT-02: `NOT_STARTED`
+- Progress: `5/7` points complete
+
+### Stretch (Optional)
+
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| FIX-07 | Password reset allows reuse of previous password (#28) | Pull in if FEAT-01 + FEAT-02 ship early |
+
+### Risks and Blockers
+
+| Risk/Blocker | Impact | Mitigation | Owner |
+| ------------ | ------ | ---------- | ----- |
+| Kanban drag now sets percent instead of status — may confuse users who expect direct status control | UX friction, support tickets | Show percent change in card after drop; keep BACKLOG↔TODO as manual override for the 0% edge case | wwwer |
+| Existing tasks may have status/percent mismatch after migration | Inconsistent board on first load | Alembic migration backfills status from current percent_complete using default thresholds | wwwer |
+| Teams with unusual review workflows may need non-default threshold | Feature feels rigid if only one threshold | Expose threshold in project settings with clear label and sensible default (80%) | wwwer |
+
+---
+
+## Next Sprint (Draft)
+
+**Sprint ID:** S12
+**Dates:** TBD (after S11)
+**Goal:** Agent platform hardening — close safety gaps identified in autonomous-ui-agent-blueprint audit: policy engine, kill switch, post-condition verification, and UI action completion
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2-3 days`
+- Planned points capacity: `7`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| AGT-01 | Agent policy engine: centralized permission and role check before every tool execution | 5 | Any project member who can call `/chat` can trigger any write tool — no role-based enforcement at tool level; agent promises safety tiers but only enforces destructive-tier; shipping more autonomy features on a foundation with no policy layer is the "2+5+8 without finishing the equation" problem | - | Centralized `check_tool_policy(tool_name, ctx)` called before every `execute_tool` in executor; policy checks action allowlist, user role (viewer can't write), project-scoped ID ownership; policy returns `allow / allow_with_approval / deny`; denied tools return error to LLM; tests cover viewer-blocked, member-allowed, deny-unknown-tool, scope-violation |
+| AGT-02 | Agent kill switch: per-project and per-org flag to disable agent execution | 2 | No way to turn off the agent for a project if it misbehaves or user doesn't want it; basic trust requirement before expanding autonomy | - | `agent_enabled` boolean in `project.settings` (default true); org-level `agent_enabled` in `organization.settings` (default true); `prepare_chat_stream` rejects with clear error if either flag is false; project settings UI exposes toggle; tests cover both flags |
+
+**Total committed points:** `7`
+
+### Stretch (Optional)
+
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| AGT-03 | Agent post-condition verification: validate tool results match plan intent before continuing | Pull in if AGT-01 + AGT-02 ship early |
+| AGT-04 | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | Pull in if stretch capacity remains |
+
+### Risks and Blockers
+
+| Risk/Blocker | Impact | Mitigation | Owner |
+| ------------ | ------ | ---------- | ----- |
+| Policy engine adds latency to every tool call | Perceived slowness in agent execution | Keep policy check as a pure in-memory function (role lookup from ctx, no extra DB query); benchmark before/after | wwwer |
+| Defining role→tool mapping may conflict with existing endpoint-level RBAC | Duplicate or contradictory permission logic | Policy engine reads the same role that the API layer uses; tool policy is additive (agent-specific restrictions), not a replacement for endpoint RBAC | wwwer |
+| Kill switch may confuse users if agent features are visible but disabled | UX friction — user clicks AI chat and gets error | When disabled, hide or grey out AI panel entry point; show clear "AI agent is disabled for this project" message | wwwer |
+| Post-condition verification (stretch) requires defining expected outcomes per tool category | Design effort may be larger than estimated | Start with write tools only (verify entity exists after create, verify field changed after update); skip read tools | wwwer |
+
+### Design Notes
+
+**Policy engine architecture:**
+```
+executor.py → check_tool_policy(tool_name, tool_input, ctx)
+                ├─ action_allowlist check (is this tool allowed?)
+                ├─ role_check (does user's project role permit this tier?)
+                ├─ scope_check (are all IDs in tool_input within ctx.project_id?)
+                └─ returns: allow | allow_with_approval | deny
+```
+
+**Tool tier → role mapping (default policy):**
+
+| Tool tier | Viewer | Member | Manager | Owner |
+|-----------|--------|--------|---------|-------|
+| Read | allow | allow | allow | allow |
+| UI | allow | allow | allow | allow |
+| Write | deny | allow | allow | allow |
+| Destructive | deny | deny | allow_with_approval | allow_with_approval |
+
+**Kill switch data model:**
+- `project.settings.agent_enabled` (boolean, default true)
+- `organization.settings.agent_enabled` (boolean, default true)
+- Org-level false overrides project-level true (org wins)
+- Check happens once at `prepare_chat_stream` entry — not per-tool
+
+**Post-condition verification (stretch — design sketch):**
+
+| Tool category | Verification |
+|---------------|-------------|
+| create_task | Returned ID exists and name matches input |
+| update_task | Changed fields match patch values |
+| delete_task | Task marked as deleted |
+| add_dependency | Dependency exists between specified tasks |
+| assign_resource | Assignment exists for task+resource pair |
+| read tools | Skip (no mutation to verify) |
+
+On mismatch: log warning, return error result to LLM, let LLM decide to retry or escalate. Max 1 retry per tool call.
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S10
 **Dates:** 2026-03-26 -> 2026-03-28
 **Goal:** Execute grouped UX remediation from `docs/06-qa/ux-review-2026-03-26.md` with focus on flow blockers, accessibility, and action clarity
@@ -36,9 +157,7 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | FIX-16 | AI preferences update bypasses service layer (#43) | Pull in if stretch capacity remains after UX-05 |
 | FIX-17 | AI service mock-provider tests fail in live mode — need to mock _complete_from_service | Pull in first — blocks git push |
 
----
-
-## Sprint Review
+### Sprint Review
 
 - Planned points: `8`
 - Completed points: `11`
@@ -423,6 +542,8 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
+| S12    | TBD                      | 7       | -         | -          | Agent platform hardening: policy engine, kill switch, post-condition verification, UI action handlers |
+| S11    | 2026-03-27 -> 2026-03-29 | 7       | -         | -          | Percent-driven status: derive task status from percent_complete with configurable review threshold |
 | S10    | 2026-03-26 -> 2026-03-28 | 8       | 11        | 0          | Shipped UX remediation groups `UX-01..UX-04` plus stretch `UX-05` and `FIX-17`; invitation/notification/member/profile flows were hardened and visual consistency pass completed. |
 | S08    | 2026-03-25 -> 2026-03-25 | 5       | 5         | 0          | Closed all five S08 QA fixes: Vite WS proxy, invite accept page, org switcher invalidation, removed-member error state, and WebSocket hook stabilization |
 | S07    | 2026-03-24 -> 2026-03-24 | 3       | 5         | 0          | Closed three committed QA fixes plus stretch `FIX-04` and `FIX-05`: avatar upload/render flow, reusable soft-deleted org slugs, personal-org fallback after deleting the active org, password-change success toast, and stable AI preference save feedback |

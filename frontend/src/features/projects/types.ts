@@ -1,6 +1,11 @@
 import type { TaskStatus } from "@/features/tasks";
 
 export interface ProjectSettings {
+  status_thresholds?: {
+    IN_PROGRESS?: number;
+    IN_REVIEW?: number;
+    DONE?: number;
+  };
   auto_calculate: boolean;
   hours_per_day: number;
   hours_per_week?: number;

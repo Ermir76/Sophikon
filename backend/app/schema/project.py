@@ -7,7 +7,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import ProjectStatus, ScheduleFrom, TaskStatus, TaskType
 from app.models.project import Project
@@ -28,9 +28,25 @@ class ProjectSettingsPatch(BaseModel):
     default_task_type: TaskType | None = Field(default=None)
     new_tasks_effort_driven: bool | None = Field(default=None)
     auto_calculate: bool | None = Field(default=None)
+    status_thresholds: dict[TaskStatus, Annotated[int, Field(ge=1, le=100)]] | None = (
+        Field(default=None, max_length=3)
+    )
     kanban_wip_limits: dict[TaskStatus, Annotated[int, Field(ge=1, le=999)]] | None = (
         Field(default=None, max_length=5)
     )
+
+    @field_validator("status_thresholds")
+    @classmethod
+    def validate_status_thresholds(
+        cls,
+        value: dict[TaskStatus, int] | None,
+    ) -> dict[TaskStatus, int] | None:
+        if value is None:
+            return value
+        review_threshold = value.get(TaskStatus.IN_REVIEW)
+        if review_threshold is not None and review_threshold >= 100:
+            raise ValueError("IN_REVIEW threshold must be less than 100")
+        return value
 
 
 class ProjectCreate(BaseModel):

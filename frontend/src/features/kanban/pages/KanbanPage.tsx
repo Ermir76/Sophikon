@@ -47,25 +47,9 @@ function normalizeWipLimits(raw: unknown): KanbanWipLimits {
 }
 
 function buildProjectSettingsPatch(
-    settings: Record<string, unknown> | undefined,
     limits: KanbanWipLimits,
 ): ProjectUpdate["settings"] {
     return {
-        hours_per_day: typeof settings?.hours_per_day === "number" ? settings.hours_per_day : undefined,
-        hours_per_week: typeof settings?.hours_per_week === "number" ? settings.hours_per_week : undefined,
-        days_per_month: typeof settings?.days_per_month === "number" ? settings.days_per_month : undefined,
-        first_day_of_week: typeof settings?.first_day_of_week === "number" ? settings.first_day_of_week : undefined,
-        default_task_type:
-            settings?.default_task_type === "FIXED_UNITS"
-            || settings?.default_task_type === "FIXED_DURATION"
-            || settings?.default_task_type === "FIXED_WORK"
-                ? settings.default_task_type
-                : undefined,
-        new_tasks_effort_driven:
-            typeof settings?.new_tasks_effort_driven === "boolean"
-                ? settings.new_tasks_effort_driven
-                : undefined,
-        auto_calculate: typeof settings?.auto_calculate === "boolean" ? settings.auto_calculate : undefined,
         kanban_wip_limits: limits,
     };
 }
@@ -203,10 +187,7 @@ export default function KanbanPage() {
 
         try {
             await updateProject.mutateAsync({
-                settings: buildProjectSettingsPatch(
-                    (project.settings ?? {}) as Record<string, unknown>,
-                    next,
-                ),
+                settings: buildProjectSettingsPatch(next),
             });
         } catch (mutationError) {
             setProjectWipLimits(projectId, previous);

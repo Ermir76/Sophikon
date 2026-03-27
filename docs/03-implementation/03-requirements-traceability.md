@@ -257,7 +257,7 @@ This document records what is evidenced by the current codebase review.
 | --------- | ------------- | -------- | ------------------------------------------------- |
 | FR-KB-001 | Implemented   | A9, A10  | `kanban/` feature module, route, and 5-column board are mounted; column collapse implemented in Phase 5 (`KanbanColumn.tsx` collapsed icon-strip branch + `useKanbanStore.collapsedByProject`). |
 | FR-KB-002 | Implemented   | A4, A10  | `task.status` DB field (BACKLOG/TODO/IN_PROGRESS/IN_REVIEW/DONE), migration, and `KanbanPage` grouping by status all implemented. |
-| FR-KB-003 | Implemented   | A4, A10  | `useKanbanDrag` calls `useUpdateTask` with `{status: newStatus}` via PATCH on drag-end; 6-test suite passes. |
+| FR-KB-003 | Implemented   | A4, A10  | `useKanbanDrag` calls `useUpdateTask` with `{status, percent_complete}` on drag-end, and backend task services now keep `status` and `percent_complete` bidirectionally derived using project-level `status_thresholds` defaults. |
 | FR-KB-004 | Implemented   | A10      | `KanbanCard` shows task name, WBS code, priority badge, deadline date, overdue indicator, progress bar, and comments count. |
 | FR-KB-005 | Implemented   | A10      | `KanbanToolbar` provides text search and priority-filter dropdown; `KanbanPage` filters before grouping. |
 | FR-KB-006 | Implemented   | A9, A10  | `KanbanColumn.tsx` renders a collapsed icon-strip (12-wide, vertical label, task count badge, expand button) when `collapsedByProject[projectId]` includes the column id; `KanbanColumnHeader` collapse button toggles via `useKanbanStore.toggleCollapse`. |

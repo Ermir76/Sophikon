@@ -135,7 +135,12 @@ class Project(Base):
         "first_day_of_week": 1,
         "default_task_type": "FIXED_UNITS",
         "new_tasks_effort_driven": true,
-        "auto_calculate": true
+        "auto_calculate": true,
+        "status_thresholds": {
+            "IN_PROGRESS": 1,
+            "IN_REVIEW": 80,
+            "DONE": 100
+        }
         }'::jsonb"""),
     )
 

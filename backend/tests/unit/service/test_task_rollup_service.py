@@ -4,6 +4,7 @@ import pytest
 from uuid_utils import uuid7
 
 from app.core.exceptions import ValidationError
+from app.models.enums import TaskStatus
 from app.models.task import Task
 from app.service.calendar_utils import DEFAULT_WORK_WEEK
 from app.service.task_rollup_service import (
@@ -11,6 +12,11 @@ from app.service.task_rollup_service import (
     clear_summary_rollup,
     sync_leaf_duration_progress,
     validate_summary_rollup_edit,
+)
+from app.service.task_service import (
+    derive_percent_from_status,
+    derive_status_from_percent,
+    resolve_status_thresholds,
 )
 
 
@@ -475,3 +481,86 @@ def test_apply_summary_rollup_parent_with_mix_of_milestones_and_tasks() -> None:
     assert summary.duration == 1440
     assert summary.percent_complete == 50.0
     assert summary.percent_work_complete == 50.0
+
+
+def test_resolve_status_thresholds_uses_defaults_for_invalid_values() -> None:
+    thresholds = resolve_status_thresholds(
+        {"status_thresholds": {"IN_PROGRESS": "bad", "IN_REVIEW": None, "DONE": 200}}
+    )
+
+    assert thresholds == {"IN_PROGRESS": 1, "IN_REVIEW": 80, "DONE": 100}
+
+
+def test_resolve_status_thresholds_clamps_review_below_done() -> None:
+    thresholds = resolve_status_thresholds(
+        {"status_thresholds": {"IN_PROGRESS": 1, "IN_REVIEW": 100, "DONE": 100}}
+    )
+
+    assert thresholds == {"IN_PROGRESS": 1, "IN_REVIEW": 99, "DONE": 100}
+
+
+def test_derive_status_from_percent_preserves_backlog_and_maps_zero_to_todo() -> None:
+    thresholds = resolve_status_thresholds({})
+
+    status_from_backlog = derive_status_from_percent(
+        0,
+        thresholds,
+        current_status=TaskStatus.BACKLOG,
+    )
+    status_from_in_progress = derive_status_from_percent(
+        0,
+        thresholds,
+        current_status=TaskStatus.IN_PROGRESS,
+    )
+
+    assert status_from_backlog == TaskStatus.BACKLOG
+    assert status_from_in_progress == TaskStatus.TODO
+
+
+def test_derive_status_from_percent_honors_explicit_zero_status_override() -> None:
+    thresholds = resolve_status_thresholds({})
+
+    explicit_backlog = derive_status_from_percent(
+        0,
+        thresholds,
+        current_status=TaskStatus.TODO,
+        explicit_zero_status=TaskStatus.BACKLOG,
+    )
+    explicit_todo = derive_status_from_percent(
+        0,
+        thresholds,
+        current_status=TaskStatus.BACKLOG,
+        explicit_zero_status=TaskStatus.TODO,
+    )
+
+    assert explicit_backlog == TaskStatus.BACKLOG
+    assert explicit_todo == TaskStatus.TODO
+
+
+def test_derive_status_from_percent_respects_threshold_boundaries() -> None:
+    thresholds = resolve_status_thresholds(
+        {"status_thresholds": {"IN_PROGRESS": 1, "IN_REVIEW": 70, "DONE": 95}}
+    )
+
+    assert (
+        derive_status_from_percent(1, thresholds, current_status=TaskStatus.TODO)
+        == TaskStatus.IN_PROGRESS
+    )
+    assert (
+        derive_status_from_percent(70, thresholds, current_status=TaskStatus.TODO)
+        == TaskStatus.IN_REVIEW
+    )
+    assert (
+        derive_status_from_percent(95, thresholds, current_status=TaskStatus.TODO)
+        == TaskStatus.DONE
+    )
+
+
+def test_derive_percent_from_status_uses_threshold_values() -> None:
+    thresholds = {"IN_PROGRESS": 5, "IN_REVIEW": 75, "DONE": 99}
+
+    assert derive_percent_from_status(TaskStatus.BACKLOG, thresholds) == 0.0
+    assert derive_percent_from_status(TaskStatus.TODO, thresholds) == 0.0
+    assert derive_percent_from_status(TaskStatus.IN_PROGRESS, thresholds) == 5.0
+    assert derive_percent_from_status(TaskStatus.IN_REVIEW, thresholds) == 75.0
+    assert derive_percent_from_status(TaskStatus.DONE, thresholds) == 99.0

@@ -29,8 +29,11 @@ from app.service.task_service import (
     _SCHEDULE_FIELDS,
     _compute_initial_finish_date,
     _resolve_hours_per_day,
+    derive_percent_from_status,
+    derive_status_from_percent,
     recalculate_summary,
     regenerate_wbs_codes,
+    resolve_status_thresholds,
     soft_delete_task,
 )
 
@@ -203,6 +206,8 @@ async def bulk_update_tasks(
     needs_wbs_regen = False
     needs_schedule_recalc = False
 
+    thresholds = resolve_status_thresholds(project.settings)
+
     for idx, update_item in enumerate(updates):
         pending_before = len(
             db.info.get(realtime_service.PENDING_REALTIME_EVENTS_KEY, [])
@@ -225,6 +230,21 @@ async def bulk_update_tasks(
                     parent_ids_to_recalc.add(task.parent_task_id)
 
                 update_data = dict(update_item["data"])
+                explicit_zero_status = (
+                    update_data.get("status") if "status" in update_data else None
+                )
+                if "percent_complete" in update_data:
+                    update_data["status"] = derive_status_from_percent(
+                        update_data["percent_complete"],
+                        thresholds,
+                        current_status=task.status,
+                        explicit_zero_status=explicit_zero_status,
+                    )
+                elif "status" in update_data and not task.is_summary:
+                    update_data["percent_complete"] = derive_percent_from_status(
+                        update_data["status"],
+                        thresholds,
+                    )
                 before = {field: getattr(task, field) for field in update_data}
 
                 # Check if parent changed
