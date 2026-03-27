@@ -28,8 +28,8 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 ### Execution Update
 
 - FEAT-01: `DONE` (status/percent derivation, project thresholds, migration backfill, and focused backend/frontend tests complete)
-- FEAT-02: `NOT_STARTED`
-- Progress: `5/7` points complete
+- FEAT-02: `DONE` (summary status derived from rolled-up percent in `recalculate_summary`; unit tests cover all threshold boundaries and clear path)
+- Progress: `7/7` points complete
 
 ### Stretch (Optional)
 

@@ -563,13 +563,21 @@ async def recalculate_summary(
         project_id=project_id,
     )
 
+    thresholds = resolve_status_thresholds(project.settings)
+
     if not children:
         clear_summary_rollup(parent, work_week, exceptions)
+        parent.status = derive_status_from_percent(
+            0.0, thresholds, current_status=parent.status
+        )
         await db.flush()
         # Recurse up in case this parent is itself a child
         await recalculate_summary(db, project_id, parent.parent_task_id)
         return
 
     apply_summary_rollup(parent, children, work_week, exceptions)
+    parent.status = derive_status_from_percent(
+        parent.percent_complete, thresholds, current_status=parent.status
+    )
     await db.flush()
     await recalculate_summary(db, project_id, parent.parent_task_id)

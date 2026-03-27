@@ -10,6 +10,14 @@ All code changes are documented here with explanations before they are applied.
 
 ## 2026-03-25 - Sprint S09: Invitation Review, Auth Idle Refresh, and Org Role UX
 
+## 2026-03-27 - Sprint S11: FEAT-02 Summary Task Status Derivation
+
+### FEAT-02 - Auto-derive summary task status from rolled-up percent_complete
+
+**What:** Extended `recalculate_summary()` in `task_service.py` to resolve project-level `status_thresholds` and call `derive_status_from_percent` after each rollup pass — both the `apply_summary_rollup` path (children present) and the `clear_summary_rollup` path (no children, resets to TODO). Added 5 unit tests covering IN_PROGRESS, IN_REVIEW, DONE transitions, clear-path reset, and custom threshold respect.
+
+**Why:** S11 FEAT-02 target — summary tasks already rolled up `percent_complete` from children but left `status` stale, causing parent cards to show contradictory state on the kanban board. Status now stays consistent with rolled-up progress using the same project-level thresholds as leaf tasks.
+
 ## 2026-03-26 - Sprint S11: FEAT-01 Percent-Driven Task Status
 
 ### FEAT-01 - Derive task status from progress percent with project-level review threshold

@@ -564,3 +564,143 @@ def test_derive_percent_from_status_uses_threshold_values() -> None:
     assert derive_percent_from_status(TaskStatus.IN_PROGRESS, thresholds) == 5.0
     assert derive_percent_from_status(TaskStatus.IN_REVIEW, thresholds) == 75.0
     assert derive_percent_from_status(TaskStatus.DONE, thresholds) == 99.0
+
+
+# FEAT-02: summary status derived from rolled-up percent
+
+
+def _make_child(
+    name: str, start: date, finish: date, duration: int, percent: float
+) -> Task:
+    return _build_task(
+        name=name,
+        start_date=start,
+        finish_date=finish,
+        duration=duration,
+        work=duration,
+        actual_duration=int(duration * percent / 100),
+        remaining_duration=duration - int(duration * percent / 100),
+        actual_work=int(duration * percent / 100),
+        remaining_work=duration - int(duration * percent / 100),
+        percent_complete=percent,
+        status=TaskStatus.IN_PROGRESS if percent > 0 else TaskStatus.TODO,
+    )
+
+
+def test_summary_status_in_progress_when_children_partially_complete() -> None:
+    thresholds = resolve_status_thresholds({})  # IN_PROGRESS=1, IN_REVIEW=80, DONE=100
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+        status=TaskStatus.TODO,
+    )
+    children = [
+        _make_child("A", date(2024, 1, 1), date(2024, 1, 2), 480, 50.0),
+        _make_child("B", date(2024, 1, 3), date(2024, 1, 4), 480, 0.0),
+    ]
+
+    apply_summary_rollup(summary, children, DEFAULT_WORK_WEEK, [])
+    summary.status = derive_status_from_percent(
+        summary.percent_complete, thresholds, current_status=summary.status
+    )
+
+    assert summary.percent_complete == 25.0
+    assert summary.status == TaskStatus.IN_PROGRESS
+
+
+def test_summary_status_in_review_when_rolled_up_percent_hits_threshold() -> None:
+    thresholds = resolve_status_thresholds({})  # IN_REVIEW=80
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+        status=TaskStatus.IN_PROGRESS,
+    )
+    children = [
+        _make_child("A", date(2024, 1, 1), date(2024, 1, 2), 480, 80.0),
+        _make_child("B", date(2024, 1, 3), date(2024, 1, 4), 480, 80.0),
+    ]
+
+    apply_summary_rollup(summary, children, DEFAULT_WORK_WEEK, [])
+    summary.status = derive_status_from_percent(
+        summary.percent_complete, thresholds, current_status=summary.status
+    )
+
+    assert summary.percent_complete == 80.0
+    assert summary.status == TaskStatus.IN_REVIEW
+
+
+def test_summary_status_done_when_all_children_complete() -> None:
+    thresholds = resolve_status_thresholds({})  # DONE=100
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+        status=TaskStatus.IN_REVIEW,
+    )
+    children = [
+        _make_child("A", date(2024, 1, 1), date(2024, 1, 2), 480, 100.0),
+        _make_child("B", date(2024, 1, 3), date(2024, 1, 4), 480, 100.0),
+    ]
+
+    apply_summary_rollup(summary, children, DEFAULT_WORK_WEEK, [])
+    summary.status = derive_status_from_percent(
+        summary.percent_complete, thresholds, current_status=summary.status
+    )
+
+    assert summary.percent_complete == 100.0
+    assert summary.status == TaskStatus.DONE
+
+
+def test_summary_status_resets_to_todo_when_children_cleared() -> None:
+    thresholds = resolve_status_thresholds({})
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 2),
+        duration=480,
+        is_summary=True,
+        percent_complete=60.0,
+        status=TaskStatus.IN_PROGRESS,
+    )
+
+    clear_summary_rollup(summary, DEFAULT_WORK_WEEK, [])
+    summary.status = derive_status_from_percent(
+        0.0, thresholds, current_status=summary.status
+    )
+
+    assert summary.percent_complete == 0.0
+    assert summary.status == TaskStatus.TODO
+
+
+def test_summary_status_respects_custom_thresholds() -> None:
+    thresholds = resolve_status_thresholds(
+        {"status_thresholds": {"IN_PROGRESS": 1, "IN_REVIEW": 60, "DONE": 100}}
+    )
+    summary = _build_task(
+        name="Summary",
+        start_date=date(2024, 1, 1),
+        finish_date=date(2024, 1, 1),
+        duration=0,
+        is_summary=True,
+        status=TaskStatus.TODO,
+    )
+    children = [
+        _make_child("A", date(2024, 1, 1), date(2024, 1, 2), 480, 60.0),
+        _make_child("B", date(2024, 1, 3), date(2024, 1, 4), 480, 60.0),
+    ]
+
+    apply_summary_rollup(summary, children, DEFAULT_WORK_WEEK, [])
+    summary.status = derive_status_from_percent(
+        summary.percent_complete, thresholds, current_status=summary.status
+    )
+
+    assert summary.percent_complete == 60.0
+    assert summary.status == TaskStatus.IN_REVIEW

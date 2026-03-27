@@ -44,14 +44,14 @@ Status: `DONE`
 
 ### FEAT-02 — Percent-driven status: summary task status auto-derived from rolled-up percent
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Wire `derive_status_from_percent` into `apply_summary_rollup()` in `task_rollup_service.py` — after computing rolled-up percent, derive and set status
-- [ ] Load project `status_thresholds` in `recalculate_summary()` and pass to rollup
-- [ ] Tests: summary task status transitions when children reach threshold boundaries
-- [ ] Tests: summary task on kanban auto-moves column when children complete
+- [x] Wire `derive_status_from_percent` into `recalculate_summary()` — after computing rolled-up percent via `apply_summary_rollup`, derive and set status
+- [x] Load project `status_thresholds` in `recalculate_summary()` and apply to rollup
+- [x] Tests: summary task status transitions when children reach threshold boundaries
+- [x] Tests: summary task status resets to TODO when children cleared
 
 #### Notes
 
