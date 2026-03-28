@@ -27,7 +27,7 @@ class AIChatRequest(BaseModel):
 class AIUsageMeta(BaseModel):
     tokens_in: int = 0
     tokens_out: int = 0
-    model: str | None = None
+    model: str | None = Field(default=None, max_length=128)
 
 
 class AIApprovalRequest(BaseModel):
@@ -106,13 +106,13 @@ class UpdateTaskPayload(BaseModel):
     percent_complete: float | None = None
     duration: int | None = None
     priority: int | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=4000)
 
 
 class AddDependencyPayload(BaseModel):
     predecessor_id: SchemaUUID
     successor_id: SchemaUUID
-    dependency_type: str = "FS"
+    dependency_type: Literal["FS", "SS", "FF", "SF"] = "FS"
     lag: int = 0
 
 
@@ -151,11 +151,11 @@ AISuggestionAction = Annotated[
 
 
 class AISuggestionItem(BaseModel):
-    id: str
-    type: str
+    id: str = Field(max_length=128)
+    type: str = Field(max_length=64)
     severity: Literal["LOW", "MEDIUM", "HIGH"]
-    title: str
-    description: str
+    title: str = Field(max_length=255)
+    description: str = Field(max_length=4000)
     affected_task_id: SchemaUUID | None = None
     suggested_action: AISuggestionAction | None = None
 

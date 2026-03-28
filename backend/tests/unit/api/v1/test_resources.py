@@ -496,6 +496,44 @@ async def test_update_resource_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_update_resource_rejects_unknown_patch_field(client: AsyncClient):
+    """Update â€” unknown patch field â€” 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_res_unknown@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Res Unknown",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Res Unknown", "slug": "org-res-unknown"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Res Unknown",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+    create_resp = await client.post(
+        f"/api/v1/projects/{proj_id}/resources",
+        json={"name": "Res Unknown"},
+    )
+    res_id = create_resp.json()["id"]
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}/resources/{res_id}",
+        json={"unknown_patch_field": "value"},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_delete_resource_success_owner(client: AsyncClient):
     """Delete — success — owner (204)."""
     await client.post(

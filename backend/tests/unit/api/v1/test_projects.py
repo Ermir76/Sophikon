@@ -1282,6 +1282,39 @@ async def test_update_project_invalid_fields(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_update_project_rejects_unknown_patch_field(client: AsyncClient):
+    """Update â€” unknown patch field â€” returns 422."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "upd_proj_unknown@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Upd Proj Unknown",
+        },
+    )
+    org_resp = await client.post(
+        "/api/v1/organizations",
+        json={"name": "Org Upd Unknown", "slug": "org-upd-unknown"},
+    )
+    org_id = org_resp.json()["id"]
+    proj_resp = await client.post(
+        "/api/v1/projects",
+        json={
+            "name": "Proj Upd Unknown",
+            "organization_id": org_id,
+            "start_date": "2024-01-01",
+        },
+    )
+    proj_id = proj_resp.json()["id"]
+
+    resp = await client.patch(
+        f"/api/v1/projects/{proj_id}",
+        json={"unknown_patch_field": "value"},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_update_project_rejects_overlong_description_and_color(
     client: AsyncClient,
 ):

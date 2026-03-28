@@ -62,6 +62,7 @@ class ModelPatchSchema(BaseModel):
     """
 
     __sa_model__: ClassVar[type[Any]]
+    model_config = {"extra": "forbid"}
 
     @model_validator(mode="after")
     def reject_explicit_nulls(self) -> "ModelPatchSchema":
