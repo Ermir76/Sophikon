@@ -46,6 +46,29 @@ async function refreshSession(): Promise<void> {
   }
 }
 
+async function readChatErrorMessage(response: Response): Promise<string> {
+  const fallback = `AI chat failed with status ${response.status}`;
+  try {
+    const payload = await response.json();
+    if (payload && typeof payload === "object") {
+      const errorNode = (payload as { error?: unknown }).error;
+      if (errorNode && typeof errorNode === "object") {
+        const message = (errorNode as { message?: unknown }).message;
+        if (typeof message === "string" && message.trim()) {
+          return message;
+        }
+      }
+      const detail = (payload as { detail?: unknown }).detail;
+      if (typeof detail === "string" && detail.trim()) {
+        return detail;
+      }
+    }
+  } catch {
+    // ignore parse errors and use fallback
+  }
+  return fallback;
+}
+
 export const aiService = {
   async streamChat(
     projectId: string,
@@ -59,7 +82,7 @@ export const aiService = {
     }
 
     if (!response.ok) {
-      throw new Error(`AI chat failed with status ${response.status}`);
+      throw new Error(await readChatErrorMessage(response));
     }
 
     if (!response.body) {

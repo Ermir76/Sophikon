@@ -21,6 +21,7 @@ export function ProjectLayout() {
   const projectQuery = useProject(projectId);
   const hasProjectAccessError = isAxiosError(projectQuery.error)
     && projectQuery.error.response?.status === 403;
+  const isAgentEnabled = projectQuery.data?.settings?.agent_enabled !== false;
 
   useProjectWebSocket(projectId);
 
@@ -60,6 +61,7 @@ export function ProjectLayout() {
           <DrawerContent className="p-0">
             <AiDockedPanel
               projectId={projectId}
+              isAgentEnabled={isAgentEnabled}
               mode="drawer"
               onClose={() => setPanelOpen(projectId, false)}
             />
@@ -93,6 +95,7 @@ export function ProjectLayout() {
       >
         <AiDockedPanel
           projectId={projectId}
+          isAgentEnabled={isAgentEnabled}
           onClose={() => setPanelOpen(projectId, false)}
         />
       </ResizablePanel>

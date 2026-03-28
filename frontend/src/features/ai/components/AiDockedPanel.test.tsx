@@ -152,10 +152,11 @@ import { useAiPreferences, useUpdateAiPreferences } from "@/features/auth/hooks/
 import { useCreateDependency } from "@/features/tasks/hooks/useDependencies";
 import { useTasks, useUpdateTask } from "@/features/tasks/hooks/useTasks";
 
-function renderPanel() {
+function renderPanel(options?: { isAgentEnabled?: boolean }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  const isAgentEnabled = options?.isAgentEnabled ?? true;
   return render(
     createElement(
       QueryClientProvider,
@@ -164,7 +165,12 @@ function renderPanel() {
         <Routes>
           <Route
             path="/projects/:projectId/:view"
-            element={<AiDockedPanel projectId="project-1" />}
+            element={
+              <AiDockedPanel
+                projectId="project-1"
+                isAgentEnabled={isAgentEnabled}
+              />
+            }
           />
         </Routes>
       </MemoryRouter>,
@@ -431,5 +437,20 @@ describe("AiDockedPanel", () => {
       { model: "gpt-5" },
       expect.any(Object),
     );
+  });
+
+  it("shows disabled state when the project AI agent is disabled", async () => {
+    renderPanel({ isAgentEnabled: false });
+
+    expect(
+      screen.getByText(
+        "AI agent is disabled for this project. Enable it in Project Settings to continue.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Ask the assistant about this project..."),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "New" })).toBeDisabled();
   });
 });

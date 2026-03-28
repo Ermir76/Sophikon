@@ -6,6 +6,7 @@ export interface ProjectSettings {
     IN_REVIEW?: number;
     DONE?: number;
   };
+  agent_enabled?: boolean;
   auto_calculate: boolean;
   hours_per_day: number;
   hours_per_week?: number;

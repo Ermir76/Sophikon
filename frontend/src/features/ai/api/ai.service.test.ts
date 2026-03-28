@@ -207,4 +207,44 @@ describe("aiService.streamChat", () => {
       aiService.streamChat("project-1", { message: "Status?" }, vi.fn()),
     ).rejects.toThrow("AI chat stream is not available");
   });
+
+  it("throws backend error.message when present in non-OK response", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({
+        error: { message: "AI agent is disabled for this project." },
+      }),
+    } as unknown as Response);
+
+    await expect(
+      aiService.streamChat("project-1", { message: "Status?" }, vi.fn()),
+    ).rejects.toThrow("AI agent is disabled for this project.");
+  });
+
+  it("throws backend detail when present in non-OK response", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: vi.fn().mockResolvedValue({
+        detail: "AI agent is disabled for this organization.",
+      }),
+    } as unknown as Response);
+
+    await expect(
+      aiService.streamChat("project-1", { message: "Status?" }, vi.fn()),
+    ).rejects.toThrow("AI agent is disabled for this organization.");
+  });
+
+  it("falls back to status-based error when non-OK response body is not JSON", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: vi.fn().mockRejectedValue(new Error("invalid json")),
+    } as unknown as Response);
+
+    await expect(
+      aiService.streamChat("project-1", { message: "Status?" }, vi.fn()),
+    ).rejects.toThrow("AI chat failed with status 502");
+  });
 });

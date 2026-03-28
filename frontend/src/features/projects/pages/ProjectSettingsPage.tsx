@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
+import { Switch } from "@/shared/ui/switch";
 import {
   Card,
   CardContent,
@@ -50,6 +51,7 @@ const projectSchema = z.object({
   description: z.string().optional(),
   color: z.string().nullable().optional(),
   review_threshold: z.coerce.number().int().min(1).max(99),
+  agent_enabled: z.boolean(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -78,6 +80,7 @@ export default function ProjectSettingsPage() {
       name: "",
       description: "",
       review_threshold: 80,
+      agent_enabled: true,
     },
   });
 
@@ -91,6 +94,7 @@ export default function ProjectSettingsPage() {
           typeof project.settings?.status_thresholds?.IN_REVIEW === "number"
             ? project.settings.status_thresholds.IN_REVIEW
             : 80,
+        agent_enabled: project.settings?.agent_enabled !== false,
       });
     }
   }, [project, form]);
@@ -106,6 +110,7 @@ export default function ProjectSettingsPage() {
           status_thresholds: {
             IN_REVIEW: data.review_threshold,
           },
+          agent_enabled: data.agent_enabled,
         },
       });
       toast.success("Project updated", {
@@ -235,6 +240,27 @@ export default function ProjectSettingsPage() {
                           <Input type="number" min={1} max={99} {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="agent_enabled"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-md border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel>AI Agent</FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Enable AI chat and proactive agent actions for this project.
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />

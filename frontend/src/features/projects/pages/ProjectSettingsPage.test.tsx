@@ -27,6 +27,11 @@ import {
 describe("ProjectSettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    globalThis.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
     vi.mocked(useProject).mockReturnValue({
       data: {
         id: "project-1",
@@ -93,11 +98,11 @@ describe("ProjectSettingsPage", () => {
     await waitFor(() => {
       expect(mockUpdateProjectMutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
-          settings: {
+          settings: expect.objectContaining({
             status_thresholds: {
               IN_REVIEW: 85,
             },
-          },
+          }),
         }),
       );
     });

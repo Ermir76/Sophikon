@@ -36,6 +36,7 @@ import { Textarea } from "@/shared/ui/textarea";
 
 interface AiDockedPanelProps {
   projectId: string;
+  isAgentEnabled?: boolean;
   mode?: "docked" | "drawer";
   onClose?: () => void;
 }
@@ -67,6 +68,7 @@ function readNumber(payload: Record<string, unknown>, key: string): number | nul
 
 export function AiDockedPanel({
   projectId,
+  isAgentEnabled = true,
   mode = "docked",
   onClose,
 }: AiDockedPanelProps) {
@@ -129,7 +131,7 @@ export function AiDockedPanel({
   const providerModels = providerRecord?.models ?? [];
   const modelSelectDisabled = !selectedProvider || providerModels.length === 0;
 
-  const inputBlocked = isStreaming || Boolean(pendingPlan);
+  const inputBlocked = !isAgentEnabled || isStreaming || Boolean(pendingPlan);
 
   const applyAiPreferencePatch = (patch: { provider?: string | null; model?: string | null }) => {
     updateAiPreferencesMutation.mutate(patch, {
@@ -229,6 +231,10 @@ export function AiDockedPanel({
   const sendMessage = async () => {
     const trimmed = chatInput.trim();
     if (!trimmed || inputBlocked) return;
+    if (!isAgentEnabled) {
+      toast.error("AI agent is disabled for this project.");
+      return;
+    }
 
     const userMessageId = crypto.randomUUID();
     const assistantMessageId = crypto.randomUUID();
@@ -519,6 +525,7 @@ export function AiDockedPanel({
               size="sm"
               className="h-7 px-2 text-[11px]"
               onClick={() => clearConversation(projectId)}
+              disabled={!isAgentEnabled}
             >
               New
             </Button>
@@ -542,7 +549,7 @@ export function AiDockedPanel({
             <Select
               value={conversationId ?? ""}
               onValueChange={(id) => void handleSelectConversation(id)}
-              disabled={isStreaming || loadingHistory}
+              disabled={!isAgentEnabled || isStreaming || loadingHistory}
             >
               <SelectTrigger className="h-7 text-[11px]">
                 <SelectValue placeholder="Resume a past conversation..." />
@@ -567,6 +574,10 @@ export function AiDockedPanel({
         ) : conversationStatus === "awaiting_plan_approval" ? (
           <div className="border-t bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
             Waiting for plan approval.
+          </div>
+        ) : !isAgentEnabled ? (
+          <div className="border-t bg-muted/50 px-3 py-1.5 text-[11px] text-muted-foreground">
+            AI agent is disabled for this project. Enable it in Project Settings to continue.
           </div>
         ) : null}
       </div>
