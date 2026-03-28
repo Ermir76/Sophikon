@@ -228,12 +228,12 @@ This document records what is evidenced by the current codebase review.
 | FR-AI-001 | Implemented   | A7       | Project-scoped chat flow exists.                                                                                 |
 | FR-AI-002 | Implemented   | A7       | Chat feature exists with project/task context surface.                                                           |
 | FR-AI-003 | Partial       | A7       | Status-style project questions are supported by current AI surface, but broad coverage was not formally audited. |
-| FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector all wired in Phase 4 frontend; backend agent loop wired in Phase 2. |
-| FR-AI-005 | Implemented   | A7       | `estimate_for_project` now calls `_complete_from_service` directly; JSON response parsed and validated into `AIEstimateResult`. |
+| FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector are wired in frontend; backend agent loop now enforces centralized tool policy checks (`allow / allow_with_approval / deny`) before execution. |
+| FR-AI-005 | Implemented   | A7       | `estimate_for_project` calls `complete_from_service`; JSON response is parsed and validated into `AIEstimateResult`. |
 | FR-AI-006 | Implemented   | A7       | `reasoning` field returned in `AIEstimateItem` when `include_reasoning=True`; LLM prompt instructs model to populate it. |
 | FR-AI-007 | Implemented   | A7       | Bulk estimation via `task_ids` list implemented in `estimate_for_project`; batch DB query, one LLM call, N estimate items returned. |
-| FR-AI-008 | Implemented   | A7       | `suggestions_for_project` now calls `_complete_from_service`; discriminated union `AISuggestionAction` fully typed (Phase 6). |
-| FR-AI-009 | Implemented   | A7       | Streaming chat flow exists.                                                                                      |
+| FR-AI-008 | Implemented   | A7       | `suggestions_for_project` calls `complete_from_service`; discriminated union `AISuggestionAction` is fully typed (Phase 6). |
+| FR-AI-009 | Implemented   | A7       | Streaming chat flow exists, with project/org agent kill-switch enforcement (`agent_enabled`) and explicit non-OK error message parsing surfaced to UI. |
 
 ### 3.13 Collaboration
 
@@ -311,8 +311,8 @@ This document records what is evidenced by the current codebase review.
 | US-4.3 Interactive Gantt Editing   | Not evidenced | A5, A9     | Drag editing and context-menu behavior were not evidenced.                                                              |
 | US-4.4 Critical Path Highlighting  | Partial       | A5         | Critical-path toggle/rendering exists; end-to-end parity was not runtime-verified.                                      |
 | US-5.1 Chat with Project           | Partial       | A7         | Project-aware chat exists, but click-through entity navigation and some specific query types were not fully evidenced.  |
-| US-5.2 AI Actions via Chat         | Implemented   | A7, A9     | Plan approval card, tool call rows, and reasoning stream complete in Phase 4; backend agent loop complete in Phase 2.   |
-| US-5.3 AI Risk Alerts              | Implemented   | A7         | Proactive Celery task (`agent_monitor.py`) runs daily health check via `run_proactive_analysis`, posts a project comment and AI_AGENT_FINDING notification when issues are detected. |
+| US-5.2 AI Actions via Chat         | Implemented   | A7, A9     | Plan approval card, tool call rows, and reasoning stream are mounted; backend agent loop enforces role/scope-aware tool policy and destructive-action approval gating before execution. |
+| US-5.3 AI Risk Alerts              | Implemented   | A7         | Proactive Celery task (`agent_monitor.py`) runs daily health checks via `run_proactive_analysis`, posts project comment + AI_AGENT_FINDING notification on issues, and skips execution when project/org agent kill-switch is disabled. |
 | US-5.4 AI Weekly Report            | Not evidenced | A7, A9     | No report-generation flow was evidenced.                                                                                |
 | US-6.1 Invite Team Members         | Implemented   | A3, A8, A9 | Project-team invite, acceptance, and member management flows are mounted in the current collaboration surface.          |
 | US-6.2 Real-time Updates           | Implemented   | A3, A8, A9 | Project-scoped websocket endpoint, presence snapshots/updates, and realtime mutation push flows are mounted in backend and consumed in frontend project routes. |

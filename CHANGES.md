@@ -4,6 +4,14 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-03-28 - Sprint S12: AGT-01 Policy Engine + AGT-02 Agent Kill Switch
+
+### AGT-01 / AGT-02 - Agent safety hardening and QA closure
+
+**What:** Implemented centralized agent tool policy enforcement (`agent/policy.py`) with role-aware and scope-aware decisions (`allow`, `allow_with_approval`, `deny`) and wired it into executor tool execution flow. Added `role_name` to `AgentContext` and passed role context from AI endpoint access checks. Added project/org `agent_enabled` kill-switch checks in AI chat entry (`prepare_chat_stream`) and proactive monitor flow, plus frontend AI panel/settings behavior for disabled state and clearer AI chat non-OK error parsing. Expanded tests across policy, executor, monitor, AI service/API, and frontend AI service/panel/settings. Added explicit PATCH unknown-field contract tests for project/task/resource endpoints to evidence `ModelPatchSchema` strict validation (`extra="forbid"`).
+
+**Why:** S12 targeted agent safety gaps: missing per-tool role/scope policy enforcement and no operational kill switch. Follow-up QA review required explicit closure evidence for policy coverage, kill-switch behavior, error parsing, and PATCH contract strictness before gate approval.
+
 ## 2026-03-24 - Sprint S07: Authentication and Organization QA Fixes
 
 ## 2026-03-25 - Sprint S08: Project Management and Realtime QA Fixes

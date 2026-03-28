@@ -64,9 +64,16 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | Item ID | Title | Points | Why now | Dependencies | Done criteria |
 | ------- | ----- | ------ | ------- | ------------ | ------------- |
 | AGT-01 | Agent policy engine: centralized permission and role check before every tool execution | 5 | Any project member who can call `/chat` can trigger any write tool — no role-based enforcement at tool level; agent promises safety tiers but only enforces destructive-tier; shipping more autonomy features on a foundation with no policy layer is the "2+5+8 without finishing the equation" problem | - | Centralized `check_tool_policy(tool_name, ctx)` called before every `execute_tool` in executor; policy checks action allowlist, user role (viewer can't write), project-scoped ID ownership; policy returns `allow / allow_with_approval / deny`; denied tools return error to LLM; tests cover viewer-blocked, member-allowed, deny-unknown-tool, scope-violation |
-| AGT-02 | Agent kill switch: per-project and per-org flag to disable agent execution | 2 | No way to turn off the agent for a project if it misbehaves or user doesn't want it; basic trust requirement before expanding autonomy | - | `agent_enabled` boolean in `project.settings` (default true); org-level `agent_enabled` in `organization.settings` (default true); `prepare_chat_stream` rejects with clear error if either flag is false; project settings UI exposes toggle; tests cover both flags |
+| AGT-02 | Agent kill switch: per-project and per-org flag to disable agent execution | 2 | No way to turn off the agent for a project if it misbehaves or user doesn't want it; basic trust requirement before expanding autonomy | - | `agent_enabled` boolean in `project.settings` (default true); org-level `agent_enabled` in `organization.settings` (default true); `prepare_chat_stream` rejects with `400 INVALID_OPERATION` and clear message if either flag is false; project settings UI exposes toggle; tests cover both flags |
 
 **Total committed points:** `7`
+
+### Execution Update
+
+- AGT-01: `DONE` (policy engine implemented in `agent/policy.py`, wired in executor before tool execution, role + scope + unknown-tool deny paths covered by unit tests)
+- AGT-02: `DONE` (project/org `agent_enabled` kill-switch checks enforced in chat + proactive monitor, project settings/UI disable state implemented, focused backend/frontend tests complete)
+- QA Gate: `GO` (diff-scoped backend/frontend suites passed after follow-up closures)
+- Progress: `7/7` points complete
 
 ### Stretch (Optional)
 

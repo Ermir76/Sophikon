@@ -2,166 +2,68 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S11
-**Dates:** 2026-03-27 -> 2026-03-29
+**Sprint ID:** S12
+**Dates:** TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S11
-
-### FEAT-01 — Percent-driven status: derive task status from percent_complete with configurable review threshold
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] Add `status_thresholds` schema to project settings (default: `{ "IN_PROGRESS": 1, "IN_REVIEW": 80, "DONE": 100 }`)
-- [x] Write `derive_status_from_percent(percent_complete, thresholds, current_status)` utility in `task_service.py` — returns derived `TaskStatus`; preserves BACKLOG↔TODO when percent is 0
-- [x] Wire derivation into `update_task()` — after `setattr` loop, auto-set `status` when `percent_complete` is in the patch
-- [x] Wire reverse: when `status` is in the patch (kanban drag), auto-set `percent_complete` to column entry value (TODO→0, IN_PROGRESS→1, IN_REVIEW→threshold, DONE→100)
-- [x] Add Alembic migration to backfill existing tasks: derive status from current percent_complete using default thresholds
-- [x] Frontend: update `useKanbanDrag` to send `percent_complete` alongside `status` (or let backend derive)
-- [x] Frontend: add review threshold setting to project settings UI (input with default 80%)
-- [x] Frontend: expose `status_thresholds` in project settings API call and store
-- [x] Tests: backend unit tests for `derive_status_from_percent` — all threshold boundaries, BACKLOG↔TODO edge case, reverse direction
-- [x] Tests: frontend test for kanban drag setting percent, project settings threshold UI
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions:
-  - BACKLOG↔TODO is manual-only (both are 0% — the difference is intent, not progress)
-  - Once percent > 0, status auto-jumps to IN_PROGRESS regardless of prior BACKLOG/TODO
-  - If percent drops back to 0, status returns to TODO (not BACKLOG — task was acknowledged)
-  - Kanban drag to a column sets percent to that column's entry threshold
-  - Default thresholds: IN_PROGRESS=1%, IN_REVIEW=80%, DONE=100%
-
----
-
-### FEAT-02 — Percent-driven status: summary task status auto-derived from rolled-up percent
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] Wire `derive_status_from_percent` into `recalculate_summary()` — after computing rolled-up percent via `apply_summary_rollup`, derive and set status
-- [x] Load project `status_thresholds` in `recalculate_summary()` and apply to rollup
-- [x] Tests: summary task status transitions when children reach threshold boundaries
-- [x] Tests: summary task status resets to TODO when children cleared
-
-#### Notes
-
-- Dependencies: FEAT-01
-- Blockers: -
-- Decisions:
-  - Summary tasks never have manually-set status — always derived from rolled-up percent
-  - Uses same project-level thresholds as leaf tasks
-
----
-
-## Draft Items — S12 (Agent Platform Hardening)
+## Active Items — S12
 
 ### AGT-01 — Agent policy engine: centralized permission and role check before every tool execution
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Define `ToolPolicy` enum (`allow`, `allow_with_approval`, `deny`) and `PolicyDecision` dataclass
-- [ ] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) → PolicyDecision`
-- [ ] Implement action allowlist check — reject unknown tool names
-- [ ] Implement role check — map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
-- [ ] Implement scope check — validate all entity IDs in `tool_input` belong to `ctx.project_id`
-- [ ] Wire `check_tool_policy` into `executor.py` before every `execute_tool` call (line 200)
-- [ ] On `deny` → return error result to LLM ("Permission denied: viewers cannot create tasks")
-- [ ] On `allow_with_approval` → reuse existing `_wait_for_tool_approval` mechanism
-- [ ] Add default policy config (viewer=read+UI only, member=read+write+UI, manager/owner=all)
-- [ ] Tests: viewer blocked from write tools, member allowed writes, deny on unknown tool, scope violation returns deny, destructive still requires per-action approval
+- [x] Define `ToolPolicy` enum (`allow`, `allow_with_approval`, `deny`) and `PolicyDecision` dataclass
+- [x] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) → PolicyDecision`
+- [x] Implement action allowlist check — reject unknown tool names
+- [x] Implement role check — map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
+- [x] Implement scope check — validate entity IDs in `tool_input` belong to `ctx.project_id` (task/dependency/assignment/resource IDs)
+- [x] Add `role_name` to `AgentContext` and pass it from AI endpoint `ProjectAccess` when building the context
+- [x] Wire `check_tool_policy` into `executor.py` before tool execution and before destructive approval branching
+- [x] On `deny` → return explicit tool-result error to the LLM (no execution)
+- [x] On `allow_with_approval` → reuse existing `_wait_for_tool_approval` mechanism
+- [x] Add default policy config (viewer=read+UI only, member=read+write+UI, manager/owner=all)
+- [x] Tests: viewer blocked from write tools, member allowed writes, deny on unknown tool, scope violation returns deny, destructive tools still require per-action approval
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Policy is a pure in-memory function — no DB query per tool call (role comes from ctx)
-  - Policy is additive to endpoint-level RBAC, not a replacement
-  - Default policy is hardcoded; project-level policy customization is future work
-  - Scope check validates task_id/dependency_id belong to ctx.project_id by querying existing repo functions
+  - Policy is implemented as a pure service-layer decision function and keeps destructive approval as a second gate.
+  - Scope validation is object-level and project-scoped for task/dependency/resource/assignment references.
 
 ---
 
 ### AGT-02 — Agent kill switch: per-project and per-org flag to disable agent execution
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Add `agent_enabled` boolean to project settings JSON schema (default: true)
-- [ ] Add `agent_enabled` boolean to organization settings JSON schema (default: true)
-- [ ] Check both flags at `prepare_chat_stream` entry — reject with clear `InvalidOperationError` if either is false
-- [ ] Org-level false overrides project-level true (org wins)
-- [ ] Frontend: add "AI Agent" toggle in project settings page
-- [ ] Frontend: when agent is disabled, show disabled state on AI panel entry point with explanation
-- [ ] Tests: chat rejected when project flag false, chat rejected when org flag false, chat works when both true
+- [x] Add `agent_enabled` boolean to project settings JSON schema (default: true when missing)
+- [x] Add `agent_enabled` boolean to organization settings JSON schema (default: true when missing)
+- [x] Check both flags at `prepare_chat_stream` entry — reject with clear `InvalidOperationError` if either is false
+- [x] Org-level false overrides project-level true (org wins)
+- [x] Apply same kill-switch guard in proactive agent monitor flow before analysis execution
+- [x] Frontend: add "AI Agent" toggle in project settings page
+- [x] Frontend: when agent is disabled, show disabled AI panel state with explanation and block chat input/actions
+- [x] Frontend transport: surface backend `error.message` for non-OK AI chat responses instead of status-only errors
+- [x] Tests: chat rejected when project flag false, chat rejected when org flag false, chat works when both true, proactive monitor skips disabled projects
+- [x] Tests: proactive monitor imports public `agent.utils` API (`read_user_ai_preferences`, `resolve_effective_provider_model`) and still resolves provider/model + API key correctly
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Kill switch is a project.settings / organization.settings JSON field, not a DB column — no migration needed
-  - Check happens once at stream entry, not per-tool (no performance impact)
-  - Proactive agent (`agent_monitor.py`) must also check the flag before running health checks
-
----
-
-### AGT-03 — Agent post-condition verification (Stretch)
-
-Status: `NOT_STARTED`
-
-#### Mini-tasks
-
-- [ ] Define verification contract: `verify_tool_result(tool_name, tool_input, result, ctx) → VerifyOutcome`
-- [ ] Implement verifiers for write tools: create_task (ID exists + name matches), update_task (fields match patch), delete_task (is_deleted=true), add_dependency (exists), assign_resource (exists)
-- [ ] Skip verification for read and UI tools
-- [ ] Wire into executor after `execute_tool` — on mismatch: log warning, return error to LLM, allow 1 retry
-- [ ] Tests: successful verification passes through, mismatch triggers retry, second mismatch stops with error
-
-#### Notes
-
-- Dependencies: AGT-01 (policy engine should be in place first)
-- Blockers: -
-- Decisions:
-  - Verification re-queries the DB to confirm the mutation landed — adds one query per write tool
-  - Max 1 retry per tool call to prevent loops
-  - Verification failures are logged but don't crash the agent run — LLM gets error and can adapt
-
----
-
-### AGT-04 — Agent UI actions: implement frontend handlers (Stretch)
-
-Status: `NOT_STARTED`
-
-#### Mini-tasks
-
-- [ ] `highlight_tasks`: receive task IDs from `ui_action` event, update a shared store (or kanban/gantt store) with highlighted IDs, render visual highlight on matching cards/bars
-- [ ] `open_task`: receive task ID, open TaskDetailPanel in current view context (kanban or tasks page)
-- [ ] `filter_view`: receive filter params (status, assignee, priority), apply to current view's filter state
-- [ ] Clear highlights/filters when AI panel closes or new conversation starts
-- [ ] Tests: highlight renders on kanban card, open_task opens detail panel, filter applies to task list
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions:
-  - UI actions modify existing view stores — no new routes or pages
-  - highlight_tasks uses a transient `highlightedTaskIds` set in shared state
-  - filter_view maps AI filter params to existing filter state shapes per view
+  - Kill switch stays in JSON settings (no migration/column changes).
+  - Defaults are permissive when keys are missing (`true`) for backward compatibility.
 
 ---
 
