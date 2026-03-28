@@ -2,15 +2,68 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S12
-**Dates:** TBD
+**Sprint ID:** S13
+**Dates:** 2026-03-28 -> 2026-03-29
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S12
+## Active Items — S13
+
+### UX-06 — AI panel styling & layout redesign
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Message bubbles redesign — user messages: right-aligned `bg-muted`, no role label; AI messages: left-aligned, no background, small Bot icon prefix, no role label
+- [x] ToolCallRow restyle — running: muted line + spinner; done: muted line + checkmark, no colored box/border; error/denied: `text-destructive` line; tight stacking like a log
+- [x] Status banners — replace `bg-amber-50`/`bg-blue-50` hardcoded stripes with `bg-muted` + differentiating icon (AlertTriangle for interrupted, Clock for awaiting approval)
+- [x] Suggestion severity — replace `text-amber-500`/`text-emerald-500` with Badge variants (`destructive` for HIGH, `secondary` for MEDIUM, `outline` for LOW)
+- [x] PlanApprovalCard — `bg-card/80` → `bg-card`, clean border, no opacity hacks
+- [x] ReasoningStep — `bg-muted/30` → `bg-muted`
+- [x] Input area — remove `text-[11px]` arbitrary sizes on selects/hints, let design system defaults apply
+- [x] Overall panel — ensure `bg-background` base, no ad-hoc color overrides remaining
+- [x] ToolCallRow code block — replace `bg-black/5 dark:bg-white/5` with `bg-muted`
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions:
+  - Pure styling change — no state/logic changes
+  - Reference: `docs/02-design/adr/ADR-010-unified-floating-task-detail-panel.md`
+
+---
+
+### UX-07 — Unified floating TaskDetailPanel across all views (ADR-010)
+
+Status: `TODO`
+
+#### Mini-tasks
+
+- [ ] TasksPage state split — add `detailTaskId` state, rewire `<TaskDetailPanel>` to use it with `floating`, keep `selectedTaskId` for row highlight only
+- [ ] Task table double-click — add `onDoubleClick` handler on `SortableTableRow` that calls `onViewDetails(taskId)`, which now maps to `setDetailTaskId`
+- [ ] Kanban store update — add `detailTaskId`, `setDetailTaskId`, `clearDetailTaskId` to `kanban-store.ts` (not persisted)
+- [ ] KanbanPage state split — wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
+- [ ] Kanban card double-click — single click selects (highlight), double-click opens detail panel
+- [ ] Keep alternative openers — kebab menu "View Details" and context menu still call `setDetailTaskId`
+- [ ] Update tests — adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
+
+#### Notes
+
+- Dependencies: UX-06 (styling should land first to avoid merge conflicts in same files)
+- Blockers: -
+- Decisions:
+  - GanttPage already uses the target pattern — no changes needed there
+  - TaskDetailPanel component already supports `floating` prop — no changes needed there
+  - Reference: `docs/02-design/adr/ADR-010-unified-floating-task-detail-panel.md`
+
+---
+
+## Previous Sprint Items — S12
 
 ### AGT-01 — Agent policy engine: centralized permission and role check before every tool execution
 

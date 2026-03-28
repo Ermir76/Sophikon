@@ -24,7 +24,7 @@ export function PlanApprovalCard({ steps, onApprove, onRedirect, disabled }: Pla
   };
 
   return (
-    <div className="mx-3 mb-2 rounded-lg border bg-card/80 p-3">
+    <div className="mx-3 mb-2 rounded-lg border bg-card p-3">
       <p className="mb-2 text-xs font-semibold text-foreground">Proposed plan</p>
       <ol className="mb-3 space-y-1.5">
         {steps.map((step, i) => (

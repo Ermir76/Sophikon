@@ -4,6 +4,16 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-03-28 - Sprint S13: UX-06 AI Panel Styling Redesign
+
+### UX-06 - Replace hardcoded colors with semantic design tokens in AI panel
+
+**What:** Replaced all hardcoded color classes (emerald, amber, blue, black/5, white/5, primary/10, card/70, card/80, muted/30, muted/40) with semantic tokens (bg-muted, bg-card, bg-background, text-destructive) across AiDockedPanel, ToolCallRow, PlanApprovalCard, and ReasoningStep. Redesigned message bubbles (user: right-aligned bg-muted, assistant: left-aligned with Bot icon, removed role labels), tool call rows (compact muted log lines instead of colored cards), status banners (bg-muted + icon differentiation via AlertTriangle/Clock), and suggestion severity (Badge variants instead of raw color classes). Replaced all arbitrary text-[11px] sizes with text-xs.
+
+**Why:** AI panel styling bypassed the design token system — tool call completions were green celebration boxes, status banners used hardcoded amber/blue with manual dark mode overrides, opacity modifiers on tokens (bg-primary/10, bg-card/70) prevented theme control. The panel needed to respect the same semantic token hierarchy as the rest of the app.
+
+---
+
 ## 2026-03-28 - Sprint S12: AGT-01 Policy Engine + AGT-02 Agent Kill Switch
 
 ### AGT-01 / AGT-02 - Agent safety hardening and QA closure

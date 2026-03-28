@@ -53,13 +53,8 @@ export function ToolCallRow({ toolName, status, result }: ToolCallRowProps) {
   return (
     <div
       className={cn(
-        "rounded-md border px-2.5 py-1.5 text-xs",
-        status === "running" && "border-border bg-muted/40 text-muted-foreground",
-        status === "done" &&
-          "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400",
-        status === "error" && "border-destructive/30 bg-destructive/5 text-destructive",
-        status === "denied" &&
-          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
+        "px-2.5 py-1 text-xs text-muted-foreground",
+        (status === "error" || status === "denied") && "text-destructive",
       )}
     >
       <div className="flex items-center gap-2">
@@ -85,7 +80,7 @@ export function ToolCallRow({ toolName, status, result }: ToolCallRowProps) {
       </div>
 
       {expanded && result ? (
-        <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-black/5 px-2 py-1 text-[10px] dark:bg-white/5">
+        <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-muted px-2 py-1 text-[10px]">
           {result}
         </pre>
       ) : null}

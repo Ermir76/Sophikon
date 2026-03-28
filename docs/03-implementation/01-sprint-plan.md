@@ -6,6 +6,83 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ## Current Sprint
 
+**Sprint ID:** S13
+**Dates:** 2026-03-28 -> 2026-03-29
+**Goal:** AI panel UX overhaul — clean up styling with semantic tokens + unify floating TaskDetailPanel across all views (ADR-010)
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2 days`
+- Planned points capacity: `4`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| UX-06 | AI panel styling & layout redesign | 2 | Hardcoded colors (emerald, amber, blue, black/5, white/5, primary/10, card/70) bypass theme; tool call rows create visual noise; message bubbles have unnecessary role labels; status banners use colored stripes instead of icons; overall chat UX feels cluttered | - | All hardcoded colors replaced with semantic tokens; user messages right-aligned bg-muted, AI messages left-aligned no-bg with bot icon; tool call rows are compact muted log lines; status banners use bg-muted + icon differentiation; PlanApprovalCard uses bg-card (no opacity); input area uses design system defaults; ReasoningStep uses bg-muted |
+| UX-07 | Unified floating TaskDetailPanel across all views (ADR-010) | 2 | Task detail panel behaves inconsistently: Gantt uses floating + decoupled state, Tasks/Kanban use side sheet + conflated state; floating panel needed alongside AI docked panel | UX-06 | All three views (Tasks, Gantt, Kanban) use `floating` TaskDetailPanel; selection (highlight) decoupled from detail (open panel) via separate state; double-click opens detail on all views; kebab/context menu "View Details" still works; tests updated |
+
+**Total committed points:** `4`
+
+### Execution Update
+
+- UX-06: `DONE` (all hardcoded colors replaced with semantic tokens across 4 AI panel components; message bubbles, tool call rows, status banners, suggestion badges, plan card, reasoning step all restyled; S12 isAgentEnabled logic preserved with updated styling)
+- UX-07: `TODO`
+- Progress: `2/4` points complete
+
+### Risks and Blockers
+
+| Risk/Blocker | Impact | Mitigation | Owner |
+| ------------ | ------ | ---------- | ----- |
+| Styling changes may break existing test snapshots | Test failures | Update affected test assertions after visual changes | wwwer |
+| Suggestion severity badges lose color differentiation | Reduced scannability | Use Badge variants (destructive/secondary/outline) instead of raw color classes | wwwer |
+| Kanban store shape change (new detailTaskId) | Persisted store may have stale shape | detailTaskId is not persisted (partialize excludes it); no migration needed | wwwer |
+| Double-click on touch devices | Touch users can't double-tap reliably | Keep kebab menu and context menu as alternative openers; double-click is desktop enhancement | wwwer |
+
+---
+
+## Previous Sprint
+
+**Sprint ID:** S12
+**Dates:** TBD (after S11)
+**Goal:** Agent platform hardening — close safety gaps identified in autonomous-ui-agent-blueprint audit: policy engine, kill switch, post-condition verification, and UI action completion
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2-3 days`
+- Planned points capacity: `7`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| AGT-01 | Agent policy engine: centralized permission and role check before every tool execution | 5 | Any project member who can call `/chat` can trigger any write tool — no role-based enforcement at tool level; agent promises safety tiers but only enforces destructive-tier; shipping more autonomy features on a foundation with no policy layer is the "2+5+8 without finishing the equation" problem | - | Centralized `check_tool_policy(tool_name, ctx)` called before every `execute_tool` in executor; policy checks action allowlist, user role (viewer can't write), project-scoped ID ownership; policy returns `allow / allow_with_approval / deny`; denied tools return error to LLM; tests cover viewer-blocked, member-allowed, deny-unknown-tool, scope-violation |
+| AGT-02 | Agent kill switch: per-project and per-org flag to disable agent execution | 2 | No way to turn off the agent for a project if it misbehaves or user doesn't want it; basic trust requirement before expanding autonomy | - | `agent_enabled` boolean in `project.settings` (default true); org-level `agent_enabled` in `organization.settings` (default true); `prepare_chat_stream` rejects with `400 INVALID_OPERATION` and clear message if either flag is false; project settings UI exposes toggle; tests cover both flags |
+
+**Total committed points:** `7`
+
+### Execution Update
+
+- AGT-01: `DONE` (policy engine implemented in `agent/policy.py`, wired in executor before tool execution, role + scope + unknown-tool deny paths covered by unit tests)
+- AGT-02: `DONE` (project/org `agent_enabled` kill-switch checks enforced in chat + proactive monitor, project settings/UI disable state implemented, focused backend/frontend tests complete)
+- QA Gate: `GO` (diff-scoped backend/frontend suites passed after follow-up closures)
+- Progress: `7/7` points complete
+
+### Sprint Review
+
+- Planned points: `7`
+- Completed points: `7`
+- Carry-over points: `0`
+- Main wins: Shipped policy engine and kill switch with full SDLC cycle; both agent safety gates wired and tested.
+- Main misses: -
+- Process changes for next sprint: -
+
+---
+
+## Previous Sprint
+
 **Sprint ID:** S11
 **Dates:** 2026-03-27 -> 2026-03-29
 **Goal:** Percent-driven status — unify task status as a derived view of percent_complete with configurable review threshold per project
@@ -549,8 +626,9 @@ On mismatch: log warning, return error result to LLM, let LLM decide to retry or
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S12    | TBD                      | 7       | -         | -          | Agent platform hardening: policy engine, kill switch, post-condition verification, UI action handlers |
-| S11    | 2026-03-27 -> 2026-03-29 | 7       | -         | -          | Percent-driven status: derive task status from percent_complete with configurable review threshold |
+| S13    | 2026-03-28 -> 2026-03-29 | 4       | -         | -          | AI panel UX overhaul — styling redesign + unified floating TaskDetailPanel (ADR-010) |
+| S12    | TBD                      | 7       | 7         | 0          | Agent platform hardening: policy engine + kill switch shipped with full SDLC cycle |
+| S11    | 2026-03-27 -> 2026-03-29 | 7       | 7         | 0          | Percent-driven status: derive task status from percent_complete with configurable review threshold |
 | S10    | 2026-03-26 -> 2026-03-28 | 8       | 11        | 0          | Shipped UX remediation groups `UX-01..UX-04` plus stretch `UX-05` and `FIX-17`; invitation/notification/member/profile flows were hardened and visual consistency pass completed. |
 | S08    | 2026-03-25 -> 2026-03-25 | 5       | 5         | 0          | Closed all five S08 QA fixes: Vite WS proxy, invite accept page, org switcher invalidation, removed-member error state, and WebSocket hook stabilization |
 | S07    | 2026-03-24 -> 2026-03-24 | 3       | 5         | 0          | Closed three committed QA fixes plus stretch `FIX-04` and `FIX-05`: avatar upload/render flow, reusable soft-deleted org slugs, personal-org fallback after deleting the active org, password-change success toast, and stable AI preference save feedback |

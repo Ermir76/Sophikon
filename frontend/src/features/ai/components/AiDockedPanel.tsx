@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router";
 import {
+  AlertTriangle,
   Bot,
+  Clock,
   Lightbulb,
   RefreshCcw,
   SendHorizontal,
@@ -50,10 +52,10 @@ function formatDuration(minutes: number): string {
   return `${days}d`;
 }
 
-function suggestionToneClass(severity: AiSuggestion["severity"]): string {
-  if (severity === "HIGH") return "text-destructive";
-  if (severity === "MEDIUM") return "text-amber-500";
-  return "text-emerald-500";
+function suggestionBadgeVariant(severity: AiSuggestion["severity"]): "destructive" | "secondary" | "outline" {
+  if (severity === "HIGH") return "destructive";
+  if (severity === "MEDIUM") return "secondary";
+  return "outline";
 }
 
 function readString(payload: Record<string, unknown>, key: string): string | null {
@@ -496,7 +498,7 @@ export function AiDockedPanel({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col bg-card",
+        "flex h-full min-h-0 flex-col bg-background",
         mode === "docked" ? "border-l" : "",
       )}
     >
@@ -515,7 +517,7 @@ export function AiDockedPanel({
             <Bot className="size-4 text-primary" />
             <div>
               <p className="text-sm font-semibold">AI Assistant</p>
-              <p className="text-[11px] text-muted-foreground">Project-aware guidance</p>
+              <p className="text-xs text-muted-foreground">Project-aware guidance</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -523,7 +525,7 @@ export function AiDockedPanel({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-[11px]"
+              className="h-7 px-2 text-xs"
               onClick={() => clearConversation(projectId)}
               disabled={!isAgentEnabled}
             >
@@ -551,7 +553,7 @@ export function AiDockedPanel({
               onValueChange={(id) => void handleSelectConversation(id)}
               disabled={!isAgentEnabled || isStreaming || loadingHistory}
             >
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger className="h-7 text-xs">
                 <SelectValue placeholder="Resume a past conversation..." />
               </SelectTrigger>
               <SelectContent>
@@ -568,15 +570,17 @@ export function AiDockedPanel({
 
         {/* Status banner */}
         {conversationStatus === "interrupted" ? (
-          <div className="border-t bg-amber-50 px-3 py-1.5 text-[11px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+          <div className="flex items-center gap-1.5 border-t bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+            <AlertTriangle className="size-3 shrink-0" />
             Conversation interrupted — resume or start a new one.
           </div>
         ) : conversationStatus === "awaiting_plan_approval" ? (
-          <div className="border-t bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+          <div className="flex items-center gap-1.5 border-t bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+            <Clock className="size-3 shrink-0" />
             Waiting for plan approval.
           </div>
         ) : !isAgentEnabled ? (
-          <div className="border-t bg-muted/50 px-3 py-1.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 border-t bg-muted px-3 py-1.5 text-xs text-muted-foreground">
             AI agent is disabled for this project. Enable it in Project Settings to continue.
           </div>
         ) : null}
@@ -617,13 +621,15 @@ export function AiDockedPanel({
                       className={cn(
                         "rounded-lg px-3 py-2 text-sm",
                         message.role === "user"
-                          ? "ml-6 bg-primary/10 text-foreground"
-                          : "mr-6 border bg-card/70 text-foreground",
+                          ? "ml-6 bg-muted"
+                          : "mr-6",
                       )}
                     >
-                      <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {message.role}
-                      </p>
+                      {message.role === "assistant" ? (
+                        <div className="mb-1 flex items-center gap-1.5">
+                          <Bot className="size-3 text-muted-foreground" />
+                        </div>
+                      ) : null}
                       <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
                   ),
@@ -723,7 +729,7 @@ export function AiDockedPanel({
               disabled={inputBlocked}
             />
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Enter to send, Shift+Enter for newline
               </p>
               <Button
@@ -743,9 +749,9 @@ export function AiDockedPanel({
         <TabsContent value="estimate" className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="flex-1 px-3 py-3">
             <div className="space-y-3">
-              <div className="rounded-md border bg-card/70 p-3">
+              <div className="rounded-md border bg-card p-3">
                 <p className="text-xs font-semibold">Select Existing Tasks</p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Select one or more tasks to estimate.
                 </p>
                 <div className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1">
@@ -753,7 +759,7 @@ export function AiDockedPanel({
                     taskOptions.map((task) => (
                       <label
                         key={task.id}
-                        className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-muted/40"
+                        className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-muted"
                       >
                         <input
                           type="checkbox"
@@ -771,14 +777,14 @@ export function AiDockedPanel({
                       </label>
                     ))
                   ) : (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       No tasks available for selection.
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-md border bg-card/70 p-3">
+              <div className="rounded-md border bg-card p-3">
                 <p className="text-xs font-semibold">Or Estimate Ad-Hoc Task</p>
                 <div className="mt-2 space-y-2">
                   <Input
@@ -873,8 +879,7 @@ export function AiDockedPanel({
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium">{suggestion.title}</p>
                       <Badge
-                        variant="outline"
-                        className={suggestionToneClass(suggestion.severity)}
+                        variant={suggestionBadgeVariant(suggestion.severity)}
                       >
                         {suggestion.severity}
                       </Badge>
