@@ -15,14 +15,14 @@ from app.models.ai_conversation import AIConversation
 from app.models.enums import CommentEntityType, NotificationType
 from app.models.project import Project
 from app.models.user import User
-from app.service import comment_service, notification_service
+from app.service import comment_service, notification_service, organization_service
 from app.service.agent.context import AgentContext
 from app.service.agent.loop import ProactiveFindings, run_proactive_analysis
-from app.service.ai_service import (
-    _read_user_ai_preferences,
-    _resolve_effective_provider_model,
-    get_model_catalog,
+from app.service.agent.utils import (
+    read_user_ai_preferences,
+    resolve_effective_provider_model,
 )
+from app.service.ai_service import get_model_catalog
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,21 @@ async def _run_proactive_check(db: AsyncSession, project_id: UUID) -> None:
     if not owner:
         return
 
+    project_agent_enabled = bool((project.settings or {}).get("agent_enabled", True))
+    if not project_agent_enabled:
+        return
+
+    organization = await organization_service.get_organization_by_id(
+        db, org_id=project.organization_id
+    )
+    organization_settings = organization.settings if organization else {}
+    org_agent_enabled = bool(organization_settings.get("agent_enabled", True))
+    if not org_agent_enabled:
+        return
+
     catalog = await get_model_catalog()
-    provider, model = _resolve_effective_provider_model(owner, catalog)
-    api_key = _read_user_ai_preferences(owner).get("api_key") or ""
+    provider, model = resolve_effective_provider_model(owner, catalog)
+    api_key = read_user_ai_preferences(owner).get("api_key") or ""
 
     conversation = AIConversation(
         project_id=project.id,
@@ -59,6 +71,7 @@ async def _run_proactive_check(db: AsyncSession, project_id: UUID) -> None:
     ctx = AgentContext(
         project_id=project.id,
         user_id=project.owner_id,
+        role_name="owner",
         conversation_id=conversation.id,
         db=db,
         project=project,

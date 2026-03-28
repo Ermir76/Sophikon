@@ -113,7 +113,7 @@ async def plan(ctx: AgentContext, messages: list[dict]) -> PlanResponse:
 
 async def _stream_plan(ctx: AgentContext, messages: list[dict]):
     """Call /v1/complete with only the define_plan tool and the planner system prompt."""
-    from app.service.ai_service import _complete_from_service
+    from app.service.ai_service import complete_from_service
     from app.service.contracts.ai import AICompleteRequest
 
     request = AICompleteRequest(
@@ -126,5 +126,5 @@ async def _stream_plan(ctx: AgentContext, messages: list[dict]):
         conversation_id=ctx.conversation_id,
     )
 
-    async for event in _complete_from_service(request):
+    async for event in complete_from_service(request):
         yield event.model_dump(mode="json", exclude_none=True)

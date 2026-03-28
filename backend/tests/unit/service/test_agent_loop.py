@@ -16,6 +16,7 @@ def _make_ctx() -> AgentContext:
     return AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=db,
         project=MagicMock(),

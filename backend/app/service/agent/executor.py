@@ -13,6 +13,7 @@ from uuid import uuid4
 from app.service.agent import history as history_mod
 from app.service.agent.context import AgentContext
 from app.service.agent.planner import PlanResponse
+from app.service.agent.policy import ToolPolicy, check_tool_policy
 from app.service.agent.streaming import (
     event_approval_required,
     event_chunk,
@@ -77,7 +78,7 @@ async def execute(
 
     Yields SSE event strings. Persists each turn to DB as it goes.
     """
-    from app.service.ai_service import _complete_from_service
+    from app.service.ai_service import complete_from_service
 
     current_messages = list(messages)
 
@@ -116,7 +117,7 @@ async def execute(
             tool_call_events: list[AIChatEvent] = []
             text_chunks: list[str] = []
 
-            async for event in _complete_from_service(request):
+            async for event in complete_from_service(request):
                 if event.type == "start" and iteration == 0:
                     pass  # start was already emitted by loop.py
 
@@ -178,7 +179,32 @@ async def execute(
                 tool_input = tc.tool_input or {}
                 tool_use_id = tc.tool_use_id or ""
 
-                if tool_name in DESTRUCTIVE_TOOLS:
+                policy_decision = await check_tool_policy(tool_name, tool_input, ctx)
+                if policy_decision.policy == ToolPolicy.DENY:
+                    denied_reason = (
+                        policy_decision.reason
+                        or "Permission denied for this tool call."
+                    )
+                    result_block = {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": denied_reason,
+                        "is_error": True,
+                    }
+                    yield event_tool_result(
+                        tool_use_id,
+                        tool_name,
+                        success=False,
+                        data={"error": denied_reason, "denied": True},
+                    )
+                    tool_result_blocks.append(result_block)
+                    continue
+
+                needs_approval = (
+                    policy_decision.policy == ToolPolicy.ALLOW_WITH_APPROVAL
+                    or tool_name in DESTRUCTIVE_TOOLS
+                )
+                if needs_approval:
                     approval_id = str(uuid4())
                     yield event_approval_required(
                         approval_id, tool_use_id, tool_name, tool_input

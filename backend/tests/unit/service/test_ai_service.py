@@ -1,5 +1,6 @@
 import json
 import uuid
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import httpx
@@ -214,6 +215,7 @@ async def test_prepare_chat_stream_creates_conversation_and_user_message(
         session,
         project=project,
         user=user,
+        role_name="owner",
         body=AIChatInput(message="How are we doing?"),
     )
     payloads = [chunk async for chunk in stream]
@@ -297,6 +299,7 @@ async def test_prepare_chat_stream_uses_user_selected_provider_and_model(
         session,
         project=project,
         user=user,
+        role_name="owner",
         body=AIChatInput(message="Use selected model"),
     )
     payloads = [chunk async for chunk in stream]
@@ -326,6 +329,7 @@ async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailabl
         session,
         project=project,
         user=user,
+        role_name="owner",
         body=AIChatInput(message="Hello?"),
     )
     payloads = [chunk async for chunk in stream]
@@ -334,6 +338,60 @@ async def test_prepare_chat_stream_emits_sse_error_when_model_catalog_unavailabl
     parsed = json.loads(payloads[0].removeprefix("data: ").strip())
     assert parsed["type"] == "error"
     assert parsed["message"] == "AI service is unavailable"
+
+
+@pytest.mark.asyncio
+async def test_prepare_chat_stream_rejects_when_project_agent_disabled(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-project-disabled@example.com",
+        slug="org-ai-project-disabled",
+    )
+    project.settings = {"agent_enabled": False}
+
+    with pytest.raises(InvalidOperationError, match="disabled for this project"):
+        await ai_service.prepare_chat_stream(
+            session,
+            project=project,
+            user=user,
+            role_name="owner",
+            body=AIChatInput(message="Hello?"),
+        )
+
+
+@pytest.mark.asyncio
+async def test_prepare_chat_stream_rejects_when_organization_agent_disabled(
+    client: AsyncClient,
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    user, project, _ = await _seed_project_with_task(
+        client,
+        session,
+        email="ai-org-disabled@example.com",
+        slug="org-ai-org-disabled",
+    )
+
+    disabled_org = MagicMock()
+    disabled_org.settings = {"agent_enabled": False}
+    monkeypatch.setattr(
+        ai_service.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=disabled_org),
+    )
+
+    with pytest.raises(InvalidOperationError, match="disabled for this organization"):
+        await ai_service.prepare_chat_stream(
+            session,
+            project=project,
+            user=user,
+            role_name="owner",
+            body=AIChatInput(message="Hello?"),
+        )
 
 
 def test_ai_schema_accepts_uuid_utils_uuid_values():
@@ -403,7 +461,7 @@ async def test_estimate_for_project_builds_task_inputs_and_tracks_usage(
         )
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
-    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_service, "complete_from_service", fake_complete)
 
     response = await ai_service.estimate_for_project(
         session,
@@ -481,7 +539,7 @@ async def test_stream_chat_emits_error_event_for_malformed_sse_payload(
 
     events = [
         event
-        async for event in ai_service._complete_from_service(
+        async for event in ai_service.complete_from_service(
             AICompleteRequest(
                 messages=[{"role": "user", "content": "Status?"}],
                 tools=[],
@@ -520,7 +578,7 @@ async def test_stream_chat_raises_invalid_operation_when_ai_service_is_unavailab
     monkeypatch.setattr(ai_service.httpx, "AsyncClient", FailingAsyncClient)
 
     with pytest.raises(InvalidOperationError, match="AI service is unavailable"):
-        events = ai_service._complete_from_service(
+        events = ai_service.complete_from_service(
             AICompleteRequest(
                 messages=[{"role": "user", "content": "Status?"}],
                 tools=[],
@@ -555,7 +613,7 @@ async def test_estimate_for_project_rejects_malformed_llm_response(
         yield AIChatEvent(type="done", usage=AIUsageMeta())
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
-    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_service, "complete_from_service", fake_complete)
 
     with pytest.raises(InvalidOperationError, match="Malformed AI estimation response"):
         await ai_service.estimate_for_project(
@@ -587,7 +645,7 @@ async def test_suggestions_for_project_rejects_malformed_llm_response(
         yield AIChatEvent(type="done", usage=AIUsageMeta())
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
-    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_service, "complete_from_service", fake_complete)
 
     with pytest.raises(
         InvalidOperationError, match="Malformed AI suggestions response"
@@ -789,7 +847,7 @@ async def test_estimate_for_project_with_mock_provider(
         )
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
-    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_service, "complete_from_service", fake_complete)
 
     result = await ai_service.estimate_for_project(
         session,
@@ -856,7 +914,7 @@ async def test_suggestions_for_project_with_mock_provider(
         )
 
     monkeypatch.setattr(ai_service, "get_model_catalog", fake_catalog)
-    monkeypatch.setattr(ai_service, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_service, "complete_from_service", fake_complete)
 
     result = await ai_service.suggestions_for_project(
         session,

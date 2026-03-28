@@ -12,6 +12,7 @@ def _make_ctx() -> AgentContext:
     return AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=MagicMock(),
         project=MagicMock(),
@@ -47,7 +48,7 @@ async def test_plan_returns_steps_when_llm_calls_define_plan(
 
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
 
     ctx = _make_ctx()
     result = await planner_mod.plan(
@@ -72,7 +73,7 @@ async def test_plan_returns_empty_when_llm_does_not_call_define_plan(
 
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
 
     ctx = _make_ctx()
     result = await planner_mod.plan(
@@ -98,7 +99,7 @@ async def test_plan_read_only_request_sets_needs_execution_false(
 
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
 
     ctx = _make_ctx()
     result = await planner_mod.plan(

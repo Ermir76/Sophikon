@@ -8,6 +8,7 @@ from app.core.exceptions import NotFoundError
 from app.service.agent import executor as executor_mod
 from app.service.agent.context import AgentContext
 from app.service.agent.planner import PlanResponse, PlanStep
+from app.service.agent.policy import PolicyDecision, ToolPolicy
 from app.service.agent.tool_registry import ToolResult
 from app.service.contracts.ai import AIChatEvent, AIUsageMeta
 
@@ -18,6 +19,7 @@ def _make_ctx() -> AgentContext:
     return AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=db,
         project=MagicMock(),
@@ -49,7 +51,7 @@ async def test_execute_yields_done_when_no_tool_calls(monkeypatch: pytest.Monkey
     import app.service.agent.history as hist
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "load_project_memory", fake_load_project_memory)
     monkeypatch.setattr(hist, "build_system_prompt", lambda *a, **kw: "system")
@@ -94,11 +96,10 @@ async def test_execute_emits_tool_call_and_tool_result(monkeypatch: pytest.Monke
         return None
 
     import app.service.agent.history as hist
-    import app.service.agent.tool_registry as tr
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
-    monkeypatch.setattr(tr, "execute_tool", fake_execute_tool)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
+    monkeypatch.setattr(executor_mod, "execute_tool", fake_execute_tool)
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "save_tool_results_turn", fake_save_tool_results_turn)
     monkeypatch.setattr(hist, "load_project_memory", fake_load_project_memory)
@@ -140,7 +141,12 @@ async def test_execute_gates_destructive_tools_with_approval_required(
     import app.service.agent.history as hist
     import app.service.ai_service as ai_svc
 
-    monkeypatch.setattr(ai_svc, "_complete_from_service", fake_complete)
+    monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
+    monkeypatch.setattr(
+        executor_mod,
+        "check_tool_policy",
+        AsyncMock(return_value=PolicyDecision(policy=ToolPolicy.ALLOW_WITH_APPROVAL)),
+    )
     monkeypatch.setattr(executor_mod, "_wait_for_tool_approval", fake_wait_for_approval)
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "save_tool_results_turn", fake_save_tool_results_turn)

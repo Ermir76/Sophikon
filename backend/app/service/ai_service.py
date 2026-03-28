@@ -26,6 +26,15 @@ from app.models.enums import (
 from app.models.project import Project
 from app.models.task import Task
 from app.models.user import User
+from app.service import organization_service
+from app.service.agent.utils import (
+    get_catalog_provider,
+    is_provider_available,
+    is_valid_model_for_provider,
+    read_user_ai_preferences,
+    recommended_model_id,
+    resolve_effective_provider_model,
+)
 from app.service.contracts.ai import (
     AIChatEvent,
     AIChatInput,
@@ -69,74 +78,11 @@ _MODEL_CATALOG_CACHE: dict | None = None
 _MODEL_CATALOG_CACHE_EXPIRES_AT: datetime | None = None
 
 
-def _get_catalog_provider(catalog: dict, provider_id: str | None) -> dict | None:
-    if provider_id is None:
-        return None
-    for provider in catalog.get("providers", []):
-        if provider.get("provider_id") == provider_id:
-            return provider
-    return None
-
-
-def _recommended_model_id(provider: dict) -> str | None:
-    models = provider.get("models", [])
-    for model in models:
-        if model.get("recommended"):
-            return model.get("model_id")
-    if models:
-        return models[0].get("model_id")
-    return None
-
-
-def _is_valid_model_for_provider(
-    catalog: dict, provider_id: str, model_id: str
-) -> bool:
-    provider = _get_catalog_provider(catalog, provider_id)
-    if provider is None:
-        return False
-    return any(m.get("model_id") == model_id for m in provider.get("models", []))
-
-
-def _is_provider_available(catalog: dict, provider_id: str) -> bool:
-    provider = _get_catalog_provider(catalog, provider_id)
-    if provider is None:
-        return False
-    return bool(provider.get("available", False))
-
-
-def _read_user_ai_preferences(user: User) -> dict:
-    prefs = dict(user.preferences or {})
-    return dict(prefs.get("ai", {}))
-
-
-def _resolve_effective_provider_model(
-    user: User, catalog: dict
-) -> tuple[str | None, str | None]:
-    ai_prefs = _read_user_ai_preferences(user)
-    defaults = catalog.get("defaults", {})
-    provider = ai_prefs.get("provider") or defaults.get("provider")
-    model = ai_prefs.get("model") or defaults.get("model")
-
-    if provider and model and _is_valid_model_for_provider(catalog, provider, model):
-        return provider, model
-    default_provider = defaults.get("provider")
-    if default_provider:
-        provider_obj = _get_catalog_provider(catalog, default_provider)
-        if provider_obj is not None:
-            return default_provider, _recommended_model_id(provider_obj)
-
-    providers = catalog.get("providers", [])
-    if providers:
-        first_provider = providers[0]
-        return first_provider.get("provider_id"), _recommended_model_id(first_provider)
-    return None, None
-
-
 def build_ai_preferences_response(user: User, catalog: dict) -> dict:
-    ai_prefs = _read_user_ai_preferences(user)
+    ai_prefs = read_user_ai_preferences(user)
     auto = dict(ai_prefs.get("auto_approve", {}))
     merged_auto = {**_DEFAULT_AUTO_APPROVE, **auto}
-    provider, model = _resolve_effective_provider_model(user, catalog)
+    provider, model = resolve_effective_provider_model(user, catalog)
     return {
         "auto_approve": merged_auto,
         "provider": provider,
@@ -173,21 +119,21 @@ def apply_ai_preferences_patch(
     if provider is None:
         provider = defaults.get("provider")
     if provider:
-        provider_obj = _get_catalog_provider(catalog, provider)
+        provider_obj = get_catalog_provider(catalog, provider)
         if provider_obj is None:
             raise ValidationError(f"Unsupported AI provider '{provider}'")
-        if not _is_provider_available(catalog, provider):
+        if not is_provider_available(catalog, provider):
             raise ValidationError(f"Provider '{provider}' is not configured on server")
-        if model is None or not _is_valid_model_for_provider(catalog, provider, model):
+        if model is None or not is_valid_model_for_provider(catalog, provider, model):
             if model_patch is not None:
                 raise ValidationError(
                     f"Model '{model_patch}' is not valid for provider '{provider}'"
                 )
-            model = _recommended_model_id(provider_obj)
+            model = recommended_model_id(provider_obj)
 
         if model is None:
             raise ValidationError(f"No models configured for provider '{provider}'")
-        if not _is_valid_model_for_provider(catalog, provider, model):
+        if not is_valid_model_for_provider(catalog, provider, model):
             raise ValidationError(
                 f"Model '{model}' is not valid for provider '{provider}'"
             )
@@ -484,7 +430,7 @@ async def get_conversation_messages(
 # ---------------------------------------------------------------------------
 
 
-async def _complete_from_service(
+async def complete_from_service(
     body: AICompleteRequest,
 ) -> AsyncGenerator[AIChatEvent]:
     try:
@@ -525,10 +471,27 @@ async def prepare_chat_stream(
     *,
     project: Project,
     user: User,
+    role_name: str,
     body: AIChatInput,
 ) -> AsyncGenerator[str]:
     from app.service.agent.context import AgentContext
     from app.service.agent.loop import run_agent
+
+    project_agent_enabled = bool((project.settings or {}).get("agent_enabled", True))
+    if not project_agent_enabled:
+        raise InvalidOperationError(
+            "AI agent is disabled for this project. Enable it in project settings to continue."
+        )
+
+    organization = await organization_service.get_organization_by_id(
+        db, org_id=project.organization_id
+    )
+    organization_settings = organization.settings if organization else {}
+    org_agent_enabled = bool(organization_settings.get("agent_enabled", True))
+    if not org_agent_enabled:
+        raise InvalidOperationError(
+            "AI agent is disabled for this organization. Contact an organization owner."
+        )
 
     conversation = await get_or_create_conversation(
         db,
@@ -557,12 +520,13 @@ async def prepare_chat_stream(
 
         return _catalog_error()
 
-    provider, model = _resolve_effective_provider_model(user, catalog)
-    api_key = _read_user_ai_preferences(user).get("api_key") or ""
+    provider, model = resolve_effective_provider_model(user, catalog)
+    api_key = read_user_ai_preferences(user).get("api_key") or ""
 
     ctx = AgentContext(
         project_id=project.id,
         user_id=user.id,
+        role_name=role_name,
         conversation_id=conversation.id,
         db=db,
         project=project,
@@ -639,8 +603,8 @@ async def estimate_for_project(
 
     context = await build_project_context(db, project)
     catalog = await get_model_catalog()
-    provider, model = _resolve_effective_provider_model(user, catalog)
-    api_key = _read_user_ai_preferences(user).get("api_key") or ""
+    provider, model = resolve_effective_provider_model(user, catalog)
+    api_key = read_user_ai_preferences(user).get("api_key") or ""
 
     project_snapshot = "\n".join(
         f"- {t.name}: {t.duration}min, {int(t.percent_complete)}% done"
@@ -678,7 +642,7 @@ async def estimate_for_project(
     text_chunks: list[str] = []
     tokens_in = 0
     tokens_out = 0
-    async for event in _complete_from_service(request):
+    async for event in complete_from_service(request):
         if event.type == "chunk" and event.content:
             text_chunks.append(event.content)
         elif event.type == "done" and event.usage:
@@ -711,8 +675,8 @@ async def suggestions_for_project(
 ) -> AISuggestionsResult:
     context = await build_project_context(db, project)
     catalog = await get_model_catalog()
-    provider, model = _resolve_effective_provider_model(user, catalog)
-    api_key = _read_user_ai_preferences(user).get("api_key") or ""
+    provider, model = resolve_effective_provider_model(user, catalog)
+    api_key = read_user_ai_preferences(user).get("api_key") or ""
 
     project_snapshot = "\n".join(
         f"- {t.name}: start={t.start_date}, finish={t.finish_date}, "
@@ -752,7 +716,7 @@ async def suggestions_for_project(
     text_chunks: list[str] = []
     tokens_in = 0
     tokens_out = 0
-    async for event in _complete_from_service(request):
+    async for event in complete_from_service(request):
         if event.type == "chunk" and event.content:
             text_chunks.append(event.content)
         elif event.type == "done" and event.usage:

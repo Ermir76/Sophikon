@@ -31,6 +31,7 @@ class ProjectSettingsPatch(BaseModel):
     status_thresholds: dict[TaskStatus, Annotated[int, Field(ge=1, le=100)]] | None = (
         Field(default=None, max_length=3)
     )
+    agent_enabled: bool | None = Field(default=None)
     kanban_wip_limits: dict[TaskStatus, Annotated[int, Field(ge=1, le=999)]] | None = (
         Field(default=None, max_length=5)
     )
@@ -58,7 +59,7 @@ class ProjectCreate(BaseModel):
     start_date: date
     schedule_from: ScheduleFrom = ScheduleFrom.START
     currency: str = Field(default="USD", min_length=3, max_length=3)
-    budget: Decimal | None = None
+    budget: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
     settings: ProjectSettingsPatch | None = None
     color: str | None = Field(default=None, max_length=32)
 
@@ -84,7 +85,7 @@ class ProjectUpdate(ModelPatchSchema):
     finish_date: date | None = None
     status_date: date | None = None
     default_calendar_id: uuid.UUID | None = None
-    budget: Decimal | None = None
+    budget: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
     color: str | None = Field(default=None, max_length=32)
 
 

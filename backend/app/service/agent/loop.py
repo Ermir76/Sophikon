@@ -38,7 +38,7 @@ async def run_proactive_analysis(ctx: AgentContext) -> ProactiveFindings:
     Called from the Celery proactive agent — no streaming, no plan approval.
     """
     from app.service.agent.tool_registry import execute_tool
-    from app.service.ai_service import _complete_from_service
+    from app.service.ai_service import complete_from_service
     from app.service.contracts.ai import AICompleteRequest
 
     summary_result = await execute_tool("get_project_summary", {}, ctx)
@@ -72,7 +72,7 @@ async def run_proactive_analysis(ctx: AgentContext) -> ProactiveFindings:
     )
 
     text_chunks: list[str] = []
-    async for event in _complete_from_service(request):
+    async for event in complete_from_service(request):
         if event.type == "chunk" and event.content:
             text_chunks.append(event.content)
 

@@ -65,6 +65,7 @@ async def chat_with_ai(
         db,
         project=access.project,
         user=user,
+        role_name=access.role_name,
         body=service_body,
     )
 

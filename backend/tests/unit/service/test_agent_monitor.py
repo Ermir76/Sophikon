@@ -11,8 +11,10 @@ def _make_project(project_id=None, owner_id=None):
     project = MagicMock()
     project.id = project_id or uuid.uuid4()
     project.owner_id = owner_id or uuid.uuid4()
+    project.organization_id = uuid.uuid4()
     project.name = "Test Project"
     project.is_deleted = False
+    project.settings = {}
     return project
 
 
@@ -57,14 +59,17 @@ async def test_run_proactive_check_posts_comment_and_notification_when_issues_fo
     monkeypatch.setattr(monitor, "get_model_catalog", AsyncMock(return_value={}))
     monkeypatch.setattr(
         monitor,
-        "_resolve_effective_provider_model",
+        "resolve_effective_provider_model",
         MagicMock(return_value=("mock", "mock")),
     )
-    monkeypatch.setattr(
-        monitor, "_read_user_ai_preferences", MagicMock(return_value={})
-    )
+    monkeypatch.setattr(monitor, "read_user_ai_preferences", MagicMock(return_value={}))
     monkeypatch.setattr(
         monitor, "run_proactive_analysis", AsyncMock(return_value=findings)
+    )
+    monkeypatch.setattr(
+        monitor.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=None),
     )
 
     mock_create_comment = AsyncMock()
@@ -106,14 +111,17 @@ async def test_run_proactive_check_does_nothing_when_no_issues(
     monkeypatch.setattr(monitor, "get_model_catalog", AsyncMock(return_value={}))
     monkeypatch.setattr(
         monitor,
-        "_resolve_effective_provider_model",
+        "resolve_effective_provider_model",
         MagicMock(return_value=("mock", "mock")),
     )
-    monkeypatch.setattr(
-        monitor, "_read_user_ai_preferences", MagicMock(return_value={})
-    )
+    monkeypatch.setattr(monitor, "read_user_ai_preferences", MagicMock(return_value={}))
     monkeypatch.setattr(
         monitor, "run_proactive_analysis", AsyncMock(return_value=findings)
+    )
+    monkeypatch.setattr(
+        monitor.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=None),
     )
 
     mock_create_comment = AsyncMock()
@@ -185,14 +193,17 @@ async def test_notification_targets_correct_project(
     monkeypatch.setattr(monitor, "get_model_catalog", AsyncMock(return_value={}))
     monkeypatch.setattr(
         monitor,
-        "_resolve_effective_provider_model",
+        "resolve_effective_provider_model",
         MagicMock(return_value=("mock", "mock")),
     )
-    monkeypatch.setattr(
-        monitor, "_read_user_ai_preferences", MagicMock(return_value={})
-    )
+    monkeypatch.setattr(monitor, "read_user_ai_preferences", MagicMock(return_value={}))
     monkeypatch.setattr(
         monitor, "run_proactive_analysis", AsyncMock(return_value=findings)
+    )
+    monkeypatch.setattr(
+        monitor.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=None),
     )
     monkeypatch.setattr(
         monitor.comment_service,
@@ -215,3 +226,57 @@ async def test_notification_targets_correct_project(
     assert call_kwargs["entity_type"] == "project"
     assert call_kwargs["entity_id"] == project.id
     assert call_kwargs["user_id"] == project.owner_id
+
+
+@pytest.mark.asyncio
+async def test_run_proactive_check_skips_when_project_agent_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import app.tasks.agent_monitor as monitor
+
+    project = _make_project()
+    project.settings = {"agent_enabled": False}
+    owner = _make_owner(project.owner_id)
+    db = _make_db(project, owner)
+
+    mock_get_model_catalog = AsyncMock(return_value={})
+    monkeypatch.setattr(monitor, "get_model_catalog", mock_get_model_catalog)
+    monkeypatch.setattr(
+        monitor.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=None),
+    )
+    monkeypatch.setattr(monitor, "run_proactive_analysis", AsyncMock())
+
+    await _run_proactive_check(db, project.id)
+
+    mock_get_model_catalog.assert_not_called()
+    monitor.run_proactive_analysis.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_run_proactive_check_skips_when_organization_agent_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import app.tasks.agent_monitor as monitor
+
+    project = _make_project()
+    owner = _make_owner(project.owner_id)
+    db = _make_db(project, owner)
+
+    disabled_org = MagicMock()
+    disabled_org.settings = {"agent_enabled": False}
+
+    mock_get_model_catalog = AsyncMock(return_value={})
+    monkeypatch.setattr(monitor, "get_model_catalog", mock_get_model_catalog)
+    monkeypatch.setattr(
+        monitor.organization_service,
+        "get_organization_by_id",
+        AsyncMock(return_value=disabled_org),
+    )
+    monkeypatch.setattr(monitor, "run_proactive_analysis", AsyncMock())
+
+    await _run_proactive_check(db, project.id)
+
+    mock_get_model_catalog.assert_not_called()
+    monitor.run_proactive_analysis.assert_not_called()

@@ -16,6 +16,7 @@ from app.models.project import Project
 class AgentContext:
     project_id: UUID
     user_id: UUID
+    role_name: str
     conversation_id: UUID
     db: AsyncSession
     project: Project

@@ -22,6 +22,7 @@ class OrganizationSettingsPatch(BaseModel):
     """
 
     model_config = {"extra": "forbid"}
+    agent_enabled: bool | None = Field(default=None)
 
 
 class OrganizationCreate(BaseModel):
