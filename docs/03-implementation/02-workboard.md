@@ -2,15 +2,78 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S13
-**Dates:** 2026-03-28 -> 2026-03-29
+**Sprint ID:** S14
+**Dates:** TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
+Guardrail: never delete previous sprint mini-task sections; keep historical sprint blocks intact and append/move only the active sprint block.
 
 ---
 
-## Active Items — S13
+## Active Items — S14
+
+### AGT-05 — Task search rewrite: DB-level search for UI + agent
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add task search endpoint `GET /projects/{project_id}/tasks/search`
+- [x] Enforce non-empty trimmed `q`; return `400 VALIDATION_ERROR` for empty `q`
+- [x] Support `status` filter with model-level enum values only (`BACKLOG|TODO|IN_PROGRESS|IN_REVIEW|DONE`)
+- [x] Support `overdue_only` and `include_parents` query params
+- [x] Implement repository full-text query (name + notes) with result limit
+- [x] Add migration/index for search performance (GIN on task search vector expression)
+- [x] Add service-layer `search_tasks` function and keep layer direction `api -> service -> repository`
+- [x] Rewire agent `search_tasks` tool to call DB-level search path (remove in-memory 250-task filtering)
+- [x] Frontend: add task search API client + hook + debounced query usage in Tasks view
+- [x] Keep explicit loading/empty/error states for search UI
+
+#### QA Coverage
+
+- [x] Backend API integration tests for `/tasks/search` happy + bad paths (`q` trim validation, status filter, include_parents)
+- [x] Backend agent tool tests for `search_tasks` schema and invalid filter handling
+- [x] Frontend hook tests for `useTaskSearch` enabled/disabled behavior
+- [x] Frontend page tests for search mode rendering and empty/error behavior
+- [x] Run targeted backend + frontend test commands and record result
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions:
+  - v1 search is limit-only (no offset/cursor pagination and no total count return)
+  - No fallback mode for empty query — this endpoint is search-only by contract
+  - QA rerun passed after repository search-expression fix (`backend` + `frontend` targeted suites green; gate `GO`).
+
+---
+
+### AGT-06 — Agent foundation: prompt versioning + tool catalog + prompt caching hooks
+
+Status: `NOT_STARTED`
+
+#### Mini-tasks
+
+- [ ] Introduce versioned prompt module with `PROMPT_VERSION = "1"`
+- [ ] Persist/log prompt version with each conversation run for traceability
+- [ ] Refactor planner/executor to share the same tool catalog source
+- [ ] Add optional prompt-caching metadata in backend `AICompleteRequest`
+- [ ] Add matching optional prompt-caching metadata in ai-service `CompleteRequest`
+- [ ] Keep metadata backward-compatible when provider ignores caching hints
+- [ ] Add a concise baked domain-knowledge section to system prompt (without loading full project dump)
+- [ ] Verify existing plan/execute/approval flow remains unchanged
+
+#### Notes
+
+- Dependencies: AGT-05 recommended first (search quality impacts agent usefulness immediately)
+- Blockers: provider-specific cache support may be partial
+- Decisions:
+  - Foundation work in this sprint is contract + wiring; deep provider optimization is follow-up
+
+---
+
+## Previous Sprint Items — S13
 
 ### UX-06 — AI panel styling & layout redesign
 
@@ -40,7 +103,7 @@ Status: `DONE`
 
 ### UX-07 — Unified floating TaskDetailPanel across all views (ADR-010)
 
-Status: `IN_PROGRESS`
+Status: `DONE`
 
 #### Mini-tasks
 
@@ -50,7 +113,7 @@ Status: `IN_PROGRESS`
 - [x] KanbanPage state split — wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
 - [x] Kanban card double-click — single click selects (highlight), double-click opens detail panel
 - [x] Keep alternative openers — kebab menu "View Details" and context menu still call `setDetailTaskId`
-- [ ] Update tests — adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
+- [x] Update tests — adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
 
 #### Notes
 
@@ -59,6 +122,7 @@ Status: `IN_PROGRESS`
 - Decisions:
   - GanttPage already uses the target pattern — no changes needed there
   - TaskDetailPanel component already supports `floating` prop — no changes needed there
+  - Final interaction contract: single click selects/highlights, double-click opens floating detail panel; explicit "View Details" actions remain valid openers
   - Reference: `docs/02-design/adr/ADR-010-unified-floating-task-detail-panel.md`
 
 ---

@@ -1,7 +1,7 @@
 # Sophikon V1 - Functional Requirements
 
-**Version:** 10.3
-**Date:** 2026-03-23
+**Version:** 10.7
+**Date:** 2026-03-30
 **Scope:** V1 product requirements only (what the system must do)
 
 ---
@@ -185,7 +185,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | ID        | Requirement                           | Priority | Status  |
 | --------- | ------------------------------------- | -------- | ------- |
 | FR-AI-001 | Chat about project                    | Must     | DONE    |
-| FR-AI-002 | Query tasks                           | Must     | DONE    |
+| FR-AI-002 | Query tasks (DB-backed search path)   | Must     | DONE    |
 | FR-AI-003 | Query status                          | Must     | PARTIAL |
 | FR-AI-004 | Actions with confirmation             | Should   | DONE    |
 | FR-AI-005 | Task estimation                       | Must     | DONE    |
@@ -236,7 +236,7 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | FR-KB-005 | Search and filter cards                                                            | Should   | DONE    |
 | FR-KB-006 | Collapse column to icon strip                                                      | Should   | DONE    |
 | FR-KB-007 | Quick-add card from column header                                                  | Should   | DONE    |
-| FR-KB-008 | Open task detail panel from card without leaving the board                         | Must     | DONE    |
+| FR-KB-008 | Open floating task detail panel from board/list card while keeping selection decoupled (single click selects, double-click opens) | Must     | DONE    |
 | FR-KB-009 | Drag to reorder cards within a column                                              | Should   | DONE    |
 | FR-KB-010 | WIP limits — set max cards per column with visual warning when exceeded            | Should   | DONE    |
 | FR-KB-011 | Swimlanes — group cards by assignee or priority within each column                 | Should   | DONE    |
@@ -314,3 +314,5 @@ Status baseline comes from `docs/03-implementation/requirements-traceability.md`
 | 10.3    | 2026-03-23 | Codex  | Marked FR-KB-013 as DONE after shipping kanban bulk select mode with multi-card move via existing bulk task update API.                                                                                                                   |
 | 10.4    | 2026-03-24 | Codex  | Marked FR-KB-016 as DONE after shipping kanban Sprint Health summary with manual AI refresh, grouped risk surfacing, and task-detail drill-in from affected risk entries.                                                                  |
 | 10.5    | 2026-03-24 | Codex  | Reclassified FR-CA-002 and FR-CA-005 through FR-CA-007 from PARTIAL to DONE after verifying mounted calendar edit/inheritance/task assignment/resource assignment flows in frontend, backend, and scheduling tests.                          |
+| 10.6    | 2026-03-30 | Codex  | Refined FR-KB-008 wording to match implemented UX-07 interaction contract: selection remains decoupled from panel-open state, with single-click selection and double-click detail open behavior. |
+| 10.7    | 2026-03-30 | Codex  | Updated FR-AI-002 wording to reflect shipped AGT-05 behavior: task querying now uses the DB-backed search path shared by UI and agent flows. |

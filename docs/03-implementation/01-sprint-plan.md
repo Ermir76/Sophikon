@@ -4,11 +4,67 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ---
 
-## S14 — Task search + agent foundation (placeholder)
+## S14 — Task search + agent foundation
 
-**Goal:** Build real task search — DB-level full-text search exposed on the UI and as an agent tool. Foundation for agent redesign (system prompt, tool catalog, prompt caching) follows once search is in place.
+**Goal:** Replace fake in-memory task search with DB-level search exposed to UI and agent tools, then harden the agent foundation with versioned system prompts, normalized tool catalog usage, and prompt-caching hooks.
 
-TBD — design pending.
+### Scope
+
+- In scope: backend task search endpoint + query path, frontend search integration, agent `search_tasks` rewrite, prompt/tooling foundation work.
+- Out of scope: new multi-agent orchestration, large ai-service provider rewrites.
+
+### Design Decisions (Approved)
+
+1. **Search endpoint contract**
+   - `GET /projects/{project_id}/tasks/search`
+   - `q` is required and must be non-empty after trim.
+   - Empty `q` returns `400 VALIDATION_ERROR` (no fallback-to-recent behavior).
+2. **Filter semantics**
+   - `status` accepts model-level values only: `BACKLOG | TODO | IN_PROGRESS | IN_REVIEW | DONE`.
+   - Derived deadline filter is separate: `overdue_only` boolean.
+3. **Parent-task filter naming**
+   - Use `include_parents` (not `include_summary`) to avoid ambiguity.
+4. **Search return contract (v1)**
+   - Limit-only search for now, no offset/cursor pagination.
+   - Repository/service return list-only (no total count in v1 contract).
+5. **Prompt versioning**
+   - Introduce `PROMPT_VERSION = "1"` in the agent prompt module.
+   - Persist/log prompt version with each conversation run for traceability.
+
+### Backend Plan
+
+- Add DB-level search query in repository (PostgreSQL full-text on active tasks).
+- Add search service function and API endpoint wiring (`api -> service -> repository`).
+- Add index + migration for search performance.
+- Rewire agent `search_tasks` tool to call search service instead of loading `list_tasks(..., per_page=250)` and filtering in Python.
+
+### Frontend Plan
+
+- Add task search API client method and query hook with debounced input.
+- Replace local/in-memory filtering with backend search results.
+- Keep explicit loading/empty/error states.
+
+### Agent Foundation Plan
+
+- Replace minimal system prompt with structured versioned prompt module.
+- Keep single source for tool schemas and route planner/executor through that catalog.
+- Add optional prompt-caching metadata path in backend->ai-service complete request (backward-compatible if provider ignores hints).
+
+### Risks and Mitigation
+
+| Risk/Blocker | Impact | Mitigation | Owner |
+| ------------ | ------ | ---------- | ----- |
+| Search quality mismatch on short queries | Irrelevant results | FTS ranking + normalized query parsing + UI debounce | wwwer |
+| Search latency on large projects | Slow chat/UI search | Add GIN index and hard limit defaults | wwwer |
+| Prompt changes regress agent behavior | Lower answer quality | Versioned prompt + rollout validation against existing flows | wwwer |
+| Contract drift between backend and ai-service | Runtime failures | Update both request contract models in same change set | wwwer |
+
+### Execution Update
+
+- AGT-05: `DONE` (DB-level `/tasks/search` endpoint + repository full-text search + GIN index migration + agent `search_tasks` rewrite + frontend debounced search integration shipped).
+- AGT-06: `NOT_STARTED` (kept out of this delivery slice).
+- QA Gate: `GO` (targeted backend suite `tests/unit/api/v1/test_tasks.py` + `tests/unit/service/test_agent_tool_registry.py` and targeted frontend suite `useTasks.test.tsx` + `TasksPage.test.tsx` passed on rerun).
+- Progress: `1/2` committed S14 items complete.
 
 ---
 
@@ -36,8 +92,18 @@ TBD — design pending.
 ### Execution Update
 
 - UX-06: `DONE` (all hardcoded colors replaced with semantic tokens across 4 AI panel components; message bubbles, tool call rows, status banners, suggestion badges, plan card, reasoning step all restyled; S12 isAgentEnabled logic preserved with updated styling)
-- UX-07: `TODO`
-- Progress: `2/4` points complete
+- UX-07: `DONE` (Tasks and Kanban now use floating TaskDetailPanel with decoupled selection/detail state; single-click selection + double-click open behavior aligned with Gantt pattern; focused tests updated and passing)
+- QA Gate: `GO` (targeted frontend suite passed after KanbanPage expectation updates)
+- Progress: `4/4` points complete
+
+### Sprint Review
+
+- Planned points: `4`
+- Completed points: `4`
+- Carry-over points: `0`
+- Main wins: Completed S13 UX-06 + UX-07 with unified floating task-detail interaction across views, preserved alternative openers, and closed QA with updated regression coverage.
+- Main misses: -
+- Process changes for next sprint: Keep interaction-contract changes and test-expectation updates in the same commit to avoid temporary red CI during review.
 
 ### Risks and Blockers
 
@@ -634,7 +700,7 @@ On mismatch: log warning, return error result to LLM, let LLM decide to retry or
 
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
-| S13    | 2026-03-28 -> 2026-03-29 | 4       | -         | -          | AI panel UX overhaul — styling redesign + unified floating TaskDetailPanel (ADR-010) |
+| S13    | 2026-03-28 -> 2026-03-29 | 4       | 4         | 0          | AI panel UX overhaul completed: semantic styling refresh + unified floating TaskDetailPanel workflow (single-click select, double-click open) |
 | S12    | TBD                      | 7       | 7         | 0          | Agent platform hardening: policy engine + kill switch shipped with full SDLC cycle |
 | S11    | 2026-03-27 -> 2026-03-29 | 7       | 7         | 0          | Percent-driven status: derive task status from percent_complete with configurable review threshold |
 | S10    | 2026-03-26 -> 2026-03-28 | 8       | 11        | 0          | Shipped UX remediation groups `UX-01..UX-04` plus stretch `UX-05` and `FIX-17`; invitation/notification/member/profile flows were hardened and visual consistency pass completed. |

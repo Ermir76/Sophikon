@@ -1,8 +1,8 @@
 # Sophikon V1 - API Specification
 
-**Version:** 1.1
-**Date:** 2026-02-13
-**Status:** Added organization & org member endpoints for multi-tenancy
+**Version:** 1.2
+**Date:** 2026-03-30
+**Status:** Added task search endpoint for DB-backed task querying
 **Base URL:** `https://api.sophikon.app/api/v1`
 
 ---
@@ -136,6 +136,7 @@ flowchart TB
     subgraph Tasks["/projects/:id/tasks"]
         T1[GET /]
         T2[POST /]
+        T8[GET /search]
         T3[GET /:taskId]
         T4[PATCH /:taskId]
         T5[DELETE /:taskId]
@@ -215,7 +216,7 @@ flowchart TB
 | Organizations | 5     | /organizations/\*             |
 | Org Members   | 4     | /organizations/:id/members/\* |
 | Projects      | 8     | /projects/\*                  |
-| Tasks         | 12    | /projects/:id/tasks/\*        |
+| Tasks         | 13    | /projects/:id/tasks/\*        |
 | Dependencies  | 4     | /projects/:id/dependencies/\* |
 | Schedule      | 2     | /projects/:id/schedule/\*     |
 | Members       | 8     | /projects/:id/members/\*, /projects/members/invitations/\* |
@@ -1306,6 +1307,28 @@ Get all tasks.
   }
 }
 ```
+
+---
+
+### GET /projects/:id/tasks/search
+
+Search tasks by task name/notes using DB-backed full-text search.
+
+**Query Parameters:**
+
+| Param           | Type    | Default | Description                                                      |
+| --------------- | ------- | ------- | ---------------------------------------------------------------- |
+| q               | string  | -       | Search query (required, non-empty after trim).                  |
+| status          | enum    | -       | Optional status filter: BACKLOG, TODO, IN_PROGRESS, IN_REVIEW, DONE. |
+| overdue_only    | bool    | false   | Return only overdue incomplete tasks.                            |
+| include_parents | bool    | false   | Include matched task ancestors in the result.                    |
+| limit           | integer | 50      | Max results, 1-250.                                              |
+
+**Response:** `200 OK`
+
+Returns a list of task objects (same task response shape used by task list/detail).
+
+**Errors:** `400` - Empty/whitespace-only query (`VALIDATION_ERROR`)
 
 ---
 
@@ -3263,3 +3286,4 @@ OpenAPI 3.0 specification.
 | 2.0     | 2026-02-05 | Ermir  | Added WebSocket                                                                                           |
 | 3.0     | 2026-02-06 | Ermir  | Added resources, calendars, baselines, time entries, comments, attachments, notifications (75+ endpoints) |
 | 4.0     | 2026-02-13 | AI     | Added organization & organization member endpoints for multi-tenancy                                      |
+| 4.1     | 2026-03-30 | Codex  | Added `GET /projects/:id/tasks/search` to endpoint map and task endpoint reference.                      |

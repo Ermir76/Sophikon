@@ -4,6 +4,16 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-03-30 - Sprint S14: AGT-05 Task Search Rewrite (DB-level for UI + Agent)
+
+### AGT-05 - Replace in-memory task search with PostgreSQL full-text search path
+
+**What:** Added `GET /projects/{project_id}/tasks/search` with required non-empty trimmed `q`, model-level `status` filter, `overdue_only`, `include_parents`, and `limit` parameters. Implemented DB-level full-text search in task repository/service (`name + notes`, ranked results, optional parent-chain inclusion) and added a GIN search-vector index plus migration (`7e9a4c2b1d8f_task_search_index.py`). Rewired agent `search_tasks` tool to use the new DB search path and updated tool schema to match the new contract. Added frontend task search API/hook support and integrated debounced search UX in `TasksPage` with explicit loading/error/empty states and clear-search behavior. Added focused backend/frontend tests for endpoint/tool/hook/page search behavior and reran targeted suites to green (`backend`: `test_tasks.py` + `test_agent_tool_registry.py`, `frontend`: `useTasks.test.tsx` + `TasksPage.test.tsx`).
+
+**Why:** Previous `search_tasks` behavior loaded up to 250 tasks and filtered in Python, which was fundamentally non-scalable and inconsistent across UI and agent flows. S14 AGT-05 required a single DB-backed search contract for both product UI and agent tools, with predictable validation and performance characteristics.
+
+---
+
 ## 2026-03-28 - Sprint S13: UX-06 AI Panel Styling Redesign
 
 ### UX-06 - Replace hardcoded colors with semantic design tokens in AI panel
@@ -11,6 +21,16 @@ All code changes are documented here with explanations before they are applied.
 **What:** Replaced all hardcoded color classes (emerald, amber, blue, black/5, white/5, primary/10, card/70, card/80, muted/30, muted/40) with semantic tokens (bg-muted, bg-card, bg-background, text-destructive) across AiDockedPanel, ToolCallRow, PlanApprovalCard, and ReasoningStep. Redesigned message bubbles (user: right-aligned bg-muted, assistant: left-aligned with Bot icon, removed role labels), tool call rows (compact muted log lines instead of colored cards), status banners (bg-muted + icon differentiation via AlertTriangle/Clock), and suggestion severity (Badge variants instead of raw color classes). Replaced all arbitrary text-[11px] sizes with text-xs.
 
 **Why:** AI panel styling bypassed the design token system — tool call completions were green celebration boxes, status banners used hardcoded amber/blue with manual dark mode overrides, opacity modifiers on tokens (bg-primary/10, bg-card/70) prevented theme control. The panel needed to respect the same semantic token hierarchy as the rest of the app.
+
+---
+
+## 2026-03-30 - Sprint S13: UX-07 Unified Floating Task Detail Workflow
+
+### UX-07 - Decouple selection from detail-panel open state across Tasks and Kanban
+
+**What:** Split selection and detail-panel state in both `TasksPage` and `KanbanPage` by introducing `detailTaskId` while keeping `selectedTaskId` for highlight/selection behavior. Updated kanban store and board/column/card prop flow to support separate selected/open state, added double-click open handlers on task rows/cards, preserved explicit "View Details" actions as alternative openers, and enabled `floating` TaskDetailPanel usage in Tasks and Kanban to align with Gantt behavior. Updated `KanbanPage.test.tsx` to assert the new interaction contract (single-click select, double-click open) and revalidated focused kanban/tasks regression tests.
+
+**Why:** UX-07 required a unified cross-view detail experience and removal of state coupling that made selection and panel-open behavior conflict. The new contract keeps board/list interactions stable while making detail access consistent and predictable.
 
 ---
 
