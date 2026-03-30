@@ -26,8 +26,10 @@ interface KanbanColumnProps {
     wipLimit?: number;
     laneMode: KanbanLaneMode;
     selectionMode?: boolean;
+    selectedTaskId?: string | null;
     selectedTaskIds?: Set<string>;
     onTaskClick?: (taskId: string) => void;
+    onTaskDoubleClick?: (taskId: string) => void;
     onSetWipLimit?: (limit: number | null) => void;
     focusedTaskId?: string | null;
     onCardFocus?: (taskId: string) => void;
@@ -122,8 +124,10 @@ export function KanbanColumn({
     wipLimit,
     laneMode,
     selectionMode = false,
+    selectedTaskId,
     selectedTaskIds,
     onTaskClick,
+    onTaskDoubleClick,
     onSetWipLimit,
     focusedTaskId,
     onCardFocus,
@@ -257,19 +261,25 @@ export function KanbanColumn({
                 ) : laneMode === "none" ? (
                     <SortableContext id={column.id} items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                         <div className="space-y-2">
-                            {tasks.map((task) => (
+                            {tasks.map((task) => {
+                                const isSelected = selectionMode
+                                    ? (selectedTaskIds?.has(task.id) ?? false)
+                                    : selectedTaskId === task.id;
+                                return (
                                 <KanbanCard
                                     key={task.id}
                                     task={task}
                                     dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                     onClick={onTaskClick}
+                                    onDoubleClick={onTaskDoubleClick}
                                     selectionMode={selectionMode}
-                                    isSelected={selectedTaskIds?.has(task.id) ?? false}
+                                    isSelected={isSelected}
                                     isKeyboardFocused={focusedTaskId === task.id}
                                     onFocus={onCardFocus}
                                     cardRef={getCardRef?.(task.id)}
                                 />
-                            ))}
+                                );
+                            })}
                         </div>
                     </SortableContext>
                 ) : (
@@ -284,19 +294,25 @@ export function KanbanColumn({
                                         <span className="text-[11px] text-muted-foreground">{lane.tasks.length}</span>
                                     </header>
                                     <div className="space-y-2">
-                                        {lane.tasks.map((task) => (
+                                        {lane.tasks.map((task) => {
+                                            const isSelected = selectionMode
+                                                ? (selectedTaskIds?.has(task.id) ?? false)
+                                                : selectedTaskId === task.id;
+                                            return (
                                             <KanbanCard
                                                 key={task.id}
                                                 task={task}
                                                 dependencyIndicator={dependencyIndicatorsByTaskId[task.id]}
                                                 onClick={onTaskClick}
+                                                onDoubleClick={onTaskDoubleClick}
                                                 selectionMode={selectionMode}
-                                                isSelected={selectedTaskIds?.has(task.id) ?? false}
+                                                isSelected={isSelected}
                                                 isKeyboardFocused={focusedTaskId === task.id}
                                                 onFocus={onCardFocus}
                                                 cardRef={getCardRef?.(task.id)}
                                             />
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </section>
                             ))}

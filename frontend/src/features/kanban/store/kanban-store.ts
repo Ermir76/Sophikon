@@ -9,6 +9,7 @@ interface KanbanState {
     searchQuery: string;
     priorityFilter: PriorityFilter;
     selectedTaskId: string | null;
+    detailTaskId: string | null;
     wipLimitsByProject: Record<string, KanbanWipLimits>;
     toggleCollapse: (projectId: string, col: TaskStatus) => void;
     setProjectLaneMode: (projectId: string, laneMode: KanbanLaneMode) => void;
@@ -16,6 +17,8 @@ interface KanbanState {
     setPriorityFilter: (f: PriorityFilter) => void;
     setSelectedTaskId: (taskId: string) => void;
     clearSelectedTaskId: () => void;
+    setDetailTaskId: (taskId: string) => void;
+    clearDetailTaskId: () => void;
     setProjectWipLimits: (projectId: string, limits: KanbanWipLimits) => void;
     setColumnWipLimit: (
         projectId: string,
@@ -32,6 +35,7 @@ export const useKanbanStore = create<KanbanState>()(
             searchQuery: "",
             priorityFilter: "all",
             selectedTaskId: null,
+            detailTaskId: null,
             wipLimitsByProject: {},
 
             toggleCollapse: (projectId, col) => {
@@ -62,6 +66,10 @@ export const useKanbanStore = create<KanbanState>()(
             setSelectedTaskId: (taskId) => set({ selectedTaskId: taskId }),
 
             clearSelectedTaskId: () => set({ selectedTaskId: null }),
+
+            setDetailTaskId: (taskId) => set({ detailTaskId: taskId }),
+
+            clearDetailTaskId: () => set({ detailTaskId: null }),
 
             setProjectWipLimits: (projectId, limits) =>
                 set({

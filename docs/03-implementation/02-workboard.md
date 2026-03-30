@@ -40,16 +40,16 @@ Status: `DONE`
 
 ### UX-07 — Unified floating TaskDetailPanel across all views (ADR-010)
 
-Status: `TODO`
+Status: `IN_PROGRESS`
 
 #### Mini-tasks
 
-- [ ] TasksPage state split — add `detailTaskId` state, rewire `<TaskDetailPanel>` to use it with `floating`, keep `selectedTaskId` for row highlight only
-- [ ] Task table double-click — add `onDoubleClick` handler on `SortableTableRow` that calls `onViewDetails(taskId)`, which now maps to `setDetailTaskId`
-- [ ] Kanban store update — add `detailTaskId`, `setDetailTaskId`, `clearDetailTaskId` to `kanban-store.ts` (not persisted)
-- [ ] KanbanPage state split — wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
-- [ ] Kanban card double-click — single click selects (highlight), double-click opens detail panel
-- [ ] Keep alternative openers — kebab menu "View Details" and context menu still call `setDetailTaskId`
+- [x] TasksPage state split — add `detailTaskId` state, rewire `<TaskDetailPanel>` to use it with `floating`, keep `selectedTaskId` for row highlight only
+- [x] Task table double-click — add `onDoubleClick` handler on `SortableTableRow` that calls `onViewDetails(taskId)`, which now maps to `setDetailTaskId`
+- [x] Kanban store update — add `detailTaskId`, `setDetailTaskId`, `clearDetailTaskId` to `kanban-store.ts` (not persisted)
+- [x] KanbanPage state split — wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
+- [x] Kanban card double-click — single click selects (highlight), double-click opens detail panel
+- [x] Keep alternative openers — kebab menu "View Details" and context menu still call `setDetailTaskId`
 - [ ] Update tests — adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
 
 #### Notes

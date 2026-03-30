@@ -35,6 +35,7 @@ interface KanbanCardProps {
     selectionMode?: boolean;
     isSelected?: boolean;
     onClick?: (taskId: string) => void;
+    onDoubleClick?: (taskId: string) => void;
     isKeyboardFocused?: boolean;
     onFocus?: (taskId: string) => void;
     cardRef?: (node: HTMLDivElement | null) => void;
@@ -47,6 +48,7 @@ export function KanbanCard({
     selectionMode = false,
     isSelected = false,
     onClick,
+    onDoubleClick,
     isKeyboardFocused = false,
     onFocus,
     cardRef,
@@ -99,6 +101,7 @@ export function KanbanCard({
             {...(isDragEnabled ? listeners : {})}
             {...(isDragEnabled ? attributes : {})}
             onClick={isDragOverlay ? undefined : () => onClick?.(task.id)}
+            onDoubleClick={isDragOverlay ? undefined : () => onDoubleClick?.(task.id)}
             onFocus={handleFocus}
             tabIndex={isDragOverlay ? undefined : (isKeyboardFocused ? 0 : -1)}
             aria-selected={selectionMode ? isSelected : undefined}
@@ -107,7 +110,7 @@ export function KanbanCard({
                 selectionMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
             } ${!isDragOverlay && isDragging ? "opacity-40" : ""} ${
                 isKeyboardFocused ? "ring-2 ring-primary/40" : ""
-            } ${selectionMode && isSelected ? "ring-2 ring-primary/60" : ""}`}
+            } ${isSelected ? "ring-2 ring-primary/60" : ""}`}
         >
             {/* Left color strip — inline style required for dynamic task.color */}
             <div className="w-[3px] shrink-0" style={{ backgroundColor: task.color ?? "transparent" }} />

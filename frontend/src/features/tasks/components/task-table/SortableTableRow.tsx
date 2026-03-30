@@ -27,6 +27,7 @@ export function SortableTableRow({ row }: { row: Row<Task> }) {
             style={style}
             data-state={row.getIsSelected() && "selected"}
             className={isDragging ? "bg-muted shadow-sm z-10 relative" : ""}
+            onDoubleClick={() => row.table.options.meta?.onViewDetails?.(row.original.id)}
         >
             {row.getVisibleCells().map((cell: Cell<Task, unknown>) => (
                 <TableCell

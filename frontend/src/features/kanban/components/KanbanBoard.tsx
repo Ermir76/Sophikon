@@ -22,8 +22,10 @@ interface KanbanBoardProps {
     wipLimits: KanbanWipLimits;
     laneMode: KanbanLaneMode;
     selectionMode: boolean;
+    selectedTaskId?: string | null;
     selectedTaskIds: Set<string>;
     onTaskClick: (taskId: string) => void;
+    onTaskDoubleClick?: (taskId: string) => void;
     onSetColumnWipLimit: (column: TaskStatus, limit: number | null) => void;
 }
 
@@ -70,8 +72,10 @@ export function KanbanBoard({
     wipLimits,
     laneMode,
     selectionMode,
+    selectedTaskId,
     selectedTaskIds,
     onTaskClick,
+    onTaskDoubleClick,
     onSetColumnWipLimit,
 }: KanbanBoardProps) {
     const { sensors, activeTaskId, handleDragStart, handleDragCancel, handleDragEnd } =
@@ -205,8 +209,10 @@ export function KanbanBoard({
                         wipLimit={wipLimits[col.id]}
                         laneMode={laneMode}
                         selectionMode={selectionMode}
+                        selectedTaskId={selectedTaskId}
                         selectedTaskIds={selectedTaskIds}
                         onTaskClick={onTaskClick}
+                        onTaskDoubleClick={onTaskDoubleClick}
                         onSetWipLimit={(limit) => onSetColumnWipLimit(col.id, limit)}
                         focusedTaskId={resolvedFocusedTaskId}
                         onCardFocus={setFocusedTaskId}

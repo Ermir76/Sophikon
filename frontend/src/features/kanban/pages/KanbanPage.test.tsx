@@ -39,6 +39,7 @@ vi.mock("../components/KanbanBoard", () => ({
         selectionMode,
         selectedTaskIds,
         onTaskClick,
+        onTaskDoubleClick,
         onSetColumnWipLimit,
     }: {
         tasksByStatus: Record<string, Task[]>;
@@ -47,6 +48,7 @@ vi.mock("../components/KanbanBoard", () => ({
         selectionMode: boolean;
         selectedTaskIds: Set<string>;
         onTaskClick: (taskId: string) => void;
+        onTaskDoubleClick?: (taskId: string) => void;
         onSetColumnWipLimit: (status: TaskStatus, limit: number | null) => void;
     }) => (
         <div data-testid="kanban-board">
@@ -59,6 +61,7 @@ vi.mock("../components/KanbanBoard", () => ({
                         <button
                             type="button"
                             onClick={() => onTaskClick(t.id)}
+                            onDoubleClick={() => onTaskDoubleClick?.(t.id)}
                             aria-pressed={selectedTaskIds.has(t.id)}
                         >
                             {t.name}
@@ -305,12 +308,16 @@ describe("KanbanPage", () => {
         expect(screen.queryByText("Authentication")).not.toBeInTheDocument();
     });
 
-    it("opens task detail panel when a card is clicked", async () => {
+    it("opens task detail panel when a card is double-clicked", async () => {
         const user = userEvent.setup();
         mockLoaded(leafTasks);
         render(<KanbanPage />);
 
         await user.click(screen.getByRole("button", { name: "Deploy API" }));
+        expect(screen.queryByTestId("task-detail-panel")).not.toBeInTheDocument();
+        expect(useKanbanStore.getState().selectedTaskId).toBe("t1");
+
+        await user.dblClick(screen.getByRole("button", { name: "Deploy API" }));
         expect(screen.getByTestId("task-detail-panel")).toBeInTheDocument();
         expect(useKanbanStore.getState().selectedTaskId).toBe("t1");
     });
@@ -320,7 +327,7 @@ describe("KanbanPage", () => {
         mockLoaded(leafTasks);
         render(<KanbanPage />);
 
-        await user.click(screen.getByRole("button", { name: "Deploy API" }));
+        await user.dblClick(screen.getByRole("button", { name: "Deploy API" }));
         expect(screen.getByTestId("task-detail-panel")).toBeInTheDocument();
         expect(screen.getByTestId("kanban-board")).toBeInTheDocument();
 

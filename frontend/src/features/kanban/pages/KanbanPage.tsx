@@ -73,12 +73,15 @@ export default function KanbanPage() {
     const priorityFilter = useKanbanStore((s) => s.priorityFilter);
     const laneModeByProject = useKanbanStore((s) => s.laneModeByProject);
     const selectedTaskId = useKanbanStore((s) => s.selectedTaskId);
+    const detailTaskId = useKanbanStore((s) => s.detailTaskId);
     const wipLimitsByProject = useKanbanStore((s) => s.wipLimitsByProject);
     const setSearch = useKanbanStore((s) => s.setSearch);
     const setPriorityFilter = useKanbanStore((s) => s.setPriorityFilter);
     const setProjectLaneMode = useKanbanStore((s) => s.setProjectLaneMode);
     const setSelectedTaskId = useKanbanStore((s) => s.setSelectedTaskId);
     const clearSelectedTaskId = useKanbanStore((s) => s.clearSelectedTaskId);
+    const setDetailTaskId = useKanbanStore((s) => s.setDetailTaskId);
+    const clearDetailTaskId = useKanbanStore((s) => s.clearDetailTaskId);
     const setProjectWipLimits = useKanbanStore((s) => s.setProjectWipLimits);
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -207,6 +210,12 @@ export default function KanbanPage() {
         setSelectedTaskId(taskId);
     }, [selectionMode, setSelectedTaskId]);
 
+    const handleTaskDoubleClick = useCallback((taskId: string) => {
+        if (selectionMode) return;
+        setSelectedTaskId(taskId);
+        setDetailTaskId(taskId);
+    }, [selectionMode, setDetailTaskId, setSelectedTaskId]);
+
     const handleBulkMove = useCallback(async () => {
         if (!projectId || validSelectedTaskIds.length === 0) return;
 
@@ -250,7 +259,8 @@ export default function KanbanPage() {
         setSelectionMode(false);
         setSelectedTaskIds([]);
         setSelectedTaskId(taskId);
-    }, [setSelectedTaskId]);
+        setDetailTaskId(taskId);
+    }, [setDetailTaskId, setSelectedTaskId]);
 
     if (isLoading) return <PageLoading message="Loading tasks..." />;
     if (error) {
@@ -283,6 +293,7 @@ export default function KanbanPage() {
                         setSelectionMode(enabled);
                         if (enabled) {
                             clearSelectedTaskId();
+                            clearDetailTaskId();
                             return;
                         }
                         setSelectedTaskIds([]);
@@ -313,16 +324,19 @@ export default function KanbanPage() {
                     wipLimits={wipLimits}
                     laneMode={laneMode}
                     selectionMode={selectionMode}
+                    selectedTaskId={selectedTaskId}
                     selectedTaskIds={selectedTaskIdSet}
                     onTaskClick={handleTaskClick}
+                    onTaskDoubleClick={handleTaskDoubleClick}
                     onSetColumnWipLimit={handleSetColumnWipLimit}
                 />
             </div>
             <TaskDetailPanel
                 projectId={projectId ?? ""}
-                taskId={selectedTaskId}
-                isOpen={!!selectedTaskId}
-                onClose={clearSelectedTaskId}
+                taskId={detailTaskId}
+                isOpen={!!detailTaskId}
+                onClose={clearDetailTaskId}
+                floating
             />
         </div>
     );

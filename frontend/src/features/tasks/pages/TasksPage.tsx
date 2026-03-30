@@ -43,8 +43,9 @@ export default function TasksPage() {
   // Local state for table row selection
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  // Detail panel state
+  // Row highlight state and detail panel state are intentionally decoupled.
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   // Add Dependency dialog state (triggered from row kebab menu)
   const [dependencyTaskId, setDependencyTaskId] = useState<string | null>(null);
@@ -89,9 +90,10 @@ export default function TasksPage() {
       await deleteTask.mutateAsync(taskId);
       toast.success("Task deleted");
       // Close detail panel if the deleted task was being viewed
-      if (selectedTaskId === taskId) {
-        setSelectedTaskId(null);
+      if (detailTaskId === taskId) {
+        setDetailTaskId(null);
       }
+      if (selectedTaskId === taskId) setSelectedTaskId(null);
       // Remove from selection if selected
       setRowSelection((prev) => {
         const next = { ...prev };
@@ -189,7 +191,10 @@ export default function TasksPage() {
               try { await outdentTask.mutateAsync(id); } catch { toast.error("Failed to outdent task"); }
             }}
             onAddDependency={(id) => setDependencyTaskId(id)}
-            onViewDetails={(id) => setSelectedTaskId(id)}
+            onViewDetails={(id) => {
+              setSelectedTaskId(id);
+              setDetailTaskId(id);
+            }}
             onDelete={handleDeleteTask}
             isIndentPending={indentTask.isPending}
             isOutdentPending={outdentTask.isPending}
@@ -268,11 +273,12 @@ export default function TasksPage() {
       {/* Slide-out Panel for Task Core Edit */}
       <TaskDetailPanel
         projectId={projectId}
-        taskId={selectedTaskId}
-        isOpen={!!selectedTaskId}
-        onClose={() => setSelectedTaskId(null)}
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
         onDelete={handleDeleteTask}
         isDeletePending={deleteTask.isPending}
+        floating
       />
 
       {/* Add Dependency Dialog triggered from row kebab menu */}
