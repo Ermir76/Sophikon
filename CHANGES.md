@@ -14,6 +14,16 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-03-30 - Sprint S14: AGT-06 Agent Foundation Hardening
+
+### AGT-06 - Versioned prompts, shared tool catalog, and prompt-cache metadata contracts
+
+**What:** Added `backend/app/service/agent/prompts.py` with `PROMPT_VERSION = "1"` and dedicated builders for planner, executor, and proactive monitor system prompts (including baked domain rules) plus prompt-cache metadata helpers. Added `backend/app/service/agent/tool_catalog.py` so planner and executor resolve tools from a shared catalog entrypoint (`get_planner_tools` / `get_execution_tools`). Updated planner/executor/loop/history to consume the new prompt module, include optional `prompt_cache` metadata in `AICompleteRequest`, and persist prompt metadata (`agent_prompt_version`, provider, model) into conversation context snapshots for traceability. Extended backend and ai-service contracts with optional `PromptCacheMetadata` and added focused tests covering executor/history/loop flow changes and ai-service compatibility (including provider paths that ignore cache hints).
+
+**Why:** AGT-06 required a stable agent foundation before deeper autonomy work: prompt behavior had to be explicitly versioned, tool-schema ownership needed a single source for planner/executor consistency, and prompt-caching needed a contract-safe optional path that does not break providers that do not implement caching hints.
+
+---
+
 ## 2026-03-28 - Sprint S13: UX-06 AI Panel Styling Redesign
 
 ### UX-06 - Replace hardcoded colors with semantic design tokens in AI panel

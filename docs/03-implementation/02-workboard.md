@@ -1,4 +1,4 @@
-﻿# Workboard
+# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -11,9 +11,9 @@ Guardrail: never delete previous sprint mini-task sections; keep historical spri
 
 ---
 
-## Active Items — S14
+## Active Items Ã¢â‚¬â€ S14
 
-### AGT-05 — Task search rewrite: DB-level search for UI + agent
+### AGT-05 Ã¢â‚¬â€ Task search rewrite: DB-level search for UI + agent
 
 Status: `DONE`
 
@@ -44,106 +44,114 @@ Status: `DONE`
 - Blockers: -
 - Decisions:
   - v1 search is limit-only (no offset/cursor pagination and no total count return)
-  - No fallback mode for empty query — this endpoint is search-only by contract
+  - No fallback mode for empty query Ã¢â‚¬â€ this endpoint is search-only by contract
   - QA rerun passed after repository search-expression fix (`backend` + `frontend` targeted suites green; gate `GO`).
 
 ---
 
-### AGT-06 — Agent foundation: prompt versioning + tool catalog + prompt caching hooks
+### AGT-06 Ã¢â‚¬â€ Agent foundation: prompt versioning + tool catalog + prompt caching hooks
 
-Status: `NOT_STARTED`
+Status: `DONE`
 
 #### Mini-tasks
 
-- [ ] Introduce versioned prompt module with `PROMPT_VERSION = "1"`
-- [ ] Persist/log prompt version with each conversation run for traceability
-- [ ] Refactor planner/executor to share the same tool catalog source
-- [ ] Add optional prompt-caching metadata in backend `AICompleteRequest`
-- [ ] Add matching optional prompt-caching metadata in ai-service `CompleteRequest`
-- [ ] Keep metadata backward-compatible when provider ignores caching hints
-- [ ] Add a concise baked domain-knowledge section to system prompt (without loading full project dump)
-- [ ] Verify existing plan/execute/approval flow remains unchanged
+- [x] Introduce versioned prompt module with `PROMPT_VERSION = "1"`
+- [x] Persist/log prompt version with each conversation run for traceability
+- [x] Refactor planner/executor to share the same tool catalog source
+- [x] Add optional prompt-caching metadata in backend `AICompleteRequest`
+- [x] Add matching optional prompt-caching metadata in ai-service `CompleteRequest`
+- [x] Keep metadata backward-compatible when provider ignores caching hints
+- [x] Add a concise baked domain-knowledge section to system prompt (without loading full project dump)
+- [x] Verify existing plan/execute/approval flow remains unchanged
 
+#### QA Follow-up Mini-tasks
+
+- [x] Fix backend agent tests broken by prompt refactor (`history.build_system_prompt` removal)
+- [x] Update loop/history test mocks for new `set_prompt_metadata` path
+- [x] Re-run targeted backend suites: planner/executor/loop/history/ai_service
+- [x] Fix ai-service contract test run-path/import issue and re-run `tests/test_contracts.py`
+- [x] Re-run ai-service `tests/test_brain_service.py` + `tests/test_contracts.py` and record final QA gate
 #### Notes
 
 - Dependencies: AGT-05 recommended first (search quality impacts agent usefulness immediately)
 - Blockers: provider-specific cache support may be partial
 - Decisions:
   - Foundation work in this sprint is contract + wiring; deep provider optimization is follow-up
+  - QA gate `GO`: `backend/tests/unit/service/test_agent_executor.py`, `backend/tests/unit/service/test_agent_history.py`, `backend/tests/unit/service/test_agent_loop.py`, `ai-service/tests/test_brain_service.py`, and `ai-service/tests/test_contracts.py` passed.
 
 ---
 
-## Previous Sprint Items — S13
+## Previous Sprint Items Ã¢â‚¬â€ S13
 
-### UX-06 — AI panel styling & layout redesign
+### UX-06 Ã¢â‚¬â€ AI panel styling & layout redesign
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Message bubbles redesign — user messages: right-aligned `bg-muted`, no role label; AI messages: left-aligned, no background, small Bot icon prefix, no role label
-- [x] ToolCallRow restyle — running: muted line + spinner; done: muted line + checkmark, no colored box/border; error/denied: `text-destructive` line; tight stacking like a log
-- [x] Status banners — replace `bg-amber-50`/`bg-blue-50` hardcoded stripes with `bg-muted` + differentiating icon (AlertTriangle for interrupted, Clock for awaiting approval)
-- [x] Suggestion severity — replace `text-amber-500`/`text-emerald-500` with Badge variants (`destructive` for HIGH, `secondary` for MEDIUM, `outline` for LOW)
-- [x] PlanApprovalCard — `bg-card/80` → `bg-card`, clean border, no opacity hacks
-- [x] ReasoningStep — `bg-muted/30` → `bg-muted`
-- [x] Input area — remove `text-[11px]` arbitrary sizes on selects/hints, let design system defaults apply
-- [x] Overall panel — ensure `bg-background` base, no ad-hoc color overrides remaining
-- [x] ToolCallRow code block — replace `bg-black/5 dark:bg-white/5` with `bg-muted`
+- [x] Message bubbles redesign Ã¢â‚¬â€ user messages: right-aligned `bg-muted`, no role label; AI messages: left-aligned, no background, small Bot icon prefix, no role label
+- [x] ToolCallRow restyle Ã¢â‚¬â€ running: muted line + spinner; done: muted line + checkmark, no colored box/border; error/denied: `text-destructive` line; tight stacking like a log
+- [x] Status banners Ã¢â‚¬â€ replace `bg-amber-50`/`bg-blue-50` hardcoded stripes with `bg-muted` + differentiating icon (AlertTriangle for interrupted, Clock for awaiting approval)
+- [x] Suggestion severity Ã¢â‚¬â€ replace `text-amber-500`/`text-emerald-500` with Badge variants (`destructive` for HIGH, `secondary` for MEDIUM, `outline` for LOW)
+- [x] PlanApprovalCard Ã¢â‚¬â€ `bg-card/80` Ã¢â€ â€™ `bg-card`, clean border, no opacity hacks
+- [x] ReasoningStep Ã¢â‚¬â€ `bg-muted/30` Ã¢â€ â€™ `bg-muted`
+- [x] Input area Ã¢â‚¬â€ remove `text-[11px]` arbitrary sizes on selects/hints, let design system defaults apply
+- [x] Overall panel Ã¢â‚¬â€ ensure `bg-background` base, no ad-hoc color overrides remaining
+- [x] ToolCallRow code block Ã¢â‚¬â€ replace `bg-black/5 dark:bg-white/5` with `bg-muted`
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Pure styling change — no state/logic changes
+  - Pure styling change Ã¢â‚¬â€ no state/logic changes
   - Reference: `docs/02-design/adr/ADR-010-unified-floating-task-detail-panel.md`
 
 ---
 
-### UX-07 — Unified floating TaskDetailPanel across all views (ADR-010)
+### UX-07 Ã¢â‚¬â€ Unified floating TaskDetailPanel across all views (ADR-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] TasksPage state split — add `detailTaskId` state, rewire `<TaskDetailPanel>` to use it with `floating`, keep `selectedTaskId` for row highlight only
-- [x] Task table double-click — add `onDoubleClick` handler on `SortableTableRow` that calls `onViewDetails(taskId)`, which now maps to `setDetailTaskId`
-- [x] Kanban store update — add `detailTaskId`, `setDetailTaskId`, `clearDetailTaskId` to `kanban-store.ts` (not persisted)
-- [x] KanbanPage state split — wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
-- [x] Kanban card double-click — single click selects (highlight), double-click opens detail panel
-- [x] Keep alternative openers — kebab menu "View Details" and context menu still call `setDetailTaskId`
-- [x] Update tests — adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
+- [x] TasksPage state split Ã¢â‚¬â€ add `detailTaskId` state, rewire `<TaskDetailPanel>` to use it with `floating`, keep `selectedTaskId` for row highlight only
+- [x] Task table double-click Ã¢â‚¬â€ add `onDoubleClick` handler on `SortableTableRow` that calls `onViewDetails(taskId)`, which now maps to `setDetailTaskId`
+- [x] Kanban store update Ã¢â‚¬â€ add `detailTaskId`, `setDetailTaskId`, `clearDetailTaskId` to `kanban-store.ts` (not persisted)
+- [x] KanbanPage state split Ã¢â‚¬â€ wire `detailTaskId` from store to `<TaskDetailPanel floating>`, keep `selectedTaskId` for card highlight
+- [x] Kanban card double-click Ã¢â‚¬â€ single click selects (highlight), double-click opens detail panel
+- [x] Keep alternative openers Ã¢â‚¬â€ kebab menu "View Details" and context menu still call `setDetailTaskId`
+- [x] Update tests Ã¢â‚¬â€ adjust test assertions for TasksPage, KanbanPage, and kanban-store to match new state split
 
 #### Notes
 
 - Dependencies: UX-06 (styling should land first to avoid merge conflicts in same files)
 - Blockers: -
 - Decisions:
-  - GanttPage already uses the target pattern — no changes needed there
-  - TaskDetailPanel component already supports `floating` prop — no changes needed there
+  - GanttPage already uses the target pattern Ã¢â‚¬â€ no changes needed there
+  - TaskDetailPanel component already supports `floating` prop Ã¢â‚¬â€ no changes needed there
   - Final interaction contract: single click selects/highlights, double-click opens floating detail panel; explicit "View Details" actions remain valid openers
   - Reference: `docs/02-design/adr/ADR-010-unified-floating-task-detail-panel.md`
 
 ---
 
-## Previous Sprint Items — S12
+## Previous Sprint Items Ã¢â‚¬â€ S12
 
-### AGT-01 — Agent policy engine: centralized permission and role check before every tool execution
+### AGT-01 Ã¢â‚¬â€ Agent policy engine: centralized permission and role check before every tool execution
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] Define `ToolPolicy` enum (`allow`, `allow_with_approval`, `deny`) and `PolicyDecision` dataclass
-- [x] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) → PolicyDecision`
-- [x] Implement action allowlist check — reject unknown tool names
-- [x] Implement role check — map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
-- [x] Implement scope check — validate entity IDs in `tool_input` belong to `ctx.project_id` (task/dependency/assignment/resource IDs)
+- [x] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) Ã¢â€ â€™ PolicyDecision`
+- [x] Implement action allowlist check Ã¢â‚¬â€ reject unknown tool names
+- [x] Implement role check Ã¢â‚¬â€ map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
+- [x] Implement scope check Ã¢â‚¬â€ validate entity IDs in `tool_input` belong to `ctx.project_id` (task/dependency/assignment/resource IDs)
 - [x] Add `role_name` to `AgentContext` and pass it from AI endpoint `ProjectAccess` when building the context
 - [x] Wire `check_tool_policy` into `executor.py` before tool execution and before destructive approval branching
-- [x] On `deny` → return explicit tool-result error to the LLM (no execution)
-- [x] On `allow_with_approval` → reuse existing `_wait_for_tool_approval` mechanism
+- [x] On `deny` Ã¢â€ â€™ return explicit tool-result error to the LLM (no execution)
+- [x] On `allow_with_approval` Ã¢â€ â€™ reuse existing `_wait_for_tool_approval` mechanism
 - [x] Add default policy config (viewer=read+UI only, member=read+write+UI, manager/owner=all)
 - [x] Tests: viewer blocked from write tools, member allowed writes, deny on unknown tool, scope violation returns deny, destructive tools still require per-action approval
 
@@ -157,7 +165,7 @@ Status: `DONE`
 
 ---
 
-### AGT-02 — Agent kill switch: per-project and per-org flag to disable agent execution
+### AGT-02 Ã¢â‚¬â€ Agent kill switch: per-project and per-org flag to disable agent execution
 
 Status: `DONE`
 
@@ -165,7 +173,7 @@ Status: `DONE`
 
 - [x] Add `agent_enabled` boolean to project settings JSON schema (default: true when missing)
 - [x] Add `agent_enabled` boolean to organization settings JSON schema (default: true when missing)
-- [x] Check both flags at `prepare_chat_stream` entry — reject with clear `InvalidOperationError` if either is false
+- [x] Check both flags at `prepare_chat_stream` entry Ã¢â‚¬â€ reject with clear `InvalidOperationError` if either is false
 - [x] Org-level false overrides project-level true (org wins)
 - [x] Apply same kill-switch guard in proactive agent monitor flow before analysis execution
 - [x] Frontend: add "AI Agent" toggle in project settings page
@@ -184,9 +192,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S10
+## Previous Sprint Items Ã¢â‚¬â€ S10
 
-### UX-01 — Invitation flow blockers + recovery
+### UX-01 Ã¢â‚¬â€ Invitation flow blockers + recovery
 
 Status: `DONE`
 
@@ -206,7 +214,7 @@ Status: `DONE`
 
 ---
 
-### UX-02 — Notification center IA + accessibility baseline
+### UX-02 Ã¢â‚¬â€ Notification center IA + accessibility baseline
 
 Status: `DONE`
 
@@ -226,7 +234,7 @@ Status: `DONE`
 
 ---
 
-### UX-03 — Membership actions safety + copy clarity
+### UX-03 Ã¢â‚¬â€ Membership actions safety + copy clarity
 
 Status: `DONE`
 
@@ -246,7 +254,7 @@ Status: `DONE`
 
 ---
 
-### UX-04 — Profile settings usability batch
+### UX-04 Ã¢â‚¬â€ Profile settings usability batch
 
 Status: `DONE`
 
@@ -266,7 +274,7 @@ Status: `DONE`
 
 ---
 
-### FIX-17 — AI service mock-provider tests fail in live mode (Stretch)
+### FIX-17 Ã¢â‚¬â€ AI service mock-provider tests fail in live mode (Stretch)
 
 Status: `DONE`
 
@@ -284,7 +292,7 @@ Status: `DONE`
 
 ---
 
-### UX-05 — Visual consistency polish pass (Stretch)
+### UX-05 Ã¢â‚¬â€ Visual consistency polish pass (Stretch)
 
 Status: `DONE`
 
@@ -303,9 +311,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S09
+## Previous Sprint Items Ã¢â‚¬â€ S09
 
-### FIX-14 — Invitation review page UX overhaul
+### FIX-14 Ã¢â‚¬â€ Invitation review page UX overhaul
 
 Status: `DONE`
 
@@ -313,13 +321,13 @@ Status: `DONE`
 
 - [x] Write ADR-009 for route-state decision (done during planning)
 - [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
-- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] Notification card: remove invitation message line Ã¢â‚¬â€ keep only project name, role, and Accept/Review buttons
 - [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
 - [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
-- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
-- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
-- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
-- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Accept page Ã¢â‚¬â€ review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page Ã¢â‚¬â€ auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page Ã¢â‚¬â€ fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page Ã¢â‚¬â€ after accept in review mode: transition to accepted state with "Go to Project"
 - [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
 - [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
 
@@ -327,12 +335,12 @@ Status: `DONE`
 
 - Dependencies: FIX-10 (accept page foundation)
 - Blockers: -
-- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Decisions: ADR-009 Ã¢â‚¬â€ route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
 - Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
 
 ---
 
-### FIX-06 — Silent token refresh not proactive (#26)
+### FIX-06 Ã¢â‚¬â€ Silent token refresh not proactive (#26)
 
 Status: `DONE`
 
@@ -349,7 +357,7 @@ Status: `DONE`
 
 ---
 
-### FIX-08 — Org member role change layout glitch (#33)
+### FIX-08 Ã¢â‚¬â€ Org member role change layout glitch (#33)
 
 Status: `DONE`
 
@@ -366,9 +374,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S08
+## Previous Sprint Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -386,7 +394,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -408,7 +416,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -421,12 +429,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -440,11 +448,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -463,9 +471,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -484,25 +492,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -510,7 +518,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -519,7 +527,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -536,7 +544,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -553,18 +561,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -573,18 +581,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -608,7 +616,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -634,7 +642,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -659,7 +667,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -683,18 +691,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -703,20 +711,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -732,7 +740,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -745,7 +753,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -754,11 +762,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -781,52 +789,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -837,7 +845,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -852,17 +860,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -873,13 +881,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -887,13 +895,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -907,11 +915,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -919,7 +927,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -927,11 +935,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -945,11 +953,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -963,38 +971,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -1024,15 +1032,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -1045,33 +1053,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -1083,9 +1091,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S10
+## Active Items Ã¢â‚¬â€ S10
 
-### UX-01 — Invitation flow blockers + recovery
+### UX-01 Ã¢â‚¬â€ Invitation flow blockers + recovery
 
 Status: `DONE`
 
@@ -1105,7 +1113,7 @@ Status: `DONE`
 
 ---
 
-### UX-02 — Notification center IA + accessibility baseline
+### UX-02 Ã¢â‚¬â€ Notification center IA + accessibility baseline
 
 Status: `DONE`
 
@@ -1125,7 +1133,7 @@ Status: `DONE`
 
 ---
 
-### UX-03 — Membership actions safety + copy clarity
+### UX-03 Ã¢â‚¬â€ Membership actions safety + copy clarity
 
 Status: `DONE`
 
@@ -1145,7 +1153,7 @@ Status: `DONE`
 
 ---
 
-### UX-04 — Profile settings usability batch
+### UX-04 Ã¢â‚¬â€ Profile settings usability batch
 
 Status: `DONE`
 
@@ -1165,7 +1173,7 @@ Status: `DONE`
 
 ---
 
-### FIX-17 — AI service mock-provider tests fail in live mode (Stretch)
+### FIX-17 Ã¢â‚¬â€ AI service mock-provider tests fail in live mode (Stretch)
 
 Status: `DONE`
 
@@ -1183,7 +1191,7 @@ Status: `DONE`
 
 ---
 
-### UX-05 — Visual consistency polish pass (Stretch)
+### UX-05 Ã¢â‚¬â€ Visual consistency polish pass (Stretch)
 
 Status: `DONE`
 
@@ -1202,9 +1210,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S09
+## Previous Sprint Items Ã¢â‚¬â€ S09
 
-### FIX-14 — Invitation review page UX overhaul
+### FIX-14 Ã¢â‚¬â€ Invitation review page UX overhaul
 
 Status: `DONE`
 
@@ -1212,13 +1220,13 @@ Status: `DONE`
 
 - [x] Write ADR-009 for route-state decision (done during planning)
 - [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
-- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] Notification card: remove invitation message line Ã¢â‚¬â€ keep only project name, role, and Accept/Review buttons
 - [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
 - [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
-- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
-- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
-- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
-- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Accept page Ã¢â‚¬â€ review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page Ã¢â‚¬â€ auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page Ã¢â‚¬â€ fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page Ã¢â‚¬â€ after accept in review mode: transition to accepted state with "Go to Project"
 - [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
 - [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
 
@@ -1226,12 +1234,12 @@ Status: `DONE`
 
 - Dependencies: FIX-10 (accept page foundation)
 - Blockers: -
-- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Decisions: ADR-009 Ã¢â‚¬â€ route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
 - Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
 
 ---
 
-### FIX-06 — Silent token refresh not proactive (#26)
+### FIX-06 Ã¢â‚¬â€ Silent token refresh not proactive (#26)
 
 Status: `DONE`
 
@@ -1248,7 +1256,7 @@ Status: `DONE`
 
 ---
 
-### FIX-08 — Org member role change layout glitch (#33)
+### FIX-08 Ã¢â‚¬â€ Org member role change layout glitch (#33)
 
 Status: `DONE`
 
@@ -1265,9 +1273,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S08
+## Previous Sprint Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -1285,7 +1293,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -1307,7 +1315,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -1320,12 +1328,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -1339,11 +1347,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -1362,9 +1370,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -1383,25 +1391,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -1409,7 +1417,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -1418,7 +1426,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -1435,7 +1443,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -1452,18 +1460,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -1472,18 +1480,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -1507,7 +1515,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -1533,7 +1541,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -1558,7 +1566,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -1582,18 +1590,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -1602,20 +1610,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -1631,7 +1639,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -1644,7 +1652,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -1653,11 +1661,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -1680,52 +1688,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -1736,7 +1744,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -1751,17 +1759,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -1772,13 +1780,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -1786,13 +1794,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -1806,11 +1814,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -1818,7 +1826,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -1826,11 +1834,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -1844,11 +1852,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -1862,38 +1870,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -1923,15 +1931,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -1944,33 +1952,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -1982,9 +1990,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S09
+## Active Items Ã¢â‚¬â€ S09
 
-### FIX-14 — Invitation review page UX overhaul
+### FIX-14 Ã¢â‚¬â€ Invitation review page UX overhaul
 
 Status: `DONE`
 
@@ -1992,13 +2000,13 @@ Status: `DONE`
 
 - [x] Write ADR-009 for route-state decision (done during planning)
 - [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
-- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] Notification card: remove invitation message line Ã¢â‚¬â€ keep only project name, role, and Accept/Review buttons
 - [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
 - [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
-- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
-- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
-- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
-- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Accept page Ã¢â‚¬â€ review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page Ã¢â‚¬â€ auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page Ã¢â‚¬â€ fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page Ã¢â‚¬â€ after accept in review mode: transition to accepted state with "Go to Project"
 - [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
 - [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
 
@@ -2006,12 +2014,12 @@ Status: `DONE`
 
 - Dependencies: FIX-10 (accept page foundation)
 - Blockers: -
-- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Decisions: ADR-009 Ã¢â‚¬â€ route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
 - Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
 
 ---
 
-### FIX-06 — Silent token refresh not proactive (#26)
+### FIX-06 Ã¢â‚¬â€ Silent token refresh not proactive (#26)
 
 Status: `DONE`
 
@@ -2028,7 +2036,7 @@ Status: `DONE`
 
 ---
 
-### FIX-08 — Org member role change layout glitch (#33)
+### FIX-08 Ã¢â‚¬â€ Org member role change layout glitch (#33)
 
 Status: `DONE`
 
@@ -2045,9 +2053,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S08
+## Previous Sprint Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -2065,7 +2073,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -2087,7 +2095,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -2100,12 +2108,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -2119,11 +2127,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -2142,9 +2150,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -2163,25 +2171,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -2189,7 +2197,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -2198,7 +2206,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -2215,7 +2223,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -2232,18 +2240,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -2252,18 +2260,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -2287,7 +2295,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -2313,7 +2321,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -2338,7 +2346,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -2362,18 +2370,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -2382,20 +2390,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -2411,7 +2419,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -2424,7 +2432,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -2433,11 +2441,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -2460,52 +2468,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -2516,7 +2524,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -2531,17 +2539,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -2552,13 +2560,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -2566,13 +2574,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -2586,11 +2594,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -2598,7 +2606,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -2606,11 +2614,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -2624,11 +2632,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -2642,38 +2650,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -2703,15 +2711,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -2724,33 +2732,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -2762,9 +2770,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S08
+## Active Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -2782,7 +2790,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -2804,7 +2812,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -2817,12 +2825,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -2836,11 +2844,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -2859,9 +2867,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -2880,25 +2888,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -2906,7 +2914,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -2915,7 +2923,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -2932,7 +2940,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -2949,18 +2957,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -2969,18 +2977,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -3004,7 +3012,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -3030,7 +3038,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -3055,7 +3063,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -3079,18 +3087,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -3099,20 +3107,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -3128,7 +3136,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -3141,7 +3149,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -3150,11 +3158,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -3177,52 +3185,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -3233,7 +3241,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -3248,17 +3256,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -3269,13 +3277,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -3283,13 +3291,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -3303,11 +3311,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -3315,7 +3323,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -3323,11 +3331,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -3341,11 +3349,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -3359,38 +3367,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -3420,15 +3428,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -3441,33 +3449,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -3479,9 +3487,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S07
+## Active Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -3500,25 +3508,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -3526,7 +3534,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -3535,7 +3543,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -3552,7 +3560,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -3569,18 +3577,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -3589,18 +3597,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -3624,7 +3632,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -3650,7 +3658,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -3675,7 +3683,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -3699,18 +3707,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -3719,20 +3727,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -3748,7 +3756,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -3761,7 +3769,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -3770,11 +3778,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -3797,52 +3805,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -3853,7 +3861,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -3868,17 +3876,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -3889,13 +3897,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -3903,13 +3911,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -3923,11 +3931,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -3935,7 +3943,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -3943,11 +3951,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -3961,11 +3969,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -3979,38 +3987,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -4040,15 +4048,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -4061,33 +4069,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -4099,23 +4107,23 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S12
+## Active Items Ã¢â‚¬â€ S12
 
-### AGT-01 — Agent policy engine: centralized permission and role check before every tool execution
+### AGT-01 Ã¢â‚¬â€ Agent policy engine: centralized permission and role check before every tool execution
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] Define `ToolPolicy` enum (`allow`, `allow_with_approval`, `deny`) and `PolicyDecision` dataclass
-- [x] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) → PolicyDecision`
-- [x] Implement action allowlist check — reject unknown tool names
-- [x] Implement role check — map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
-- [x] Implement scope check — validate entity IDs in `tool_input` belong to `ctx.project_id` (task/dependency/assignment/resource IDs)
+- [x] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) Ã¢â€ â€™ PolicyDecision`
+- [x] Implement action allowlist check Ã¢â‚¬â€ reject unknown tool names
+- [x] Implement role check Ã¢â‚¬â€ map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
+- [x] Implement scope check Ã¢â‚¬â€ validate entity IDs in `tool_input` belong to `ctx.project_id` (task/dependency/assignment/resource IDs)
 - [x] Add `role_name` to `AgentContext` and pass it from AI endpoint `ProjectAccess` when building the context
 - [x] Wire `check_tool_policy` into `executor.py` before tool execution and before destructive approval branching
-- [x] On `deny` → return explicit tool-result error to the LLM (no execution)
-- [x] On `allow_with_approval` → reuse existing `_wait_for_tool_approval` mechanism
+- [x] On `deny` Ã¢â€ â€™ return explicit tool-result error to the LLM (no execution)
+- [x] On `allow_with_approval` Ã¢â€ â€™ reuse existing `_wait_for_tool_approval` mechanism
 - [x] Add default policy config (viewer=read+UI only, member=read+write+UI, manager/owner=all)
 - [x] Tests: viewer blocked from write tools, member allowed writes, deny on unknown tool, scope violation returns deny, destructive tools still require per-action approval
 
@@ -4129,7 +4137,7 @@ Status: `DONE`
 
 ---
 
-### AGT-02 — Agent kill switch: per-project and per-org flag to disable agent execution
+### AGT-02 Ã¢â‚¬â€ Agent kill switch: per-project and per-org flag to disable agent execution
 
 Status: `DONE`
 
@@ -4137,7 +4145,7 @@ Status: `DONE`
 
 - [x] Add `agent_enabled` boolean to project settings JSON schema (default: true when missing)
 - [x] Add `agent_enabled` boolean to organization settings JSON schema (default: true when missing)
-- [x] Check both flags at `prepare_chat_stream` entry — reject with clear `InvalidOperationError` if either is false
+- [x] Check both flags at `prepare_chat_stream` entry Ã¢â‚¬â€ reject with clear `InvalidOperationError` if either is false
 - [x] Org-level false overrides project-level true (org wins)
 - [x] Apply same kill-switch guard in proactive agent monitor flow before analysis execution
 - [x] Frontend: add "AI Agent" toggle in project settings page
@@ -4156,9 +4164,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S10
+## Previous Sprint Items Ã¢â‚¬â€ S10
 
-### UX-01 — Invitation flow blockers + recovery
+### UX-01 Ã¢â‚¬â€ Invitation flow blockers + recovery
 
 Status: `DONE`
 
@@ -4178,7 +4186,7 @@ Status: `DONE`
 
 ---
 
-### UX-02 — Notification center IA + accessibility baseline
+### UX-02 Ã¢â‚¬â€ Notification center IA + accessibility baseline
 
 Status: `DONE`
 
@@ -4198,7 +4206,7 @@ Status: `DONE`
 
 ---
 
-### UX-03 — Membership actions safety + copy clarity
+### UX-03 Ã¢â‚¬â€ Membership actions safety + copy clarity
 
 Status: `DONE`
 
@@ -4218,7 +4226,7 @@ Status: `DONE`
 
 ---
 
-### UX-04 — Profile settings usability batch
+### UX-04 Ã¢â‚¬â€ Profile settings usability batch
 
 Status: `DONE`
 
@@ -4238,7 +4246,7 @@ Status: `DONE`
 
 ---
 
-### FIX-17 — AI service mock-provider tests fail in live mode (Stretch)
+### FIX-17 Ã¢â‚¬â€ AI service mock-provider tests fail in live mode (Stretch)
 
 Status: `DONE`
 
@@ -4256,7 +4264,7 @@ Status: `DONE`
 
 ---
 
-### UX-05 — Visual consistency polish pass (Stretch)
+### UX-05 Ã¢â‚¬â€ Visual consistency polish pass (Stretch)
 
 Status: `DONE`
 
@@ -4275,9 +4283,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S09
+## Previous Sprint Items Ã¢â‚¬â€ S09
 
-### FIX-14 — Invitation review page UX overhaul
+### FIX-14 Ã¢â‚¬â€ Invitation review page UX overhaul
 
 Status: `DONE`
 
@@ -4285,13 +4293,13 @@ Status: `DONE`
 
 - [x] Write ADR-009 for route-state decision (done during planning)
 - [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
-- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] Notification card: remove invitation message line Ã¢â‚¬â€ keep only project name, role, and Accept/Review buttons
 - [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
 - [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
-- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
-- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
-- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
-- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Accept page Ã¢â‚¬â€ review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page Ã¢â‚¬â€ auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page Ã¢â‚¬â€ fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page Ã¢â‚¬â€ after accept in review mode: transition to accepted state with "Go to Project"
 - [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
 - [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
 
@@ -4299,12 +4307,12 @@ Status: `DONE`
 
 - Dependencies: FIX-10 (accept page foundation)
 - Blockers: -
-- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Decisions: ADR-009 Ã¢â‚¬â€ route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
 - Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
 
 ---
 
-### FIX-06 — Silent token refresh not proactive (#26)
+### FIX-06 Ã¢â‚¬â€ Silent token refresh not proactive (#26)
 
 Status: `DONE`
 
@@ -4321,7 +4329,7 @@ Status: `DONE`
 
 ---
 
-### FIX-08 — Org member role change layout glitch (#33)
+### FIX-08 Ã¢â‚¬â€ Org member role change layout glitch (#33)
 
 Status: `DONE`
 
@@ -4338,9 +4346,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S08
+## Previous Sprint Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -4358,7 +4366,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -4380,7 +4388,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -4393,12 +4401,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -4412,11 +4420,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -4435,9 +4443,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -4456,25 +4464,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -4482,7 +4490,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -4491,7 +4499,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -4508,7 +4516,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -4525,18 +4533,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -4545,18 +4553,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -4580,7 +4588,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -4606,7 +4614,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -4631,7 +4639,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -4655,18 +4663,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -4675,20 +4683,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -4704,7 +4712,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -4717,7 +4725,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -4726,11 +4734,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -4753,52 +4761,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -4809,7 +4817,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -4824,17 +4832,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -4845,13 +4853,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -4859,13 +4867,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -4879,11 +4887,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -4891,7 +4899,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -4899,11 +4907,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -4917,11 +4925,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -4935,38 +4943,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -4996,15 +5004,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -5017,33 +5025,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -5055,23 +5063,23 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S11
+## Active Items Ã¢â‚¬â€ S11
 
-### FEAT-01 — Percent-driven status: derive task status from percent_complete with configurable review threshold
+### FEAT-01 Ã¢â‚¬â€ Percent-driven status: derive task status from percent_complete with configurable review threshold
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] Add `status_thresholds` schema to project settings (default: `{ "IN_PROGRESS": 1, "IN_REVIEW": 80, "DONE": 100 }`)
-- [x] Write `derive_status_from_percent(percent_complete, thresholds, current_status)` utility in `task_service.py` — returns derived `TaskStatus`; preserves BACKLOG↔TODO when percent is 0
-- [x] Wire derivation into `update_task()` — after `setattr` loop, auto-set `status` when `percent_complete` is in the patch
-- [x] Wire reverse: when `status` is in the patch (kanban drag), auto-set `percent_complete` to column entry value (TODO→0, IN_PROGRESS→1, IN_REVIEW→threshold, DONE→100)
+- [x] Write `derive_status_from_percent(percent_complete, thresholds, current_status)` utility in `task_service.py` Ã¢â‚¬â€ returns derived `TaskStatus`; preserves BACKLOGÃ¢â€ â€TODO when percent is 0
+- [x] Wire derivation into `update_task()` Ã¢â‚¬â€ after `setattr` loop, auto-set `status` when `percent_complete` is in the patch
+- [x] Wire reverse: when `status` is in the patch (kanban drag), auto-set `percent_complete` to column entry value (TODOÃ¢â€ â€™0, IN_PROGRESSÃ¢â€ â€™1, IN_REVIEWÃ¢â€ â€™threshold, DONEÃ¢â€ â€™100)
 - [x] Add Alembic migration to backfill existing tasks: derive status from current percent_complete using default thresholds
 - [x] Frontend: update `useKanbanDrag` to send `percent_complete` alongside `status` (or let backend derive)
 - [x] Frontend: add review threshold setting to project settings UI (input with default 80%)
 - [x] Frontend: expose `status_thresholds` in project settings API call and store
-- [x] Tests: backend unit tests for `derive_status_from_percent` — all threshold boundaries, BACKLOG↔TODO edge case, reverse direction
+- [x] Tests: backend unit tests for `derive_status_from_percent` Ã¢â‚¬â€ all threshold boundaries, BACKLOGÃ¢â€ â€TODO edge case, reverse direction
 - [x] Tests: frontend test for kanban drag setting percent, project settings threshold UI
 
 #### Notes
@@ -5079,21 +5087,21 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - BACKLOG↔TODO is manual-only (both are 0% — the difference is intent, not progress)
+  - BACKLOGÃ¢â€ â€TODO is manual-only (both are 0% Ã¢â‚¬â€ the difference is intent, not progress)
   - Once percent > 0, status auto-jumps to IN_PROGRESS regardless of prior BACKLOG/TODO
-  - If percent drops back to 0, status returns to TODO (not BACKLOG — task was acknowledged)
+  - If percent drops back to 0, status returns to TODO (not BACKLOG Ã¢â‚¬â€ task was acknowledged)
   - Kanban drag to a column sets percent to that column's entry threshold
   - Default thresholds: IN_PROGRESS=1%, IN_REVIEW=80%, DONE=100%
 
 ---
 
-### FEAT-02 — Percent-driven status: summary task status auto-derived from rolled-up percent
+### FEAT-02 Ã¢â‚¬â€ Percent-driven status: summary task status auto-derived from rolled-up percent
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Wire `derive_status_from_percent` into `recalculate_summary()` — after computing rolled-up percent via `apply_summary_rollup`, derive and set status
+- [x] Wire `derive_status_from_percent` into `recalculate_summary()` Ã¢â‚¬â€ after computing rolled-up percent via `apply_summary_rollup`, derive and set status
 - [x] Load project `status_thresholds` in `recalculate_summary()` and apply to rollup
 - [x] Tests: summary task status transitions when children reach threshold boundaries
 - [x] Tests: summary task status resets to TODO when children cleared
@@ -5103,27 +5111,27 @@ Status: `DONE`
 - Dependencies: FEAT-01
 - Blockers: -
 - Decisions:
-  - Summary tasks never have manually-set status — always derived from rolled-up percent
+  - Summary tasks never have manually-set status Ã¢â‚¬â€ always derived from rolled-up percent
   - Uses same project-level thresholds as leaf tasks
 
 ---
 
-## Draft Items — S12 (Agent Platform Hardening)
+## Draft Items Ã¢â‚¬â€ S12 (Agent Platform Hardening)
 
-### AGT-01 — Agent policy engine: centralized permission and role check before every tool execution
+### AGT-01 Ã¢â‚¬â€ Agent policy engine: centralized permission and role check before every tool execution
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
 - [ ] Define `ToolPolicy` enum (`allow`, `allow_with_approval`, `deny`) and `PolicyDecision` dataclass
-- [ ] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) → PolicyDecision`
-- [ ] Implement action allowlist check — reject unknown tool names
-- [ ] Implement role check — map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
-- [ ] Implement scope check — validate all entity IDs in `tool_input` belong to `ctx.project_id`
+- [ ] Create `agent/policy.py` with `check_tool_policy(tool_name, tool_input, ctx) Ã¢â€ â€™ PolicyDecision`
+- [ ] Implement action allowlist check Ã¢â‚¬â€ reject unknown tool names
+- [ ] Implement role check Ã¢â‚¬â€ map project role (viewer/member/manager/owner) to allowed tool tiers (read/write/destructive/UI)
+- [ ] Implement scope check Ã¢â‚¬â€ validate all entity IDs in `tool_input` belong to `ctx.project_id`
 - [ ] Wire `check_tool_policy` into `executor.py` before every `execute_tool` call (line 200)
-- [ ] On `deny` → return error result to LLM ("Permission denied: viewers cannot create tasks")
-- [ ] On `allow_with_approval` → reuse existing `_wait_for_tool_approval` mechanism
+- [ ] On `deny` Ã¢â€ â€™ return error result to LLM ("Permission denied: viewers cannot create tasks")
+- [ ] On `allow_with_approval` Ã¢â€ â€™ reuse existing `_wait_for_tool_approval` mechanism
 - [ ] Add default policy config (viewer=read+UI only, member=read+write+UI, manager/owner=all)
 - [ ] Tests: viewer blocked from write tools, member allowed writes, deny on unknown tool, scope violation returns deny, destructive still requires per-action approval
 
@@ -5132,14 +5140,14 @@ Status: `NOT_STARTED`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Policy is a pure in-memory function — no DB query per tool call (role comes from ctx)
+  - Policy is a pure in-memory function Ã¢â‚¬â€ no DB query per tool call (role comes from ctx)
   - Policy is additive to endpoint-level RBAC, not a replacement
   - Default policy is hardcoded; project-level policy customization is future work
   - Scope check validates task_id/dependency_id belong to ctx.project_id by querying existing repo functions
 
 ---
 
-### AGT-02 — Agent kill switch: per-project and per-org flag to disable agent execution
+### AGT-02 Ã¢â‚¬â€ Agent kill switch: per-project and per-org flag to disable agent execution
 
 Status: `NOT_STARTED`
 
@@ -5147,7 +5155,7 @@ Status: `NOT_STARTED`
 
 - [ ] Add `agent_enabled` boolean to project settings JSON schema (default: true)
 - [ ] Add `agent_enabled` boolean to organization settings JSON schema (default: true)
-- [ ] Check both flags at `prepare_chat_stream` entry — reject with clear `InvalidOperationError` if either is false
+- [ ] Check both flags at `prepare_chat_stream` entry Ã¢â‚¬â€ reject with clear `InvalidOperationError` if either is false
 - [ ] Org-level false overrides project-level true (org wins)
 - [ ] Frontend: add "AI Agent" toggle in project settings page
 - [ ] Frontend: when agent is disabled, show disabled state on AI panel entry point with explanation
@@ -5158,22 +5166,22 @@ Status: `NOT_STARTED`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Kill switch is a project.settings / organization.settings JSON field, not a DB column — no migration needed
+  - Kill switch is a project.settings / organization.settings JSON field, not a DB column Ã¢â‚¬â€ no migration needed
   - Check happens once at stream entry, not per-tool (no performance impact)
   - Proactive agent (`agent_monitor.py`) must also check the flag before running health checks
 
 ---
 
-### AGT-03 — Agent post-condition verification (Stretch)
+### AGT-03 Ã¢â‚¬â€ Agent post-condition verification (Stretch)
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
-- [ ] Define verification contract: `verify_tool_result(tool_name, tool_input, result, ctx) → VerifyOutcome`
+- [ ] Define verification contract: `verify_tool_result(tool_name, tool_input, result, ctx) Ã¢â€ â€™ VerifyOutcome`
 - [ ] Implement verifiers for write tools: create_task (ID exists + name matches), update_task (fields match patch), delete_task (is_deleted=true), add_dependency (exists), assign_resource (exists)
 - [ ] Skip verification for read and UI tools
-- [ ] Wire into executor after `execute_tool` — on mismatch: log warning, return error to LLM, allow 1 retry
+- [ ] Wire into executor after `execute_tool` Ã¢â‚¬â€ on mismatch: log warning, return error to LLM, allow 1 retry
 - [ ] Tests: successful verification passes through, mismatch triggers retry, second mismatch stops with error
 
 #### Notes
@@ -5181,13 +5189,13 @@ Status: `NOT_STARTED`
 - Dependencies: AGT-01 (policy engine should be in place first)
 - Blockers: -
 - Decisions:
-  - Verification re-queries the DB to confirm the mutation landed — adds one query per write tool
+  - Verification re-queries the DB to confirm the mutation landed Ã¢â‚¬â€ adds one query per write tool
   - Max 1 retry per tool call to prevent loops
-  - Verification failures are logged but don't crash the agent run — LLM gets error and can adapt
+  - Verification failures are logged but don't crash the agent run Ã¢â‚¬â€ LLM gets error and can adapt
 
 ---
 
-### AGT-04 — Agent UI actions: implement frontend handlers (Stretch)
+### AGT-04 Ã¢â‚¬â€ Agent UI actions: implement frontend handlers (Stretch)
 
 Status: `NOT_STARTED`
 
@@ -5204,15 +5212,15 @@ Status: `NOT_STARTED`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - UI actions modify existing view stores — no new routes or pages
+  - UI actions modify existing view stores Ã¢â‚¬â€ no new routes or pages
   - highlight_tasks uses a transient `highlightedTaskIds` set in shared state
   - filter_view maps AI filter params to existing filter state shapes per view
 
 ---
 
-## Previous Sprint Items — S10
+## Previous Sprint Items Ã¢â‚¬â€ S10
 
-### UX-01 — Invitation flow blockers + recovery
+### UX-01 Ã¢â‚¬â€ Invitation flow blockers + recovery
 
 Status: `DONE`
 
@@ -5232,7 +5240,7 @@ Status: `DONE`
 
 ---
 
-### UX-02 — Notification center IA + accessibility baseline
+### UX-02 Ã¢â‚¬â€ Notification center IA + accessibility baseline
 
 Status: `DONE`
 
@@ -5252,7 +5260,7 @@ Status: `DONE`
 
 ---
 
-### UX-03 — Membership actions safety + copy clarity
+### UX-03 Ã¢â‚¬â€ Membership actions safety + copy clarity
 
 Status: `DONE`
 
@@ -5272,7 +5280,7 @@ Status: `DONE`
 
 ---
 
-### UX-04 — Profile settings usability batch
+### UX-04 Ã¢â‚¬â€ Profile settings usability batch
 
 Status: `DONE`
 
@@ -5292,7 +5300,7 @@ Status: `DONE`
 
 ---
 
-### FIX-17 — AI service mock-provider tests fail in live mode (Stretch)
+### FIX-17 Ã¢â‚¬â€ AI service mock-provider tests fail in live mode (Stretch)
 
 Status: `DONE`
 
@@ -5310,7 +5318,7 @@ Status: `DONE`
 
 ---
 
-### UX-05 — Visual consistency polish pass (Stretch)
+### UX-05 Ã¢â‚¬â€ Visual consistency polish pass (Stretch)
 
 Status: `DONE`
 
@@ -5329,9 +5337,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S09
+## Previous Sprint Items Ã¢â‚¬â€ S09
 
-### FIX-14 — Invitation review page UX overhaul
+### FIX-14 Ã¢â‚¬â€ Invitation review page UX overhaul
 
 Status: `DONE`
 
@@ -5339,13 +5347,13 @@ Status: `DONE`
 
 - [x] Write ADR-009 for route-state decision (done during planning)
 - [x] Add "Considered" entry to roadmap for future GET invitation endpoint (done during planning)
-- [x] Notification card: remove invitation message line — keep only project name, role, and Accept/Review buttons
+- [x] Notification card: remove invitation message line Ã¢â‚¬â€ keep only project name, role, and Accept/Review buttons
 - [x] "Review" button: navigate to accept page with route state `{ review: true, title, message }`
 - [x] "Accept" button: accepts inline then navigates with accepted data (kept existing behavior)
-- [x] Accept page — review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
-- [x] Accept page — auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
-- [x] Accept page — fallback: when route state is missing (email link, page refresh), auto-accept as before
-- [x] Accept page — after accept in review mode: transition to accepted state with "Go to Project"
+- [x] Accept page Ã¢â‚¬â€ review mode: show invitation details card (title, full message) with "Accept Invitation" and "Back" buttons; do NOT auto-accept
+- [x] Accept page Ã¢â‚¬â€ auto-accept mode: keep current behavior (auto-accept on mount, show "Invitation Accepted" + "Go to Project")
+- [x] Accept page Ã¢â‚¬â€ fallback: when route state is missing (email link, page refresh), auto-accept as before
+- [x] Accept page Ã¢â‚¬â€ after accept in review mode: transition to accepted state with "Go to Project"
 - [x] Tests: update/add coverage for review mode, auto-accept mode, fallback mode, and notification card without message
 - [x] Resolve accepted invite notifications so non-actionable invitation rows disappear from the bell and unread counts stay correct
 
@@ -5353,12 +5361,12 @@ Status: `DONE`
 
 - Dependencies: FIX-10 (accept page foundation)
 - Blockers: -
-- Decisions: ADR-009 — route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
+- Decisions: ADR-009 Ã¢â‚¬â€ route state for invitation details remains the review-mode source for now; future GET endpoint is still tracked in the roadmap Considered section.
 - Scope: frontend review UX plus targeted backend notification resolution for accepted invitations.
 
 ---
 
-### FIX-06 — Silent token refresh not proactive (#26)
+### FIX-06 Ã¢â‚¬â€ Silent token refresh not proactive (#26)
 
 Status: `DONE`
 
@@ -5375,7 +5383,7 @@ Status: `DONE`
 
 ---
 
-### FIX-08 — Org member role change layout glitch (#33)
+### FIX-08 Ã¢â‚¬â€ Org member role change layout glitch (#33)
 
 Status: `DONE`
 
@@ -5392,9 +5400,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S08
+## Previous Sprint Items Ã¢â‚¬â€ S08
 
-### FIX-09 — Finalize Vite WS proxy fix (#39)
+### FIX-09 Ã¢â‚¬â€ Finalize Vite WS proxy fix (#39)
 
 Status: `DONE`
 
@@ -5412,7 +5420,7 @@ Status: `DONE`
 
 ---
 
-### FIX-10 — Project invite accept page stuck on "Accepting invitation..." (#35)
+### FIX-10 Ã¢â‚¬â€ Project invite accept page stuck on "Accepting invitation..." (#35)
 
 Status: `DONE`
 
@@ -5434,7 +5442,7 @@ Status: `DONE`
 
 ---
 
-### FIX-11 — Org switcher not updated after project invite accept (#36)
+### FIX-11 Ã¢â‚¬â€ Org switcher not updated after project invite accept (#36)
 
 Status: `DONE`
 
@@ -5447,12 +5455,12 @@ Status: `DONE`
 #### Notes
 
 - File: `frontend/src/features/projects/hooks/useProjectMembers.ts` (the accept mutation's onSuccess callback)
-- The org query key is likely in `frontend/src/features/organizations/` — find it and invalidate after accept
+- The org query key is likely in `frontend/src/features/organizations/` Ã¢â‚¬â€ find it and invalidate after accept
 - Depends on FIX-10 being resolved first
 
 ---
 
-### FIX-12 — Removed project member sees generic error (#37)
+### FIX-12 Ã¢â‚¬â€ Removed project member sees generic error (#37)
 
 Status: `DONE`
 
@@ -5466,11 +5474,11 @@ Status: `DONE`
 
 - Files: `frontend/src/features/projects/components/ProjectLayout.tsx` or the project route guard
 - Backend returns 403 via `PermissionDeniedError` when a non-member accesses a project
-- The fix should handle 403 specifically — don't mask other errors
+- The fix should handle 403 specifically Ã¢â‚¬â€ don't mask other errors
 
 ---
 
-### FIX-13 — WebSocket hooks unstable effect dependencies (#40)
+### FIX-13 Ã¢â‚¬â€ WebSocket hooks unstable effect dependencies (#40)
 
 Status: `DONE`
 
@@ -5489,9 +5497,9 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S07
+## Previous Sprint Items Ã¢â‚¬â€ S07
 
-### FIX-01 — Avatar upload crashes with raw Pydantic error (#27)
+### FIX-01 Ã¢â‚¬â€ Avatar upload crashes with raw Pydantic error (#27)
 
 Status: `DONE`
 
@@ -5510,25 +5518,25 @@ Status: `DONE`
 
 ---
 
-### FIX-02 — Deleted org slug not released (#31)
+### FIX-02 Ã¢â‚¬â€ Deleted org slug not released (#31)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Check if org delete is soft delete — confirmed: sets `is_deleted=True`, `deleted_at`
+- [x] Check if org delete is soft delete Ã¢â‚¬â€ confirmed: sets `is_deleted=True`, `deleted_at`
 - [x] Update slug uniqueness to exclude soft-deleted orgs and align service/repository lookups with active-org semantics
-- [x] Verify: delete an org, recreate with the same slug — succeeds
+- [x] Verify: delete an org, recreate with the same slug Ã¢â‚¬â€ succeeds
 
 #### Notes
 
-- Model: `backend/app/models/organization.py` — `slug` previously had a global unique constraint
-- Service: `backend/app/service/organization_service.py` — `soft_delete_organization()`
+- Model: `backend/app/models/organization.py` Ã¢â‚¬â€ `slug` previously had a global unique constraint
+- Service: `backend/app/service/organization_service.py` Ã¢â‚¬â€ `soft_delete_organization()`
 - Implemented fix: replace the global slug unique index with an active-only partial unique index and keep repository lookups scoped to non-deleted orgs
 
 ---
 
-### FIX-03 — Sidebar no fallback after org deletion (#32)
+### FIX-03 Ã¢â‚¬â€ Sidebar no fallback after org deletion (#32)
 
 Status: `DONE`
 
@@ -5536,7 +5544,7 @@ Status: `DONE`
 
 - [x] Find where org deletion success is handled in the frontend store/page
 - [x] After deletion, find the user's personal org and set it as active
-- [x] Verify: delete active org → app switches to personal org automatically
+- [x] Verify: delete active org Ã¢â€ â€™ app switches to personal org automatically
 
 #### Notes
 
@@ -5545,7 +5553,7 @@ Status: `DONE`
 
 ---
 
-### FIX-04 — Change password missing toast (#29)
+### FIX-04 Ã¢â‚¬â€ Change password missing toast (#29)
 
 Status: `DONE`
 
@@ -5562,7 +5570,7 @@ Status: `DONE`
 
 ---
 
-### FIX-05 — AI preferences toggle glitch (#30)
+### FIX-05 Ã¢â‚¬â€ AI preferences toggle glitch (#30)
 
 Status: `DONE`
 
@@ -5579,18 +5587,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S06
+## Previous Sprint Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -5599,18 +5607,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -5634,7 +5642,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -5660,7 +5668,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -5685,7 +5693,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -5709,18 +5717,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -5729,20 +5737,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -5758,7 +5766,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -5771,7 +5779,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -5780,11 +5788,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -5807,52 +5815,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -5863,7 +5871,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -5878,17 +5886,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -5899,13 +5907,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -5913,13 +5921,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -5933,11 +5941,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -5945,7 +5953,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -5953,11 +5961,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -5971,11 +5979,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -5989,38 +5997,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -6050,15 +6058,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -6071,33 +6079,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -6109,18 +6117,18 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S06
+## Active Items Ã¢â‚¬â€ S06
 
-### KB-09 — Kanban: AI Sprint Health Summary (FR-KB-016)
+### KB-09 Ã¢â‚¬â€ Kanban: AI Sprint Health Summary (FR-KB-016)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add "Sprint Health" button to Kanban toolbar — triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
-- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` — use `refetch()` on button press, not `enabled` toggle
+- [x] Add "Sprint Health" button to Kanban toolbar Ã¢â‚¬â€ triggers `refetch()` on `useAiSuggestions`, does not auto-fetch on mount
+- [x] Wire `useAiSuggestions(projectId, limit, enabled=false)` into `KanbanPage` Ã¢â‚¬â€ use `refetch()` on button press, not `enabled` toggle
 - [x] Build `KanbanHealthSummary` component: render HIGH/MEDIUM severity suggestions grouped by `affected_task_id`, show `title` + `description` per risk
-- [x] Link each risk entry to the affected kanban card — clicking a risk highlights the card or opens the existing `TaskDetailPanel`
+- [x] Link each risk entry to the affected kanban card Ã¢â‚¬â€ clicking a risk highlights the card or opens the existing `TaskDetailPanel`
 - [x] Add loading spinner and error fallback (with retry) that do not block board interactions
 - [x] Add tests: summary renders on success, empty state when no HIGH/MEDIUM suggestions, error fallback shown on failure
 
@@ -6129,18 +6137,18 @@ Status: `DONE`
 - Dependencies: `KB-01` complete
 - Blockers: -
 - Decisions:
-  - No backend changes — `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
-  - No new types — `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
-  - No new service calls — `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
+  - No backend changes Ã¢â‚¬â€ `GET /projects/{id}/ai/suggestions` already returns `AiSuggestion[]` with `severity`, `title`, `description`, `affected_task_id`
+  - No new types Ã¢â‚¬â€ `AiSuggestion`, `AiSuggestionsResponse` in `ai/types.ts` are the full contract
+  - No new service calls Ã¢â‚¬â€ `aiService.suggestions()` and `useAiSuggestions()` already exist in `useAi.ts`
   - Fetch is manual only: `refetchOnMount: false`, `refetchOnWindowFocus: false` already set on the hook; pass `enabled=false` and call `refetch()` on button press
-  - Filter to HIGH/MEDIUM only in the component — LOW severity suggestions are not surfaced in this view
+  - Filter to HIGH/MEDIUM only in the component Ã¢â‚¬â€ LOW severity suggestions are not surfaced in this view
   - Keep V1 project-scoped and board-context only (no cross-project aggregation)
 
 ---
 
-## Previous Sprint Items — S05
+## Previous Sprint Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -6164,7 +6172,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -6190,7 +6198,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -6215,7 +6223,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -6239,18 +6247,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -6259,20 +6267,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -6288,7 +6296,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -6301,7 +6309,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -6310,11 +6318,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -6337,52 +6345,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -6393,7 +6401,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -6408,17 +6416,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -6429,13 +6437,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -6443,13 +6451,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -6463,11 +6471,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -6475,7 +6483,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -6483,11 +6491,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -6501,11 +6509,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -6519,38 +6527,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -6580,15 +6588,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -6601,33 +6609,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -6639,9 +6647,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S05
+## Active Items Ã¢â‚¬â€ S05
 
-### KB-02 — Kanban: Card Reordering Within Column (FR-KB-009)
+### KB-02 Ã¢â‚¬â€ Kanban: Card Reordering Within Column (FR-KB-009)
 
 Status: `DONE`
 
@@ -6665,7 +6673,7 @@ Status: `DONE`
 
 ---
 
-### KB-04 — Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
+### KB-04 Ã¢â‚¬â€ Kanban: Swimlanes by Assignee/Priority (FR-KB-011)
 
 Status: `DONE`
 
@@ -6691,7 +6699,7 @@ Status: `DONE`
 
 ---
 
-### KB-05 — Kanban: Keyboard Shortcuts (FR-KB-012)
+### KB-05 Ã¢â‚¬â€ Kanban: Keyboard Shortcuts (FR-KB-012)
 
 Status: `DONE`
 
@@ -6716,7 +6724,7 @@ Status: `DONE`
 
 ---
 
-### KB-06 — Kanban: Bulk Select And Move Cards (FR-KB-013)
+### KB-06 Ã¢â‚¬â€ Kanban: Bulk Select And Move Cards (FR-KB-013)
 
 Status: `DONE`
 
@@ -6740,18 +6748,18 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S04
+## Previous Sprint Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -6760,20 +6768,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -6789,7 +6797,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -6802,7 +6810,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -6811,11 +6819,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `DONE`
 
@@ -6838,52 +6846,52 @@ Status: `DONE`
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
-
-Status: `DONE`
-
-#### Mini-tasks
-
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
-
-#### Notes
-
-- Dependencies: -
-- Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
-
----
-
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
+
+Status: `DONE`
+
+#### Mini-tasks
+
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
+
+---
+
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -6894,7 +6902,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -6909,17 +6917,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -6930,13 +6938,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -6944,13 +6952,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -6964,11 +6972,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -6976,7 +6984,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -6984,11 +6992,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -7002,11 +7010,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -7020,38 +7028,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -7081,15 +7089,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -7102,33 +7110,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -7140,18 +7148,18 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S04
+## Active Items Ã¢â‚¬â€ S04
 
-### KB-01 — Kanban: Task Detail Panel from Card (FR-KB-008)
+### KB-01 Ã¢â‚¬â€ Kanban: Task Detail Panel from Card (FR-KB-008)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Read existing `TaskDetailPanel` component and tasks barrel — identify what to re-use
+- [x] Read existing `TaskDetailPanel` component and tasks barrel Ã¢â‚¬â€ identify what to re-use
 - [x] Add slide-in panel state to kanban store (`selectedTaskId: string | null`)
 - [x] Wire card click to set `selectedTaskId` (replace current no-op)
-- [x] Render `TaskDetailPanel` inside `KanbanPage` — mount alongside board, not as route navigation
+- [x] Render `TaskDetailPanel` inside `KanbanPage` Ã¢â‚¬â€ mount alongside board, not as route navigation
 - [x] Ensure panel is closeable (Escape key + close button)
 - [x] Verify board stays mounted and interactive while panel is open
 
@@ -7160,20 +7168,20 @@ Status: `DONE`
 - Dependencies: -
 - Blockers: -
 - Decisions:
-  - Use existing `TaskDetailPanel` from tasks feature — do not build a new one
+  - Use existing `TaskDetailPanel` from tasks feature Ã¢â‚¬â€ do not build a new one
   - Keep panel state in kanban Zustand store (`selectedTaskId` + setter/clearer)
   - Open panel on kanban card click; keep drag behavior unchanged
   - Render panel directly in `KanbanPage` as non-floating `Sheet` (`floating` omitted)
 
 ---
 
-### KB-03 — Kanban: WIP Limits per Column (FR-KB-010)
+### KB-03 Ã¢â‚¬â€ Kanban: WIP Limits per Column (FR-KB-010)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Design decision: where to store WIP limits (localStorage per project vs backend) — write ADR before coding
+- [x] Design decision: where to store WIP limits (localStorage per project vs backend) Ã¢â‚¬â€ write ADR before coding
 - [x] Add WIP limit config to kanban store (per-column, per-project)
 - [x] Add UI to set limit in column header (input or settings modal)
 - [x] Show visual warning on column header when card count exceeds limit
@@ -7189,7 +7197,7 @@ Status: `DONE`
 
 ---
 
-### KB-07 — Kanban: Assignee Avatar on Card (FR-KB-014)
+### KB-07 Ã¢â‚¬â€ Kanban: Assignee Avatar on Card (FR-KB-014)
 
 Status: `DONE`
 
@@ -7202,7 +7210,7 @@ Status: `DONE`
 
 **Frontend**
 - [x] Add `assignments` field to `Task` type in `frontend/src/features/tasks/types.ts`
-- [x] Render assignee avatar on `KanbanCard` — use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
+- [x] Render assignee avatar on `KanbanCard` Ã¢â‚¬â€ use `Avatar`/`AvatarFallback` from `shared/ui/avatar`; show initials if no avatar
 - [x] Add tooltip with full resource name on hover
 - [x] Handle unassigned state gracefully (no avatar rendered)
 - [x] Write tests: avatar renders when assigned, nothing renders when unassigned
@@ -7211,11 +7219,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Embed `assignments` in task list response (Option A) — avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
+- Decisions: Embed `assignments` in task list response (Option A) Ã¢â‚¬â€ avoids N+1 queries. Shape: `[{ resource_id, resource_name, resource_initials }]`. Resource has no `avatar_url` so initials-only fallback is the norm.
 
 ---
 
-### KB-08 — Kanban: Dependency Indicator on Card (FR-KB-015)
+### KB-08 Ã¢â‚¬â€ Kanban: Dependency Indicator on Card (FR-KB-015)
 
 Status: `NOT_STARTED`
 
@@ -7230,56 +7238,56 @@ Status: `NOT_STARTED`
 
 - Dependencies: -
 - Blockers: Depends on whether dependency data is included in task list API response
-- Decisions: TBD — if not in response, decide whether to add to query or use separate fetch
+- Decisions: TBD Ã¢â‚¬â€ if not in response, decide whether to add to query or use separate fetch
 
 ---
 
-## Previous Sprint Items — S03
+## Previous Sprint Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [x] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [x] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `DONE`
 
 #### Mini-tasks
 
 - [x] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [x] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [x] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -7290,7 +7298,7 @@ Status: `DONE`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `DONE`
 
@@ -7305,17 +7313,17 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [x] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [x] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -7326,13 +7334,13 @@ Status: `DONE`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [x] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [x] Update corresponding test expectation in `ai.service.test.ts`
 - [x] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -7340,13 +7348,13 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -7360,11 +7368,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -7372,7 +7380,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -7380,11 +7388,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -7398,11 +7406,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -7416,38 +7424,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -7477,15 +7485,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -7498,33 +7506,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -7536,52 +7544,52 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S03
+## Active Items Ã¢â‚¬â€ S03
 
-### TECH-04-A — Batch Error State Fixes (#41 #43 #51 #56)
+### TECH-04-A Ã¢â‚¬â€ Batch Error State Fixes (#41 #43 #51 #56)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #41: `OrgSwitcher.tsx` — destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
-- [x] #43: `useKanbanDrag.ts` — add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
-- [x] #51: `CalendarPage.tsx` — add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
-- [x] #56: `UtilizationPage.tsx` — capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
+- [x] #41: `OrgSwitcher.tsx` Ã¢â‚¬â€ destructure `isError`/`refetch`; render inline error/retry in dropdown when `isError` is true
+- [x] #43: `useKanbanDrag.ts` Ã¢â‚¬â€ add `onError: (error) => toast.error(getErrorMessage(error))` to `mutate()` call
+- [x] #51: `CalendarPage.tsx` Ã¢â‚¬â€ add `exceptionsQuery.isError` branch rendering `QueryError` with retry before empty-state branch
+- [x] #56: `UtilizationPage.tsx` Ã¢â‚¬â€ capture `isError`/`refetch` from `useOverAllocations`; render `QueryError` for over-allocation section on error
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) — do not introduce new error UI
+- Decisions: Use existing `QueryError` component pattern (see `DashboardPage.tsx`) Ã¢â‚¬â€ do not introduce new error UI
 
 ---
 
-### TECH-04-B — ProfilePage AI Error State + Remove Double Refetch (#35)
+### TECH-04-B Ã¢â‚¬â€ ProfilePage AI Error State + Remove Double Refetch (#35)
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
-- [ ] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab — render `QueryError` or alert before tool list
-- [ ] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` — invalidation already handles it
+- [ ] Add `else if (aiPreferencesQuery.isError)` branch in AI Settings tab Ã¢â‚¬â€ render `QueryError` or alert before tool list
+- [ ] Remove redundant `aiPreferencesQuery.refetch()` call from `handleAiToggle` `onSuccess` Ã¢â‚¬â€ invalidation already handles it
 
 #### Notes
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Do not refactor the surrounding tab structure — surgical fix only
+- Decisions: Do not refactor the surrounding tab structure Ã¢â‚¬â€ surgical fix only
 
 ---
 
-### TECH-04-C — Fix `setState` in `useEffect` (#26)
+### TECH-04-C Ã¢â‚¬â€ Fix `setState` in `useEffect` (#26)
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
 - [ ] `CalendarPage.tsx`: replace `setSelectedCalendarId(calendars[0].id)` inside effect with `useState(() => calendars[0]?.id)` initializer or derive from data directly
-- [ ] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` — remove state entirely if possible
+- [ ] `TasksPage.tsx`: replace `setIsAddingFirstTask(false)` inside effect with derived value `tasks.length === 0` Ã¢â‚¬â€ remove state entirely if possible
 - [ ] Verify ESLint `react-hooks/set-state-in-effect` no longer flags these files
 
 #### Notes
@@ -7592,7 +7600,7 @@ Status: `NOT_STARTED`
 
 ---
 
-### TECH-04-D — Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
+### TECH-04-D Ã¢â‚¬â€ Fix `useLayoutEffect` Missing Deps in `useCollapsedTree` (#30)
 
 Status: `NOT_STARTED`
 
@@ -7607,17 +7615,17 @@ Status: `NOT_STARTED`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: TBD — must read the hook intent first before committing to either approach
+- Decisions: TBD Ã¢â‚¬â€ must read the hook intent first before committing to either approach
 
 ---
 
-### TECH-04-E — Fix Gantt Milestone/Summary Click (#46)
+### TECH-04-E Ã¢â‚¬â€ Fix Gantt Milestone/Summary Click (#46)
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
-- [ ] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` — keep only `onTaskClick(taskId)`
+- [ ] `useGanttInteractions.ts`: remove `onTaskDoubleClick(taskId)` call from `handleChartTaskClick` Ã¢â‚¬â€ keep only `onTaskClick(taskId)`
 - [ ] Manually verify: single click selects; double click opens panel; no regression on regular task bars
 
 #### Notes
@@ -7628,13 +7636,13 @@ Status: `NOT_STARTED`
 
 ---
 
-### TECH-04-F — Fix AI Stream Error Event Field Name (#53)
+### TECH-04-F Ã¢â‚¬â€ Fix AI Stream Error Event Field Name (#53)
 
 Status: `NOT_STARTED`
 
 #### Mini-tasks
 
-- [ ] `ai.service.ts` line 104: change `error: "Malformed streaming response"` → `message: "Malformed streaming response"`
+- [ ] `ai.service.ts` line 104: change `error: "Malformed streaming response"` Ã¢â€ â€™ `message: "Malformed streaming response"`
 - [ ] Update corresponding test expectation in `ai.service.test.ts`
 - [ ] Verify `AiDockedPanel.tsx` correctly receives and displays the error message
 
@@ -7642,13 +7650,13 @@ Status: `NOT_STARTED`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` — no contract changes
+- Decisions: Align to the declared `{ type: "error"; message: string }` contract in `ai/types.ts` Ã¢â‚¬â€ no contract changes
 
 ---
 
-## Previous Sprint Items — S02
+## Previous Sprint Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -7662,11 +7670,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -7674,7 +7682,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -7682,11 +7690,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -7700,11 +7708,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -7718,38 +7726,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -7779,15 +7787,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -7800,33 +7808,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -7838,9 +7846,9 @@ Rule: one section per committed item. Keep tasks concrete and small.
 
 ---
 
-## Active Items — S02
+## Active Items Ã¢â‚¬â€ S02
 
-### TECH-03-A — Fix Failing Gantt Tests (#27)
+### TECH-03-A Ã¢â‚¬â€ Fix Failing Gantt Tests (#27)
 
 Status: `DONE`
 
@@ -7854,11 +7862,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Fix is barrel-only — do not move the component
+- Decisions: Fix is barrel-only Ã¢â‚¬â€ do not move the component
 
 ---
 
-### TECH-03-B — Remove Dead Code (#28 #32 #36 #42 #49)
+### TECH-03-B Ã¢â‚¬â€ Remove Dead Code (#28 #32 #36 #42 #49)
 
 Status: `DONE`
 
@@ -7866,7 +7874,7 @@ Status: `DONE`
 
 - [x] #28: Remove unused `useEffect` import from `AiDockedPanel.tsx`; remove unused `GanttHoverTooltip` import from `GanttContainer.tsx`
 - [x] #32: Delete `frontend/src/shared/ui/empty.tsx`; remove `getInitials` export from `shared/lib/utils.ts`
-- [x] #36: Fixed show/hide password button in `LoginPage.tsx` — wired up state toggle and EyeOff icon
+- [x] #36: Fixed show/hide password button in `LoginPage.tsx` Ã¢â‚¬â€ wired up state toggle and EyeOff icon
 - [x] #42: Remove dead exports (`InviteMemberDialog`, `MembersTable`, `MemberActions`) from organizations barrel
 - [x] #49: Delete `GanttClickPopoverOverlay` file and remove any import references
 
@@ -7874,11 +7882,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies — that's a separate refactor; just remove the dead export
+- Decisions: For #32, do NOT consolidate the three inline `getInitials` copies Ã¢â‚¬â€ that's a separate refactor; just remove the dead export
 
 ---
 
-### TECH-03-C — Fix `any` Types in Test Files (#29)
+### TECH-03-C Ã¢â‚¬â€ Fix `any` Types in Test Files (#29)
 
 Status: `DONE`
 
@@ -7892,11 +7900,11 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Scope strictly to test files only — do not touch production code
+- Decisions: Scope strictly to test files only Ã¢â‚¬â€ do not touch production code
 
 ---
 
-### TECH-03-D — Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
+### TECH-03-D Ã¢â‚¬â€ Fix Query Key Namespacing + Zustand Selectors (#34 #38 #45)
 
 Status: `DONE`
 
@@ -7910,38 +7918,38 @@ Status: `DONE`
 
 - Dependencies: -
 - Blockers: -
-- Decisions: Changing query keys invalidates cache — verify no stale cache issues after rename
+- Decisions: Changing query keys invalidates cache Ã¢â‚¬â€ verify no stale cache issues after rename
 
 ---
 
-### TECH-03-E — Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
+### TECH-03-E Ã¢â‚¬â€ Fix Cross-Feature Internal Imports (#33 #37 #39 #40 #44 #47 #48 #50 #52 #54 #55)
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] #33: `AiDockedPanel.tsx` — import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
-- [x] #33: `ai.service.ts` — import `useAuthStore` from `@/features/auth` not internal path
-- [x] #37: Task-detail components — import through `@/features/tasks` barrel
-- [x] #39: Projects WebSocket — import query keys through `@/features/tasks` barrel
-- [x] #40: `ProjectOverviewPage` — import through `@/features/ai` barrel
-- [x] #44: `KanbanColumn` — import `useCreateTask` through `@/features/tasks` barrel
-- [x] #47: `useSchedule` — import `taskKeys` through `@/features/tasks` barrel
-- [x] #48: `GanttBarQuickInfo` — import `useAssignments` through `@/features/tasks` barrel
-- [x] #50: `CalendarPage` — fix all cross-feature internal imports
-- [x] #52: AI feature — import tasks types through `@/features/tasks` barrel
-- [x] #54: Notifications hook — import auth through `@/features/auth` barrel
-- [x] #55: Resources — replace relative imports with absolute `@/` imports
+- [x] #33: `AiDockedPanel.tsx` Ã¢â‚¬â€ import `useAiPreferences`/`useUpdateAiPreferences` through auth barrel (add to barrel if missing)
+- [x] #33: `ai.service.ts` Ã¢â‚¬â€ import `useAuthStore` from `@/features/auth` not internal path
+- [x] #37: Task-detail components Ã¢â‚¬â€ import through `@/features/tasks` barrel
+- [x] #39: Projects WebSocket Ã¢â‚¬â€ import query keys through `@/features/tasks` barrel
+- [x] #40: `ProjectOverviewPage` Ã¢â‚¬â€ import through `@/features/ai` barrel
+- [x] #44: `KanbanColumn` Ã¢â‚¬â€ import `useCreateTask` through `@/features/tasks` barrel
+- [x] #47: `useSchedule` Ã¢â‚¬â€ import `taskKeys` through `@/features/tasks` barrel
+- [x] #48: `GanttBarQuickInfo` Ã¢â‚¬â€ import `useAssignments` through `@/features/tasks` barrel
+- [x] #50: `CalendarPage` Ã¢â‚¬â€ fix all cross-feature internal imports
+- [x] #52: AI feature Ã¢â‚¬â€ import tasks types through `@/features/tasks` barrel
+- [x] #54: Notifications hook Ã¢â‚¬â€ import auth through `@/features/auth` barrel
+- [x] #55: Resources Ã¢â‚¬â€ replace relative imports with absolute `@/` imports
 
 #### Notes
 
-- Dependencies: Some barrel exports may be missing — add them as part of this task
+- Dependencies: Some barrel exports may be missing Ã¢â‚¬â€ add them as part of this task
 - Blockers: -
 - Decisions: Never add internal path imports as a workaround; always fix the barrel
 
 ---
 
-## Previous Sprint Items — S01
+## Previous Sprint Items Ã¢â‚¬â€ S01
 
 ---
 
@@ -7971,15 +7979,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -7992,33 +8000,33 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
-﻿# Workboard
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+Ã¯Â»Â¿# Workboard
 
 Purpose: execution checklist for currently committed sprint items.
 
@@ -8056,15 +8064,15 @@ Status: `NOT_STARTED` | `IN_PROGRESS` | `BLOCKED` | `DONE`
 
 ## Active Items
 
-### TECH-01 — Frontend Automated Audit
+### TECH-01 Ã¢â‚¬â€ Frontend Automated Audit
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] Run `cd frontend && npx tsc --noEmit` — capture all type errors
-- [x] Run `cd frontend && npx eslint src/` — capture all lint violations
-- [x] Run `cd frontend && npm test -- --run` — capture all failing tests
+- [x] Run `cd frontend && npx tsc --noEmit` Ã¢â‚¬â€ capture all type errors
+- [x] Run `cd frontend && npx eslint src/` Ã¢â‚¬â€ capture all lint violations
+- [x] Run `cd frontend && npm test -- --run` Ã¢â‚¬â€ capture all failing tests
 - [x] Triage each finding: skip if already in `issues/dismissed_issues/`, `issues/open_issues/`, or is a planned roadmap item
 - [x] Write new `issues/open_issues/` files for every surviving confirmed finding
 - [x] Mark TECH-01 DONE in workboard
@@ -8077,29 +8085,29 @@ Status: `DONE`
 
 ---
 
-### TECH-02 — Frontend Standards Review
+### TECH-02 Ã¢â‚¬â€ Frontend Standards Review
 
 Status: `DONE`
 
 #### Mini-tasks
 
-- [x] `shared/` — run /frontend-feature-audit shared
-- [x] `auth` — run /frontend-feature-audit auth
-- [x] `tasks` — run /frontend-feature-audit tasks
-- [x] `projects` — run /frontend-feature-audit projects
-- [x] `organizations` — run /frontend-feature-audit organizations
-- [x] `kanban` — run /frontend-feature-audit kanban
-- [x] `gantt` — run /frontend-feature-audit gantt
-- [x] `dashboard` — run /frontend-feature-audit dashboard
-- [x] `calendar` — run /frontend-feature-audit calendar
-- [x] `ai` — run /frontend-feature-audit ai
-- [x] `notifications` — run /frontend-feature-audit notifications
-- [x] `resources` — run /frontend-feature-audit resources
-- [x] `reports` — run /frontend-feature-audit reports
+- [x] `shared/` Ã¢â‚¬â€ run /frontend-feature-audit shared
+- [x] `auth` Ã¢â‚¬â€ run /frontend-feature-audit auth
+- [x] `tasks` Ã¢â‚¬â€ run /frontend-feature-audit tasks
+- [x] `projects` Ã¢â‚¬â€ run /frontend-feature-audit projects
+- [x] `organizations` Ã¢â‚¬â€ run /frontend-feature-audit organizations
+- [x] `kanban` Ã¢â‚¬â€ run /frontend-feature-audit kanban
+- [x] `gantt` Ã¢â‚¬â€ run /frontend-feature-audit gantt
+- [x] `dashboard` Ã¢â‚¬â€ run /frontend-feature-audit dashboard
+- [x] `calendar` Ã¢â‚¬â€ run /frontend-feature-audit calendar
+- [x] `ai` Ã¢â‚¬â€ run /frontend-feature-audit ai
+- [x] `notifications` Ã¢â‚¬â€ run /frontend-feature-audit notifications
+- [x] `resources` Ã¢â‚¬â€ run /frontend-feature-audit resources
+- [x] `reports` Ã¢â‚¬â€ run /frontend-feature-audit reports
 - [x] Mark TECH-02 DONE in workboard
 
 #### Notes
 
 - Dependencies: TECH-01 complete first
 - Blockers: -
-- Decisions: **one feature per session** — prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.
+- Decisions: **one feature per session** Ã¢â‚¬â€ prevents context loss. Each session: pick next unchecked feature, run /consistency-review scoped to that feature only, commit findings to issues/ before ending session.

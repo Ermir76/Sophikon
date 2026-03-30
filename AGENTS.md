@@ -42,6 +42,7 @@ cd frontend && npm run lint && npm run format
 ## Hard Rules — Never Break These
 
 ### SDLC Autopilot Closure Gate
+
 - "Autopilot" means full SDLC completion, not just build + tests.
 - Never end a feature task after BUILD only. You must run REVIEW and SYNC phases.
 - Manual checks do not replace required close-out skills.
@@ -54,14 +55,17 @@ cd frontend && npm run lint && npm run format
 - Before final handoff, include a short closure receipt listing which close-out skills ran (or why a step was intentionally skipped).
 
 ### General
+
 - Never delete models that have no endpoints yet — they are planned for future phases.
 - Never remove dependencies (redis, celery, fastapi-mail, recharts, etc.) without checking `docs/ROADMAP.md` first.
 - Never call something "unused" without checking the roadmap.
 - Before creating a new file, check if an existing file already handles it.
 - Don't add comments, docstrings, or type annotations to code you didn't change.
 - Don't create helpers or abstractions for things used only once.
+- Never delete previous sprint mini-task sections from implementation docs (`docs/03-implementation/02-workboard.md`); preserve history and only add/update the active sprint block.
 
 ### Backend
+
 - Services are **plain async functions**, never classes.
 - All DB queries use `select()` style, never `session.query()`.
 - All endpoints require auth via `Depends(get_current_user)` or `get_project_or_404`.
@@ -70,6 +74,7 @@ cd frontend && npm run lint && npm run format
 - Layer direction is `api → service → repository → models/db`. Never skip layers.
 
 ### Frontend
+
 - Organize by feature, not by file type.
 - Absolute imports only (`@/shared/ui/button`, never `../../../`).
 - `shared/` is for code used by 2+ features. Feature-specific code stays in its feature folder.
@@ -106,9 +111,9 @@ Read what you need, when you need it.
 
 ### Implementation
 
-- `docs/03-implementation/sprint-plan.md` — current sprint and history
-- `docs/03-implementation/workboard.md` — active mini-tasks
-- `docs/03-implementation/requirements-traceability.md` — FR status tracking
+- `docs/03-implementation/01-sprint-plan.md` — current sprint and history
+- `docs/03-implementation/02-workboard.md` — active mini-tasks
+- `docs/03-implementation/03-requirements-traceability.md` — FR status tracking
 
 ### Testing
 

@@ -32,7 +32,7 @@ This document records what is evidenced by the current codebase review.
 - `A4` Task, dependency, and assignment surface: `backend/app/api/v1/endpoints/tasks.py` (includes `GET /projects/{project_id}/tasks/search`), `backend/app/api/v1/endpoints/dependencies.py`, `backend/app/api/v1/endpoints/assignments.py`, `backend/app/service/task_service.py` (`search_tasks`), `backend/app/repository/task_repo.py` (DB full-text search), `backend/app/service/dependency_service.py`, `frontend/src/features/tasks/*`
 - `A5` Schedule, gantt, and calendar surface: `backend/app/api/v1/endpoints/schedule.py`, `backend/app/api/v1/endpoints/calendars.py`, `frontend/src/features/gantt/*`, `frontend/src/features/calendar/*`, `frontend/src/app/App.tsx`
 - `A6` Resource and utilization surface: `backend/app/api/v1/endpoints/resources.py`, `backend/app/api/v1/endpoints/utilization.py`, `frontend/src/features/resources/*`, `frontend/src/app/App.tsx`
-- `A7` AI surface: `backend/app/api/v1/endpoints/ai.py`, `backend/app/service/ai_service.py`, `ai-service/app/main.py`, `frontend/src/features/ai/*`
+- `A7` AI surface: `backend/app/api/v1/endpoints/ai.py`, `backend/app/service/ai_service.py`, `backend/app/service/agent/prompts.py`, `backend/app/service/agent/tool_catalog.py`, `backend/app/service/contracts/ai.py`, `ai-service/app/main.py`, `ai-service/app/schema/contracts.py`, `frontend/src/features/ai/*`
 - `A8` Mounted backend scope boundary: `backend/app/main.py`
 - `A9` Mounted frontend route boundary: `frontend/src/app/App.tsx`
 - `A10` Kanban surface: `frontend/src/features/kanban/*`, `backend/app/models/enums.py` (TaskStatus), `backend/app/models/task.py` (status field), `backend/alembic/versions/b3c4d5e6f7a8_add_task_status.py`, `backend/app/schema/project.py` (`kanban_wip_limits`), `backend/tests/unit/api/v1/test_projects.py`
@@ -228,12 +228,12 @@ This document records what is evidenced by the current codebase review.
 | FR-AI-001 | Implemented   | A7       | Project-scoped chat flow exists.                                                                                 |
 | FR-AI-002 | Implemented   | A4, A7   | Chat feature exists with project/task context surface, and the agent `search_tasks` tool now uses DB-level task search (`/tasks/search`) rather than in-memory list filtering. |
 | FR-AI-003 | Partial       | A7       | Status-style project questions are supported by current AI surface, but broad coverage was not formally audited. |
-| FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector are wired in frontend; backend agent loop now enforces centralized tool policy checks (`allow / allow_with_approval / deny`) before execution. |
+| FR-AI-004 | Implemented   | A7, A9   | Plan approval card, reasoning stream, tool call rows, and conversation selector are wired in frontend; backend agent loop enforces centralized tool policy checks (`allow / allow_with_approval / deny`) before execution and now records agent prompt metadata (`agent_prompt_version`, provider, model) in conversation context for traceability. |
 | FR-AI-005 | Implemented   | A7       | `estimate_for_project` calls `complete_from_service`; JSON response is parsed and validated into `AIEstimateResult`. |
 | FR-AI-006 | Implemented   | A7       | `reasoning` field returned in `AIEstimateItem` when `include_reasoning=True`; LLM prompt instructs model to populate it. |
 | FR-AI-007 | Implemented   | A7       | Bulk estimation via `task_ids` list implemented in `estimate_for_project`; batch DB query, one LLM call, N estimate items returned. |
 | FR-AI-008 | Implemented   | A7       | `suggestions_for_project` calls `complete_from_service`; discriminated union `AISuggestionAction` is fully typed (Phase 6). |
-| FR-AI-009 | Implemented   | A7       | Streaming chat flow exists, with project/org agent kill-switch enforcement (`agent_enabled`) and explicit non-OK error message parsing surfaced to UI. |
+| FR-AI-009 | Implemented   | A7       | Streaming chat flow exists, with project/org agent kill-switch enforcement (`agent_enabled`) and explicit non-OK error message parsing surfaced to UI; planner/executor requests now share a versioned prompt/tool catalog path and include optional `prompt_cache` metadata as backward-compatible provider hints. |
 
 ### 3.13 Collaboration
 

@@ -62,9 +62,9 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 ### Execution Update
 
 - AGT-05: `DONE` (DB-level `/tasks/search` endpoint + repository full-text search + GIN index migration + agent `search_tasks` rewrite + frontend debounced search integration shipped).
-- AGT-06: `NOT_STARTED` (kept out of this delivery slice).
-- QA Gate: `GO` (targeted backend suite `tests/unit/api/v1/test_tasks.py` + `tests/unit/service/test_agent_tool_registry.py` and targeted frontend suite `useTasks.test.tsx` + `TasksPage.test.tsx` passed on rerun).
-- Progress: `1/2` committed S14 items complete.
+- AGT-06: `DONE` (versioned prompts, shared planner/executor tool catalog, prompt-cache metadata contracts in backend and ai-service, and prompt metadata traceability persistence completed).
+- QA Gate: `GO` (targeted backend suites `tests/unit/api/v1/test_tasks.py`, `tests/unit/service/test_agent_tool_registry.py`, `tests/unit/service/test_agent_executor.py`, `tests/unit/service/test_agent_history.py`, `tests/unit/service/test_agent_loop.py` and targeted ai-service suites `tests/test_brain_service.py`, `tests/test_contracts.py` passed).
+- Progress: `2/2` committed S14 items complete.
 
 ---
 
