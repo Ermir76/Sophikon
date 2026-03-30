@@ -13,6 +13,7 @@ from app.models.ai_message import AIMessage
 from app.models.enums import AIMessageRole
 from app.service.agent import history as history_mod
 from app.service.agent.context import AgentContext
+from app.service.agent.prompts import build_execution_system_prompt
 
 
 async def _seed_project_and_conversation(
@@ -253,7 +254,7 @@ async def test_set_conversation_status_transitions(
     assert conversation.status == "executing"
 
 
-def test_build_system_prompt_returns_non_empty_string():
+def test_build_execution_system_prompt_returns_non_empty_string():
     ctx = AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
@@ -266,13 +267,13 @@ def test_build_system_prompt_returns_non_empty_string():
         api_key="",
     )
 
-    prompt = history_mod.build_system_prompt(ctx, memory=None)
+    prompt = build_execution_system_prompt(ctx, memory=None)
 
     assert isinstance(prompt, str)
     assert len(prompt) > 0
 
 
-def test_build_system_prompt_injects_project_memory():
+def test_build_execution_system_prompt_injects_project_memory():
     ctx = AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
@@ -285,6 +286,28 @@ def test_build_system_prompt_injects_project_memory():
         api_key="",
     )
 
-    prompt = history_mod.build_system_prompt(ctx, memory="Agent chose WBS 1.1")
+    prompt = build_execution_system_prompt(ctx, memory="Agent chose WBS 1.1")
 
     assert "Agent chose WBS 1.1" in prompt
+
+
+@pytest.mark.asyncio
+async def test_set_prompt_metadata_updates_context_snapshot(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    ctx, conversation, *_ = await _seed_project_and_conversation(
+        client,
+        session,
+        email="history-prompt-meta@example.com",
+        slug="org-history-prompt-meta",
+    )
+
+    await history_mod.set_prompt_metadata(ctx, "1")
+    await session.commit()
+    await session.refresh(conversation)
+
+    snapshot = conversation.context_snapshot or {}
+    assert snapshot.get("agent_prompt_version") == "1"
+    assert snapshot.get("agent_provider") == "mock"
+    assert snapshot.get("agent_model") == "mock"

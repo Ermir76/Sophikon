@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from app.service.agent import executor, planner
 from app.service.agent import history as history_mod
+from app.service.agent import prompts as prompts_mod
 from app.service.agent.context import AgentContext
 from app.service.agent.streaming import (
     event_plan,
@@ -52,23 +53,16 @@ async def run_proactive_analysis(ctx: AgentContext) -> ProactiveFindings:
     )
 
     project_memory = await history_mod.load_project_memory(ctx.db, ctx.project_id)
-    system_prompt = (
-        f"You are a proactive project health monitor for '{ctx.project.name}'. "
-        "Analyze the project data provided and identify actionable issues "
-        "(overdue tasks, critical path delays, serious risks). "
-        "If issues are found, start your response with 'ISSUES FOUND:' and list them concisely in markdown. "
-        "If the project is on track with no significant issues, respond only with 'NO ISSUES'."
-    )
-    if project_memory:
-        system_prompt += f"\n\nProject memory:\n{project_memory}"
-
     request = AICompleteRequest(
         messages=[{"role": "user", "content": data_context}],
         tools=[],
-        system_prompt=system_prompt,
+        system_prompt=prompts_mod.build_proactive_system_prompt(
+            ctx.project.name, project_memory
+        ),
         provider=ctx.provider,
         model=ctx.model,
         api_key=ctx.api_key or None,
+        prompt_cache=prompts_mod.build_prompt_cache_metadata("proactive"),
     )
 
     text_chunks: list[str] = []
@@ -139,7 +133,15 @@ async def run_agent(
     async def _stream():
         yield event_start(ctx.conversation_id, ctx.model)
 
+        logger.info(
+            "Starting agent run conversation_id=%s prompt_version=%s provider=%s model=%s",
+            ctx.conversation_id,
+            prompts_mod.PROMPT_VERSION,
+            ctx.provider,
+            ctx.model,
+        )
         await history_mod.set_conversation_status(ctx, "executing")
+        await history_mod.set_prompt_metadata(ctx, prompts_mod.PROMPT_VERSION)
         await ctx.db.commit()
 
         # Load history + inject project memory into system context

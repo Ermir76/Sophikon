@@ -13,6 +13,11 @@ import logging
 from dataclasses import dataclass, field
 
 from app.service.agent.context import AgentContext
+from app.service.agent.prompts import (
+    build_planner_system_prompt,
+    build_prompt_cache_metadata,
+)
+from app.service.agent.tool_catalog import get_planner_tools
 
 logger = logging.getLogger(__name__)
 
@@ -31,58 +36,6 @@ class PlanStep:
 class PlanResponse:
     steps: list[PlanStep] = field(default_factory=list)
     needs_execution: bool = False
-
-
-# ---------------------------------------------------------------------------
-# define_plan tool schema
-# ---------------------------------------------------------------------------
-
-
-_DEFINE_PLAN_TOOL: dict = {
-    "name": "define_plan",
-    "description": (
-        "Define the step-by-step plan for the requested operation. "
-        "Call this tool once to present your plan before taking any action."
-    ),
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "steps": {
-                "type": "array",
-                "maxItems": 10,
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "action": {
-                            "type": "string",
-                            "description": "What you will do in this step.",
-                        },
-                        "reason": {
-                            "type": "string",
-                            "description": "Why this step is needed.",
-                        },
-                    },
-                    "required": ["action", "reason"],
-                },
-            },
-            "needs_execution": {
-                "type": "boolean",
-                "description": (
-                    "True if the request requires creating, modifying, or deleting data. "
-                    "False for read-only questions or analysis."
-                ),
-            },
-        },
-        "required": ["steps", "needs_execution"],
-    },
-}
-
-_PLANNER_SYSTEM = (
-    "You are a professional Project Manager AI assistant. "
-    "Your ONLY task right now is to produce a concise, numbered plan for the user's request. "
-    "Do NOT execute anything. Do NOT call any other tools. "
-    "Call define_plan exactly once with your proposed steps and whether execution is needed."
-)
 
 
 # ---------------------------------------------------------------------------
@@ -118,12 +71,13 @@ async def _stream_plan(ctx: AgentContext, messages: list[dict]):
 
     request = AICompleteRequest(
         messages=messages,
-        tools=[_DEFINE_PLAN_TOOL],
-        system_prompt=_PLANNER_SYSTEM,
+        tools=get_planner_tools(),
+        system_prompt=build_planner_system_prompt(),
         provider=ctx.provider,
         model=ctx.model,
         api_key=ctx.api_key or None,
         conversation_id=ctx.conversation_id,
+        prompt_cache=build_prompt_cache_metadata("planner"),
     )
 
     async for event in complete_from_service(request):

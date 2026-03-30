@@ -54,7 +54,9 @@ async def test_execute_yields_done_when_no_tool_calls(monkeypatch: pytest.Monkey
     monkeypatch.setattr(ai_svc, "complete_from_service", fake_complete)
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "load_project_memory", fake_load_project_memory)
-    monkeypatch.setattr(hist, "build_system_prompt", lambda *a, **kw: "system")
+    monkeypatch.setattr(
+        executor_mod, "build_execution_system_prompt", lambda *a, **kw: "system"
+    )
 
     ctx = _make_ctx()
     events = [e async for e in await _collect(ctx, [])]
@@ -103,7 +105,9 @@ async def test_execute_emits_tool_call_and_tool_result(monkeypatch: pytest.Monke
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "save_tool_results_turn", fake_save_tool_results_turn)
     monkeypatch.setattr(hist, "load_project_memory", fake_load_project_memory)
-    monkeypatch.setattr(hist, "build_system_prompt", lambda *a, **kw: "system")
+    monkeypatch.setattr(
+        executor_mod, "build_execution_system_prompt", lambda *a, **kw: "system"
+    )
 
     ctx = _make_ctx()
     events = [e async for e in await _collect(ctx, [])]
@@ -151,7 +155,9 @@ async def test_execute_gates_destructive_tools_with_approval_required(
     monkeypatch.setattr(hist, "save_assistant_turn", fake_save_assistant_turn)
     monkeypatch.setattr(hist, "save_tool_results_turn", fake_save_tool_results_turn)
     monkeypatch.setattr(hist, "load_project_memory", fake_load_project_memory)
-    monkeypatch.setattr(hist, "build_system_prompt", lambda *a, **kw: "system")
+    monkeypatch.setattr(
+        executor_mod, "build_execution_system_prompt", lambda *a, **kw: "system"
+    )
 
     ctx = _make_ctx()
     events = [e async for e in await _collect(ctx, [])]

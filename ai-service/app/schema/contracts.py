@@ -1,7 +1,15 @@
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+CacheTag = Annotated[str, Field(min_length=1, max_length=64)]
+
+
+class PromptCacheMetadata(BaseModel):
+    key: str = Field(min_length=1, max_length=128)
+    ttl_seconds: int | None = Field(default=None, ge=1, le=86_400)
+    tags: list[CacheTag] = Field(default_factory=list, max_length=8)
 
 
 class CompleteRequest(BaseModel):
@@ -12,6 +20,7 @@ class CompleteRequest(BaseModel):
     model: str | None = Field(default=None, max_length=128)
     api_key: str | None = None
     conversation_id: UUID | None = None
+    prompt_cache: PromptCacheMetadata | None = None
 
 
 class AIUsageMeta(BaseModel):

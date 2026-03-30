@@ -14,6 +14,10 @@ from app.service.agent import history as history_mod
 from app.service.agent.context import AgentContext
 from app.service.agent.planner import PlanResponse
 from app.service.agent.policy import ToolPolicy, check_tool_policy
+from app.service.agent.prompts import (
+    build_execution_system_prompt,
+    build_prompt_cache_metadata,
+)
 from app.service.agent.streaming import (
     event_approval_required,
     event_chunk,
@@ -23,9 +27,9 @@ from app.service.agent.streaming import (
     event_tool_result,
     event_ui_action,
 )
+from app.service.agent.tool_catalog import get_execution_tools
 from app.service.agent.tool_registry import (
     DESTRUCTIVE_TOOLS,
-    TOOL_SCHEMAS,
     execute_tool,
 )
 from app.service.contracts.ai import AIChatEvent, AICompleteRequest, AIUsageMeta
@@ -101,17 +105,18 @@ async def execute(
 
     try:
         project_memory = await history_mod.load_project_memory(ctx.db, ctx.project_id)
-        system_prompt = history_mod.build_system_prompt(ctx, project_memory)
+        system_prompt = build_execution_system_prompt(ctx, project_memory)
 
         for iteration in range(_MAX_ITERATIONS):
             request = AICompleteRequest(
                 messages=current_messages,
-                tools=TOOL_SCHEMAS,
+                tools=get_execution_tools(),
                 system_prompt=system_prompt,
                 provider=ctx.provider,
                 model=ctx.model,
                 api_key=ctx.api_key or None,
                 conversation_id=ctx.conversation_id,
+                prompt_cache=build_prompt_cache_metadata("executor"),
             )
 
             tool_call_events: list[AIChatEvent] = []

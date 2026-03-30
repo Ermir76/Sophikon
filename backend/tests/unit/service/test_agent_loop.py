@@ -37,6 +37,7 @@ async def test_run_agent_emits_start_event(monkeypatch: pytest.MonkeyPatch):
     import app.service.agent.planner as planner_mod
 
     monkeypatch.setattr(hist, "set_conversation_status", AsyncMock())
+    monkeypatch.setattr(hist, "set_prompt_metadata", AsyncMock())
     monkeypatch.setattr(hist, "load_project_memory", AsyncMock(return_value=None))
     monkeypatch.setattr(hist, "load_messages", AsyncMock(return_value=[]))
     monkeypatch.setattr(hist, "maybe_summarize", AsyncMock())
@@ -67,6 +68,7 @@ async def test_run_agent_skips_plan_approval_when_needs_execution_false(
     import app.service.agent.planner as planner_mod
 
     monkeypatch.setattr(hist, "set_conversation_status", AsyncMock())
+    monkeypatch.setattr(hist, "set_prompt_metadata", AsyncMock())
     monkeypatch.setattr(hist, "load_project_memory", AsyncMock(return_value=None))
     monkeypatch.setattr(hist, "load_messages", AsyncMock(return_value=[]))
     monkeypatch.setattr(hist, "maybe_summarize", AsyncMock())
@@ -102,6 +104,7 @@ async def test_run_agent_emits_plan_event_when_needs_execution_true(
     import app.service.agent.planner as planner_mod
 
     monkeypatch.setattr(hist, "set_conversation_status", AsyncMock())
+    monkeypatch.setattr(hist, "set_prompt_metadata", AsyncMock())
     monkeypatch.setattr(hist, "load_project_memory", AsyncMock(return_value=None))
     monkeypatch.setattr(hist, "load_messages", AsyncMock(return_value=[]))
     monkeypatch.setattr(hist, "maybe_summarize", AsyncMock())
@@ -143,3 +146,57 @@ async def test_resolve_plan_approval_raises_for_unknown_conversation():
         await loop_mod.resolve_plan_approval(
             "nonexistent-conversation-id", approved=True, feedback=None
         )
+
+
+@pytest.mark.asyncio
+async def test_run_agent_replans_once_then_stops_if_second_approval_denied(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import app.service.agent.executor as executor_mod
+    import app.service.agent.history as hist
+    import app.service.agent.planner as planner_mod
+    from app.service.agent.loop import PlanApprovalResult
+
+    monkeypatch.setattr(hist, "set_conversation_status", AsyncMock())
+    monkeypatch.setattr(hist, "set_prompt_metadata", AsyncMock())
+    monkeypatch.setattr(hist, "load_project_memory", AsyncMock(return_value=None))
+    monkeypatch.setattr(hist, "load_messages", AsyncMock(return_value=[]))
+    monkeypatch.setattr(hist, "save_user_message", AsyncMock())
+    monkeypatch.setattr(hist, "maybe_summarize", AsyncMock())
+
+    first_plan = PlanResponse(
+        steps=[PlanStep(action="Initial action", reason="Initial reason")],
+        needs_execution=True,
+    )
+    second_plan = PlanResponse(
+        steps=[PlanStep(action="Replanned action", reason="Use feedback")],
+        needs_execution=True,
+    )
+    monkeypatch.setattr(
+        planner_mod, "plan", AsyncMock(side_effect=[first_plan, second_plan])
+    )
+
+    approvals = iter(
+        [
+            PlanApprovalResult(approved=False, feedback="Do something else"),
+            PlanApprovalResult(approved=False, feedback=None),
+        ]
+    )
+
+    async def fake_wait_for_plan_approval(conversation_id: str):
+        return next(approvals)
+
+    monkeypatch.setattr(
+        loop_mod, "_wait_for_plan_approval", fake_wait_for_plan_approval
+    )
+    execute_mock = AsyncMock()
+    monkeypatch.setattr(executor_mod, "execute", execute_mock)
+
+    ctx = _make_ctx()
+    stream = await loop_mod.run_agent(ctx, "Create a task")
+    events = [e async for e in stream]
+
+    types = [json.loads(e.removeprefix("data: ").strip())["type"] for e in events]
+    assert types.count("plan") == 2
+    assert "plan_approved" not in types
+    assert execute_mock.await_count == 0

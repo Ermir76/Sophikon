@@ -205,6 +205,14 @@ class ProjectContext(BaseModel):
 # Complete request (POST /v1/complete on ai-service)
 # ---------------------------------------------------------------------------
 
+CacheTag = Annotated[str, Field(min_length=1, max_length=64)]
+
+
+class PromptCacheMetadata(BaseModel):
+    key: str = Field(min_length=1, max_length=128)
+    ttl_seconds: int | None = Field(default=None, ge=1, le=86_400)
+    tags: list[CacheTag] = Field(default_factory=list, max_length=8)
+
 
 class AICompleteRequest(BaseModel):
     messages: list[dict] = Field(default_factory=list)
@@ -214,6 +222,7 @@ class AICompleteRequest(BaseModel):
     model: str
     api_key: str | None = None
     conversation_id: ContractUUID | None = None
+    prompt_cache: PromptCacheMetadata | None = None
 
 
 # ---------------------------------------------------------------------------

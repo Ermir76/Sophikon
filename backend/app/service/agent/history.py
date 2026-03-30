@@ -259,32 +259,22 @@ async def get_conversation(
 
 
 # ---------------------------------------------------------------------------
-# System prompt builder
+# Conversation metadata
 # ---------------------------------------------------------------------------
 
 
-def build_system_prompt(ctx: AgentContext, memory: str | None) -> str:
-    project = ctx.project
-    parts = [
-        f"You are a professional Project Manager AI assistant for the project '{project.name}'.",
-        f"Project status: {project.status}",
-        f"Start date: {project.start_date}",
-    ]
-    if project.finish_date:
-        parts.append(f"Finish date: {project.finish_date}")
-    if project.description:
-        parts.append(f"Description: {project.description}")
-
-    parts.append(
-        "\nYou have access to tools to read and modify the project. "
-        "When taking actions, prefer bulk operations over repeated single calls. "
-        "After structural changes (create/delete tasks, add dependencies), "
-        "call calculate_schedule to keep dates accurate."
+async def set_prompt_metadata(ctx: AgentContext, prompt_version: str) -> None:
+    result = await ctx.db.execute(
+        select(AIConversation).where(AIConversation.id == ctx.conversation_id)
     )
+    conversation = result.scalar_one_or_none()
+    if not conversation:
+        return
 
-    if memory:
-        parts.append(
-            f"\n[Project memory — key decisions and preferences from past sessions]\n{memory}"
-        )
-
-    return "\n".join(parts)
+    snapshot = conversation.context_snapshot or {}
+    snapshot["agent_prompt_version"] = prompt_version
+    snapshot["agent_provider"] = ctx.provider
+    snapshot["agent_model"] = ctx.model
+    conversation.context_snapshot = snapshot
+    conversation.updated_at = datetime.now(UTC)
+    await ctx.db.flush()
