@@ -80,7 +80,7 @@ export function ToolCallRow({ toolName, status, result }: ToolCallRowProps) {
       </div>
 
       {expanded && result ? (
-        <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-muted px-2 py-1 text-[10px]">
+        <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-muted px-2 py-1 text-xs">
           {result}
         </pre>
       ) : null}

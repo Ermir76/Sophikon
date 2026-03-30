@@ -29,7 +29,7 @@ export function PlanApprovalCard({ steps, onApprove, onRedirect, disabled }: Pla
       <ol className="mb-3 space-y-1.5">
         {steps.map((step, i) => (
           <li key={i} className="flex gap-2 text-xs">
-            <span className="mt-0.5 shrink-0 text-[10px] font-medium text-muted-foreground">
+            <span className="mt-0.5 shrink-0 text-xs font-medium text-muted-foreground">
               {i + 1}.
             </span>
             <div>
