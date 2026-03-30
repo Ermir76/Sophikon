@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     AI_SERVICE_URL: str = "http://localhost:8010"
     AI_SERVICE_SHARED_SECRET: str = "dev-ai-shared-secret"
-    AI_SERVICE_TIMEOUT_SECONDS: int = 45
+    AI_SERVICE_TIMEOUT_SECONDS: int = 180
 
     # OAuth (Google)
     GOOGLE_CLIENT_ID: str = ""

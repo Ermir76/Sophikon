@@ -69,6 +69,7 @@ async def _seed_project_and_conversation(
     ctx = AgentContext(
         project_id=project_id,
         user_id=user.id,
+        role_name="owner",
         conversation_id=conversation.id,
         db=session,
         project=project,
@@ -256,6 +257,7 @@ def test_build_system_prompt_returns_non_empty_string():
     ctx = AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=MagicMock(),
         project=MagicMock(),
@@ -274,6 +276,7 @@ def test_build_system_prompt_injects_project_memory():
     ctx = AgentContext(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=MagicMock(),
         project=MagicMock(),

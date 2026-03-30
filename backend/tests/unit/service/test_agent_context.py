@@ -8,6 +8,7 @@ def _make_context(**overrides) -> AgentContext:
     defaults = dict(
         project_id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        role_name="owner",
         conversation_id=uuid.uuid4(),
         db=MagicMock(),
         project=MagicMock(),
@@ -28,6 +29,7 @@ def test_agent_context_stores_all_fields():
     ctx = AgentContext(
         project_id=project_id,
         user_id=user_id,
+        role_name="owner",
         conversation_id=conversation_id,
         db=db,
         project=project,

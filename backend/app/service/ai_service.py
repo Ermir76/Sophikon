@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
@@ -430,35 +431,62 @@ async def get_conversation_messages(
 # ---------------------------------------------------------------------------
 
 
+_STREAM_MAX_RETRIES = 2
+_STREAM_RETRY_BACKOFF = (2.0, 5.0)
+
+
 async def complete_from_service(
     body: AICompleteRequest,
 ) -> AsyncGenerator[AIChatEvent]:
-    try:
-        async with httpx.AsyncClient(timeout=_request_timeout()) as client:
-            async with client.stream(
-                "POST",
-                _service_url("/v1/complete"),
-                headers=_service_headers(),
-                json=body.model_dump(mode="json"),
-            ) as response:
-                if response.status_code >= 400:
-                    raise InvalidOperationError(await _extract_error_message(response))
+    last_exc: Exception | None = None
 
-                async for line in response.aiter_lines():
-                    if not line.startswith("data:"):
-                        continue
-                    payload = line.removeprefix("data:").strip()
-                    if not payload:
-                        continue
-                    try:
-                        parsed = json.loads(payload)
-                        yield AIChatEvent.model_validate(parsed)
-                    except (ValueError, TypeError):
-                        yield AIChatEvent(
-                            type="error", message="Malformed AI stream event"
+    for attempt in range(_STREAM_MAX_RETRIES + 1):
+        try:
+            async with httpx.AsyncClient(timeout=_request_timeout()) as client:
+                async with client.stream(
+                    "POST",
+                    _service_url("/v1/complete"),
+                    headers=_service_headers(),
+                    json=body.model_dump(mode="json"),
+                ) as response:
+                    if response.status_code >= 400:
+                        raise InvalidOperationError(
+                            await _extract_error_message(response)
                         )
-    except httpx.RequestError:
-        raise InvalidOperationError("AI service is unavailable")
+
+                    async for line in response.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        payload = line.removeprefix("data:").strip()
+                        if not payload:
+                            continue
+                        try:
+                            parsed = json.loads(payload)
+                            yield AIChatEvent.model_validate(parsed)
+                        except (ValueError, TypeError):
+                            yield AIChatEvent(
+                                type="error", message="Malformed AI stream event"
+                            )
+                    return  # stream completed successfully
+        except httpx.ReadTimeout as exc:
+            last_exc = exc
+            if attempt < _STREAM_MAX_RETRIES:
+                delay = _STREAM_RETRY_BACKOFF[
+                    min(attempt, len(_STREAM_RETRY_BACKOFF) - 1)
+                ]
+                logger.warning(
+                    "ReadTimeout on attempt %d/%d, retrying in %.1fs",
+                    attempt + 1,
+                    _STREAM_MAX_RETRIES + 1,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+                continue
+        except httpx.RequestError as exc:
+            last_exc = exc
+            break  # non-timeout network errors are not retryable
+
+    raise InvalidOperationError("AI service is unavailable") from last_exc
 
 
 # ---------------------------------------------------------------------------

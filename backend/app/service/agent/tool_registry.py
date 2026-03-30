@@ -1079,12 +1079,28 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
         patch = {
             k: v for k, v in tool_input.items() if k != "task_id" and v is not None
         }
+        skipped: list[str] = []
+        if task.is_summary:
+            _rollup_fields = {
+                "start_date",
+                "finish_date",
+                "duration",
+                "percent_complete",
+            }
+            skipped = [f for f in _rollup_fields if f in patch]
+            for f in skipped:
+                del patch[f]
         if "start_date" in patch:
             patch["start_date"] = date.fromisoformat(patch["start_date"])
         if "percent_complete" in patch:
             patch["percent_complete"] = Decimal(str(patch["percent_complete"]))
         updated = await task_service.update_task(db, task, patch, project=project)
-        return {"updated": {"id": str(updated.id), "name": updated.name}}
+        result: dict = {"updated": {"id": str(updated.id), "name": updated.name}}
+        if skipped:
+            result["note"] = (
+                f"{', '.join(skipped)} skipped — summary task values are auto-calculated from children"
+            )
+        return result
 
     if tool_name == "bulk_create_tasks":
         from app.service.contracts.task_bulk import TaskCreateInput

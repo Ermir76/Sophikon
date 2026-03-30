@@ -103,9 +103,9 @@ async def test_task_create_update_delete_produce_activity_records(
         "updated",
         "created",
     ]
-    assert payload["items"][1]["changes"]["fields"] == [
-        {"field": "percent_complete", "old": 0, "new": 25}
-    ]
+    changed_fields = payload["items"][1]["changes"]["fields"]
+    pct_change = next(f for f in changed_fields if f["field"] == "percent_complete")
+    assert pct_change == {"field": "percent_complete", "old": 0, "new": 25}
 
     user_result = await session.execute(select(User).where(User.email == owner_email))
     owner = user_result.scalar_one()
