@@ -78,11 +78,12 @@ Points scale:
 | FIX-16 | TECH | AI preferences update bypasses service layer (#43) | P3 | 1 | - | V1.1 | READY | - | S10 stretch |
 | FIX-17 | TECH | AI service mock-provider tests fail in live mode — mock _complete_from_service | P2 | 1 | - | V1.0 | DONE | wwwer | S10 stretch |
 | FEAT-01 | FR | Percent-driven status: derive task status from percent_complete with configurable review threshold | P1 | 5 | - | V1.0 | DONE | wwwer | S11 |
-| FEAT-02 | FR | Percent-driven status: summary task status auto-derived from rolled-up percent | P1 | 2 | FEAT-01 | V1.0 | READY | wwwer | S11 |
-| AGT-01 | FR | Agent policy engine: centralized permission and role check before every tool execution | P0 | 5 | - | V1.0 | READY | wwwer | S12 |
-| AGT-02 | FR | Agent kill switch: per-project and per-org flag to disable agent execution | P0 | 2 | - | V1.0 | READY | wwwer | S12 |
+| FEAT-02 | FR | Percent-driven status: summary task status auto-derived from rolled-up percent | P1 | 2 | FEAT-01 | V1.0 | DONE | wwwer | S11 |
+| AGT-01 | FR | Agent policy engine: centralized permission and role check before every tool execution | P0 | 5 | - | V1.0 | DONE | wwwer | S12 |
+| AGT-02 | FR | Agent kill switch: per-project and per-org flag to disable agent execution | P0 | 2 | - | V1.0 | DONE | wwwer | S12 |
 | AGT-03 | FR | Agent post-condition verification: validate tool results match plan intent before continuing | P1 | 3 | AGT-01 | V1.0 | READY | wwwer | S12 stretch |
 | AGT-04 | FR | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | P2 | 2 | - | V1.0 | READY | wwwer | S12 stretch |
+| AGT-05 | TECH | Agent overhaul: task search (DB-level), system prompt redesign, prompt caching | P1 | - | - | V1.1 | NOT_READY | - | S14 |
 
 ---
 
@@ -134,15 +135,15 @@ Points scale:
 | UX-05     | Visual consistency polish pass (stretch)                                                               | 2      | S10    |
 | FIX-17    | AI service mock-provider tests fail in live mode — mock _complete_from_service                        | 1      | S10    |
 | FEAT-01   | Percent-driven status: derive task status from percent_complete with configurable review threshold       | 5      | S11    |
+| FEAT-02   | Percent-driven status: summary task status auto-derived from rolled-up percent                          | 2      | S11    |
+| AGT-01    | Agent policy engine: centralized permission and role check before every tool execution                   | 5      | S12    |
+| AGT-02    | Agent kill switch: per-project and per-org flag to disable agent execution                               | 2      | S12    |
 
 ### V1.0 (Remaining Backlog)
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
 | FIX-07   | Password reset allows reuse of previous password (#28) | 1      | READY | - |
-| FEAT-02 | Percent-driven status: summary task status auto-derived from rolled-up percent | 2 | READY | S11, depends on FEAT-01 |
-| AGT-01 | Agent policy engine: centralized permission and role check before every tool execution | 5 | READY | S12 |
-| AGT-02 | Agent kill switch: per-project and per-org flag to disable agent execution | 2 | READY | S12 |
 | AGT-03 | Agent post-condition verification: validate tool results match plan intent before continuing | 3 | READY | S12 stretch, depends on AGT-01 |
 | AGT-04 | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | 2 | READY | S12 stretch |
 

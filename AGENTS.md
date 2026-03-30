@@ -45,11 +45,6 @@ cd frontend && npm run lint && npm run format
 - "Autopilot" means full SDLC completion, not just build + tests.
 - Never end a feature task after BUILD only. You must run REVIEW and SYNC phases.
 - Manual checks do not replace required close-out skills.
-- Branch Safety Gate:
-  - Never create a task branch from the current `HEAD` implicitly.
-  - Always run `git fetch origin --prune` first, then create task branches from `origin/main` explicitly.
-  - If the current worktree is dirty, create a new worktree from `origin/main` for the new task instead of switching branches in place.
-  - Immediately verify branch base after creation: `git rev-parse HEAD` must equal `git rev-parse origin/main`.
 - Required close-out skills by change type (spawned as parallel agents from dev-lifecycle):
   - Backend changed: agent loads `dev-lifecycle/phases/review-backend.md` checklist → `/phase-reviewer`
   - Backend schema changed: `/pydantic-audit` also
@@ -59,7 +54,6 @@ cd frontend && npm run lint && npm run format
 - Before final handoff, include a short closure receipt listing which close-out skills ran (or why a step was intentionally skipped).
 
 ### General
-- Never write code before the Branch Safety Gate passes (see dev-lifecycle Phase 3). No exceptions.
 - Never delete models that have no endpoints yet — they are planned for future phases.
 - Never remove dependencies (redis, celery, fastapi-mail, recharts, etc.) without checking `docs/ROADMAP.md` first.
 - Never call something "unused" without checking the roadmap.

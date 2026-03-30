@@ -4,6 +4,14 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ---
 
+## S14 — Task search + agent foundation (placeholder)
+
+**Goal:** Build real task search — DB-level full-text search exposed on the UI and as an agent tool. Foundation for agent redesign (system prompt, tool catalog, prompt caching) follows once search is in place.
+
+TBD — design pending.
+
+---
+
 ## Current Sprint
 
 **Sprint ID:** S13
