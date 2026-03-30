@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import {
     useTasks,
+    useTaskSearch,
     useTask,
     useCreateTask,
     useUpdateTask,
@@ -21,6 +22,7 @@ import type { Task } from "@/features/tasks/types";
 vi.mock("@/features/tasks/api/task.service", () => ({
     taskService: {
         list: vi.fn(),
+        search: vi.fn(),
         get: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
@@ -89,6 +91,32 @@ describe("Task Hooks", () => {
         rerender({ pid: projectId, tid: undefined });
         expect(result.current.fetchStatus).toBe("idle");
         expect(taskService.get).toHaveBeenCalledTimes(1);
+    });
+
+    it("useTaskSearch — fetches when query exists, disabled when query is empty", async () => {
+        const mockSearchTasks = [{ id: "s1", name: "Search Task 1" }];
+        vi.mocked(taskService.search).mockResolvedValue(mockSearchTasks as never);
+
+        const { result, rerender } = renderHook(
+            ({ pid, q }: { pid: string; q: string | undefined }) =>
+                useTaskSearch(pid, q ? { q, include_parents: true, limit: 50 } : undefined),
+            {
+                wrapper: createWrapper(),
+                initialProps: { pid: projectId, q: "alpha" },
+            },
+        );
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+        expect(result.current.data).toEqual(mockSearchTasks);
+        expect(taskService.search).toHaveBeenCalledWith(projectId, {
+            q: "alpha",
+            include_parents: true,
+            limit: 50,
+        });
+
+        rerender({ pid: projectId, q: undefined });
+        expect(result.current.fetchStatus).toBe("idle");
+        expect(taskService.search).toHaveBeenCalledTimes(1);
     });
 
     it("useCreateTask — calls service.create, invalidates list cache", async () => {

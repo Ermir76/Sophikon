@@ -8,7 +8,8 @@ import type {
     TaskBulkUpdate,
     TaskBulkDelete,
     TaskBulkCreateResponse,
-    BulkOperationResponse
+    BulkOperationResponse,
+    TaskSearchParams,
 } from "@/features/tasks/types";
 import type { PaginatedResponse } from "@/shared/types/api";
 
@@ -16,6 +17,13 @@ export const taskService = {
     list: async (projectId: string) => {
         const response = await api.get<PaginatedResponse<Task>>(`/projects/${projectId}/tasks`, {
             params: { per_page: 10000 },
+        });
+        return response.data;
+    },
+
+    search: async (projectId: string, params: TaskSearchParams) => {
+        const response = await api.get<Task[]>(`/projects/${projectId}/tasks/search`, {
+            params,
         });
         return response.data;
     },

@@ -23,6 +23,7 @@ from app.models.enums import (
     LagFormat,
     NotificationType,
     RateTable,
+    TaskStatus,
     TaskType,
     WorkContour,
 )
@@ -115,7 +116,10 @@ TOOL_SCHEMAS: list[dict] = [
     },
     {
         "name": "search_tasks",
-        "description": "Search tasks by name or notes, or filter by overdue/in_progress status.",
+        "description": (
+            "Search tasks by text in task name/notes. Supports status filtering, "
+            "overdue-only filter, and optional parent inclusion."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -123,9 +127,21 @@ TOOL_SCHEMAS: list[dict] = [
                     "type": "string",
                     "description": "Text to search in task name and notes.",
                 },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "BACKLOG",
+                        "TODO",
+                        "IN_PROGRESS",
+                        "IN_REVIEW",
+                        "DONE",
+                    ],
+                },
                 "overdue_only": {"type": "boolean"},
-                "in_progress_only": {"type": "boolean"},
+                "include_parents": {"type": "boolean"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 250},
             },
+            "required": ["query"],
         },
     },
     {
@@ -755,34 +771,48 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
         }
 
     if tool_name == "search_tasks":
-        query = (tool_input.get("query") or "").lower()
+        query = (tool_input.get("query") or "").strip()
+        if not query:
+            raise InvalidOperationError("Search query cannot be empty")
         overdue_only = tool_input.get("overdue_only", False)
-        in_progress_only = tool_input.get("in_progress_only", False)
-        tasks, _ = await task_service.list_tasks(db, project, per_page=250)
-        results = []
-        for t in tasks:
-            if (
-                query
-                and query not in (t.name or "").lower()
-                and query not in (t.notes or "").lower()
-            ):
-                continue
-            pct = float(t.percent_complete)
-            if overdue_only and not (pct < 100 and t.finish_date < today):
-                continue
-            if in_progress_only and not (0 < pct < 100):
-                continue
-            results.append(
+        include_parents = tool_input.get("include_parents", False)
+        raw_limit = tool_input.get("limit", 50)
+        limit = raw_limit if isinstance(raw_limit, int) else 50
+        status_input = tool_input.get("status")
+        status: TaskStatus | None = None
+        if isinstance(status_input, str):
+            try:
+                status = TaskStatus(status_input)
+            except ValueError as exc:
+                raise InvalidOperationError(
+                    "Invalid status filter for search_tasks"
+                ) from exc
+        tasks = await task_service.search_tasks(
+            db,
+            project,
+            query=query,
+            status=status,
+            overdue_only=overdue_only,
+            include_parents=include_parents,
+            limit=max(1, min(limit, 250)),
+        )
+        return {
+            "tasks": [
                 {
-                    "id": str(t.id),
-                    "name": t.name,
-                    "wbs_code": t.wbs_code,
-                    "percent_complete": pct,
-                    "finish_date": str(t.finish_date),
-                    "is_critical": t.is_critical,
+                    "id": str(task.id),
+                    "name": task.name,
+                    "wbs_code": task.wbs_code,
+                    "percent_complete": float(task.percent_complete),
+                    "finish_date": str(task.finish_date),
+                    "status": task.status,
+                    "is_critical": task.is_critical,
+                    "parent_task_id": str(task.parent_task_id)
+                    if task.parent_task_id
+                    else None,
                 }
-            )
-        return {"tasks": results, "count": len(results)}
+                for task in tasks
+            ]
+        }
 
     if tool_name == "get_dependencies":
         deps, _ = await dependency_service.list_dependencies(db, project, per_page=500)

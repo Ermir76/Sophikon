@@ -195,6 +195,35 @@ async def list_tasks(
     return tasks, total
 
 
+async def search_tasks(
+    db: AsyncSession,
+    project: Project,
+    *,
+    query: str,
+    status: TaskStatus | None = None,
+    overdue_only: bool = False,
+    include_parents: bool = False,
+    limit: int = 50,
+) -> list[Task]:
+    tasks = await task_repo.search_tasks_for_project(
+        db,
+        project_id=project.id,
+        query=query,
+        status=status,
+        overdue_only=overdue_only,
+        include_parents=include_parents,
+        limit=limit,
+        today=datetime.now(UTC).date(),
+    )
+    task_ids = [task.id for task in tasks]
+    comment_counts = await _load_task_comment_counts(db, task_ids)
+    assignment_map = await task_repo.list_assignments_for_tasks(db, task_ids=task_ids)
+    for task in tasks:
+        task.comments_count = comment_counts.get(task.id, 0)
+        task.assignment_summaries = assignment_map.get(task.id, [])
+    return tasks
+
+
 async def regenerate_wbs_codes(db: AsyncSession, project_id: UUID) -> None:
     """
     Regenerate WBS codes, outline levels, sort_order, and summary flags

@@ -68,6 +68,17 @@ def test_each_tool_schema_has_required_keys():
         )
 
 
+def test_search_tasks_schema_matches_new_contract():
+    search_schema = next(t for t in TOOL_SCHEMAS if t["name"] == "search_tasks")
+    properties = search_schema["input_schema"]["properties"]
+    assert "query" in properties
+    assert "status" in properties
+    assert "include_parents" in properties
+    assert "limit" in properties
+    assert "in_progress_only" not in properties
+    assert search_schema["input_schema"].get("required") == ["query"]
+
+
 def test_destructive_tools_set():
     assert "delete_task" in DESTRUCTIVE_TOOLS
     assert "delete_dependency" in DESTRUCTIVE_TOOLS
@@ -136,3 +147,19 @@ async def test_execute_tool_ui_tools_return_is_ui_action():
 
     assert result.success is True
     assert result.is_ui_action is True
+
+
+@pytest.mark.asyncio
+async def test_execute_tool_search_tasks_invalid_status_returns_error():
+    ctx = MagicMock()
+    ctx.db = AsyncMock()
+    ctx.project = MagicMock()
+
+    result = await execute_tool(
+        "search_tasks",
+        {"query": "alpha", "status": "INVALID_STATUS"},
+        ctx,
+    )
+
+    assert result.success is False
+    assert result.error is not None

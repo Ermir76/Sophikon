@@ -2,6 +2,7 @@
 Task repository helpers.
 """
 
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import delete, func, select
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.assignment import Assignment
 from app.models.comment import Comment
 from app.models.dependency import Dependency
+from app.models.enums import TaskStatus
 from app.models.project import Project
 from app.models.resource import Resource
 from app.models.task import Task
@@ -36,6 +38,104 @@ async def list_tasks_for_project(
         base_query.order_by(Task.sort_order.asc()).offset(offset).limit(per_page)
     )
     return list(result.scalars().all()), total
+
+
+async def search_tasks_for_project(
+    db: AsyncSession,
+    *,
+    project_id: UUID,
+    query: str,
+    status: TaskStatus | None,
+    overdue_only: bool,
+    include_parents: bool,
+    limit: int,
+    today: date,
+) -> list[Task]:
+    search_expr = func.to_tsvector(
+        "simple",
+        func.concat_ws(
+            " ", func.coalesce(Task.name, ""), func.coalesce(Task.notes, "")
+        ),
+    )
+    ts_query = func.plainto_tsquery("simple", query)
+    rank_expr = func.ts_rank_cd(search_expr, ts_query)
+
+    conditions = [
+        Task.project_id == project_id,
+        Task.is_deleted.is_(False),
+        search_expr.op("@@")(ts_query),
+    ]
+    if status is not None:
+        conditions.append(Task.status == status.value)
+    if overdue_only:
+        conditions.append(Task.finish_date < today)
+        conditions.append(Task.percent_complete < 100)
+
+    matched_rows = await db.execute(
+        select(Task.id, rank_expr.label("rank"))
+        .where(*conditions)
+        .order_by(rank_expr.desc(), Task.sort_order.asc())
+        .limit(limit)
+    )
+    matched = list(matched_rows.all())
+    if not matched:
+        return []
+
+    matched_ids = [row.id for row in matched]
+    matched_rank_by_id = {row.id: float(row.rank or 0.0) for row in matched}
+    final_ids: set[UUID] = set(matched_ids)
+
+    if include_parents:
+        pending_rows = await db.execute(
+            select(Task.parent_task_id).where(
+                Task.id.in_(matched_ids),
+                Task.parent_task_id.is_not(None),
+            )
+        )
+        pending_parent_ids: set[UUID] = {
+            parent_id
+            for parent_id in pending_rows.scalars().all()
+            if parent_id is not None
+        }
+        fetched_parent_ids: set[UUID] = set()
+        while pending_parent_ids:
+            parent_rows = await db.execute(
+                select(Task.id, Task.parent_task_id).where(
+                    Task.id.in_(pending_parent_ids),
+                    Task.project_id == project_id,
+                    Task.is_deleted.is_(False),
+                )
+            )
+            next_parent_ids: set[UUID] = set()
+            for parent_id, grand_parent_id in parent_rows.all():
+                final_ids.add(parent_id)
+                fetched_parent_ids.add(parent_id)
+                if (
+                    grand_parent_id is not None
+                    and grand_parent_id not in fetched_parent_ids
+                ):
+                    next_parent_ids.add(grand_parent_id)
+            pending_parent_ids = next_parent_ids
+
+    tasks_result = await db.execute(
+        select(Task).where(
+            Task.project_id == project_id,
+            Task.is_deleted.is_(False),
+            Task.id.in_(final_ids),
+        )
+    )
+    tasks = list(tasks_result.scalars().all())
+    if include_parents:
+        tasks.sort(key=lambda task: task.sort_order)
+        return tasks
+
+    tasks.sort(
+        key=lambda task: (
+            -matched_rank_by_id.get(task.id, 0.0),
+            task.sort_order,
+        )
+    )
+    return tasks
 
 
 async def count_comments_for_tasks(

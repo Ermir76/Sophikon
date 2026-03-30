@@ -347,6 +347,167 @@ async def test_list_tasks_pagination(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_search_tasks_filters_by_query_status_and_limit(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "search_tasks_ok@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Search Tasks Ok",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Search Tasks", "slug": "org-search-tasks"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Search Tasks",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Alpha search candidate",
+            "notes": "contains keyword alpha",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "status": "TODO",
+        },
+    )
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Alpha second candidate",
+            "notes": "contains keyword alpha",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "status": "TODO",
+        },
+    )
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Gamma unrelated",
+            "notes": "contains keyword gamma",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "status": "IN_PROGRESS",
+        },
+    )
+
+    response = await client.get(
+        f"/api/v1/projects/{proj_id}/tasks/search?q=alpha&status=TODO&limit=1"
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["status"] == "TODO"
+    assert "alpha" in (f"{payload[0]['name']} {payload[0].get('notes') or ''}").lower()
+
+
+@pytest.mark.asyncio
+async def test_search_tasks_rejects_whitespace_only_query(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "search_tasks_empty@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Search Tasks Empty",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Search Empty", "slug": "org-search-empty"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Search Empty",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    response = await client.get(f"/api/v1/projects/{proj_id}/tasks/search?q=%20%20%20")
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_search_tasks_include_parents_returns_ancestors(client: AsyncClient):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "search_tasks_parent@x.com",
+            "password": "StrongPassword123!",
+            "full_name": "Search Tasks Parent",
+        },
+    )
+    org_id = (
+        await client.post(
+            "/api/v1/organizations",
+            json={"name": "Org Search Parent", "slug": "org-search-parent"},
+        )
+    ).json()["id"]
+    proj_id = (
+        await client.post(
+            "/api/v1/projects",
+            json={
+                "name": "Proj Search Parent",
+                "organization_id": org_id,
+                "start_date": "2024-01-01",
+            },
+        )
+    ).json()["id"]
+
+    parent_id = (
+        await client.post(
+            f"/api/v1/projects/{proj_id}/tasks",
+            json={
+                "name": "Parent container",
+                "start_date": "2024-01-01",
+                "duration": 480,
+            },
+        )
+    ).json()["id"]
+    await client.post(
+        f"/api/v1/projects/{proj_id}/tasks",
+        json={
+            "name": "Child needle task",
+            "start_date": "2024-01-01",
+            "duration": 480,
+            "parent_task_id": parent_id,
+        },
+    )
+
+    without_parents = await client.get(
+        f"/api/v1/projects/{proj_id}/tasks/search?q=needle"
+    )
+    assert without_parents.status_code == 200
+    assert all(item["id"] != parent_id for item in without_parents.json())
+
+    with_parents = await client.get(
+        f"/api/v1/projects/{proj_id}/tasks/search?q=needle&include_parents=true"
+    )
+    assert with_parents.status_code == 200
+    returned_ids = {item["id"] for item in with_parents.json()}
+    assert parent_id in returned_ids
+
+
+@pytest.mark.asyncio
 async def test_create_task_success(client: AsyncClient):
     """Create — success — auto WBS and order_index."""
     await client.post(

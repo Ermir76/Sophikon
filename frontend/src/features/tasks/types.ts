@@ -95,6 +95,14 @@ export interface TaskReorder {
     new_parent_id?: string | null;
 }
 
+export interface TaskSearchParams {
+    q: string;
+    status?: TaskStatus;
+    overdue_only?: boolean;
+    include_parents?: boolean;
+    limit?: number;
+}
+
 export interface TaskBulkCreate {
     tasks: TaskCreate[];
 }

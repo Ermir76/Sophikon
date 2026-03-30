@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Navigate } from "react-router";
-import { ListTodo, Trash2, Pencil } from "lucide-react";
+import { ListTodo, Trash2, Pencil, Search } from "lucide-react";
 import { isValid, parseISO, startOfDay } from "date-fns";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { QueryError } from "@/shared/components/QueryError";
-import { useTasks, useIndentTask, useOutdentTask, useReorderTask, useDeleteTask, useBulkDeleteTasks } from "@/features/tasks/hooks/useTasks";
+import { useTasks, useTaskSearch, useIndentTask, useOutdentTask, useReorderTask, useDeleteTask, useBulkDeleteTasks } from "@/features/tasks/hooks/useTasks";
 import { TaskTable } from "@/features/tasks/components/task-table/TaskTable";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail/TaskDetailPanel";
 import { AddDependencyDialog } from "@/features/tasks/components/task-detail/AddDependencyDialog";
@@ -42,6 +43,8 @@ export default function TasksPage() {
 
   // Local state for table row selection
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] = useState("");
 
   // Row highlight state and detail panel state are intentionally decoupled.
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -58,7 +61,29 @@ export default function TasksPage() {
   const [showBulkEdit, setShowBulkEdit] = useState(false);
 
   // Fetch task data
-  const { data, isLoading, isError, refetch } = useTasks(projectId);
+  const tasksQuery = useTasks(projectId);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchText(searchText.trim());
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchText]);
+  const searchParams = useMemo(
+    () =>
+      debouncedSearchText
+        ? {
+            q: debouncedSearchText,
+            include_parents: true,
+            limit: 250,
+          }
+        : undefined,
+    [debouncedSearchText],
+  );
+  const taskSearchQuery = useTaskSearch(projectId, searchParams);
+  const isSearchActive = Boolean(searchParams?.q);
+  const isLoading = isSearchActive ? taskSearchQuery.isLoading : tasksQuery.isLoading;
+  const isError = isSearchActive ? taskSearchQuery.isError : tasksQuery.isError;
+  const refetch = isSearchActive ? taskSearchQuery.refetch : tasksQuery.refetch;
   const indentTask = useIndentTask(projectId);
   const outdentTask = useOutdentTask(projectId);
   const reorderTask = useReorderTask(projectId);
@@ -66,7 +91,9 @@ export default function TasksPage() {
   const bulkDeleteTasks = useBulkDeleteTasks(projectId);
 
   // Ensure data structure safely maps out items array
-  const tasks = data?.items ?? EMPTY_TASKS;
+  const tasks = isSearchActive
+    ? taskSearchQuery.data ?? EMPTY_TASKS
+    : tasksQuery.data?.items ?? EMPTY_TASKS;
   const now = new Date();
   const overdueTasks = tasks.filter(
     (task) => task.percent_complete < 100 && isPastDueDate(task.finish_date, now),
@@ -140,6 +167,15 @@ export default function TasksPage() {
         title="Tasks"
         description="Plan, sequence, and update task execution."
       />
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder="Search task name or notes..."
+          className="pl-8"
+        />
+      </div>
 
       {!isLoading && tasks.length > 0 ? (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -167,12 +203,22 @@ export default function TasksPage() {
       ) : tasks.length === 0 && !isAddingFirstTaskMode ? (
         <PageEmpty
           icon={ListTodo}
-          title="No tasks"
-          description="You haven't added any tasks to this project yet."
+          title={isSearchActive ? "No matching tasks" : "No tasks"}
+          description={
+            isSearchActive
+              ? "Try a different search phrase or clear search."
+              : "You haven't added any tasks to this project yet."
+          }
           action={
-            <Button variant="outline" onClick={() => setIsAddingFirstTask(true)}>
-              Add task
-            </Button>
+            isSearchActive ? (
+              <Button variant="outline" onClick={() => setSearchText("")}>
+                Clear search
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setIsAddingFirstTask(true)}>
+                Add task
+              </Button>
+            )
           }
         />
       ) : (

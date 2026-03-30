@@ -383,6 +383,14 @@ class Task(Base):
             finish_date,
             postgresql_where=text("NOT is_deleted"),
         ),
+        Index(
+            "idx_task_search_vector",
+            text(
+                "to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(notes, ''))"
+            ),
+            postgresql_using="gin",
+            postgresql_where=text("NOT is_deleted"),
+        ),
         CheckConstraint(
             "status IN ('BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE')",
             name="check_task_status",

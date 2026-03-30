@@ -27,7 +27,8 @@ from app.api.deps.project import (
     get_project_or_404,
 )
 from app.core.database import get_db
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import InvalidOperationError, NotFoundError
+from app.models.enums import TaskStatus
 from app.models.user import User
 from app.schema.common import PaginatedResponse
 from app.schema.task import (
@@ -77,6 +78,34 @@ async def list_tasks(
         page=page,
         per_page=per_page,
     )
+
+
+@router.get("/search", response_model=list[TaskResponse])
+async def search_tasks(
+    access: Annotated[ProjectAccess, Depends(get_project_or_404)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    q: Annotated[str, Query(min_length=1, max_length=500)],
+    status: Annotated[TaskStatus | None, Query()] = None,
+    overdue_only: Annotated[bool, Query()] = False,
+    include_parents: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=250)] = 50,
+):
+    query = q.strip()
+    if not query:
+        raise InvalidOperationError(
+            "Search query cannot be empty",
+            error_code="VALIDATION_ERROR",
+        )
+    tasks = await task_service.search_tasks(
+        db,
+        access.project,
+        query=query,
+        status=status,
+        overdue_only=overdue_only,
+        include_parents=include_parents,
+        limit=limit,
+    )
+    return [TaskResponse.model_validate(task) for task in tasks]
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)

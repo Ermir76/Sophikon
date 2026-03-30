@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "@/features/tasks/api/task.service";
 import type {
     TaskCreate,
+    TaskSearchParams,
     TaskUpdate,
     TaskReorder,
     TaskBulkCreate,
@@ -15,6 +16,9 @@ export const taskKeys = {
     all: ["tasks"] as const,
     lists: () => [...taskKeys.all, "list"] as const,
     list: (projectId: string) => [...taskKeys.lists(), projectId] as const,
+    searches: () => [...taskKeys.all, "search"] as const,
+    search: (projectId: string, params: TaskSearchParams) =>
+        [...taskKeys.searches(), projectId, params] as const,
     details: () => [...taskKeys.all, "detail"] as const,
     detail: (projectId: string, taskId: string) => [...taskKeys.details(), projectId, taskId] as const,
 };
@@ -32,6 +36,18 @@ export function useTask(projectId: string | undefined, taskId: string | undefine
         queryKey: taskKeys.detail(projectId!, taskId!),
         queryFn: () => taskService.get(projectId!, taskId!),
         enabled: !!projectId && !!taskId,
+    });
+}
+
+export function useTaskSearch(
+    projectId: string | undefined,
+    params: TaskSearchParams | undefined,
+) {
+    const hasQuery = Boolean(params?.q?.trim());
+    return useQuery({
+        queryKey: taskKeys.search(projectId!, params!),
+        queryFn: () => taskService.search(projectId!, params!),
+        enabled: !!projectId && hasQuery,
     });
 }
 

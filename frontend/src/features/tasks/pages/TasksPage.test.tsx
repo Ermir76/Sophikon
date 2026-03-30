@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,6 +13,7 @@ let capturedBulkEditProps: {
 
 vi.mock("@/features/tasks/hooks/useTasks", () => ({
   useTasks: vi.fn(),
+  useTaskSearch: vi.fn(),
   useIndentTask: vi.fn(),
   useOutdentTask: vi.fn(),
   useReorderTask: vi.fn(),
@@ -97,6 +98,7 @@ import {
   useIndentTask,
   useOutdentTask,
   useReorderTask,
+  useTaskSearch,
   useTasks,
 } from "@/features/tasks/hooks/useTasks";
 
@@ -176,6 +178,12 @@ describe("TasksPage", () => {
       mutateAsync: vi.fn(),
       isPending: false,
     } as never);
+    vi.mocked(useTaskSearch).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
   });
 
   it("passes selected ids and selected tasks to BulkEditDialog", async () => {
@@ -219,5 +227,35 @@ describe("TasksPage", () => {
     renderPage();
 
     expect(screen.getByText("Failed to load project tasks.")).toBeInTheDocument();
+  });
+
+  it("renders search empty state and clear action when search has no matches", async () => {
+    const user = userEvent.setup();
+    vi.mocked(useTasks).mockReturnValue({
+      data: {
+        items: [makeTask("leaf-1", false)],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    vi.mocked(useTaskSearch).mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+
+    renderPage();
+
+    await user.type(
+      screen.getByPlaceholderText("Search task name or notes..."),
+      "nothing",
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("No matching tasks")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
   });
 });
