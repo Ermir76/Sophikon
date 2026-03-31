@@ -102,7 +102,7 @@ export function OrgSwitcher() {
                   onClick={() => {
                     setActiveOrg(org.id);
                     queryClient.invalidateQueries({ queryKey: projectKeys.list(org.id) });
-                    navigate("/projects");
+                    navigate("/");
                   }}
                   className="gap-2 p-2 cursor-pointer"
                 >

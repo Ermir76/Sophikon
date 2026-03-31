@@ -385,7 +385,7 @@ export function AppHeader() {
 
             <div className="border-t pt-2">
               <Button asChild type="button" variant="ghost" className="h-9 w-full justify-start px-2 text-xs">
-                <Link to="/profile">Manage notification settings</Link>
+                <Link to="/settings">Manage notification settings</Link>
               </Button>
             </div>
           </DropdownMenuContent>

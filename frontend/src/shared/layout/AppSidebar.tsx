@@ -7,11 +7,10 @@ import {
   LayoutDashboard,
   Kanban,
   ListTodo,
-  Settings,
-  Users,
   FolderKanban,
   ArrowLeft,
   Sparkles,
+  Users,
 } from "lucide-react";
 
 import {
@@ -26,9 +25,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/shared/ui/sidebar";
 import { NavUser } from "@/shared/layout/NavUser";
-import { OrgSwitcher, useMyOrgRole } from "@/features/organizations";
+import { OrgSwitcher } from "@/features/organizations";
 import { useAiPanelStore } from "@/features/ai";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -45,13 +45,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const toggleAiPanel = useAiPanelStore((state) => state.togglePanel);
   const setAiActiveTab = useAiPanelStore((state) => state.setActiveTab);
 
-  const { role: currentRole } = useMyOrgRole();
-  const isAdminOrOwner = currentRole === "admin" || currentRole === "owner";
-
   type NavItem = {
     title: string;
     url: string;
     icon: React.ComponentType<{ className?: string }>;
+  };
+
+  type NavGroup = {
+    label: string;
+    items: NavItem[];
   };
 
   const globalNavItems: NavItem[] = [
@@ -65,28 +67,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/projects",
       icon: FolderKanban,
     },
-    ...(isAdminOrOwner
-      ? [
-          {
-            title: "Members",
-            url: "/members",
-            icon: Users,
-          },
-          {
-            title: "Settings",
-            url: "/settings",
-            icon: Settings,
-          },
-        ]
-      : []),
   ];
 
-  const projectNavItems: NavItem[] = [
+  const projectBackNavItems: NavItem[] = [
     {
       title: "Back to Projects",
       url: "/projects",
       icon: ArrowLeft,
     },
+  ];
+
+  const projectPrimaryNavItems: NavItem[] = [
     {
       title: "Overview",
       url: `/projects/${projectId}`,
@@ -98,14 +89,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: ListTodo,
     },
     {
-      title: "Gantt",
-      url: `/projects/${projectId}/gantt`,
-      icon: GanttChart,
-    },
-    {
       title: "Kanban",
       url: `/projects/${projectId}/kanban`,
       icon: Kanban,
+    },
+  ];
+
+  const projectPlanningNavItems: NavItem[] = [
+    {
+      title: "Gantt",
+      url: `/projects/${projectId}/gantt`,
+      icon: GanttChart,
     },
     {
       title: "Resources",
@@ -113,14 +107,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Users,
     },
     {
-      title: "Utilization",
-      url: `/projects/${projectId}/utilization`,
-      icon: BarChart3,
-    },
-    {
       title: "Calendar",
       url: `/projects/${projectId}/calendar`,
       icon: Calendar,
+    },
+  ];
+
+  const projectAnalysisNavItems: NavItem[] = [
+    {
+      title: "Utilization",
+      url: `/projects/${projectId}/utilization`,
+      icon: BarChart3,
     },
     {
       title: "Reports",
@@ -129,8 +126,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
-  const navItems = isProjectContext ? projectNavItems : globalNavItems;
-  const groupLabel = isProjectContext ? "Project" : "Organization";
+  const projectNavGroups: NavGroup[] = [
+    { label: "Project", items: projectBackNavItems },
+    { label: "Work", items: projectPrimaryNavItems },
+    { label: "Planning", items: projectPlanningNavItems },
+    { label: "Insights", items: projectAnalysisNavItems },
+  ];
+
+  const renderNavItems = (items: NavItem[]) => (
+    <SidebarMenu>
+      {items.map((item) => {
+        const isActive =
+          item.url === "/"
+            ? location.pathname === "/"
+            : location.pathname === item.url ||
+              (item.url !== "/projects" && location.pathname.startsWith(item.url + "/"));
+
+        return (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+              <Link to={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -139,53 +163,48 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive =
-                  item.url === "/"
-                    ? location.pathname === "/"
-                    : location.pathname === item.url ||
-                    (item.url !== "/projects" &&
-                      location.pathname.startsWith(item.url + "/"));
-
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-              {isProjectContext ? (
-                <SidebarMenuItem key="AI Assistant">
-                  <SidebarMenuButton
-                    type="button"
-                    isActive={isAiPanelOpen}
-                    tooltip="AI Assistant"
-                    onClick={() => {
-                      if (!projectId) return;
-                      setAiActiveTab(projectId, "chat");
-                      toggleAiPanel(projectId);
-                    }}
-                  >
-                    <Sparkles />
-                    <span>AI Assistant</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : null}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {isProjectContext ? (
+          <>
+            {projectNavGroups.map((group, index) => (
+              <SidebarGroup key={group.label}>
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                <SidebarSeparator className="my-1" />
+                <SidebarGroupContent>
+                  {renderNavItems(group.items)}
+                  {group.label === "Insights" ? (
+                    <SidebarMenu>
+                      <SidebarMenuItem key="AI Assistant">
+                        <SidebarMenuButton
+                          type="button"
+                          isActive={isAiPanelOpen}
+                          tooltip="AI Assistant"
+                          onClick={() => {
+                            if (!projectId) return;
+                            setAiActiveTab(projectId, "chat");
+                            toggleAiPanel(projectId);
+                          }}
+                        >
+                          <Sparkles />
+                          <span>AI Assistant</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  ) : null}
+                  {index < projectNavGroups.length - 1 ? <SidebarSeparator className="mt-2" /> : null}
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </>
+        ) : (
+          <SidebarGroup>
+            <SidebarGroupLabel>Organization</SidebarGroupLabel>
+            <SidebarSeparator className="my-1" />
+            <SidebarGroupContent>
+              {renderNavItems(globalNavItems)}
+              <SidebarSeparator className="mt-2" />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>

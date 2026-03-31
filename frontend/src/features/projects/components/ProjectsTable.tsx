@@ -326,7 +326,7 @@ function SortableProjectRow({
       </TableCell>
       <TableCell className="min-w-0">
         <Link
-          to={`/projects/${project.id}/tasks`}
+          to={`/projects/${project.id}`}
           className="block truncate font-medium hover:underline"
         >
           {project.name}

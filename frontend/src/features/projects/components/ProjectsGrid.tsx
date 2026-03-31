@@ -38,7 +38,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <CardTitle className="text-base font-medium">
                 <Link
-                  to={`/projects/${project.id}/tasks`}
+                  to={`/projects/${project.id}`}
                   className="hover:underline"
                 >
                   {project.name}

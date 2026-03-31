@@ -1,11 +1,10 @@
 import { Suspense, lazy, useEffect, useEffectEvent, useRef } from "react";
-import { Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 
 import { AppLayout } from "@/shared/layout/AppLayout";
 import { ProjectLayout } from "@/features/projects";
 import { ProtectedRoute } from "@/app/routing/ProtectedRoute";
 import { GuestRoute } from "@/app/routing/GuestRoute";
-import { OrgGuard } from "@/app/routing/OrgGuard";
 import { PageLoader } from "@/shared/components/PageLoader";
 
 // Lazy imports
@@ -17,7 +16,9 @@ const ForgotPasswordPage = lazy(
 const ResetPasswordPage = lazy(
   () => import("@/features/auth").then(m => ({ default: m.ResetPasswordPage }))
 );
-const ProfilePage = lazy(() => import("@/features/auth").then(m => ({ default: m.ProfilePage })));
+const SettingsPage = lazy(
+  () => import("@/features/settings").then(m => ({ default: m.SettingsPage }))
+);
 const AuthLayout = lazy(() => import("@/shared/layout/AuthLayout"));
 const DashboardPage = lazy(
   () => import("@/features/dashboard").then(m => ({ default: m.DashboardPage }))
@@ -39,12 +40,6 @@ const ProjectsPage = lazy(
 );
 const ReportsPage = lazy(
   () => import("@/features/reports").then(m => ({ default: m.ReportsPage }))
-);
-const OrgSettingsPage = lazy(
-  () => import("@/features/organizations").then(m => ({ default: m.OrgSettingsPage }))
-);
-const OrgMembersPage = lazy(
-  () => import("@/features/organizations").then(m => ({ default: m.OrgMembersPage }))
 );
 const ProjectSettingsPage = lazy(
   () => import("@/features/projects").then(m => ({ default: m.ProjectSettingsPage }))
@@ -146,18 +141,9 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project-invitations/accept" element={<ProjectInvitationAcceptPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-
-            <Route element={<OrgGuard />}>
-              <Route
-                path="/settings"
-                element={<OrgSettingsPage />}
-              />
-              <Route
-                path="/members"
-                element={<OrgMembersPage />}
-              />
-            </Route>
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<Navigate to="/settings" replace />} />
+            <Route path="/members" element={<Navigate to="/settings" replace />} />
 
             {/* Project Scope */}
             <Route path="/projects/:projectId" element={<ProjectLayout />}>

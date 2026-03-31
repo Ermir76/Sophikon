@@ -2,13 +2,12 @@ import {
   ChevronsUpDown,
   LogOut,
   Settings,
-  User,
   Sun,
   Moon,
   Monitor,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { useAuthStore } from "@/features/auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -25,12 +24,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from "@/shared/ui/sidebar";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { setTheme } = useTheme();
@@ -48,6 +47,15 @@ export function NavUser() {
 
   return (
     <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Settings">
+          <Link to="/settings">
+            <Settings className="size-4" />
+            <span>Settings</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarSeparator className="my-1" />
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -94,17 +102,6 @@ export function NavUser() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate("/profile")}>
-                <User className="mr-2 size-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/settings")}>
-                <Settings className="mr-2 size-4" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel>Theme</DropdownMenuLabel>

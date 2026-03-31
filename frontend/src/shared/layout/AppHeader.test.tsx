@@ -180,7 +180,7 @@ describe("AppHeader", () => {
 
     expect(screen.getByRole("link", { name: "Manage notification settings" })).toHaveAttribute(
       "href",
-      "/profile",
+      "/settings",
     );
   });
 
