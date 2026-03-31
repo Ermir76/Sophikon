@@ -4,6 +4,38 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ---
 
+## S15 — Settings consolidation
+
+**Goal:** Replace the split-brain `/profile` + `/settings` + `/members` routes with a single `/settings` destination using a 3-column layout (app sidebar unchanged, anchor nav column, scrollable content). Consolidates Profile, Security, Notifications, AI Preferences, Org General, Members, and Billing into one place.
+
+### Scope
+
+- In scope: new `features/settings/` feature folder (SettingsPage, 3-column layout, SettingsAnchorNav, 7 section components), route consolidation in `App.tsx`, NavUser footer redesign, AppSidebar global nav cleanup, AppHeader notification link update, Notifications section (new UI using existing hooks).
+- Out of scope: no new backend endpoints, no schema changes, no new `shared/ui` primitives.
+
+### Design Decisions (Approved)
+
+1. **Route consolidation**: `/settings` is the single settings destination. `/profile` and `/members` become `<Navigate>` redirects to `/settings`. `/settings` no longer requires `OrgGuard` at the route level.
+2. **Layout pattern**: 3 columns — app sidebar (unchanged) | sticky anchor nav column | scrollable content. No sidebar inside settings. Claude.ai pattern.
+3. **Feature location**: new `features/settings/` folder. Spans auth + org concerns, owned by neither.
+4. **Anchor nav sections**: Profile · Security · Notifications · AI Preferences · General · Members · Billing
+5. **NavUser footer**: Settings button (direct click to `/settings`) stacked above the avatar row. Avatar row dropdown trimmed to Theme + Logout only. "Profile" item removed entirely.
+6. **AppSidebar**: `Members` and `Settings` items removed from `globalNavItems`. Sidebar `defaultOpen={false}`.
+7. **Notifications section**: implement using existing `useNotificationSettings` / `useUpdateNotificationSettings` hooks — no new backend work.
+8. **Section content sources**: Profile, Security, AI Preferences extracted from `ProfilePage`. General extracted from `OrgSettingsPage`. Members extracted from `OrgMembersPage`. Source pages deleted after extraction (routes redirect away).
+9. **OrgGuard replacement**: General and Members sections read `activeOrgId` from `useOrgStore` and render a graceful empty state when null. This also handles org switcher mid-session.
+10. **Role-based visibility**: General and Members anchor nav items hidden for non-admin/non-owner roles. Replicate the `isAdminOrOwner` check from `AppSidebar`.
+11. **Mobile**: anchor nav becomes a sticky horizontal pill bar at `< 768px`.
+12. **Active section tracking**: `IntersectionObserver` drives the highlighted anchor nav item as user scrolls.
+
+### Execution Update
+
+- UX-08: `DONE` (single `/settings` destination shipped with consolidated sections, nav/app wiring cleanup, legacy page removal, and focused frontend regression coverage).
+- QA Gate: `GO` (targeted frontend tests passed for `SettingsPage`, `NotificationsSection`, and `AppHeader`).
+- Progress: `1/1` committed S15 items complete.
+
+---
+
 ## S14 — Task search + agent foundation
 
 **Goal:** Replace fake in-memory task search with DB-level search exposed to UI and agent tools, then harden the agent foundation with versioned system prompts, normalized tool catalog usage, and prompt-caching hooks.

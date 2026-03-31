@@ -2,7 +2,7 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S14
+**Sprint ID:** S15
 **Dates:** TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
@@ -11,8 +11,153 @@ Guardrail: never delete previous sprint mini-task sections; keep historical spri
 
 ---
 
-## Active Items Ã¢â‚¬â€ S14
+## Active Items - S15
 
+### UX-08 - Settings consolidation
+
+Status: `DONE`
+
+#### Design Decisions (locked — do not deviate without approval)
+
+**File structure**
+```
+frontend/src/features/settings/
+  index.ts
+  pages/
+    SettingsPage.tsx
+  components/
+    SettingsLayout.tsx
+    SettingsAnchorNav.tsx
+    sections/
+      ProfileSection.tsx
+      SecuritySection.tsx
+      NotificationsSection.tsx
+      AiPreferencesSection.tsx
+      GeneralSection.tsx
+      MembersSection.tsx
+      BillingSection.tsx
+  hooks/
+    useActiveSection.ts
+```
+
+**Component tree**
+- `AppLayout` (unchanged) wraps `/settings` route
+- `SettingsPage` → `SettingsLayout` (2-col: anchor nav + scrollable content)
+- `SettingsAnchorNav` in left col; section components in right col wrapped in `<div ref>`
+- App sidebar is already the left column from `AppLayout` — `SettingsLayout` does NOT add a third sidebar
+
+**Component interfaces**
+- `SettingsLayout`: props `anchorNav: React.ReactNode`, `children: React.ReactNode`. Desktop: side-by-side. Mobile `< 768px`: anchor nav becomes sticky horizontal pill bar above content.
+- `SettingsAnchorNav`: props `activeSection: string`, `onSectionClick: (id: string) => void`, `isAdminOrOwner: boolean`. Hides General + Members when `!isAdminOrOwner`.
+- All section components: **zero props**. Each owns its hooks and mutations internally. `GeneralSection` and `MembersSection` read `activeOrgId` from `useOrgStore` internally — render graceful empty state when null (handles both no-org and org-switcher mid-session).
+
+**Ref pattern in SettingsPage**
+- `SettingsPage` creates a `ref` per section via `useRef<HTMLDivElement>()`.
+- Refs are attached to wrapper `<div>` elements in `SettingsPage`, NOT passed as props into section components.
+- `useActiveSection(refs, sectionOrder)` returns the currently visible `activeSection` string via `IntersectionObserver` (threshold 0.3, fallback to first section).
+
+**`useActiveSection` hook signature**
+```ts
+function useActiveSection(
+  refs: Record<string, React.RefObject<HTMLDivElement>>,
+  sectionOrder: string[]
+): string
+```
+
+**State ownership**
+- `activeSection` string: `SettingsPage` (via `useActiveSection`)
+- Profile/avatar mutations: `ProfileSection` internal (existing `useUpdateProfile`, `useUploadAvatar`, `useDeleteAvatar`)
+- Password form: `SecuritySection` internal (existing `useChangePassword`)
+- AI prefs draft + pending toggle: `AiPreferencesSection` internal (existing `useAiPreferences`, `useUpdateAiPreferences`)
+- Notification toggles: `NotificationsSection` internal (`useNotificationSettings`, `useUpdateNotificationSettings` from `@/features/notifications`)
+- Org general form + delete: `GeneralSection` internal (existing `useOrganization`, `useUpdateOrganization`, `useDeleteOrganization`)
+- Members + invite + role + remove dialogs: `MembersSection` internal (existing hooks + local dialog state)
+- No new Zustand stores. No new API calls.
+
+**Notification fields** — 4 toggles from `NotificationSettings`:
+`email_task_assigned`, `email_mentioned`, `email_deadline_approaching`, `push_enabled`.
+Each fires `useUpdateNotificationSettings` individually on toggle change (same pattern as AI toggles).
+
+**NavUser footer redesign**
+- Add `<Link to="/settings">` Settings button (with ⚙ icon) stacked above the avatar `DropdownMenuTrigger`
+- Remove "Profile" `DropdownMenuItem`
+- Remove "Settings" `DropdownMenuItem`
+- Dropdown retains: Theme group (Light/Dark/System) + Log out only
+
+**AppSidebar changes**
+- Remove `{ title: "Members", url: "/members", icon: Users }` from `globalNavItems`
+- Remove `{ title: "Settings", url: "/settings", icon: Settings }` from `globalNavItems`
+- Add `defaultOpen={false}` to `<Sidebar>` (or equivalent prop per shadcn sidebar API)
+
+**Wireframe reference**: `settings-layout-wireframe.excalidraw` in repo root — 3 breakpoints: wide ≥1024px, medium 768–1023px, mobile <768px.
+
+#### Mini-tasks
+
+**Design phase**
+- [x] Define `features/settings/` file structure and barrel exports
+- [x] Define `SettingsAnchorNav` component contract: active section state management, scroll-to-section wiring, IntersectionObserver hook interface
+- [x] Define prop interfaces for each section component
+
+**New feature folder + layout**
+- [x] Create `features/settings/` folder: `SettingsPage`, 3-column layout wrapper, `SettingsAnchorNav` component
+- [x] `SettingsAnchorNav`: sections Profile, Security, Notifications, AI Preferences, General, Members, Billing; General + Members hidden for non-admin/non-owner roles
+- [x] Mobile: anchor nav becomes sticky horizontal pill bar at `< 768px`
+- [x] `IntersectionObserver` active-section tracking + smooth scroll-to-section on anchor nav click
+
+**Profile section** (extracted from ProfilePage tab 1)
+- [x] Merged avatar + profile form in one card; AlertDialog for avatar removal; upload/delete flows unchanged (2MB, png/jpeg/webp, toasts + inline errors)
+- [x] Remove disabled-save helper text while preserving dirty/pending button state
+
+**Security section** (extracted from ProfilePage tab 2)
+- [x] Change password with live 4-item checklist (length, uppercase, number, special char)
+- [x] Inline Account Recovery link below Change Password submit (demoted from standalone card)
+
+**AI Preferences section** (extracted from ProfilePage tab 3)
+- [x] Toggle table with Tool / Auto-approve column header row
+- [x] Separator + subheading groups (remove bordered containers)
+
+**Notifications section** (new)
+- [x] Email notification toggles using `useNotificationSettings` / `useUpdateNotificationSettings`
+
+**General section** (extracted from OrgSettingsPage)
+- [x] Org name/slug/description form; render graceful empty state when `activeOrgId` is null
+
+**Members section** (extracted from OrgMembersPage)
+- [x] Member list + role management + invite flow; render graceful empty state when `activeOrgId` is null
+
+**Billing section**
+- [x] Placeholder card (coming soon)
+
+**Route + nav wiring**
+- [x] `App.tsx`: `/settings` to global scope (remove OrgGuard), `/profile` -> `<Navigate to="/settings">`, `/members` -> `<Navigate to="/settings">`
+- [x] `App.tsx`: remove lazy imports for ProfilePage, OrgSettingsPage, OrgMembersPage
+- [x] `NavUser`: add Settings button (direct link to `/settings`) above avatar row; slim dropdown to Theme + Logout only; remove Profile item
+- [x] `AppSidebar`: remove Members and Settings from `globalNavItems`; set `defaultOpen={false}`
+- [x] `AppHeader`: update "Manage notification settings" link to `/settings`
+
+**Cleanup**
+- [x] Grep confirms no remaining consumers of `/profile` or `/members` beyond already-touched files
+- [x] Delete `ProfilePage.tsx` and `ProfilePage.test.tsx` after content extracted
+- [x] Delete `OrgSettingsPage.tsx`, `OrgSettingsPage.test.tsx`, `OrgMembersPage.tsx`, `OrgMembersPage.test.tsx` after content extracted and role guards replicated
+- [x] Remove `ProfilePage`, `OrgSettingsPage`, `OrgMembersPage` exports from feature barrels (`features/auth/index.ts`, `features/organizations/index.ts`)
+
+**Tests**
+- [x] `AppHeader.test.tsx`: update `/profile` assertion to `/settings`
+- [x] Write `SettingsPage` focused tests: anchor nav rendering, section visibility, notifications toggles, org sections conditional on `activeOrgId`
+
+#### Notes
+
+- Dependencies: -
+- Blockers: -
+- Decisions:
+  - Frontend-only; no backend endpoints or schema changes.
+  - Reuse existing feature hooks and `shared/ui` primitives only.
+  - OrgGuard replaced by per-section conditional rendering (also handles org switcher mid-session).
+  - Wireframe: `settings-layout-wireframe.excalidraw` in repo root (3 breakpoints: wide ≥1024px, medium 768–1023px, mobile <768px) — primary layout reference for build.
+
+---
+
+## Previous Sprint Items - S14
 ### AGT-05 Ã¢â‚¬â€ Task search rewrite: DB-level search for UI + agent
 
 Status: `DONE`

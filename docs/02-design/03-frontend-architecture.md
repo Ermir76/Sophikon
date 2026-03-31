@@ -38,15 +38,15 @@ Query client defaults: `staleTime` 5 minutes, `retry` 1, `refetchOnWindowFocus` 
 
 **Protected routes** (authenticated):
 
-- Global: `/`, `/projects`, `/profile`, `/project-invitations/accept`
-- Org-scoped: `/settings`, `/members`
+- Global: `/`, `/projects`, `/settings`, `/project-invitations/accept`
+- Route aliases: `/profile` and `/members` redirect to `/settings`
 - Project-scoped: `/projects/:projectId` -> `tasks`, `gantt`, `kanban`, `resources`, `utilization`, `calendar`, `reports`, `settings`
 
 **Guards:**
 
 - `ProtectedRoute` - blocks until auth init completes, redirects to `/login?next=...` when unauthenticated
 - `GuestRoute` - redirects authenticated users to `/`
-- `OrgGuard` - requires active org context before allowing org-scoped routes
+- No route-level org guard for account/org settings; the consolidated `/settings` surface handles missing active-org state per section with graceful empty states
 
 ---
 
@@ -121,6 +121,14 @@ Both hooks invalidate relevant TanStack Query caches on incoming events.
 - Feature UI calling backend directly without going through feature service + shared API client
 - Cross-feature internal imports; cross-feature access must go through feature public API/barrel exports
 - Global state stores replacing feature-scoped state + query cache
+
+---
+
+## Feature Notes
+
+- `features/settings/` owns the consolidated settings destination for account and organization preferences
+- The settings surface uses a left anchor-nav on desktop and a sticky horizontal pill bar on mobile
+- General and Members sections are visibility-gated by org role and render empty-state handling when no active organization is selected
 
 ---
 

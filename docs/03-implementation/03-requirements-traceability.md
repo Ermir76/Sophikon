@@ -50,14 +50,14 @@ This document records what is evidenced by the current codebase review.
 | FR-AU-003 | Implemented   | A1, A8   | Google OAuth start/callback routes are mounted and covered by auth API/service tests. |
 | FR-AU-004 | Implemented   | A1       | Logout flow exists in backend and auth store.                                 |
 | FR-AU-005 | Implemented   | A1, A8   | Password-reset request/confirm routes are mounted and covered by API/service/concurrency tests. |
-| FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; profile save now uses a clear pristine-state guard, password requirements are shown before submit, avatar upload/remove actions provide explicit success feedback, and avatar removal requires confirmation. |
+| FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; account settings now use anchored sections (desktop left-nav + mobile sticky pill bar), profile save uses a clear pristine-state guard, password requirements are shown before submit as a live checklist, and account recovery is exposed inline in the security flow. |
 | FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI, and the mounted app now refreshes authenticated sessions proactively while idle. |
 | FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
 | FR-AU-009 | Implemented   | A1, A8   | Email verification route/page are mounted in backend and frontend.            |
 | FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI.          |
 | FR-AU-011 | Implemented   | A1, A8   | Authenticated change-password flow is mounted in backend and profile UI, with standard success toast feedback on save. |
 | FR-AU-012 | Implemented   | A1, A8   | Avatar upload/remove routes are mounted, the frontend now sends real multipart uploads, profile UI handles client-side validation, upload failures surface safe user-facing errors, and returned avatar URLs render in both profile and sidebar UI. |
-| FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI, with visible save confirmation, stable optimistic toggle behavior, and grouped permission controls by user intent. |
+| FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI, with visible save confirmation, stable optimistic toggle behavior, grouped permission controls by user intent, and explicit `Tool`/`Auto-approve` headered toggle rows. |
 
 ### 3.1b Organization Management
 
@@ -65,12 +65,12 @@ This document records what is evidenced by the current codebase review.
 | --------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
 | FR-OR-001 | Implemented   | A2       | Organization list route and switcher flow are mounted.                                                               |
 | FR-OR-002 | Implemented   | A2       | Organization create route and dialog flow are mounted.                                                               |
-| FR-OR-003 | Implemented   | A2       | Organization settings page and update route are mounted.                                                             |
+| FR-OR-003 | Implemented   | A2       | Organization settings update flow is mounted, and organization general settings now live inside the consolidated `/settings` destination with graceful empty-state handling when no active org is selected. |
 | FR-OR-004 | Implemented   | A2, A9   | Soft-delete route is mounted; deleting the active org now falls back to the personal org in frontend state.         |
-| FR-OR-005 | Implemented   | A2       | Organization members list route/page are mounted.                                                                    |
-| FR-OR-006 | Implemented   | A2       | Existing-user invite flow by email is mounted in backend and frontend.                                               |
-| FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted, with a stable pending indicator that disables overlapping role actions during save.                            |
-| FR-OR-008 | Implemented   | A2       | Organization member removal flow is mounted.                                                                         |
+| FR-OR-005 | Implemented   | A2       | Organization members list flow is mounted and rendered inside the consolidated `/settings` destination.             |
+| FR-OR-006 | Implemented   | A2       | Existing-user invite flow by email is mounted in backend and frontend, now from the organization members section in `/settings`. |
+| FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted in the `/settings` members section, with a stable pending indicator that disables overlapping role actions during save. |
+| FR-OR-008 | Implemented   | A2       | Organization member removal flow is mounted in the `/settings` members section.                                     |
 | FR-OR-009 | Implemented   | A2       | Current-user organization membership resolution is mounted at `/organizations/{org_id}/members/me`.                 |
 | FR-OR-010 | Implemented   | A2, A3   | Organization dashboard insights endpoint and dashboard page flow are mounted via active-org context.                |
 | FR-OR-011 | Not evidenced | A2, A8   | Invite-unregistered-user onboarding flow was not evidenced in the current mounted backend/frontend surface.         |
@@ -249,7 +249,7 @@ This document records what is evidenced by the current codebase review.
 | FR-CO-008 | Implemented   | A3, A8, A9 | Comments are mounted via `/comments` endpoints, exposed in the task detail panel, and synchronized through websocket comment events.                                                           |
 | FR-CO-009 | Implemented   | A3, A8, A9 | `@mentions` are resolved from ID-backed tokens, validated against project membership, persisted on comments, and create mention notification rows.                                             |
 | FR-CO-010 | Implemented   | A3, A8, A9 | Task attachment flow is mounted end-to-end (`/projects/{project_id}/tasks/{task_id}/attachments` upload/list/download/delete) with private storage and task-detail UI integration. |
-| FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline/project-invitation triggers create rows when applicable, accepted/revoked/expired invitation notifications no longer remain actionable in the inbox, and header bell UI consumes live user websocket updates through a stabilized auth-scoped notification websocket hook. |
+| FR-CO-011 | Implemented   | A3, A8, A9 | Notification inbox endpoints are mounted (`/notifications` list/read/read-all/settings), assignment/mention/deadline/project-invitation triggers create rows when applicable, accepted/revoked/expired invitation notifications no longer remain actionable in the inbox, header bell UI consumes live user websocket updates through a stabilized auth-scoped notification websocket hook, and notification preferences are managed from the consolidated `/settings` destination via the bell entry point. |
 
 ### 3.15 Kanban Board
 
