@@ -72,6 +72,7 @@ export function AppHeader() {
   const [hiddenNotificationIds, setHiddenNotificationIds] = useState<Record<string, true>>({});
   const visibleUsers = projectSocketState?.users.slice(0, 4) ?? [];
   const extraUsers = Math.max((projectSocketState?.users.length ?? 0) - visibleUsers.length, 0);
+  const isProjectConnected = projectSocketState?.status === "connected";
   const unreadCount =
     notificationSocketUnreadCount ?? notificationsQuery.data?.unread_count ?? 0;
 
@@ -392,7 +393,7 @@ export function AppHeader() {
         </DropdownMenu>
         {projectId ? (
           <>
-            <span className="text-xs text-muted-foreground">
+            <span className={isProjectConnected ? "text-xs text-[var(--auth-feature-analytics)]" : "text-xs text-destructive"}>
               {projectSocketState?.status === "connected"
                 ? "Connected"
                 : projectSocketState?.status === "reconnecting"
