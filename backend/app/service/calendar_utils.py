@@ -202,7 +202,9 @@ def working_minutes_between(
     Useful for computing slack in working minutes.
     """
     if start > end:
-        return 0
+        raise ValueError(
+            f"start ({start}) is after end ({end}) in working_minutes_between"
+        )
 
     total = 0
     current = start

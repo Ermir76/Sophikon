@@ -379,7 +379,7 @@ async def calculate_schedule(
 
         # Total slack = LS - ES in working minutes
         if sd.ls is not None:
-            if sd.ls >= sd.es:
+            if sd.ls > sd.es:
                 sd.total_slack = working_minutes_between(
                     sd.es,
                     sd.ls - timedelta(days=1),
@@ -397,10 +397,12 @@ async def calculate_schedule(
             succ_es_dates = [schedule_data[s].es for s in succs if s in schedule_data]
             if succ_es_dates:
                 min_succ_es = min(succ_es_dates)
-                if min_succ_es > sd.ef:
+                free_start = sd.ef + timedelta(days=1)
+                free_end = min_succ_es - timedelta(days=1)
+                if free_end >= free_start:
                     sd.free_slack = working_minutes_between(
-                        sd.ef + timedelta(days=1),
-                        min_succ_es - timedelta(days=1),
+                        free_start,
+                        free_end,
                         task_ww,
                         task_exceptions,
                     )
@@ -415,15 +417,22 @@ async def calculate_schedule(
         if sd.is_critical:
             critical_ids.append(tid)
 
-    # 6. Persist results for leaf tasks
+    # 6. Persist results for leaf tasks (summary tasks get dates from rollup)
     updated = 0
     for sd in schedule_data.values():
         task = sd.task
+        if task.is_summary:
+            continue
         task.start_date = sd.es
         task.finish_date = sd.ef
         task.total_slack = sd.total_slack
         task.free_slack = sd.free_slack
         task.is_critical = sd.is_critical
+        if task.finish_date < task.start_date:
+            raise RuntimeError(
+                f"Scheduler produced inverted dates for task {task.id}: "
+                f"start={task.start_date}, finish={task.finish_date}"
+            )
         updated += 1
 
     # 7. Summary task rollup

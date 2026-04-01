@@ -6,6 +6,8 @@ Pure-Python tests: no database and no async.
 
 from datetime import date
 
+import pytest
+
 from app.service.calendar_utils import (
     DEFAULT_WORK_WEEK,
     add_working_duration,
@@ -160,10 +162,8 @@ def test_working_minutes_between_spans_weekend():
 
 
 def test_working_minutes_between_inverted():
-    total = working_minutes_between(
-        date(2024, 1, 5), date(2024, 1, 1), DEFAULT_WORK_WEEK
-    )
-    assert total == 0
+    with pytest.raises(ValueError, match="start .* is after end"):
+        working_minutes_between(date(2024, 1, 5), date(2024, 1, 1), DEFAULT_WORK_WEEK)
 
 
 def test_working_days_between_alias_matches_minutes_function():

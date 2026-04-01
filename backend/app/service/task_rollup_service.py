@@ -184,6 +184,8 @@ def calculate_summary_duration_minutes(
     work_week: list[dict | None],
     exceptions: list[CalendarException],
 ) -> int:
+    if start_date > finish_date:
+        return 0
     return working_minutes_between(start_date, finish_date, work_week, exceptions)
 
 

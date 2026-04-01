@@ -66,6 +66,13 @@ class TaskUpdate(ModelPatchSchema):
     color: str | None = Field(default=None, max_length=32)
     status: TaskStatus | None = Field(default=None)
 
+    @model_validator(mode="after")
+    def check_dates_order(self) -> "TaskUpdate":
+        if self.start_date is not None and self.finish_date is not None:
+            if self.finish_date < self.start_date:
+                raise ValueError("finish_date must be >= start_date")
+        return self
+
 
 class TaskReorder(BaseModel):
     """Payload for reordering tasks via drag-and-drop."""

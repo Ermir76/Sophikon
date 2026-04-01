@@ -446,6 +446,14 @@ async def update_task(
     if not task.is_summary:
         sync_leaf_duration_progress(task)
 
+    # Keep finish_date >= start_date for the intermediate flush;
+    # the scheduler will overwrite with the real calculated value.
+    if task.finish_date < task.start_date:
+        if "start_date" in patch:
+            task.finish_date = task.start_date
+        elif "finish_date" in patch:
+            task.start_date = task.finish_date
+
     # If parent changed, recalculate for both old and new parents
     # But update_task doesn't currently allow changing parent_task_id directly based on schema
     # Just recalculate the current parent

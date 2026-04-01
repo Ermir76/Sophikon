@@ -345,6 +345,10 @@ class Task(Base):
             "priority >= 0 AND priority <= 1000",
             name="check_task_priority",
         ),
+        CheckConstraint(
+            "finish_date >= start_date",
+            name="check_task_dates_order",
+        ),
         Index(
             "idx_task_project",
             project_id,
