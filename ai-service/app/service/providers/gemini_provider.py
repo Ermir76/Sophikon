@@ -17,6 +17,7 @@ async def stream_gemini(
     model_id: str,
     api_key: str | None = None,
     conversation_id: UUID | None = None,
+    prompt_cache: dict | None = None,
 ):
     from google import genai
     from google.genai import types

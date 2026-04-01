@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 from uuid import UUID, uuid4
@@ -18,6 +19,7 @@ async def stream_openai(
     model_id: str,
     api_key: str | None = None,
     conversation_id: UUID | None = None,
+    prompt_cache: dict | None = None,
 ):
     from openai import AsyncOpenAI
 
@@ -108,8 +110,6 @@ async def stream_openai(
             mode="json", exclude_none=True
         )
         return
-
-    import json
 
     for index in sorted(pending_tool_calls):
         pending = pending_tool_calls[index]

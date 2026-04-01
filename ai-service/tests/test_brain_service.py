@@ -77,7 +77,7 @@ def test_complete_stream_dispatches_to_openai_stream_in_live_mode(monkeypatch):
     ]
 
 
-def test_complete_stream_ignores_prompt_cache_and_still_dispatches(monkeypatch):
+def test_complete_stream_forwards_prompt_cache_to_provider(monkeypatch):
     monkeypatch.setattr(settings, "AI_MODE", "live")
     monkeypatch.setattr(
         brain_service,
@@ -87,7 +87,8 @@ def test_complete_stream_ignores_prompt_cache_and_still_dispatches(monkeypatch):
 
     async def fake_stream_openai(messages, system_prompt, tools, *, model_id, **kwargs):
         assert model_id == "gpt-5-mini"
-        assert "prompt_cache" not in kwargs
+        assert kwargs.get("prompt_cache") is not None
+        assert kwargs["prompt_cache"]["key"] == "agent:planner:v1"
         assert kwargs.get("conversation_id") is not None
         yield {"type": "start", "model": model_id}
         yield {"type": "done", "model": model_id}

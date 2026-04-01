@@ -17,6 +17,7 @@ async def stream_claude(
     model_id: str,
     api_key: str | None = None,
     conversation_id: UUID | None = None,
+    prompt_cache: dict | None = None,
 ):
     from anthropic import AsyncAnthropic
 
@@ -34,10 +35,20 @@ async def stream_claude(
     tool_input_json = ""
     final_message = None
 
+    system_value: str | list[dict] = system_prompt
+    if prompt_cache:
+        system_value = [
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+
     stream_kwargs: dict[str, Any] = {
         "model": model_id,
         "max_tokens": 8096,
-        "system": system_prompt,
+        "system": system_value,
         "messages": messages,
     }
     if tools:

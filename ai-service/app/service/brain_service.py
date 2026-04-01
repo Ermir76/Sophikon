@@ -29,6 +29,9 @@ async def complete_stream(request: CompleteRequest):
         )
         return
 
+    raw_cache = request.prompt_cache
+    prompt_cache = raw_cache.model_dump() if hasattr(raw_cache, "model_dump") else raw_cache
+
     if provider == "anthropic":
         async for event in _provider_stream_claude(
             request.messages,
@@ -37,6 +40,7 @@ async def complete_stream(request: CompleteRequest):
             model_id=model_id,
             api_key=request.api_key,
             conversation_id=request.conversation_id,
+            prompt_cache=prompt_cache,
         ):
             yield event
     elif provider == "openai":
@@ -47,6 +51,7 @@ async def complete_stream(request: CompleteRequest):
             model_id=model_id,
             api_key=request.api_key,
             conversation_id=request.conversation_id,
+            prompt_cache=prompt_cache,
         ):
             yield event
     elif provider == "gemini":
@@ -57,6 +62,7 @@ async def complete_stream(request: CompleteRequest):
             model_id=model_id,
             api_key=request.api_key,
             conversation_id=request.conversation_id,
+            prompt_cache=prompt_cache,
         ):
             yield event
     else:

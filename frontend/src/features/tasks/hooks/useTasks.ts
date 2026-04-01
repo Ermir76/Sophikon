@@ -62,6 +62,7 @@ export function useCreateTask(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -98,6 +99,7 @@ export function useUpdateTask(projectId: string | undefined) {
         onSettled: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -114,6 +116,7 @@ export function useDeleteTask(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -130,6 +133,7 @@ export function useIndentTask(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -146,6 +150,7 @@ export function useOutdentTask(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -188,6 +193,7 @@ export function useReorderTask(projectId: string | undefined) {
         onSettled: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -205,6 +211,7 @@ export function useBulkCreateTasks(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -221,6 +228,7 @@ export function useBulkUpdateTasks(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
@@ -237,6 +245,7 @@ export function useBulkDeleteTasks(projectId: string | undefined) {
         onSuccess: () => {
             if (projectId) {
                 queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+                queryClient.invalidateQueries({ queryKey: taskKeys.searches() });
             }
         },
     });
