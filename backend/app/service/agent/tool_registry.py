@@ -84,9 +84,10 @@ TOOL_SCHEMAS: list[dict] = [
     {
         "name": "get_tasks",
         "description": (
-            "Get all tasks for the project. Returns tasks with WBS codes, dates, "
-            "progress percentage, priority, and hierarchy. Use this to understand "
-            "the project state before answering questions or taking actions."
+            "Get tasks for the project. Pass parent_task_id to get only direct "
+            "children of a summary task — use this to drill into subtasks "
+            "efficiently instead of loading the full project. Returns WBS codes, "
+            "dates, progress, priority, and hierarchy."
         ),
         "input_schema": {
             "type": "object",
@@ -101,6 +102,13 @@ TOOL_SCHEMAS: list[dict] = [
                         "not_started",
                     ],
                     "description": "Filter tasks by status. Omit for all tasks.",
+                },
+                "parent_task_id": {
+                    "type": "string",
+                    "description": (
+                        "If provided, return only direct children of this task. "
+                        "Use to drill into a summary task's subtasks."
+                    ),
                 },
             },
         },
@@ -678,7 +686,12 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
 
     if tool_name == "get_tasks":
         filter_status = tool_input.get("filter_status", "all")
+        parent_filter = tool_input.get("parent_task_id")
         tasks, _ = await task_service.list_tasks(db, project, per_page=250)
+
+        if parent_filter:
+            parent_uuid = UUID(parent_filter)
+            tasks = [t for t in tasks if t.parent_task_id == parent_uuid]
 
         # Batch-load assignees for all tasks in one query
         task_ids = [t.id for t in tasks]
@@ -806,6 +819,7 @@ async def _dispatch(tool_name: str, tool_input: dict, ctx: AgentContext) -> obje
                     "finish_date": str(task.finish_date),
                     "status": task.status,
                     "is_critical": task.is_critical,
+                    "is_summary": task.is_summary,
                     "parent_task_id": str(task.parent_task_id)
                     if task.parent_task_id
                     else None,
