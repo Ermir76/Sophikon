@@ -2,12 +2,82 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S15
+**Sprint ID:** S16
 **Dates:** TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 Guardrail: never delete previous sprint mini-task sections; keep historical sprint blocks intact and append/move only the active sprint block.
+
+---
+
+## Active Items - S16
+
+### FIX-18 — GIN index mismatch
+
+Status: `DONE`
+
+- [x] Change tsvector expression in `task_repo.py` from `concat_ws()` to `coalesce() || coalesce()` matching the migration index
+- [ ] Verify with EXPLAIN ANALYZE that the index is used (manual)
+
+### FIX-19 — Search cache invalidation
+
+Status: `DONE`
+
+- [x] Add `taskKeys.searches()` invalidation to all 9 mutation `onSuccess` callbacks in `useTasks.ts`
+- [ ] Verify search results refresh after task create/update/delete (manual)
+
+### AGT-08 — Agent subtask drill-down
+
+Status: `DONE`
+
+#### Design Decisions (locked)
+
+**Problem:** Agent has no efficient way to go downward in the task tree. `search_tasks` doesn't return `is_summary`, and `get_tasks` has no parent filter — agent must load all tasks and reason over `parent_task_id` fields.
+
+**Changes — all in `backend/app/service/agent/tool_registry.py`:**
+
+1. **`get_tasks` schema** — add optional `parent_task_id` string param with description: "If provided, return only direct children of this task. Use to drill into a summary task's subtasks."
+2. **`get_tasks` execution** — when `parent_task_id` is provided, add `Task.parent_task_id == parent_task_id` filter to the DB query (not client-side filtering).
+3. **`get_tasks` description** — update to: "Get tasks for the project. Pass parent_task_id to get only direct children of a summary task — use this to drill into subtasks efficiently instead of loading the full project. Returns WBS codes, dates, progress, hierarchy."
+4. **`search_tasks` response** — add `"is_summary": task.is_summary` to each result dict.
+
+**No DB/schema/migration changes.** `parent_task_id` and `is_summary` already exist on Task model.
+
+#### Checklist
+
+- [x] Add `parent_task_id` optional filter param to `get_tasks` tool schema
+- [x] Add `parent_task_id` filter in `get_tasks` execution block
+- [x] Update `get_tasks` tool description to document drill-down pattern
+- [x] Add `is_summary` field to `search_tasks` response payload
+- [ ] Verify: search "Phase 1" shows `is_summary: true`, then `get_tasks(parent_task_id=...)` returns children only (manual)
+
+### AGT-07 — Prompt caching last-mile
+
+Status: `DONE`
+
+#### Design Decisions (locked)
+
+**Problem:** `prompt_cache` metadata flows from backend agent layer to ai-service HTTP boundary, but `brain_service.py` drops it before calling providers. No provider applies caching.
+
+**Changes:**
+
+1. **`ai-service/app/service/brain_service.py`** — add `prompt_cache=request.prompt_cache` kwarg to all 3 provider calls (Anthropic, OpenAI, Gemini).
+2. **`ai-service/app/service/providers/anthropic_provider.py`** — accept `prompt_cache: dict | None = None`. When not None, convert `system` from plain string to content block list: `[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]`. When None, keep plain string (no breaking change).
+3. **`ai-service/app/service/providers/openai_provider.py`** — accept `prompt_cache: dict | None = None`. No-op: OpenAI caching is automatic for prompts >= 1024 tokens. Param accepted for contract consistency.
+4. **`ai-service/app/service/providers/gemini_provider.py`** — accept `prompt_cache: dict | None = None`. No-op: Gemini caching requires separate `cachedContent.create` call with 32K+ token minimum (our prompts are below). Param accepted for forward-compatibility.
+5. **`ai-service/tests/test_brain_service.py`** — flip assertion from `assert "prompt_cache" not in kwargs` to `assert kwargs.get("prompt_cache") is not None`.
+
+**No schema changes.** `PromptCacheMetadata` and `CompleteRequest.prompt_cache` already exist.
+
+#### Checklist
+
+- [x] Forward `prompt_cache` param from `brain_service.py` to all 3 provider calls
+- [x] Anthropic provider: accept param, wrap system prompt in content block with `cache_control` when present
+- [x] OpenAI provider: accept param (no-op, automatic caching)
+- [x] Gemini provider: accept param (no-op, forward-compatibility)
+- [x] Update `test_brain_service.py` assertion to verify passthrough
+- [ ] Verify streaming still works end-to-end for all 3 providers (manual)
 
 ---
 

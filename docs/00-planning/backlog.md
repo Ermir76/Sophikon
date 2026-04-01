@@ -84,6 +84,11 @@ Points scale:
 | AGT-03 | FR | Agent post-condition verification: validate tool results match plan intent before continuing | P1 | 3 | AGT-01 | V1.0 | READY | wwwer | S12 stretch |
 | AGT-04 | FR | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | P2 | 2 | - | V1.0 | READY | wwwer | S12 stretch |
 | AGT-05 | TECH | Agent overhaul: task search (DB-level), system prompt redesign, prompt caching | P1 | - | - | V1.1 | NOT_READY | - | S14 |
+| UX-08 | TECH | Settings consolidation — 3-column /settings (profile, security, notifications, AI prefs, org general, members, billing), NavUser + sidebar redesign, /profile + /members redirect | P2 | 5 | UX-04 | V1.0 | DONE | wwwer | S15 |
+| FIX-18 | TECH | GIN index mismatch on task search — repo uses concat_ws(), index built on coalesce() || coalesce(); PostgreSQL skips index, full scan on large projects | P1 | 1 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
+| FIX-19 | TECH | Search cache not invalidated after task mutations — create/update/delete/reorder/indent/outdent/bulk only invalidate list key, search key stays stale in UI | P2 | 1 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
+| AGT-08 | TECH | Agent subtask drill-down — add parent_task_id filter to get_tasks tool, add is_summary to search_tasks response, update tool descriptions for drill-down pattern | P1 | 2 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
+| AGT-07 | TECH | Prompt caching last-mile — wire prompt_cache through brain_service to all 3 providers (Anthropic cache_control, OpenAI structure, Gemini config) | P2 | 3 | - | V1.0 | IN_PROGRESS | wwwer | S16 |
 
 ---
 

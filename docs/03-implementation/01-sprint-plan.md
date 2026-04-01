@@ -4,6 +4,32 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ---
 
+## S16 — Bug fixes + agent tooling + prompt caching
+
+**Goal:** Fix two S14 search bugs (index mismatch, stale cache), give the agent proper subtask drill-down tooling, and wire prompt caching end-to-end through all three AI providers.
+
+### Scope
+
+- In scope: backend search expression fix, frontend search cache invalidation, agent `get_tasks` parent filter + `search_tasks` response enrichment, prompt caching wiring through brain_service to Anthropic/OpenAI/Gemini providers.
+- Out of scope: new agent tools beyond parent filtering, new search features, provider-side caching policy tuning.
+
+### Design Decisions (Approved)
+
+1. **FIX-18**: Change `task_repo.py` search expression from `concat_ws()` to `coalesce() || coalesce()` to match the GIN index expression character-for-character.
+2. **FIX-19**: Add `taskKeys.searches()` invalidation to all 9 task mutation `onSuccess` callbacks in `useTasks.ts`.
+3. **AGT-08 — Agent subtask drill-down**:
+   - Add `parent_task_id` optional filter param to `get_tasks` tool — returns only direct children of the specified task.
+   - Add `is_summary` field to `search_tasks` response — agent knows immediately if a hit has children.
+   - Update tool descriptions in `tool_registry.py` so the agent learns the drill-down pattern.
+4. **AGT-07 — Prompt caching last-mile**:
+   - Forward `prompt_cache` from `brain_service.py` to all provider functions.
+   - Anthropic: convert system prompt to content block list with `cache_control: {"type": "ephemeral"}`.
+   - OpenAI: structure system message for automatic caching eligibility.
+   - Gemini: apply cache config via `GenerateContentConfig`.
+   - Update `test_brain_service.py` assertion to verify passthrough.
+
+---
+
 ## S15 — Settings consolidation
 
 **Goal:** Replace the split-brain `/profile` + `/settings` + `/members` routes with a single `/settings` destination using a 3-column layout (app sidebar unchanged, anchor nav column, scrollable content). Consolidates Profile, Security, Notifications, AI Preferences, Org General, Members, and Billing into one place.

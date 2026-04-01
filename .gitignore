@@ -32,9 +32,12 @@ backend/scripts/seed_sophikon.py
 .codex/
 .githooks/
 .agents/
+.gemini/
+
 
 # Local tools and config
 wiki/
 .skill-staging/
 pyrightconfig.json
 fucking_rules/
+excalidraw.log
