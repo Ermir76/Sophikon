@@ -53,9 +53,7 @@ async def search_tasks_for_project(
 ) -> list[Task]:
     search_expr = func.to_tsvector(
         "simple",
-        func.concat_ws(
-            " ", func.coalesce(Task.name, ""), func.coalesce(Task.notes, "")
-        ),
+        func.coalesce(Task.name, "") + " " + func.coalesce(Task.notes, ""),
     )
     ts_query = func.plainto_tsquery("simple", query)
     rank_expr = func.ts_rank_cd(search_expr, ts_query)
