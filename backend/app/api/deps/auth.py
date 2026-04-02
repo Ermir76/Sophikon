@@ -11,11 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.exceptions import AuthenticationError, PermissionDeniedError
+from app.core.exceptions import AuthenticationError
 from app.core.security import decode_access_token
 from app.models.user import User
 from app.service.auth_service import (
     get_user_by_id,
+    require_active_user,
     require_unexpired_email_verification_grace,
 )
 
@@ -66,7 +67,6 @@ async def get_current_user(
 async def get_current_active_user(
     user: Annotated[User, Depends(get_current_user)],
 ) -> User:
-    if not user.is_active:
-        raise PermissionDeniedError("Inactive user")
+    require_active_user(user)
     require_unexpired_email_verification_grace(user)
     return user

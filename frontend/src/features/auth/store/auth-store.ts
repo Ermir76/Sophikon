@@ -83,12 +83,17 @@ export const useAuthStore = create<AuthState>((set) => {
             set({ user, isAuthenticated: true, isInitialized: true });
             return;
           } catch {
-            // Fall through to local auth clear when refresh recovery fails.
+            clearAuth();
+            set({ user: null, isAuthenticated: false, isInitialized: true });
+            return;
           }
         }
 
-        clearAuth();
-        set({ user: null, isAuthenticated: false, isInitialized: true });
+        set((state) => ({
+          user: state.user,
+          isAuthenticated: state.isAuthenticated,
+          isInitialized: true,
+        }));
       }
     },
   };

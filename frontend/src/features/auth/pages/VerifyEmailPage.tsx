@@ -75,9 +75,9 @@ export default function VerifyEmailPage() {
       </Button>
       {resendFeedback}
       <Button asChild variant="outline">
-        <Link to="/">
+        <Link to="/login">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Go to Dashboard
+          Go to Login
         </Link>
       </Button>
     </div>

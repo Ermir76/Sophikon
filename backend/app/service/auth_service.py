@@ -59,6 +59,10 @@ EMAIL_VERIFICATION_GRACE_PERIOD = timedelta(hours=24)
 EMAIL_VERIFICATION_REQUIRED_MESSAGE = (
     "Email verification expired. Request a new verification email to continue."
 )
+ACCOUNT_DEACTIVATED_ERROR_CODE = "ACCOUNT_DEACTIVATED"
+ACCOUNT_DEACTIVATED_MESSAGE = (
+    "Your account has been deactivated. Contact support or your administrator."
+)
 
 _PASSWORD_UPPERCASE_RE = re.compile(r"[A-Z]")
 _PASSWORD_NUMBER_RE = re.compile(r"[0-9]")
@@ -89,6 +93,14 @@ def require_unexpired_email_verification_grace(user: User) -> None:
         raise PermissionDeniedError(
             EMAIL_VERIFICATION_REQUIRED_MESSAGE,
             error_code="EMAIL_VERIFICATION_REQUIRED",
+        )
+
+
+def require_active_user(user: User) -> None:
+    if not user.is_active:
+        raise PermissionDeniedError(
+            ACCOUNT_DEACTIVATED_MESSAGE,
+            error_code=ACCOUNT_DEACTIVATED_ERROR_CODE,
         )
 
 
@@ -301,8 +313,7 @@ async def register_user(
     # Create personal organization
     await create_personal_organization(db, user, commit=False)
 
-    if not user.is_active:
-        raise PermissionDeniedError("Account is deactivated")
+    require_active_user(user)
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     await db.commit()
@@ -326,8 +337,7 @@ async def login_user(
         or not verify_password(password, user.password_hash)
     ):
         raise AuthenticationError("Invalid email or password")
-    if not user.is_active:
-        raise PermissionDeniedError("Account is deactivated")
+    require_active_user(user)
     require_unexpired_email_verification_grace(user)
 
     access_token, raw_refresh = await _create_token_pair(
@@ -379,8 +389,9 @@ async def refresh_tokens(
     db_token.revoked_reason = "rotated"
 
     user = await get_user_by_id(db, db_token.user_id)
-    if not user or not user.is_active:
-        raise AuthenticationError("User not found or deactivated")
+    if not user:
+        raise AuthenticationError("User not found")
+    require_active_user(user)
     require_unexpired_email_verification_grace(user)
 
     access_token, raw_refresh = await _create_token_pair(
@@ -506,8 +517,7 @@ async def confirm_password_reset(
     user = await get_user_by_id(db, user_id)
     if user is None:
         raise InvalidOperationError("Invalid or expired reset token")
-    if not user.is_active:
-        raise PermissionDeniedError("Account is deactivated")
+    require_active_user(user)
 
     if user.password_hash and verify_password(new_password, user.password_hash):
         raise ValidationError("New password must be different from current password")
@@ -689,8 +699,7 @@ async def login_with_google_code(
             await db.flush()
             await create_personal_organization(db, user, commit=False)
 
-    if not user.is_active:
-        raise PermissionDeniedError("Account is deactivated")
+    require_active_user(user)
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     user.last_login_at = datetime.now(UTC)

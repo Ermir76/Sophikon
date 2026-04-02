@@ -33,7 +33,13 @@ vi.mock("@/features/auth/lib/auth", () => ({
 }));
 
 // Now import api and axios
-import { api, consumeBlockedUnverifiedEmail, refreshSessionOnce } from "./api";
+import {
+    api,
+    consumeBlockedUnverifiedEmail,
+    consumeDeactivatedAccountNotice,
+    getVerificationRecoveryRedirectHref,
+    refreshSessionOnce,
+} from "./api";
 import axios from "axios";
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
@@ -41,6 +47,7 @@ type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 describe("API Interceptors", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.history.replaceState({}, "", "/");
         window.sessionStorage.clear();
     });
 
@@ -160,7 +167,8 @@ describe("API Interceptors", () => {
         expect(axios.post).not.toHaveBeenCalled(); // No refresh
     });
 
-    it("captures blocked unverified email from stored auth state", async () => {
+    it("captures blocked unverified email, clears auth, and prepares login recovery", async () => {
+        window.history.replaceState({}, "", "/projects");
         const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
             throw Object.assign(new Error("403"), {
                 response: {
@@ -181,5 +189,86 @@ describe("API Interceptors", () => {
         await expect(api.get("/projects")).rejects.toThrow("403");
 
         expect(consumeBlockedUnverifiedEmail()).toBe("stored@example.com");
+        expect(clearAuthMock).toHaveBeenCalledTimes(1);
+        expect(setStateMock).toHaveBeenCalledWith({
+            user: null,
+            isAuthenticated: false,
+            isInitialized: true,
+        });
+        expect(
+            getVerificationRecoveryRedirectHref({
+                pathname: "/projects",
+                search: "",
+                hash: "",
+            }),
+        ).toBe("/login?next=%2Fprojects");
+    });
+
+    it("does not prepare a redirect when verification recovery is already on a public auth screen", async () => {
+        window.history.replaceState({}, "", "/login");
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            throw Object.assign(new Error("403"), {
+                response: {
+                    status: 403,
+                    data: {
+                        error: {
+                            code: "EMAIL_VERIFICATION_REQUIRED",
+                            message: "Email verification expired.",
+                        },
+                    },
+                },
+                config,
+                isAxiosError: true,
+            });
+        });
+        api.defaults.adapter = adapterMock;
+
+        await expect(api.get("/auth/me")).rejects.toThrow("403");
+
+        expect(consumeBlockedUnverifiedEmail()).toBe("stored@example.com");
+        expect(
+            getVerificationRecoveryRedirectHref({
+                pathname: "/login",
+                search: "",
+                hash: "",
+            }),
+        ).toBeNull();
+    });
+
+    it("captures deactivated account recovery, clears auth, and prepares login redirect", async () => {
+        window.history.replaceState({}, "", "/projects");
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            throw Object.assign(new Error("403"), {
+                response: {
+                    status: 403,
+                    data: {
+                        error: {
+                            code: "ACCOUNT_DEACTIVATED",
+                            message: "Your account has been deactivated.",
+                        },
+                    },
+                },
+                config,
+                isAxiosError: true,
+            });
+        });
+        api.defaults.adapter = adapterMock;
+
+        await expect(api.get("/projects")).rejects.toThrow("403");
+
+        expect(consumeDeactivatedAccountNotice()).toBe(true);
+        expect(clearAuthMock).toHaveBeenCalledTimes(1);
+        expect(setStateMock).toHaveBeenCalledWith({
+            user: null,
+            isAuthenticated: false,
+            isInitialized: true,
+        });
+        expect(
+            getVerificationRecoveryRedirectHref({
+                pathname: "/projects",
+                search: "",
+                hash: "",
+            }),
+        ).toBe("/login?next=%2Fprojects");
     });
 });

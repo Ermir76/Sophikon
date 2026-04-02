@@ -88,18 +88,34 @@ describe("Auth Store", () => {
     expect(authLib.saveAuth).toHaveBeenCalledWith(mockUser);
   });
 
-  it("checkSession failure clears state", async () => {
+  it("checkSession preserves existing session on non-auth failure", async () => {
+    const existingUser = {
+      id: "1",
+      email: "test@example.com",
+      full_name: "Test User",
+      email_verified: true,
+    };
+    useAuthStore.setState({
+      user: existingUser,
+      isAuthenticated: true,
+      isInitialized: false,
+    });
+
     const { authService } = await import("@/features/auth/api/auth.service");
-    vi.mocked(authService.me).mockRejectedValue(new Error("Unauthorized"));
+    vi.mocked(authService.me).mockRejectedValue(
+      Object.assign(new Error("Server error"), {
+        response: { status: 500 },
+      }),
+    );
 
     const { checkSession } = useAuthStore.getState();
     await checkSession();
 
     const state = useAuthStore.getState();
-    expect(state.user).toBeNull();
-    expect(state.isAuthenticated).toBe(false);
+    expect(state.user).toEqual(existingUser);
+    expect(state.isAuthenticated).toBe(true);
     expect(state.isInitialized).toBe(true);
-    expect(authLib.clearAuth).toHaveBeenCalled();
+    expect(authLib.clearAuth).not.toHaveBeenCalled();
   });
 
   it("checkSession retries through shared refresh when /auth/me returns 401", async () => {

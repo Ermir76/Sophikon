@@ -28,6 +28,7 @@ async def test_inactive_user_returns_403(client: AsyncClient, session: AsyncSess
 
     resp = await client.get("/api/v1/auth/me")
     assert resp.status_code == 403
+    assert resp.json()["error"]["code"] == "ACCOUNT_DEACTIVATED"
 
 
 @pytest.mark.asyncio

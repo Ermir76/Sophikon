@@ -57,6 +57,19 @@ describe("VerifyEmailPage", () => {
 
     expect(screen.getByRole("heading", { name: "Invalid Link" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Resend Verification Email" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Login" })).toHaveAttribute("href", "/login");
+  });
+
+  it("keeps the dashboard CTA for successful verification", () => {
+    render(
+      <MemoryRouter initialEntries={["/verify-email?status=success"]}>
+        <Routes>
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("link", { name: "Go to Dashboard" })).toHaveAttribute("href", "/");
   });
 
   it("submits public resend verification with entered email", async () => {

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   startGoogleOAuth: vi.fn(),
   resendVerificationEmail: vi.fn(),
   consumeBlockedUnverifiedEmail: vi.fn(() => null),
+  consumeDeactivatedAccountNotice: vi.fn(() => false),
   loginState: {
     mutate: vi.fn(),
     isPending: false,
@@ -31,6 +32,7 @@ vi.mock("@/features/auth/api/auth.service", () => ({
 
 vi.mock("@/shared/api/api", () => ({
   consumeBlockedUnverifiedEmail: mocks.consumeBlockedUnverifiedEmail,
+  consumeDeactivatedAccountNotice: mocks.consumeDeactivatedAccountNotice,
 }));
 
 describe("LoginPage", () => {
@@ -148,5 +150,46 @@ describe("LoginPage", () => {
     expect(
       screen.getByText("Your email verification window expired. Request a new verification email to continue."),
     ).toBeInTheDocument();
+  });
+
+  it("shows a dedicated deactivated account message on login failure", () => {
+    mocks.loginState.isError = true;
+    mocks.loginState.error = {
+      response: {
+        data: {
+          error: {
+            code: "ACCOUNT_DEACTIVATED",
+            message: "Your account has been deactivated.",
+          },
+        },
+      },
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Your account has been deactivated.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Contact support or your administrator if you think this is a mistake."),
+    ).toBeInTheDocument();
+  });
+
+  it("hydrates deactivated account notice from session recovery state", () => {
+    mocks.consumeDeactivatedAccountNotice.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Your account has been deactivated.")).toBeInTheDocument();
   });
 });

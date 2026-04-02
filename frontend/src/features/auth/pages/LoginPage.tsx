@@ -7,7 +7,10 @@ import { z } from "zod";
 
 import { authService } from "@/features/auth/api/auth.service";
 import { useLogin } from "@/features/auth/hooks/useAuth";
-import { consumeBlockedUnverifiedEmail } from "@/shared/api/api";
+import {
+  consumeBlockedUnverifiedEmail,
+  consumeDeactivatedAccountNotice,
+} from "@/shared/api/api";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -54,6 +57,7 @@ function getErrorCode(error: unknown): string | null {
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [blockedEmail, setBlockedEmail] = useState<string | null>(null);
+  const [isDeactivatedAccount, setIsDeactivatedAccount] = useState(false);
   const [resendState, setResendState] = useState<{
     pending: boolean;
     success: boolean;
@@ -77,10 +81,16 @@ export default function LoginPage() {
   const watchedEmail = form.watch("email");
   const loginErrorCode = getErrorCode(loginMutation.error);
   const requiresVerification = Boolean(blockedEmail) || loginErrorCode === "EMAIL_VERIFICATION_REQUIRED";
+  const requiresDeactivatedAccountNotice =
+    isDeactivatedAccount || loginErrorCode === "ACCOUNT_DEACTIVATED";
   const recoveryEmail =
     blockedEmail ?? (loginErrorCode === "EMAIL_VERIFICATION_REQUIRED" ? watchedEmail : "");
 
   useEffect(() => {
+    if (consumeDeactivatedAccountNotice()) {
+      setIsDeactivatedAccount(true);
+    }
+
     const email = consumeBlockedUnverifiedEmail();
     if (!email) {
       return;
@@ -125,9 +135,20 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {loginMutation.isError && !requiresVerification && (
+      {loginMutation.isError && !requiresVerification && !requiresDeactivatedAccountNotice && (
         <Alert variant="destructive" className="mb-5">
           <AlertDescription>{getErrorMessage(loginMutation.error)}</AlertDescription>
+        </Alert>
+      )}
+
+      {requiresDeactivatedAccountNotice && (
+        <Alert variant="destructive" className="mb-5">
+          <AlertDescription className="space-y-3">
+            <p>Your account has been deactivated.</p>
+            <p className="text-sm">
+              Contact support or your administrator if you think this is a mistake.
+            </p>
+          </AlertDescription>
         </Alert>
       )}
 
@@ -183,6 +204,7 @@ export default function LoginPage() {
         <form
           onSubmit={form.handleSubmit((data) => {
             setBlockedEmail(null);
+            setIsDeactivatedAccount(false);
             setResendState({ pending: false, success: false, error: null });
             loginMutation.mutate(data);
           })}

@@ -351,12 +351,14 @@ async def test_login_user_rejects_inactive_user(session: AsyncSession) -> None:
     user.is_active = False
     await session.commit()
 
-    with pytest.raises(PermissionDeniedError):
+    with pytest.raises(PermissionDeniedError) as exc_info:
         await auth_service.login_user(
             session,
             email,
             password,
         )
+
+    assert exc_info.value.error_code == auth_service.ACCOUNT_DEACTIVATED_ERROR_CODE
 
 
 @pytest.mark.asyncio
@@ -484,6 +486,29 @@ async def test_refresh_tokens_rejects_unverified_user_after_grace_period(
 
     with pytest.raises(PermissionDeniedError, match="verification expired"):
         await auth_service.refresh_tokens(session, refresh_token)
+
+
+@pytest.mark.asyncio
+async def test_refresh_tokens_rejects_inactive_user_with_stable_error_code(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-refresh-inactive")
+    password = "StrongPassword123!"
+
+    user, _, refresh_token = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Refresh Inactive",
+    )
+    user.is_active = False
+    await session.commit()
+
+    with pytest.raises(PermissionDeniedError) as exc_info:
+        await auth_service.refresh_tokens(session, refresh_token)
+
+    assert exc_info.value.error_code == auth_service.ACCOUNT_DEACTIVATED_ERROR_CODE
 
 
 @pytest.mark.asyncio
