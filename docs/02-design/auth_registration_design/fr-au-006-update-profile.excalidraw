@@ -1,0 +1,518 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "manual",
+  "elements": [
+    {
+      "id": "90266e82-fc75-4be0-b107-1f4df142d541",
+      "type": "text",
+      "x": 100,
+      "y": 20,
+      "width": 600,
+      "height": 40,
+      "text": "FR-AU-006: Update Profile (Info & Avatar)\nPlain words + Technical specs",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#111827",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "81855299-3461-4f7f-bf93-95fcc940730b",
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 350,
+      "height": 120,
+      "backgroundColor": "#dbeafe",
+      "strokeColor": "#1d4ed8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "1bb6f45b-4ba4-4ece-ab18-268737a238ce",
+      "type": "text",
+      "x": 120,
+      "y": 120,
+      "width": 310,
+      "height": 80,
+      "text": "Change my name\n\nFrontend submits settings form\n`PATCH /users/me`",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#1d4ed8",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "91ffcc25-3220-44fc-8488-f0794531b965",
+      "type": "arrow",
+      "x": 450,
+      "y": 160,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "35a3ca1b-0e58-41cc-b8b0-be193d3c2548",
+      "type": "diamond",
+      "x": 520,
+      "y": 100,
+      "width": 340,
+      "height": 120,
+      "backgroundColor": "#ffedd5",
+      "strokeColor": "#c2410c",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "bb9c6b89-08d5-4c83-af4c-7011c6af48ca",
+      "type": "text",
+      "x": 570,
+      "y": 150,
+      "width": 240,
+      "height": 20,
+      "text": "Is the name empty?\n\nValidate `full_name` length",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#c2410c",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "d1f1272e-ea30-462a-bef7-14880ea96a0d",
+      "type": "arrow",
+      "x": 860,
+      "y": 160,
+      "width": 70,
+      "height": -60,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          -60
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "d640cbd4-05f6-40a0-8074-7792ed7b4458",
+      "type": "text",
+      "x": 880.0,
+      "y": 110.0,
+      "width": 30,
+      "height": 30,
+      "text": "No",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#166534",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "e2c77c99-6507-47b1-9695-0725dc570b03",
+      "type": "rectangle",
+      "x": 930,
+      "y": 50,
+      "width": 350,
+      "height": 120,
+      "backgroundColor": "#dcfce7",
+      "strokeColor": "#15803d",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "25ae7858-eda6-4ba8-81ff-db90cfa4df80",
+      "type": "text",
+      "x": 950,
+      "y": 70,
+      "width": 310,
+      "height": 80,
+      "text": "Save new name\n\nUpdate `user.full_name` in DB\nReturn UserResponse",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#15803d",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "4592d957-2ada-4d39-9ab8-1fb50b253614",
+      "type": "arrow",
+      "x": 860,
+      "y": 160,
+      "width": 70,
+      "height": 60,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          60
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "ff2e192a-c9c9-4e10-b969-d47189852683",
+      "type": "text",
+      "x": 880.0,
+      "y": 170.0,
+      "width": 30,
+      "height": 30,
+      "text": "Yes",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#166534",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "27587188-7daa-4096-8d91-f5c1615dd74f",
+      "type": "rectangle",
+      "x": 930,
+      "y": 200,
+      "width": 350,
+      "height": 120,
+      "backgroundColor": "#fee2e2",
+      "strokeColor": "#b91c1c",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "a7a635f1-5f68-4672-b9d9-b43b33a54e91",
+      "type": "text",
+      "x": 950,
+      "y": 220,
+      "width": 310,
+      "height": 80,
+      "text": "Reject it\n\nReturn ValidationError",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#b91c1c",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "707b3f3d-ab92-4e11-8d97-3aa3b84aace6",
+      "type": "rectangle",
+      "x": 100,
+      "y": 350,
+      "width": 350,
+      "height": 140,
+      "backgroundColor": "#e0e7ff",
+      "strokeColor": "#4338ca",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "3393a845-6e10-4640-a3c1-89395ff863ab",
+      "type": "text",
+      "x": 120,
+      "y": 370,
+      "width": 310,
+      "height": 100,
+      "text": "Upload new picture\n\nUser picks image file\n`POST /users/me/avatar`",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#4338ca",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "95064130-dc0a-412d-80fd-97e78b6ab4e0",
+      "type": "arrow",
+      "x": 450,
+      "y": 420,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "d204f202-5a60-46c9-8687-d399e3adb324",
+      "type": "diamond",
+      "x": 520,
+      "y": 330,
+      "width": 340,
+      "height": 180,
+      "backgroundColor": "#ffedd5",
+      "strokeColor": "#c2410c",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "e35d8d90-9ed2-4669-a88e-1d7ad4a291ba",
+      "type": "text",
+      "x": 570,
+      "y": 380,
+      "width": 240,
+      "height": 80,
+      "text": "Is the file okay?\n\nCheck type (PNG/JPG/WEBP)\nCheck size <= 2MB",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#c2410c",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "2a3ab240-4361-427d-b855-27bb443f0eb9",
+      "type": "arrow",
+      "x": 860,
+      "y": 420,
+      "width": 70,
+      "height": -60,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          -60
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "2ca6ecad-af3b-4b21-8a78-ce444de72d98",
+      "type": "text",
+      "x": 880.0,
+      "y": 370.0,
+      "width": 30,
+      "height": 30,
+      "text": "Yes",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#166534",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "bd0a7ddf-0440-4cb3-9638-a9b04a4b3004",
+      "type": "rectangle",
+      "x": 930,
+      "y": 340,
+      "width": 350,
+      "height": 140,
+      "backgroundColor": "#dcfce7",
+      "strokeColor": "#15803d",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "09be4aea-5a8f-4673-b11f-2f1fe14b9e7b",
+      "type": "text",
+      "x": 950,
+      "y": 360,
+      "width": 310,
+      "height": 100,
+      "text": "Save file exactly on disk\n\nDelete old avatar from disk\nWrite new file\nUpdate `user.avatar_url`",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#15803d",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "d47ef49d-ecc5-4dc8-af4f-a448fd3bdc12",
+      "type": "arrow",
+      "x": 860,
+      "y": 420,
+      "width": 70,
+      "height": 100,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          100
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "acbac88f-ecd2-4268-b0a3-36e1b3984ae9",
+      "type": "text",
+      "x": 880.0,
+      "y": 450.0,
+      "width": 30,
+      "height": 30,
+      "text": "No",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#166534",
+      "textAlign": "left",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "8ae220f2-4dd8-441c-b753-ec95818db81b",
+      "type": "rectangle",
+      "x": 930,
+      "y": 500,
+      "width": 350,
+      "height": 120,
+      "backgroundColor": "#fee2e2",
+      "strokeColor": "#b91c1c",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "cf956d88-5cae-44b6-b5e8-8f14e582aba9",
+      "type": "text",
+      "x": 950,
+      "y": 520,
+      "width": 310,
+      "height": 80,
+      "text": "Reject bad file\n\nReturn ValidationError",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#b91c1c",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "9e0e9416-0af6-4ff0-97c7-00b5afe1b272",
+      "type": "rectangle",
+      "x": 100,
+      "y": 660,
+      "width": 350,
+      "height": 120,
+      "backgroundColor": "#f3f4f6",
+      "strokeColor": "#4b5563",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "a2f170b8-001d-4762-8464-b89be3b48d7c",
+      "type": "text",
+      "x": 120,
+      "y": 680,
+      "width": 310,
+      "height": 80,
+      "text": "Remove my picture\n\nClick delete avatar\n`DELETE /users/me/avatar`",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#4b5563",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    },
+    {
+      "id": "670cd734-4b87-4cf4-b70b-3b003e356c68",
+      "type": "arrow",
+      "x": 450,
+      "y": 720,
+      "width": 100,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          100,
+          0
+        ]
+      ],
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "id": "3f676bc3-30a5-49b8-9ea6-e3d64468a625",
+      "type": "rectangle",
+      "x": 550,
+      "y": 660,
+      "width": 400,
+      "height": 120,
+      "backgroundColor": "#fef9c3",
+      "strokeColor": "#a16207",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "id": "6ec4d7bd-2d7e-4607-909d-75770c35ea90",
+      "type": "text",
+      "x": 570,
+      "y": 680,
+      "width": 360,
+      "height": 80,
+      "text": "Delete file and clear profile\n\nUnlink file from server disk\nUpdate `user.avatar_url = None`\nReturn UserResponse",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "strokeColor": "#a16207",
+      "textAlign": "center",
+      "verticalAlign": "middle"
+    }
+  ]
+}
