@@ -60,6 +60,66 @@ services:
       ai-service:
         condition: service_started
 
+  celery-worker:
+    build:
+      context: ./backend
+    container_name: sophikon-celery-worker
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD}@postgres:5432/sophikon
+      REDIS_URL: redis://redis:6379/0
+      MAIL_SERVER: ${MAIL_SERVER:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM: noreply@sophikon.org
+      MAIL_STARTTLS: "false"
+      MAIL_SSL_TLS: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8010}
+      AI_SERVICE_SHARED_SECRET: ${AI_SERVICE_SHARED_SECRET:-dev-ai-shared-secret}
+    command: ["celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ai-service:
+        condition: service_started
+
+  celery-beat:
+    build:
+      context: ./backend
+    container_name: sophikon-celery-beat
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sophikon_user:${POSTGRES_PASSWORD}@postgres:5432/sophikon
+      REDIS_URL: redis://redis:6379/0
+      MAIL_SERVER: ${MAIL_SERVER:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM: noreply@sophikon.org
+      MAIL_STARTTLS: "false"
+      MAIL_SSL_TLS: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8010}
+      AI_SERVICE_SHARED_SECRET: ${AI_SERVICE_SHARED_SECRET:-dev-ai-shared-secret}
+    command: ["celery", "-A", "app.celery_app:celery_app", "beat", "--loglevel=info"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ai-service:
+        condition: service_started
+
   ai-service:
     build:
       context: ./ai-service

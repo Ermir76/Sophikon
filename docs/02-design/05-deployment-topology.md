@@ -14,11 +14,13 @@ All services run via Docker Compose:
 | `postgres`   | PostgreSQL 18       | 5433 → 5432 |
 | `redis`      | Redis 7             | 6379        |
 | `backend`    | FastAPI             | 8000        |
+| `celery-worker` | Celery worker    | -           |
+| `celery-beat` | Celery beat        | -           |
 | `ai-service` | FastAPI             | 8010        |
 | `nginx`      | Reverse proxy       | 80, 443     |
 | `mailpit`    | Dev SMTP (optional) | 1025, 8025  |
 
-Startup order: `postgres` + `redis` + `ai-service` → `backend` → `nginx`.
+Startup order: `postgres` + `redis` + `ai-service` → `backend` + `celery-worker` + `celery-beat` → `nginx`.
 
 ---
 
@@ -31,7 +33,10 @@ Startup order: `postgres` + `redis` + `ai-service` → `backend` → `nginx`.
 - `AI_MODE` — LLM provider (`anthropic` | `openai` | `gemini` | `mock`)
 - `AI_SERVICE_SHARED_SECRET` — all requests require `X-AI-Service-Secret` header matching backend config
 
-**Celery** — worker and beat run as separate processes (not in docker-compose). Must be started manually in development.
+**Celery** — worker and beat run as separate containers in Docker Compose. They use the same backend image/codebase, but each container runs its own process:
+
+- `celery-worker` — `celery -A app.celery_app:celery_app worker --loglevel=info`
+- `celery-beat` — `celery -A app.celery_app:celery_app beat --loglevel=info`
 
 ---
 
