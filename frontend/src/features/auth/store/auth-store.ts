@@ -13,6 +13,11 @@ export interface AuthState {
 export const useAuthStore = create<AuthState>((set) => {
   // Synchronously initialize state from localStorage
   const initialUser = getUser();
+  const isUnauthorizedError = (error: unknown): boolean =>
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    (error as { response?: { status?: number } }).response?.status === 401;
 
   return {
     user: initialUser,
@@ -65,7 +70,23 @@ export const useAuthStore = create<AuthState>((set) => {
         const user = await authService.me();
         saveAuth(user);
         set({ user, isAuthenticated: true, isInitialized: true });
-      } catch {
+      } catch (error) {
+        if (isUnauthorizedError(error)) {
+          try {
+            const [{ refreshSessionOnce }, { authService }] = await Promise.all([
+              import("@/shared/api/api"),
+              import("@/features/auth/api/auth.service"),
+            ]);
+            await refreshSessionOnce();
+            const user = await authService.me();
+            saveAuth(user);
+            set({ user, isAuthenticated: true, isInitialized: true });
+            return;
+          } catch {
+            // Fall through to local auth clear when refresh recovery fails.
+          }
+        }
+
         clearAuth();
         set({ user: null, isAuthenticated: false, isInitialized: true });
       }

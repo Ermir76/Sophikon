@@ -7,6 +7,7 @@ vi.mock("@/shared/api/api", () => ({
   api: {
     post: vi.fn(),
   },
+  refreshSessionOnce: vi.fn(),
 }));
 
 vi.mock("@/features/auth/api/auth.service", () => ({
@@ -95,6 +96,55 @@ describe("Auth Store", () => {
     await checkSession();
 
     const state = useAuthStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.isInitialized).toBe(true);
+    expect(authLib.clearAuth).toHaveBeenCalled();
+  });
+
+  it("checkSession retries through shared refresh when /auth/me returns 401", async () => {
+    const mockUser = {
+      id: "1",
+      email: "test@example.com",
+      full_name: "Test User",
+      email_verified: true,
+    };
+    const unauthorizedError = Object.assign(new Error("Unauthorized"), {
+      response: { status: 401 },
+    });
+    const { authService } = await import("@/features/auth/api/auth.service");
+    const { refreshSessionOnce } = await import("@/shared/api/api");
+    vi.mocked(authService.me)
+      .mockRejectedValueOnce(unauthorizedError)
+      .mockResolvedValueOnce(mockUser);
+    vi.mocked(refreshSessionOnce).mockResolvedValue(undefined);
+
+    const { checkSession } = useAuthStore.getState();
+    await checkSession();
+
+    const state = useAuthStore.getState();
+    expect(refreshSessionOnce).toHaveBeenCalledTimes(1);
+    expect(authService.me).toHaveBeenCalledTimes(2);
+    expect(state.user).toEqual(mockUser);
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.isInitialized).toBe(true);
+    expect(authLib.saveAuth).toHaveBeenCalledWith(mockUser);
+  });
+
+  it("checkSession clears auth when bootstrap refresh recovery fails", async () => {
+    const unauthorizedError = Object.assign(new Error("Unauthorized"), {
+      response: { status: 401 },
+    });
+    const { authService } = await import("@/features/auth/api/auth.service");
+    const { refreshSessionOnce } = await import("@/shared/api/api");
+    vi.mocked(authService.me).mockRejectedValue(unauthorizedError);
+    vi.mocked(refreshSessionOnce).mockRejectedValue(new Error("Refresh failed"));
+
+    const { checkSession } = useAuthStore.getState();
+    await checkSession();
+
+    const state = useAuthStore.getState();
+    expect(refreshSessionOnce).toHaveBeenCalledTimes(1);
     expect(state.user).toBeNull();
     expect(state.isAuthenticated).toBe(false);
     expect(state.isInitialized).toBe(true);

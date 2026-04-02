@@ -696,6 +696,54 @@ async def test_confirm_password_reset_rejects_expired_token(
 
 
 @pytest.mark.asyncio
+async def test_confirm_password_reset_rejects_same_password_without_consuming_token(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-reset-same-password")
+    current_password = "StrongPassword123!"
+    raw_reset_token = _unique_value("same-password-token")
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        email,
+        current_password,
+        "Reset Same Password",
+    )
+    user_id = user.id
+    session.add(
+        PasswordReset(
+            user_id=user_id,
+            token_hash=hash_token(raw_reset_token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+    )
+    await session.commit()
+
+    with pytest.raises(ValidationError):
+        await auth_service.confirm_password_reset(
+            session,
+            token=raw_reset_token,
+            new_password=current_password,
+        )
+
+    await session.rollback()
+
+    reset_result = await session.execute(
+        select(PasswordReset).where(PasswordReset.user_id == user_id)
+    )
+    reset_row = reset_result.scalar_one()
+    assert reset_row.used_at is None
+
+    logged_in_user, _, _ = await auth_service.login_user(
+        session,
+        email,
+        current_password,
+    )
+    assert logged_in_user.id == user_id
+
+
+@pytest.mark.asyncio
 async def test_update_user_profile_updates_allowed_fields_only(
     session: AsyncSession,
 ) -> None:

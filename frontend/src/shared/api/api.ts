@@ -13,6 +13,8 @@ interface RetryableRequest extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+let refreshPromise: Promise<void> | null = null;
+
 // Auth endpoints should never trigger token refresh
 const AUTH_PATHS = [
   "/auth/login",
@@ -24,6 +26,23 @@ const AUTH_PATHS = [
   "/auth/password-reset",
   "/auth/password-reset/confirm",
 ];
+
+export async function refreshSessionOnce(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(
+        `${API_BASE}/auth/refresh`,
+        {},
+        { withCredentials: true },
+      )
+      .then(() => undefined)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
 
 // Response Interceptor: Handle Errors (401)
 api.interceptors.response.use(
@@ -43,11 +62,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post(
-          `${API_BASE}/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
+        await refreshSessionOnce();
 
         return api(originalRequest);
       } catch (refreshError) {

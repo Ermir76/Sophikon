@@ -398,8 +398,29 @@ async def confirm_password_reset(
     token_hash_value = hash_token(token)
     now = datetime.now(UTC)
 
-    # Atomically consume reset token only if still unused + unexpired and user is active.
-    # This prevents double-success under concurrent confirm requests.
+    candidate_result = await db.execute(
+        select(PasswordReset.user_id).where(
+            PasswordReset.token_hash == token_hash_value,
+            PasswordReset.used_at.is_(None),
+            PasswordReset.expires_at >= now,
+        )
+    )
+    user_id = candidate_result.scalar_one_or_none()
+    if user_id is None:
+        raise InvalidOperationError("Invalid or expired reset token")
+
+    user = await get_user_by_id(db, user_id)
+    if user is None:
+        raise InvalidOperationError("Invalid or expired reset token")
+    if not user.is_active:
+        raise PermissionDeniedError("Account is deactivated")
+
+    if user.password_hash and verify_password(new_password, user.password_hash):
+        raise ValidationError("New password must be different from current password")
+
+    # Atomically consume reset token only after validation passes.
+    # This prevents same-password validation failures from burning the link,
+    # while still preventing double-success under concurrent confirm requests.
     consume_result = await db.execute(
         update(PasswordReset)
         .where(
@@ -416,29 +437,7 @@ async def confirm_password_reset(
         .values(used_at=now)
         .returning(PasswordReset.user_id)
     )
-    user_id = consume_result.scalar_one_or_none()
-    if user_id is None:
-        # Preserve error semantics for valid token + inactive account.
-        candidate_result = await db.execute(
-            select(PasswordReset.user_id).where(
-                PasswordReset.token_hash == token_hash_value,
-                PasswordReset.used_at.is_(None),
-                PasswordReset.expires_at >= now,
-            )
-        )
-        candidate_user_id = candidate_result.scalar_one_or_none()
-        if candidate_user_id is None:
-            raise InvalidOperationError("Invalid or expired reset token")
-
-        candidate_user = await get_user_by_id(db, candidate_user_id)
-        if candidate_user is None:
-            raise InvalidOperationError("Invalid or expired reset token")
-        if not candidate_user.is_active:
-            raise PermissionDeniedError("Account is deactivated")
-        raise InvalidOperationError("Invalid or expired reset token")
-
-    user = await get_user_by_id(db, user_id)
-    if user is None:
+    if consume_result.scalar_one_or_none() is None:
         raise InvalidOperationError("Invalid or expired reset token")
 
     user.password_hash = hash_password(new_password)

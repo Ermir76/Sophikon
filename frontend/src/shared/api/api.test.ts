@@ -31,7 +31,7 @@ vi.mock("@/features/auth/lib/auth", () => ({
 }));
 
 // Now import api and axios
-import { api } from "./api";
+import { api, refreshSessionOnce } from "./api";
 import axios from "axios";
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
@@ -116,6 +116,28 @@ describe("API Interceptors", () => {
             isAuthenticated: false,
             isInitialized: true,
         });
+    });
+
+    it("coalesces concurrent refresh attempts into a single request", async () => {
+        let resolveRefresh: (() => void) | undefined;
+        vi.mocked(axios.post).mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    resolveRefresh = () => resolve({ status: 200 });
+                }),
+        );
+
+        const firstRefresh = refreshSessionOnce();
+        const secondRefresh = refreshSessionOnce();
+
+        expect(axios.post).toHaveBeenCalledTimes(1);
+
+        resolveRefresh?.();
+        await Promise.all([firstRefresh, secondRefresh]);
+
+        vi.mocked(axios.post).mockResolvedValueOnce({ status: 200 });
+        await refreshSessionOnce();
+        expect(axios.post).toHaveBeenCalledTimes(2);
     });
 
     it("does not retry if already retried", async () => {
