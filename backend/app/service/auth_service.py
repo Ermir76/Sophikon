@@ -5,6 +5,7 @@ Handles registration, login, token refresh, and logout.
 """
 
 import logging
+import re
 from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
@@ -48,9 +49,37 @@ GOOGLE_OAUTH_SCOPES = "openid email profile"
 
 logger = logging.getLogger(__name__)
 
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_MIN_LENGTH_MESSAGE = "Password must be at least 8 characters."
+PASSWORD_MAX_BYTES_MESSAGE = "Password must be at most 72 bytes"
+PASSWORD_UPPERCASE_MESSAGE = "Password must contain at least one uppercase letter"
+PASSWORD_NUMBER_MESSAGE = "Password must contain at least one number"
+PASSWORD_SPECIAL_MESSAGE = "Password must contain at least one special character"
+
+_PASSWORD_UPPERCASE_RE = re.compile(r"[A-Z]")
+_PASSWORD_NUMBER_RE = re.compile(r"[0-9]")
+_PASSWORD_SPECIAL_RE = re.compile(r"[^a-zA-Z0-9]")
+
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def validate_password_policy(password: str) -> None:
+    if len(password) < PASSWORD_MIN_LENGTH:
+        raise ValidationError(PASSWORD_MIN_LENGTH_MESSAGE)
+
+    # bcrypt only uses the first 72 bytes; enforce this explicitly to avoid
+    # silent truncation and make validation behavior deterministic.
+    if len(password.encode("utf-8")) > 72:
+        raise ValidationError(PASSWORD_MAX_BYTES_MESSAGE)
+
+    if not _PASSWORD_UPPERCASE_RE.search(password):
+        raise ValidationError(PASSWORD_UPPERCASE_MESSAGE)
+    if not _PASSWORD_NUMBER_RE.search(password):
+        raise ValidationError(PASSWORD_NUMBER_MESSAGE)
+    if not _PASSWORD_SPECIAL_RE.search(password):
+        raise ValidationError(PASSWORD_SPECIAL_MESSAGE)
 
 
 def get_google_redirect_uri() -> str:
@@ -223,11 +252,7 @@ async def register_user(
 ) -> tuple[User, str, str]:
     """Register a new user. Returns (user, access_token, refresh_token)."""
     normalized_email = normalize_email(email)
-
-    # bcrypt only uses the first 72 bytes; enforce this explicitly to avoid
-    # silent truncation and make validation behavior deterministic.
-    if len(password.encode("utf-8")) > 72:
-        raise ValidationError("Password must be at most 72 bytes")
+    validate_password_policy(password)
 
     existing = await get_user_by_email(db, normalized_email)
     if existing:
@@ -246,6 +271,9 @@ async def register_user(
 
     # Create personal organization
     await create_personal_organization(db, user, commit=False)
+
+    if not user.is_active:
+        raise PermissionDeniedError("Account is deactivated")
 
     access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
     await db.commit()
@@ -392,8 +420,7 @@ async def confirm_password_reset(
     """
     Validate reset token and rotate user password.
     """
-    if len(new_password.encode("utf-8")) > 72:
-        raise ValidationError("Password must be at most 72 bytes")
+    validate_password_policy(new_password)
 
     token_hash_value = hash_token(token)
     now = datetime.now(UTC)
@@ -461,8 +488,7 @@ async def change_password(
 
     Revokes all active refresh tokens after success.
     """
-    if len(new_password.encode("utf-8")) > 72:
-        raise ValidationError("Password must be at most 72 bytes")
+    validate_password_policy(new_password)
 
     if not user.password_hash or not verify_password(
         current_password, user.password_hash

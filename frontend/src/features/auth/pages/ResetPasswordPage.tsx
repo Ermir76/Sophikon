@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router";
 import { z } from "zod";
 
 import { useConfirmPasswordReset } from "@/features/auth/hooks/useAuth";
+import { createPasswordSchema } from "@/features/auth/lib/passwordPolicy";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -22,15 +23,7 @@ import { Input } from "@/shared/ui/input";
 
 const resetPasswordSchema = z
   .object({
-    new_password: z
-      .string()
-      .min(8, "Password must be at least 8 characters.")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(
-        /[^a-zA-Z0-9]/,
-        "Password must contain at least one special character",
-      ),
+    new_password: createPasswordSchema(),
     confirmPassword: z.string().min(8, "Password confirmation is required."),
   })
   .refine((data) => data.new_password === data.confirmPassword, {

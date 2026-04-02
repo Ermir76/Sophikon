@@ -120,6 +120,25 @@ async def test_register_weak_password(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_register_rejects_password_without_uppercase(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "weakpass-uppercase@example.com",
+            "password": "lowercase123!",
+            "full_name": "Weak Password Uppercase",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert (
+        response.json()["error"]["message"]
+        == "Password must contain at least one uppercase letter"
+    )
+
+
+@pytest.mark.asyncio
 async def test_register_invalid_email(client: AsyncClient):
     """Register — invalid email format returns 422"""
     response = await client.post(
@@ -688,6 +707,43 @@ async def test_password_reset_confirm_rejects_expired_token(
 
 
 @pytest.mark.asyncio
+async def test_password_reset_confirm_rejects_password_without_number(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    email = "password-reset-weak@example.com"
+    old_password = "StrongPassword123!"
+    raw_token = "weak-reset-token"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": old_password, "full_name": "Reset Weak"},
+    )
+    user = await auth_service.get_user_by_email(session, email)
+    assert user is not None
+
+    session.add(
+        PasswordReset(
+            user_id=user.id,
+            token_hash=hash_token(raw_token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+    )
+    await session.commit()
+
+    response = await client.post(
+        "/api/v1/auth/password-reset/confirm",
+        json={"token": raw_token, "new_password": "MissingNumber!"},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert (
+        response.json()["error"]["message"]
+        == "Password must contain at least one number"
+    )
+
+
+@pytest.mark.asyncio
 async def test_patch_users_me_requires_authentication(client: AsyncClient):
     response = await client.patch("/api/v1/users/me", json={"full_name": "Updated"})
     assert response.status_code == 401
@@ -881,6 +937,34 @@ async def test_change_password_rejects_wrong_current_password(client: AsyncClien
     )
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "INVALID_OPERATION"
+
+
+@pytest.mark.asyncio
+async def test_change_password_rejects_password_without_special_character(
+    client: AsyncClient,
+):
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "change-password-weak-new@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "Change Password Weak New",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/change-password",
+        json={
+            "current_password": "StrongPassword123!",
+            "new_password": "MissingSpecial123",
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert (
+        response.json()["error"]["message"]
+        == "Password must contain at least one special character"
+    )
 
 
 @pytest.mark.asyncio

@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { useChangePassword } from "@/features/auth";
+import {
+  createPasswordSchema,
+  getPasswordChecklist,
+} from "@/features/auth/lib/passwordPolicy";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -23,12 +27,7 @@ import { Input } from "@/shared/ui/input";
 const changePasswordSchema = z
   .object({
     current_password: z.string().min(1, "Current password is required."),
-    new_password: z
-      .string()
-      .min(8, "Password must be at least 8 characters.")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
+    new_password: createPasswordSchema(),
     confirm_password: z.string().min(1, "Please confirm your password."),
   })
   .refine((data) => data.new_password === data.confirm_password, {
@@ -52,15 +51,7 @@ export function SecuritySection() {
 
   const newPassword = securityForm.watch("new_password");
 
-  const checklist = useMemo(
-    () => [
-      { label: "At least 8 characters", valid: newPassword.length >= 8 },
-      { label: "One uppercase letter", valid: /[A-Z]/.test(newPassword) },
-      { label: "One number", valid: /[0-9]/.test(newPassword) },
-      { label: "One special character", valid: /[^a-zA-Z0-9]/.test(newPassword) },
-    ],
-    [newPassword],
-  );
+  const checklist = useMemo(() => getPasswordChecklist(newPassword), [newPassword]);
 
   return (
     <section className="space-y-5">

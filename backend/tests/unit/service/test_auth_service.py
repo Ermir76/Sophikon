@@ -81,6 +81,26 @@ def _unique_value(prefix: str) -> str:
     return f"{prefix}-{uuid7()}"
 
 
+@pytest.mark.parametrize(
+    ("password", "expected_message"),
+    [
+        ("lowercase123!", auth_service.PASSWORD_UPPERCASE_MESSAGE),
+        ("MissingNumber!", auth_service.PASSWORD_NUMBER_MESSAGE),
+        ("MissingSpecial123", auth_service.PASSWORD_SPECIAL_MESSAGE),
+        ("a" * 73, auth_service.PASSWORD_MAX_BYTES_MESSAGE),
+    ],
+)
+def test_validate_password_policy_rejects_invalid_passwords(
+    password: str, expected_message: str
+) -> None:
+    with pytest.raises(ValidationError, match=expected_message):
+        auth_service.validate_password_policy(password)
+
+
+def test_validate_password_policy_accepts_strong_password() -> None:
+    auth_service.validate_password_policy("StrongPassword123!")
+
+
 @pytest.mark.asyncio
 async def test_register_user_hashes_password_and_persists_refresh_token(
     session: AsyncSession,
@@ -128,6 +148,31 @@ async def test_register_user_rejects_password_over_72_bytes(
             email,
             too_long_password,
             "Auth Too Long",
+        )
+
+
+@pytest.mark.parametrize(
+    ("password", "expected_message"),
+    [
+        ("lowercase123!", auth_service.PASSWORD_UPPERCASE_MESSAGE),
+        ("MissingNumber!", auth_service.PASSWORD_NUMBER_MESSAGE),
+        ("MissingSpecial123", auth_service.PASSWORD_SPECIAL_MESSAGE),
+    ],
+)
+@pytest.mark.asyncio
+async def test_register_user_rejects_passwords_that_fail_complexity_policy(
+    session: AsyncSession,
+    password: str,
+    expected_message: str,
+) -> None:
+    await _ensure_system_user_role(session)
+
+    with pytest.raises(ValidationError, match=expected_message):
+        await auth_service.register_user(
+            session,
+            _unique_email("auth-register-policy"),
+            password,
+            "Auth Register Policy",
         )
 
 
@@ -743,6 +788,48 @@ async def test_confirm_password_reset_rejects_same_password_without_consuming_to
     assert logged_in_user.id == user_id
 
 
+@pytest.mark.parametrize(
+    ("new_password", "expected_message"),
+    [
+        ("lowercase123!", auth_service.PASSWORD_UPPERCASE_MESSAGE),
+        ("MissingNumber!", auth_service.PASSWORD_NUMBER_MESSAGE),
+        ("MissingSpecial123", auth_service.PASSWORD_SPECIAL_MESSAGE),
+        ("a" * 73, auth_service.PASSWORD_MAX_BYTES_MESSAGE),
+    ],
+)
+@pytest.mark.asyncio
+async def test_confirm_password_reset_rejects_passwords_that_fail_complexity_policy(
+    session: AsyncSession,
+    new_password: str,
+    expected_message: str,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-reset-policy")
+    raw_reset_token = _unique_value("reset-policy-token")
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        email,
+        "StrongPassword123!",
+        "Reset Policy User",
+    )
+    session.add(
+        PasswordReset(
+            user_id=user.id,
+            token_hash=hash_token(raw_reset_token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+    )
+    await session.commit()
+
+    with pytest.raises(ValidationError, match=expected_message):
+        await auth_service.confirm_password_reset(
+            session,
+            token=raw_reset_token,
+            new_password=new_password,
+        )
+
+
 @pytest.mark.asyncio
 async def test_update_user_profile_updates_allowed_fields_only(
     session: AsyncSession,
@@ -879,6 +966,40 @@ async def test_change_password_revokes_refresh_tokens_and_rotates_login_credenti
     old_refresh = refresh_result.scalar_one()
     assert old_refresh.is_revoked is True
     assert old_refresh.revoked_reason == "password_change"
+
+
+@pytest.mark.parametrize(
+    ("new_password", "expected_message"),
+    [
+        ("lowercase123!", auth_service.PASSWORD_UPPERCASE_MESSAGE),
+        ("MissingNumber!", auth_service.PASSWORD_NUMBER_MESSAGE),
+        ("MissingSpecial123", auth_service.PASSWORD_SPECIAL_MESSAGE),
+        ("a" * 73, auth_service.PASSWORD_MAX_BYTES_MESSAGE),
+    ],
+)
+@pytest.mark.asyncio
+async def test_change_password_rejects_passwords_that_fail_complexity_policy(
+    session: AsyncSession,
+    new_password: str,
+    expected_message: str,
+) -> None:
+    await _ensure_system_user_role(session)
+    current_password = "StrongPassword123!"
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        _unique_email("auth-change-policy"),
+        current_password,
+        "Change Password Policy",
+    )
+
+    with pytest.raises(ValidationError, match=expected_message):
+        await auth_service.change_password(
+            session,
+            user=user,
+            current_password=current_password,
+            new_password=new_password,
+        )
 
 
 @pytest.mark.asyncio
