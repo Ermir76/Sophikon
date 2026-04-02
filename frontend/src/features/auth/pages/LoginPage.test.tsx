@@ -8,26 +8,40 @@ import LoginPage from "@/features/auth/pages/LoginPage";
 const mocks = vi.hoisted(() => ({
   loginMutate: vi.fn(),
   startGoogleOAuth: vi.fn(),
-}));
-
-vi.mock("@/features/auth/hooks/useAuth", () => ({
-  useLogin: vi.fn(() => ({
-    mutate: mocks.loginMutate,
+  resendVerificationEmail: vi.fn(),
+  consumeBlockedUnverifiedEmail: vi.fn(() => null),
+  loginState: {
+    mutate: vi.fn(),
     isPending: false,
     isError: false,
     error: null,
-  })),
+  },
+}));
+
+vi.mock("@/features/auth/hooks/useAuth", () => ({
+  useLogin: vi.fn(() => mocks.loginState),
 }));
 
 vi.mock("@/features/auth/api/auth.service", () => ({
   authService: {
     startGoogleOAuth: mocks.startGoogleOAuth,
+    resendVerificationEmail: mocks.resendVerificationEmail,
   },
+}));
+
+vi.mock("@/shared/api/api", () => ({
+  consumeBlockedUnverifiedEmail: mocks.consumeBlockedUnverifiedEmail,
 }));
 
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.loginState = {
+      mutate: mocks.loginMutate,
+      isPending: false,
+      isError: false,
+      error: null,
+    };
     globalThis.ResizeObserver = class ResizeObserver {
       observe() {}
       unobserve() {}
@@ -87,5 +101,52 @@ describe("LoginPage", () => {
       password: "StrongPassword123!",
       remember_me: true,
     });
+  });
+
+  it("shows blocked verification recovery and resends using the public endpoint", async () => {
+    const user = userEvent.setup();
+    mocks.loginState.isError = true;
+    mocks.loginState.error = {
+      response: {
+        data: {
+          error: {
+            code: "EMAIL_VERIFICATION_REQUIRED",
+            message: "Email verification expired.",
+          },
+        },
+      },
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email Address"), "blocked@example.com");
+    await user.click(screen.getByRole("button", { name: "Resend Verification Email" }));
+
+    expect(mocks.resendVerificationEmail).toHaveBeenCalledWith({
+      email: "blocked@example.com",
+    });
+  });
+
+  it("hydrates blocked verification recovery from stored email", () => {
+    mocks.consumeBlockedUnverifiedEmail.mockReturnValue("stored@example.com");
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByDisplayValue("stored@example.com")).toBeInTheDocument();
+    expect(
+      screen.getByText("Your email verification window expired. Request a new verification email to continue."),
+    ).toBeInTheDocument();
   });
 });

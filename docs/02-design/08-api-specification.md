@@ -84,6 +84,7 @@ flowchart TB
         A5[POST /password-reset]
         A6[GET /oauth/google]
         A7[POST /change-password]
+        A8[POST /resend-verification-email]
     end
 
     subgraph Users["/users"]
@@ -211,7 +212,7 @@ flowchart TB
 
 | Category      | Count | Endpoints                     |
 | ------------- | ----- | ----------------------------- |
-| Auth          | 8     | /auth/\*                      |
+| Auth          | 9     | /auth/\*                      |
 | Users         | 5     | /users/\*                     |
 | Organizations | 5     | /organizations/\*             |
 | Org Members   | 4     | /organizations/:id/members/\* |
@@ -244,6 +245,7 @@ Auth contract (runtime):
 - Cookie names:
   - `access_token` (path: `/api`)
   - `refresh_token` (path: `/api/v1/auth`)
+- Unverified accounts have a 24-hour grace period from registration; after that, login, refresh, and protected routes return `403 EMAIL_VERIFICATION_REQUIRED` until the email is verified.
 
 ### POST /auth/register
 
@@ -432,6 +434,32 @@ Change password for the authenticated user.
   "message": "Password has been changed"
 }
 ```
+
+---
+
+### POST /auth/resend-verification-email
+
+Public resend endpoint for verification recovery.
+
+This route always returns a generic success message to avoid account enumeration. It is intended for blocked or expired unverified users who can no longer use authenticated resend flows.
+
+**Request:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "If the email exists, a verification email was sent."
+}
+```
+
+**Errors:** `422` - Invalid email payload, `429` - Rate limited
 
 ---
 
@@ -3294,3 +3322,4 @@ OpenAPI 3.0 specification.
 | 3.0     | 2026-02-06 | Ermir  | Added resources, calendars, baselines, time entries, comments, attachments, notifications (75+ endpoints) |
 | 4.0     | 2026-02-13 | AI     | Added organization & organization member endpoints for multi-tenancy                                      |
 | 4.1     | 2026-03-30 | Codex  | Added `GET /projects/:id/tasks/search` to endpoint map and task endpoint reference.                      |
+| 4.2     | 2026-04-02 | Codex  | Added `POST /auth/resend-verification-email` and documented the 24-hour email-verification enforcement contract. |

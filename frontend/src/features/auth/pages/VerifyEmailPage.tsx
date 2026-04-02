@@ -1,19 +1,22 @@
 import { ArrowLeft, CheckCircle2, Mail, XCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
-import { useSendVerificationEmail } from "@/features/auth/hooks/useAuth";
+import { useResendVerificationEmail } from "@/features/auth/hooks/useAuth";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const queryStatus = searchParams.get("status");
   const checkSession = useAuthStore((state) => state.checkSession);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const resendMutation = useSendVerificationEmail();
+  const user = useAuthStore((state) => state.user);
+  const resendMutation = useResendVerificationEmail();
+  const [email, setEmail] = useState(user?.email ?? "");
 
   useEffect(() => {
     if (queryStatus === "success") {
@@ -21,22 +24,56 @@ export default function VerifyEmailPage() {
     }
   }, [queryStatus, checkSession]);
 
-  const resendErrorAlert = resendMutation.isError ? (
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user?.email]);
+
+  const resendFeedback = resendMutation.isError ? (
     <Alert variant="destructive">
       <AlertDescription>{getErrorMessage(resendMutation.error)}</AlertDescription>
     </Alert>
+  ) : resendMutation.isSuccess ? (
+    <Alert>
+      <AlertDescription>
+        If that email exists, a verification email was sent. Use the newest link in your
+        inbox.
+      </AlertDescription>
+    </Alert>
   ) : null;
+
+  function handleResend() {
+    if (!email) {
+      return;
+    }
+    resendMutation.mutate({ email });
+  }
 
   const resendActions = (
     <div className="flex flex-col gap-3">
+      <div className="space-y-2 text-left">
+        <Label htmlFor="verification-email">Email address</Label>
+        <Input
+          id="verification-email"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            resendMutation.reset();
+          }}
+          placeholder="name@example.com"
+          autoComplete="email"
+        />
+      </div>
       <Button
-        onClick={() => resendMutation.mutate()}
-        disabled={resendMutation.isPending || resendMutation.isSuccess}
+        onClick={handleResend}
+        disabled={resendMutation.isPending || resendMutation.isSuccess || !email}
       >
         <Mail className="mr-2 h-4 w-4" />
-        {resendMutation.isSuccess ? "Email Sent!" : "Resend Verification Email"}
+        {resendMutation.isPending ? "Sending..." : "Resend Verification Email"}
       </Button>
-      {resendErrorAlert}
+      {resendFeedback}
       <Button asChild variant="outline">
         <Link to="/">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -74,11 +111,7 @@ export default function VerifyEmailPage() {
           This link may have expired or already been used. Please request a new
           verification email.
         </p>
-        {isAuthenticated ? resendActions : (
-          <Button asChild>
-            <Link to="/login">Go to Login</Link>
-          </Button>
-        )}
+        {resendActions}
       </div>
     );
   }
@@ -93,11 +126,7 @@ export default function VerifyEmailPage() {
         This verification link appears to be invalid. Please check your email and try
         again.
       </p>
-      {isAuthenticated ? resendActions : (
-        <Button asChild>
-          <Link to="/login">Go to Login</Link>
-        </Button>
-      )}
+      {resendActions}
     </div>
   );
 }

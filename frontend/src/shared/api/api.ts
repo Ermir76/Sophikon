@@ -9,6 +9,8 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+const BLOCKED_UNVERIFIED_SESSION_KEY = "auth.blocked-unverified-email";
+
 interface RetryableRequest extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
@@ -23,6 +25,7 @@ const AUTH_PATHS = [
   "/auth/refresh",
   "/auth/me",
   "/auth/send-verification-email",
+  "/auth/resend-verification-email",
   "/auth/password-reset",
   "/auth/password-reset/confirm",
 ];
@@ -50,6 +53,35 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequest;
     const requestPath = originalRequest?.url || "";
+    const errorCode =
+      typeof error.response?.data === "object" &&
+      error.response?.data !== null &&
+      "error" in error.response.data &&
+      typeof error.response.data.error === "object" &&
+      error.response.data.error !== null &&
+      "code" in error.response.data.error
+        ? String(error.response.data.error.code)
+        : null;
+    const responseBlockedEmail =
+      typeof error.response?.data === "object" &&
+      error.response?.data !== null &&
+      "error" in error.response.data &&
+      typeof error.response.data.error === "object" &&
+      error.response.data.error !== null &&
+      "email" in error.response.data.error
+        ? String(error.response.data.error.email)
+        : null;
+
+    if (errorCode === "EMAIL_VERIFICATION_REQUIRED") {
+      let blockedEmail = responseBlockedEmail;
+      if (!blockedEmail) {
+        const { getUser } = await import("@/features/auth/lib/auth");
+        blockedEmail = getUser()?.email ?? null;
+      }
+      if (blockedEmail) {
+        window.sessionStorage.setItem(BLOCKED_UNVERIFIED_SESSION_KEY, blockedEmail);
+      }
+    }
 
     // Skip refresh for auth endpoints and already-retried requests
     const isAuthEndpoint = AUTH_PATHS.some((p) => requestPath.includes(p));
@@ -81,3 +113,11 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export function consumeBlockedUnverifiedEmail(): string | null {
+  const email = window.sessionStorage.getItem(BLOCKED_UNVERIFIED_SESSION_KEY);
+  if (email) {
+    window.sessionStorage.removeItem(BLOCKED_UNVERIFIED_SESSION_KEY);
+  }
+  return email;
+}

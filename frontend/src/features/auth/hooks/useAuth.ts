@@ -7,6 +7,7 @@ import type {
   LoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetRequest,
+  ResendVerificationEmailRequest,
   RegisterRequest,
   UpdateProfileRequest,
 } from "@/features/auth/api/auth.service";
@@ -46,6 +47,13 @@ export function useRegister(redirectTo?: string | null) {
 export function useSendVerificationEmail() {
   return useMutation({
     mutationFn: () => authService.sendVerificationEmail(),
+  });
+}
+
+export function useResendVerificationEmail() {
+  return useMutation({
+    mutationFn: (data: ResendVerificationEmailRequest) =>
+      authService.resendVerificationEmail(data),
   });
 }
 

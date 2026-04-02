@@ -48,7 +48,11 @@ def _get_mail_client() -> FastMail:
 
 
 async def send_verification_email(
-    db: AsyncSession, user_id: uuid.UUID, email: str
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    email: str,
+    *,
+    is_reminder: bool = False,
 ) -> None:
     """
     Generate a verification token, save its hash, and send the email.
@@ -80,9 +84,20 @@ async def send_verification_email(
     verify_url = f"{settings.BACKEND_URL}/api/v1/auth/verify-email?token={token}"
 
     # Send email
+    intro_copy = (
+        "This is a reminder to verify your email address before access is restricted."
+        if is_reminder
+        else "Welcome to Sophikon! Click the link below to verify your email:"
+    )
+    subject = (
+        "Reminder: verify your email - Sophikon"
+        if is_reminder
+        else "Verify your email - Sophikon"
+    )
+
     html = f"""
     <h2>Verify your email address</h2>
-    <p>Welcome to Sophikon! Click the link below to verify your email:</p>
+    <p>{intro_copy}</p>
     <p><a href="{verify_url}" style="
         display: inline-block;
         padding: 12px 24px;
@@ -98,7 +113,7 @@ async def send_verification_email(
     """
 
     message = MessageSchema(
-        subject="Verify your email - Sophikon",
+        subject=subject,
         recipients=[NameEmail(name="", email=email)],
         body=html,
         subtype=MessageType.html,

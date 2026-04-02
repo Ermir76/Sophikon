@@ -529,6 +529,35 @@ async def test_get_current_user_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_get_current_user_rejects_unverified_user_after_grace_period(
+    client: AsyncClient,
+    session: AsyncSession,
+):
+    email = "me-unverified-expired@example.com"
+    password = "StrongPassword123!"
+
+    register_response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Expired Verify User",
+        },
+    )
+    assert register_response.status_code == 201
+
+    user = await auth_service.get_user_by_email(session, email)
+    assert user is not None
+    user.created_at = datetime.now(UTC) - timedelta(hours=25)
+    await session.commit()
+
+    response = await client.get("/api/v1/auth/me")
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "EMAIL_VERIFICATION_REQUIRED"
+
+
+@pytest.mark.asyncio
 async def test_get_current_user_unauthenticated(client: AsyncClient):
     """Unauthenticated — returns 401"""
     # Simply call without logging in.

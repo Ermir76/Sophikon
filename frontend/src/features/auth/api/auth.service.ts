@@ -55,6 +55,10 @@ export interface PasswordResetRequest {
   email: string;
 }
 
+export interface ResendVerificationEmailRequest {
+  email: string;
+}
+
 export interface PasswordResetConfirmRequest {
   token: string;
   new_password: string;
@@ -144,6 +148,11 @@ export const authService = {
    */
   async sendVerificationEmail() {
     const response = await api.post<MessageResponse>("/auth/send-verification-email");
+    return response.data;
+  },
+
+  async resendVerificationEmail(data: ResendVerificationEmailRequest) {
+    const response = await api.post<MessageResponse>("/auth/resend-verification-email", data);
     return response.data;
   },
 

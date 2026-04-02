@@ -360,6 +360,31 @@ async def test_login_user_rejects_inactive_user(session: AsyncSession) -> None:
 
 
 @pytest.mark.asyncio
+async def test_login_user_rejects_unverified_user_after_grace_period(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-login-unverified-expired")
+    password = "StrongPassword123!"
+
+    user, _, _ = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Login Unverified Expired",
+    )
+    user.created_at = datetime.now(UTC) - timedelta(hours=25)
+    await session.commit()
+
+    with pytest.raises(PermissionDeniedError, match="verification expired"):
+        await auth_service.login_user(
+            session,
+            email,
+            password,
+        )
+
+
+@pytest.mark.asyncio
 async def test_refresh_tokens_rotates_and_revokes_old_token(
     session: AsyncSession,
 ) -> None:
@@ -373,13 +398,19 @@ async def test_refresh_tokens_rotates_and_revokes_old_token(
         password,
         "Auth Refresh",
     )
-    refreshed_user, access_token, new_refresh_token = await auth_service.refresh_tokens(
+    (
+        refreshed_user,
+        access_token,
+        new_refresh_token,
+        is_persistent,
+    ) = await auth_service.refresh_tokens(
         session,
         old_refresh_token,
     )
 
     assert refreshed_user.id == user.id
     assert new_refresh_token != old_refresh_token
+    assert is_persistent is True
     decoded = decode_access_token(access_token)
     assert decoded["sub"] == str(user.id)
     assert decoded["type"] == "access"
@@ -435,6 +466,27 @@ async def test_refresh_tokens_rejects_expired_token(session: AsyncSession) -> No
 
 
 @pytest.mark.asyncio
+async def test_refresh_tokens_rejects_unverified_user_after_grace_period(
+    session: AsyncSession,
+) -> None:
+    await _ensure_system_user_role(session)
+    email = _unique_email("auth-refresh-unverified-expired")
+    password = "StrongPassword123!"
+
+    user, _, refresh_token = await auth_service.register_user(
+        session,
+        email,
+        password,
+        "Auth Refresh Unverified Expired",
+    )
+    user.created_at = datetime.now(UTC) - timedelta(hours=25)
+    await session.commit()
+
+    with pytest.raises(PermissionDeniedError, match="verification expired"):
+        await auth_service.refresh_tokens(session, refresh_token)
+
+
+@pytest.mark.asyncio
 async def test_refresh_tokens_rejects_malformed_token(session: AsyncSession) -> None:
     await _ensure_system_user_role(session)
 
@@ -456,7 +508,7 @@ async def test_refresh_reuse_detection_revokes_active_token_family(
         password,
         "Auth Refresh Reuse",
     )
-    _, _, rotated_refresh_token = await auth_service.refresh_tokens(
+    _, _, rotated_refresh_token, _ = await auth_service.refresh_tokens(
         session,
         old_refresh_token,
     )

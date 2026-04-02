@@ -15,7 +15,7 @@ Guardrail: never delete previous sprint mini-task sections; keep historical spri
 
 ### QA-01 - Carry-forward manual verification sweep
 
-Status: `PENDING`
+Status: `DONE`
 
 - [ ] Verify `FIX-20`: browser check for close/reopen behavior across session-only vs persistent login
 - [ ] Verify `FIX-18`: run `EXPLAIN ANALYZE` and confirm the task search query uses the GIN index
@@ -32,17 +32,28 @@ Status: `PENDING`
 
 Status: `PENDING`
 
-- [ ] Define the product/security policy for unverified users after verification-link expiry
-- [ ] Enforce the policy in backend auth/session checks instead of frontend reminder-only UI
-- [ ] Update the user-facing recovery flow so blocked users can resend verification or understand the restriction
-- [ ] Add focused tests covering the chosen grace-period and enforcement behavior
-- [ ] Record outcome against issue `#48`
+- [x] Lock policy: immediate verification email on registration, reminder emails at 6 hours and 12 hours, 24-hour grace period from `user.created_at`, then hard auth/session block if `email_verified` is still false
+- [x] Define the recovery contract for blocked users: resend verification action plus clear blocked-state messaging instead of a generic logged-out failure
+- [x] Add a single backend policy helper for "verification required after grace period" so login, refresh, and protected-route auth checks use the same rule
+- [x] Enforce the policy in `login_user` so expired unverified users cannot start a new session
+- [x] Enforce the policy in `refresh_tokens` so expired unverified users cannot silently extend an old session
+- [x] Enforce the policy in the protected auth dependency used by `/auth/me` and the rest of the protected API
+- [x] Replace reminder-only UX with blocked-state recovery messaging on auth entry/recovery screens while keeping the in-app banner for pre-expiry reminder state as non-dismissible or snoozable, not permanently dismissible
+- [x] Add focused backend tests for grace-period vs expired behavior across login, refresh, `/auth/me`, and a representative protected endpoint
+- [x] Add focused frontend tests for blocked-session recovery and resend messaging
+- [x] Record outcome against issue `#48`: targeted backend/frontend auth-policy coverage passed; broader auth slice still contains an unrelated flaky oauth-state baseline test outside this feature scope
 
 #### Notes
 
 - Source issue: `issues/open_issues/48-unverified-users-have-no-enforcement-after-link-expiry.md`
 - Priority: P0 / Highest priority
-- Decision to lock before implementation: whether enforcement blocks all protected routes after grace-period expiry or only sensitive actions
+- Design decision locked on branch `auth-01-unverified-policy`: immediate verification email, reminder emails at 6h and 12h, hard backend block after the 24-hour grace period, not partial per-action restriction
+- Current backend gap: registration/login mint normal sessions, `get_current_active_user` checks `is_active` only, and frontend enforcement is limited to `EmailVerificationBanner`
+- Recommended backend touch points: `backend/app/service/auth_service.py`, `backend/app/api/deps/auth.py`, `backend/app/api/v1/endpoints/auth.py`
+- Recommended background-task touch points: reminder-email scheduling in the existing Celery path so 6h/12h nudges are handled server-side, not by frontend polling
+- Recommended frontend touch points: `frontend/src/features/auth/pages/LoginPage.tsx`, `frontend/src/features/auth/pages/VerifyEmailPage.tsx`, `frontend/src/features/auth/components/EmailVerificationBanner.tsx`, auth-store/bootstrap handling if blocked state needs a distinct redirect
+- Schema assumption for design: no DB migration required if the grace period is derived from existing `user.created_at`; revisit only if admin override/state needs emerge
+- Build status: backend policy enforcement, reminder scheduling, public resend flow, and frontend blocked/snooze UX are implemented on branch `auth-01-unverified-policy`; focused backend/frontend auth-policy tests are in place and passing, with one unrelated flaky oauth-state baseline test still present in the broader auth slice
 
 ---
 

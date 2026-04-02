@@ -4,6 +4,28 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-04-02 - AUTH-01 Unverified User Enforcement After Verification Expiry
+
+### Enforce a 24-hour verification grace period with recovery paths
+
+**What:** Added a shared backend policy for expired unverified accounts and enforced it across login, refresh rotation, `/auth/me`, and representative protected API access. Registration now keeps the immediate verification email and schedules reminder emails at 6 hours and 12 hours through the existing Celery task layer. Added a public resend-verification endpoint with enumeration-safe response semantics so blocked users can recover without an authenticated session. Updated the login and verify-email recovery flows to use that public resend path, capture blocked-session recovery state, and show a clear blocked-account recovery experience instead of generic auth failure.
+
+**Why:** Issue `#48` allowed newly registered password-based accounts to keep full access indefinitely after the verification link expired because verification existed only as an email/token reminder flow, not as an enforced auth policy. The new 24-hour grace-period rule closes that security gap while still giving users a practical recovery path if they miss or lose the original verification email.
+
+### Make verification reminders persistent-but-user-scoped in the UI
+
+**What:** Reworked the in-app verification reminder banner so it is snoozable for 2 hours instead of permanently dismissible, and scoped the snooze key by `user.id` so one account cannot hide the banner for another account in the same browser. Also added a proper visible label for the public resend email field on `VerifyEmailPage`.
+
+**Why:** A permanent dismiss made it too easy for unverified users to lose the only in-app reminder before the 24-hour enforcement cutoff, and the first snooze implementation shared browser state across accounts. The updated behavior keeps reminders recoverable and avoids cross-account leakage while keeping the recovery form accessible.
+
+### Add focused regression coverage for enforcement, recovery, and reminder jobs
+
+**What:** Expanded backend/frontend tests to cover expired-unverified rejection in login, refresh, `/auth/me`, and `GET /projects`, plus public resend-verification behavior, blocked-session recovery UI, and verification reminder task send/skip behavior.
+
+**Why:** AUTH-01 changes touched auth-sensitive paths where narrow happy-path coverage would miss regressions. The added test slice gives direct evidence that the enforced policy works both in core auth flows and through a representative protected endpoint.
+
+---
+
 ## 2026-04-02 - Auth Remember-Me and Verification Recovery Hardening
 
 ### Preserve session-vs-persistent login policy across refresh rotation

@@ -15,9 +15,10 @@ vi.mock("axios", async () => {
 });
 
 // Mock auth store
-const { setStateMock, clearAuthMock } = vi.hoisted(() => ({
+const { setStateMock, clearAuthMock, getUserMock } = vi.hoisted(() => ({
     setStateMock: vi.fn(),
     clearAuthMock: vi.fn(),
+    getUserMock: vi.fn(() => ({ email: "stored@example.com" })),
 }));
 vi.mock("@/features/auth/store/auth-store", () => ({
     useAuthStore: {
@@ -28,10 +29,11 @@ vi.mock("@/features/auth/store/auth-store", () => ({
 // Mock clearAuth
 vi.mock("@/features/auth/lib/auth", () => ({
     clearAuth: clearAuthMock,
+    getUser: getUserMock,
 }));
 
 // Now import api and axios
-import { api, refreshSessionOnce } from "./api";
+import { api, consumeBlockedUnverifiedEmail, refreshSessionOnce } from "./api";
 import axios from "axios";
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
@@ -39,6 +41,7 @@ type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 describe("API Interceptors", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.sessionStorage.clear();
     });
 
     afterEach(() => {
@@ -155,5 +158,28 @@ describe("API Interceptors", () => {
         await expect(api.get("/test")).rejects.toThrow("401");
 
         expect(axios.post).not.toHaveBeenCalled(); // No refresh
+    });
+
+    it("captures blocked unverified email from stored auth state", async () => {
+        const adapterMock = vi.fn().mockImplementation(async (config: RetryableConfig) => {
+            throw Object.assign(new Error("403"), {
+                response: {
+                    status: 403,
+                    data: {
+                        error: {
+                            code: "EMAIL_VERIFICATION_REQUIRED",
+                            message: "Email verification expired.",
+                        },
+                    },
+                },
+                config,
+                isAxiosError: true,
+            });
+        });
+        api.defaults.adapter = adapterMock;
+
+        await expect(api.get("/projects")).rejects.toThrow("403");
+
+        expect(consumeBlockedUnverifiedEmail()).toBe("stored@example.com");
     });
 });

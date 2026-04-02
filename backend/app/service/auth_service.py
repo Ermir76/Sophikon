@@ -55,6 +55,10 @@ PASSWORD_MAX_BYTES_MESSAGE = "Password must be at most 72 bytes"
 PASSWORD_UPPERCASE_MESSAGE = "Password must contain at least one uppercase letter"
 PASSWORD_NUMBER_MESSAGE = "Password must contain at least one number"
 PASSWORD_SPECIAL_MESSAGE = "Password must contain at least one special character"
+EMAIL_VERIFICATION_GRACE_PERIOD = timedelta(hours=24)
+EMAIL_VERIFICATION_REQUIRED_MESSAGE = (
+    "Email verification expired. Request a new verification email to continue."
+)
 
 _PASSWORD_UPPERCASE_RE = re.compile(r"[A-Z]")
 _PASSWORD_NUMBER_RE = re.compile(r"[0-9]")
@@ -63,6 +67,29 @@ _PASSWORD_SPECIAL_RE = re.compile(r"[^a-zA-Z0-9]")
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def is_email_verification_grace_expired(
+    user: User,
+    *,
+    now: datetime | None = None,
+) -> bool:
+    if user.email_verified:
+        return False
+
+    current_time = now or datetime.now(UTC)
+    created_at = user.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=UTC)
+    return current_time >= created_at + EMAIL_VERIFICATION_GRACE_PERIOD
+
+
+def require_unexpired_email_verification_grace(user: User) -> None:
+    if is_email_verification_grace_expired(user):
+        raise PermissionDeniedError(
+            EMAIL_VERIFICATION_REQUIRED_MESSAGE,
+            error_code="EMAIL_VERIFICATION_REQUIRED",
+        )
 
 
 def validate_password_policy(password: str) -> None:
@@ -301,6 +328,7 @@ async def login_user(
         raise AuthenticationError("Invalid email or password")
     if not user.is_active:
         raise PermissionDeniedError("Account is deactivated")
+    require_unexpired_email_verification_grace(user)
 
     access_token, raw_refresh = await _create_token_pair(
         db,
@@ -353,6 +381,7 @@ async def refresh_tokens(
     user = await get_user_by_id(db, db_token.user_id)
     if not user or not user.is_active:
         raise AuthenticationError("User not found or deactivated")
+    require_unexpired_email_verification_grace(user)
 
     access_token, raw_refresh = await _create_token_pair(
         db,
@@ -422,6 +451,29 @@ async def request_password_reset(db: AsyncSession, email: str) -> None:
         logger.warning(
             "Failed to send password reset email",
             extra={"user_id": str(user.id)},
+            exc_info=True,
+        )
+
+
+async def request_verification_email(
+    db: AsyncSession,
+    email: str,
+) -> None:
+    """
+    Send a fresh verification email when possible.
+
+    The caller is responsible for returning an enumeration-safe response.
+    """
+    user = await get_user_by_email(db, email)
+    if user is None or user.email_verified or not user.is_active:
+        return
+
+    try:
+        await email_service.send_verification_email(db, user.id, user.email)
+    except Exception:
+        logger.warning(
+            "Failed to send verification email",
+            extra={"email": normalize_email(email)},
             exc_info=True,
         )
 

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   resendMutate: vi.fn(),
   resendState: {
     mutate: vi.fn(),
+    reset: vi.fn(),
     isPending: false,
     isSuccess: false,
     isError: false,
@@ -16,12 +17,12 @@ const mocks = vi.hoisted(() => ({
   },
   authState: {
     checkSession: vi.fn(),
-    isAuthenticated: false,
+    user: null,
   },
 }));
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
-  useSendVerificationEmail: vi.fn(() => mocks.resendState),
+  useResendVerificationEmail: vi.fn(() => mocks.resendState),
 }));
 
 vi.mock("@/features/auth/store/auth-store", () => ({
@@ -33,6 +34,7 @@ describe("VerifyEmailPage", () => {
     vi.clearAllMocks();
     mocks.resendState = {
       mutate: mocks.resendMutate,
+      reset: vi.fn(),
       isPending: false,
       isSuccess: false,
       isError: false,
@@ -40,11 +42,11 @@ describe("VerifyEmailPage", () => {
     };
     mocks.authState = {
       checkSession: vi.fn(),
-      isAuthenticated: false,
+      user: null,
     };
   });
 
-  it("shows login recovery CTA for guests on invalid links", () => {
+  it("shows public resend recovery for invalid links", () => {
     render(
       <MemoryRouter initialEntries={["/verify-email"]}>
         <Routes>
@@ -54,15 +56,11 @@ describe("VerifyEmailPage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Invalid Link" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go to Login" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
+    expect(screen.getByRole("button", { name: "Resend Verification Email" })).toBeInTheDocument();
   });
 
-  it("submits resend verification for authenticated users", async () => {
+  it("submits public resend verification with entered email", async () => {
     const user = userEvent.setup();
-    mocks.authState.isAuthenticated = true;
 
     render(
       <MemoryRouter initialEntries={["/verify-email?status=error"]}>
@@ -72,13 +70,27 @@ describe("VerifyEmailPage", () => {
       </MemoryRouter>,
     );
 
+    await user.type(screen.getByPlaceholderText("name@example.com"), "recover@example.com");
     await user.click(screen.getByRole("button", { name: "Resend Verification Email" }));
 
-    expect(mocks.resendMutate).toHaveBeenCalledTimes(1);
+    expect(mocks.resendMutate).toHaveBeenCalledWith({ email: "recover@example.com" });
   });
 
-  it("renders resend failure feedback for authenticated users", () => {
-    mocks.authState.isAuthenticated = true;
+  it("prefills the email from auth state when available", () => {
+    mocks.authState.user = { email: "member@example.com" };
+
+    render(
+      <MemoryRouter initialEntries={["/verify-email?status=error"]}>
+        <Routes>
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByDisplayValue("member@example.com")).toBeInTheDocument();
+  });
+
+  it("renders resend failure feedback", () => {
     mocks.resendState.isError = true;
     mocks.resendState.error = {
       isAxiosError: true,

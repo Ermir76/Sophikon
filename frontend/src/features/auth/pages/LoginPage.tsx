@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { authService } from "@/features/auth/api/auth.service";
 import { useLogin } from "@/features/auth/hooks/useAuth";
+import { consumeBlockedUnverifiedEmail } from "@/shared/api/api";
 import { getErrorMessage } from "@/shared/lib/errors";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -30,8 +31,38 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+function getErrorCode(error: unknown): string | null {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "data" in error.response &&
+    typeof error.response.data === "object" &&
+    error.response.data !== null &&
+    "error" in error.response.data &&
+    typeof error.response.data.error === "object" &&
+    error.response.data.error !== null &&
+    "code" in error.response.data.error
+  ) {
+    return String(error.response.data.error.code);
+  }
+  return null;
+}
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [blockedEmail, setBlockedEmail] = useState<string | null>(null);
+  const [resendState, setResendState] = useState<{
+    pending: boolean;
+    success: boolean;
+    error: string | null;
+  }>({
+    pending: false,
+    success: false,
+    error: null,
+  });
   const [searchParams] = useSearchParams();
   const next = searchParams.get("next");
   const oauthStatus = searchParams.get("oauth");
@@ -43,6 +74,47 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", remember_me: false },
   });
+  const watchedEmail = form.watch("email");
+  const loginErrorCode = getErrorCode(loginMutation.error);
+  const requiresVerification = Boolean(blockedEmail) || loginErrorCode === "EMAIL_VERIFICATION_REQUIRED";
+  const recoveryEmail =
+    blockedEmail ?? (loginErrorCode === "EMAIL_VERIFICATION_REQUIRED" ? watchedEmail : "");
+
+  useEffect(() => {
+    const email = consumeBlockedUnverifiedEmail();
+    if (!email) {
+      return;
+    }
+    setBlockedEmail(email);
+    form.setValue("email", email, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [form]);
+
+  async function handleResendVerification() {
+    if (!recoveryEmail) {
+      setResendState({
+        pending: false,
+        success: false,
+        error: "Enter your email address first.",
+      });
+      return;
+    }
+
+    setResendState({ pending: true, success: false, error: null });
+    try {
+      await authService.resendVerificationEmail({ email: recoveryEmail });
+      setResendState({ pending: false, success: true, error: null });
+    } catch (error) {
+      setResendState({
+        pending: false,
+        success: false,
+        error: getErrorMessage(error),
+      });
+    }
+  }
 
   return (
     <div>
@@ -53,9 +125,49 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {loginMutation.isError && (
+      {loginMutation.isError && !requiresVerification && (
         <Alert variant="destructive" className="mb-5">
           <AlertDescription>{getErrorMessage(loginMutation.error)}</AlertDescription>
+        </Alert>
+      )}
+
+      {requiresVerification && (
+        <Alert className="mb-5">
+          <AlertDescription className="space-y-3">
+            <p>
+              Your email verification window expired. Request a new verification email
+              to continue.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={resendState.pending || resendState.success || !recoveryEmail}
+                onClick={() => void handleResendVerification()}
+              >
+                {resendState.pending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : resendState.success ? (
+                  "Verification Email Sent"
+                ) : (
+                  "Resend Verification Email"
+                )}
+              </Button>
+              <Button asChild type="button" variant="ghost">
+                <Link to="/verify-email?status=error">Open verification help</Link>
+              </Button>
+            </div>
+            {resendState.error ? <p className="text-sm">{resendState.error}</p> : null}
+            {resendState.success ? (
+              <p className="text-sm">
+                Check your inbox for the newest verification link. Older links may no
+                longer work.
+              </p>
+            ) : null}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -69,7 +181,11 @@ export default function LoginPage() {
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))}
+          onSubmit={form.handleSubmit((data) => {
+            setBlockedEmail(null);
+            setResendState({ pending: false, success: false, error: null });
+            loginMutation.mutate(data);
+          })}
           className="space-y-5"
         >
           <FormField

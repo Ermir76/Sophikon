@@ -32,17 +32,22 @@ from app.schema.auth import (
     MessageResponse,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
+    ResendVerificationEmailRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
 )
 from app.service import auth_service, email_service
+from app.tasks.notification_tasks import schedule_verification_reminder_emails
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 GOOGLE_OAUTH_STATE_COOKIE_NAME = "oauth_google_state"
+VERIFICATION_EMAIL_GENERIC_MESSAGE = (
+    "If the email exists, a verification email was sent."
+)
 
 
 def _client_info(request: Request) -> tuple[str | None, str | None]:
@@ -123,6 +128,7 @@ async def register(
     # Send verification email (don't fail registration if email fails)
     try:
         await email_service.send_verification_email(db, user.id, user.email)
+        schedule_verification_reminder_emails(user_id=str(user.id))
     except Exception:
         logger.warning("Failed to send verification email on register", exc_info=True)
 
@@ -369,3 +375,14 @@ async def resend_verification_email(
 
     await email_service.send_verification_email(db, user.id, user.email)
     return MessageResponse(message="Verification email sent")
+
+
+@router.post("/resend-verification-email", response_model=MessageResponse)
+@limiter.limit("5/hour")
+async def resend_verification_email_public(
+    body: ResendVerificationEmailRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await auth_service.request_verification_email(db, body.email)
+    return MessageResponse(message=VERIFICATION_EMAIL_GENERIC_MESSAGE)

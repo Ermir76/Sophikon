@@ -4,6 +4,7 @@ Tests for email verification feature.
 Covers:
 - GET /api/v1/auth/verify-email  (valid, invalid, expired, reused tokens → 302 redirect)
 - POST /api/v1/auth/send-verification-email  (auth, already verified, unauth)
+- POST /api/v1/auth/resend-verification-email  (public, generic response)
 - Registration auto-sends verification email
 - Resend invalidates old tokens
 """
@@ -26,6 +27,7 @@ from app.models.user import User
 REGISTER_URL = "/api/v1/auth/register"
 VERIFY_URL = "/api/v1/auth/verify-email"
 SEND_URL = "/api/v1/auth/send-verification-email"
+PUBLIC_RESEND_URL = "/api/v1/auth/resend-verification-email"
 
 # Known token so we can verify it from the test side
 KNOWN_TOKEN = "test-verification-token-abc123"
@@ -268,6 +270,44 @@ async def test_send_verification_email_unauthenticated(client: AsyncClient):
     """Unauthenticated request to send-verification-email returns 401."""
     resp = await client.post(SEND_URL)
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+@patch(
+    "app.service.email_service._get_mail_client",
+    return_value=_mock_mail_client(),
+)
+async def test_public_resend_verification_email_returns_generic_message(
+    mock_mail,
+    client: AsyncClient,
+):
+    await _register_user(client, email="public-resend@example.com")
+    await client.post("/api/v1/auth/logout")
+
+    resp = await client.post(
+        PUBLIC_RESEND_URL,
+        json={"email": "public-resend@example.com"},
+    )
+
+    assert resp.status_code == 200
+    assert (
+        resp.json()["message"] == "If the email exists, a verification email was sent."
+    )
+
+
+@pytest.mark.asyncio
+async def test_public_resend_verification_email_stays_generic_for_unknown_email(
+    client: AsyncClient,
+):
+    resp = await client.post(
+        PUBLIC_RESEND_URL,
+        json={"email": "unknown@example.com"},
+    )
+
+    assert resp.status_code == 200
+    assert (
+        resp.json()["message"] == "If the email exists, a verification email was sent."
+    )
 
 
 # ---------------------------------------------------------------------------

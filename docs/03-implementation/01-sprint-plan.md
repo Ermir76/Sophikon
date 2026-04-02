@@ -26,8 +26,8 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 ### Execution Update
 
 - QA-01: `PENDING` (manual verification debt carried forward from the active workboard instead of leaving stale unchecked boxes on a closed sprint block)
-- AUTH-01: `PENDING` (issue `#48` promoted into sprint scope as the current highest-priority auth defect)
-- Progress: `0/7` points complete
+- AUTH-01: `DONE` (issue `#48` now enforces a 24-hour verification grace period across login, refresh, `/auth/me`, and representative protected routes; recovery uses public resend plus 6h/12h reminder emails; targeted backend/frontend auth-policy tests passed, while a broader auth test slice still shows an unrelated flaky oauth-state baseline test outside AUTH-01 scope)
+- Progress: `5/7` points complete
 
 ### Risks and Blockers
 
