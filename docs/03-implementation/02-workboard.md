@@ -2,12 +2,112 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S17
-**Dates:** 2026-04-02 -> TBD
+**Sprint ID:** S18
+**Dates:** 2026-04-03 -> TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 Guardrail: never delete previous sprint mini-task sections; keep historical sprint blocks intact and append/move only the active sprint block.
+
+---
+
+## Active Items - S18
+
+### DASH-01 — Dashboard bootstrap race — loading vs empty-org indistinguishable
+
+Status: `PENDING`
+
+- [ ] In `DashboardPage.tsx`, import `useOrganizations` from `@/features/organizations` and call it to get `isLoading: isOrgsLoading`
+- [ ] Extend the existing loading guard (line 58) to also cover bootstrap: when `!activeOrgId && isOrgsLoading`, show `PageLoading` instead of falling through to the `!activeOrganization` empty-state branch
+- [ ] Add focused `DashboardPage` test: mock `useOrganizations` as loading + `activeOrgId` null → assert `PageLoading` renders, not `PageEmpty`
+
+#### Notes
+
+- Files: `frontend/src/features/dashboard/pages/DashboardPage.tsx`
+- Root cause: `org-store` hydrates `activeOrgId` from `localStorage` synchronously, but `useOrganizations` list fetch is async. When `activeOrgId` is null (new user, cleared storage, first login), `OrgSwitcher`'s auto-select `useEffect` hasn't fired yet. The page falls through to `!activeOrganization` and renders the empty state.
+- The fix must not break the genuine no-org state — only cover the bootstrap gap while orgs are still loading.
+
+### DASH-03 — Dashboard trend chart timezone shift
+
+Status: `PENDING`
+
+- [ ] In `insights-trend-card.tsx` line 48, add the `parseISO` import from `date-fns`, and change `new Date(v)` to `parseISO(v)` in the XAxis `tickFormatter` so plain `YYYY-MM-DD` strings are correctly parsed as local midnight.
+- [ ] Add `InsightsTrendCard` unit test: pass a `YYYY-MM-DD` date string, assert formatted label matches that exact calendar day regardless of runtime timezone
+
+#### Notes
+
+- Files: `frontend/src/shared/ui/insights-trend-card.tsx`
+- Root cause: `new Date("2026-04-02")` parses as `2026-04-02T00:00:00Z` (UTC). In `America/Los_Angeles` (UTC-7), `toLocaleDateString()` renders this as `Apr 1`. Using `parseISO` correctly treats the string as a timezone-independent local midnight.
+- Backend `TrendPoint.date` is a `date` field with no time component — the frontend must display it as-is.
+
+### DASH-06 — Dashboard `date.today()` uses server-local timezone instead of UTC
+
+Status: `PENDING`
+
+- [ ] In `insights_service.py`, add `timezone` to the existing `from datetime import ...` line
+- [ ] Replace `today = date.today()` with `today = datetime.now(timezone.utc).date()` at lines 42, 383, and 494
+- [ ] Verify existing backend insight tests still pass (`uv run pytest tests/unit/api/v1/test_insights.py tests/unit/service/test_insights_service.py -q`)
+
+#### Notes
+
+- Files: `backend/app/service/insights_service.py`
+- Root cause: `date.today()` returns the server's local date. If the server runs in a non-UTC timezone, "today" drifts relative to users. Standard Docker/cloud runs UTC so current risk is low, but this is a fragile assumption.
+- No DB/schema changes. Pure service-layer cleanup.
+
+### DASH-04 — Dashboard activity feed not clickable
+
+Status: `PENDING`
+
+- [ ] In `insights-activity-card.tsx`, add `import { Link } from "react-router";`
+- [ ] Add a route-builder helper inside the component: `project` → `/projects/${project_id}`, `task` → `/projects/${project_id}/tasks`, `resource` → `/projects/${project_id}/resources`; fallback to `#` if `project_id` is null
+- [ ] Wrap each `<li>` inner content in a `<Link to={route}>` with `className="block"` so the entire card area is clickable
+- [ ] Add `InsightsActivityCard` unit test: render with sample `task`, `project`, and `resource` items → assert each renders a link with the correct `href`
+
+#### Notes
+
+- Files: `frontend/src/shared/ui/insights-activity-card.tsx`
+- The `RecentActivityItem` type already includes `entity_type`, `entity_id`, and `project_id` — all the data needed to build routes.
+- For `task` entities, linking to the project's task list is the correct scope since there is no direct `/tasks/:taskId` route in the app.
+- This component lives in `shared/ui/` because it is used by both the org dashboard and the project dashboard.
+
+### DASH-05 — Dashboard N+1 in overallocation stats
+
+Status: `PENDING`
+
+- [ ] Add `get_active_resources_for_projects(db, *, project_ids: list[UUID]) -> list[Resource]` to `insights_repo.py` — uses `Resource.project_id.in_(project_ids)` + `Resource.is_active == True`
+- [ ] Add `get_assignments_in_range_for_projects(db, *, project_ids: list[UUID], start_date, end_date) -> list[Assignment]` to `utilization_repo.py` — bulk variant of existing `get_assignments_in_range`
+- [ ] Add `compute_overallocation_counts(resources: list[Resource], assignments: list[Assignment], start_date, end_date) -> dict[UUID, int]` as a pure function in `insights_service.py` — groups resources and assignments by `project_id`, computes per-project overallocated resource count in-memory without DB calls
+- [ ] Rewire the `for project in projects` loop in `get_org_dashboard_insights` to: (1) fetch all resources via `get_active_resources_for_projects`, (2) fetch all assignments via `get_assignments_in_range_for_projects`, (3) call `compute_overallocation_counts` once, (4) look up per-project count from the returned dict
+- [ ] Remove the per-project `_project_overallocation_stats` call from the loop (the function itself stays for project-level dashboard use)
+- [ ] Verify existing backend insight + utilization tests still pass
+- [ ] Add a test case: org with 3 projects returns correct per-project overallocation counts from the batched path
+
+#### Notes
+
+- Files: `backend/app/repository/insights_repo.py`, `backend/app/repository/utilization_repo.py`, `backend/app/service/insights_service.py`
+- The existing `_project_overallocation_stats` calls `utilization_service.detect_over_allocations` + `insights_repo.get_active_resources_for_project` per project — 2N queries. The batch approach reduces this to 2 queries total.
+- `_project_overallocation_stats` is still used by `get_project_dashboard` (single project) — do not delete it.
+
+### DASH-02 — Dashboard KPI cards drill into wrong project
+
+Status: `PENDING`
+
+#### Design Decisions (locked)
+
+**Decision:** Option (a) — KPI cards link to `/projects` (org-level project list). The four metric KPI cards ("Task Completion", "Overdue Tasks", "Critical Tasks", "Overallocated Resources") are org-level aggregates; linking to a single project is incorrect. The project list is the correct drill-down scope until per-metric filtered views exist.
+
+- [ ] In `DashboardPage.tsx`, change "Task Completion" card `to` from `firstProjectId ? \`/projects/${firstProjectId}/tasks\` : "/projects"` to `"/projects"`
+- [ ] Change "Overdue Tasks" card `to` to `"/projects"`
+- [ ] Change "Critical Tasks" card `to` to `"/projects"`
+- [ ] Change "Overallocated Resources" card `to` from `firstProjectId ? \`/projects/${firstProjectId}/utilization\` : "/projects"` to `"/projects"`
+- [ ] Remove the `firstProjectId` variable (line 97) since it is no longer used
+- [ ] Add focused `DashboardPage` test: assert all 4 metric KPI cards render links pointing to `/projects`, not to a specific project ID
+
+#### Notes
+
+- Files: `frontend/src/features/dashboard/pages/DashboardPage.tsx`
+- The "Active Projects" and "Completed Projects" cards already link to `/projects` — this change makes all 6 KPI cards consistent.
+- Future enhancement: add query-param filters to `/projects` page (e.g. `?sort=completion`, `?filter=overdue`) so KPI cards can deep-link to a meaningful filtered view.
 
 ---
 

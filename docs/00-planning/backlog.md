@@ -1,4 +1,4 @@
-﻿# Product Backlog
+# Product Backlog
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
@@ -92,6 +92,15 @@ Points scale:
 | FIX-20 | TECH | Auth remember-me and verification recovery hardening | P1 | 2 | - | V1.0 | DONE | wwwer | S16 stretch |
 | QA-01 | TECH | Carry-forward manual verification sweep for shipped S14/S16 work | P1 | 2 | FIX-18, FIX-19, AGT-07, AGT-08, FIX-20 | V1.0 | IN_PROGRESS | wwwer | S17 |
 | AUTH-01 | TECH | Enforce post-expiry policy for unverified users after verification-link expiry (#48) | P0 | 5 | - | V1.0 | IN_PROGRESS | wwwer | S17 |
+| DASH-01 | TECH | Dashboard bootstrap race — loading vs empty-org states are indistinguishable on first load | P1 | 1 | - | V1.0 | READY | - | Audits: DASH-001, KIRO-DASH-001 |
+| DASH-02 | TECH | Dashboard KPI cards drill into wrong project — all 4 link to highest-risk project instead of metric source | P1 | 2 | - | V1.0 | READY | - | Needs product decision on target route |
+| DASH-03 | TECH | Dashboard trend chart timezone shift — `new Date("YYYY-MM-DD")` renders previous day in UTC-negative timezones | P1 | 1 | - | V1.0 | READY | - | One-liner fix |
+| DASH-04 | TECH | Dashboard activity feed not clickable — items render as plain `<li>` despite backend providing entity routing data | P1 | 2 | - | V1.0 | READY | - | Audits: DASH-01 (Gemini), KIRO-DASH-004 |
+| DASH-05 | TECH | Dashboard N+1 in overallocation stats — 2N DB queries per load via per-project loop | P1 | 2 | - | V1.0 | READY | - | Audits: DASH-02 (Gemini), KIRO-DASH-005 |
+| DASH-06 | TECH | Dashboard `date.today()` uses server-local timezone instead of UTC anchor | P1 | 1 | - | V1.0 | READY | - | Easy fix |
+| DASH-07 | TECH | Dashboard global view has no WebSocket realtime updates unlike project-level views | P2 | 3 | - | V1.1 | NOT_READY | - | Audit: DASH-03 (Gemini) |
+| DASH-08 | TECH | Dashboard refresh indicator is minimal "Refreshing..." text | P2 | 1 | - | V1.0 | READY | - | Audit: DASH-04 (Gemini) |
+| DASH-09 | TECH | Dashboard missing page-level and component-level automated tests | P2 | 2 | DASH-01..DASH-06 | V1.0 | READY | - | Audits: DASH-05 (Gemini), Kiro test coverage |
 
 ---
 

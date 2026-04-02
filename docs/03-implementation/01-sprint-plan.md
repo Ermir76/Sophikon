@@ -1,8 +1,50 @@
-﻿# Sprint Plan
+# Sprint Plan
 
 Purpose: define one sprint commitment with capacity, scope, and completion criteria.
 
 ## Current Sprint
+
+**Sprint ID:** S18
+**Dates:** 2026-04-03 -> TBD
+**Goal:** Fix dashboard audit bugs — resolve all P1 correctness, navigation, and performance issues found across three independent audits so the post-login landing page is reliable and demo-ready.
+**Owner(s):** wwwer
+
+### Capacity
+
+- Estimated effort: `~2-3 days`
+- Planned points capacity: `9`
+
+### Committed Items
+
+| Item ID | Title | Points | Why now | Dependencies | Done criteria |
+| ------- | ----- | ------ | ------- | ------------ | ------------- |
+| DASH-01 | Dashboard bootstrap race — loading vs empty-org indistinguishable on first load | 1 | Three audits flagged this independently; first impression after login is broken | - | `DashboardPage` distinguishes org-hydration-in-progress from genuine no-org state; loading indicator covers the bootstrap gap; focused test protects the guard |
+| DASH-03 | Dashboard trend chart timezone shift — dates render as previous day in UTC-negative timezones | 1 | Correctness bug visible to every US-timezone user; one-liner fix | - | Trend tick formatter parses date-only strings without UTC coercion; labels match exact API day in any timezone |
+| DASH-06 | Dashboard `date.today()` uses server-local timezone instead of UTC anchor | 1 | Fragile correctness in `resolve_window` and `get_org_dashboard_insights`; easy fix | - | All `date.today()` replaced with `datetime.now(timezone.utc).date()` in insights service; backend tests confirm UTC-safe window resolution |
+| DASH-04 | Dashboard activity feed not clickable — items are plain `<li>` despite routing data from backend | 2 | Contradicts the "navigation hub" promise; all three audits flagged it | - | Activity items are clickable links routing to correct project/task/resource pages using `entity_type`, `entity_id`, and `project_id`; test covers click navigation |
+| DASH-05 | Dashboard N+1 in overallocation stats — 2N DB queries per load via per-project loop | 2 | Performance degrades with org size; acknowledged in code comment | - | Overallocation stats computed in a single batched query; backend test confirms correct stats for multi-project org |
+| DASH-02 | Dashboard KPI cards drill into wrong project — all 4 link to highest-risk project | 2 | Navigation shortcut sends users to wrong context; needs product decision on target | - | Each KPI card links to a correct destination for its metric, or drill-down is removed if no accurate target exists |
+
+**Total committed points:** `9`
+
+### Stretch (Optional)
+
+| Item ID | Title | Trigger to pull in |
+| ------- | ----- | ------------------ |
+| DASH-08 | Dashboard refresh indicator polish | Pull in if committed items ship early |
+| DASH-09 | Dashboard page-level and component-level automated tests | Pull in if stretch capacity remains |
+
+### Risks and Blockers
+
+| Risk/Blocker | Impact | Mitigation | Owner |
+| ------------ | ------ | ---------- | ----- |
+| DASH-02 requires a product decision on where KPI cards should link | Blocks implementation or results in wrong target | Decide before building: (a) filtered project list, (b) remove drill-down, (c) other | wwwer |
+| Bootstrap race fix may interact with org-store hydration timing | Regression in sidebar org switcher | Test org resolution flow end-to-end after fix | wwwer |
+| N+1 batch refactor changes query structure in insights_service | Regression in dashboard stats | Run existing backend insight tests plus new batched-query test | wwwer |
+
+---
+
+## Previous Sprint
 
 **Sprint ID:** S17
 **Dates:** 2026-04-02 -> TBD
