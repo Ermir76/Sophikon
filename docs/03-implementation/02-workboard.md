@@ -2,12 +2,47 @@
 
 Purpose: execution checklist for currently committed sprint items.
 
-**Sprint ID:** S16
-**Dates:** TBD
+**Sprint ID:** S17
+**Dates:** 2026-04-02 -> TBD
 **References:** `docs/03-implementation/01-sprint-plan.md`, `docs/00-planning/backlog.md`, `docs/03-implementation/03-requirements-traceability.md`
 
 Rule: one section per committed item. Keep tasks concrete and small.
 Guardrail: never delete previous sprint mini-task sections; keep historical sprint blocks intact and append/move only the active sprint block.
+
+---
+
+## Active Items - S17
+
+### QA-01 - Carry-forward manual verification sweep
+
+Status: `PENDING`
+
+- [ ] Verify `FIX-20`: browser check for close/reopen behavior across session-only vs persistent login
+- [ ] Verify `FIX-18`: run `EXPLAIN ANALYZE` and confirm the task search query uses the GIN index
+- [ ] Verify `FIX-19`: search results refresh correctly after task create/update/delete
+- [ ] Verify `AGT-08`: `search_tasks` hit with `is_summary: true` followed by `get_tasks(parent_task_id=...)` returns direct children only
+- [ ] Verify `AGT-07`: streaming still works end-to-end for Anthropic, OpenAI, and Gemini after prompt-cache wiring
+
+#### Pending
+
+- Every verification result must be recorded as `PASS`, `FAIL`, or converted into a new follow-up issue
+- After the result is recorded here, do not reopen the old S16 checkbox for the same work
+
+### AUTH-01 - Unverified user enforcement after verification expiry (#48)
+
+Status: `PENDING`
+
+- [ ] Define the product/security policy for unverified users after verification-link expiry
+- [ ] Enforce the policy in backend auth/session checks instead of frontend reminder-only UI
+- [ ] Update the user-facing recovery flow so blocked users can resend verification or understand the restriction
+- [ ] Add focused tests covering the chosen grace-period and enforcement behavior
+- [ ] Record outcome against issue `#48`
+
+#### Notes
+
+- Source issue: `issues/open_issues/48-unverified-users-have-no-enforcement-after-link-expiry.md`
+- Priority: P0 / Highest priority
+- Decision to lock before implementation: whether enforcement blocks all protected routes after grace-period expiry or only sensitive actions
 
 ---
 
@@ -22,7 +57,7 @@ Status: `DONE`
 - [x] Persist remember-me choice on refresh-token records with migration support
 - [x] Add focused backend coverage for login and refresh cookie persistence behavior
 - [x] Add focused frontend coverage for login remember-me submission and verify-email resend recovery feedback
-- [ ] Manual verification in browser across close/reopen flow
+- [x] Manual verification in browser across close/reopen flow moved to `S17 / QA-01`
 
 #### Notes
 
@@ -35,14 +70,14 @@ Status: `DONE`
 Status: `DONE`
 
 - [x] Change tsvector expression in `task_repo.py` from `concat_ws()` to `coalesce() || coalesce()` matching the migration index
-- [ ] Verify with EXPLAIN ANALYZE that the index is used (manual)
+- [x] Verify with EXPLAIN ANALYZE that the index is used (manual) moved to `S17 / QA-01`
 
 ### FIX-19 — Search cache invalidation
 
 Status: `DONE`
 
 - [x] Add `taskKeys.searches()` invalidation to all 9 mutation `onSuccess` callbacks in `useTasks.ts`
-- [ ] Verify search results refresh after task create/update/delete (manual)
+- [x] Verify search results refresh after task create/update/delete (manual) moved to `S17 / QA-01`
 
 ### AGT-08 — Agent subtask drill-down
 
@@ -67,7 +102,7 @@ Status: `DONE`
 - [x] Add `parent_task_id` filter in `get_tasks` execution block
 - [x] Update `get_tasks` tool description to document drill-down pattern
 - [x] Add `is_summary` field to `search_tasks` response payload
-- [ ] Verify: search "Phase 1" shows `is_summary: true`, then `get_tasks(parent_task_id=...)` returns children only (manual)
+- [x] Verify: search "Phase 1" shows `is_summary: true`, then `get_tasks(parent_task_id=...)` returns children only (manual) moved to `S17 / QA-01`
 
 ### AGT-07 — Prompt caching last-mile
 
@@ -94,7 +129,7 @@ Status: `DONE`
 - [x] OpenAI provider: accept param (no-op, automatic caching)
 - [x] Gemini provider: accept param (no-op, forward-compatibility)
 - [x] Update `test_brain_service.py` assertion to verify passthrough
-- [ ] Verify streaming still works end-to-end for all 3 providers (manual)
+- [x] Verify streaming still works end-to-end for all 3 providers (manual) moved to `S17 / QA-01`
 
 ---
 

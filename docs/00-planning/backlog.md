@@ -2,7 +2,7 @@
 
 Purpose: single prioritized list of planned work across FRs, agent-platform items, and technical debt.
 
-**Last updated:** 2026-03-26
+**Last updated:** 2026-04-02
 **Status source:** `docs/03-implementation/03-requirements-traceability.md` + `docs/03-implementation/01-sprint-plan.md` + `docs/03-implementation/02-workboard.md`
 **Roadmap source:** `docs/ROADMAP.md`
 
@@ -43,7 +43,6 @@ Points scale:
 | TECH-04-D | TECH                    | Fix useLayoutEffect missing deps in useCollapsedTree (#30)                                           | P2       | 1      | TECH-03-A..E     | V1.0           | DONE                                                        | -     | S03                          |
 | TECH-04-E | TECH                    | Fix Gantt milestone/summary click opens detail panel (#46)                                           | P2       | 1      | TECH-03-A..E     | V1.0           | DONE                                                        | -     | S03                          |
 | TECH-04-F | TECH                    | Fix AI stream error event field name mismatch (#53)                                                  | P2       | 1      | TECH-03-A..E     | V1.0           | DONE                                                        | -     | S03                          |
-
 | KB-01 | FR | Kanban: task detail panel from card (FR-KB-008) | P1 | 2 | TECH-04-A..F | V1.0 | DONE | - | S04 |
 | KB-02 | FR | Kanban: card reordering within column (FR-KB-009) | P2 | 2 | KB-01 | V1.0 | DONE | - | S05 |
 | KB-03 | FR | Kanban: WIP limits per column (FR-KB-010) | P2 | 2 | - | V1.0 | DONE | - | S04 |
@@ -61,7 +60,7 @@ Points scale:
 | FIX-04 | TECH | Change password success not using Sonner toast (#29) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
 | FIX-05 | TECH | AI preferences toggle glitch — no confirmation + icon flash (#30) | P2 | 1 | - | V1.0 | DONE | wwwer | S07 stretch |
 | FIX-06 | TECH | Silent token refresh not proactive — user kicked to /login after idle (#26) | P1 | 2 | - | V1.0 | DONE | wwwer | S09 |
-| FIX-07 | TECH | Password reset allows reuse of previous password (#28) | P2 | 1 | - | V1.0 | READY | - | - |
+| FIX-07 | TECH | Password reset allows reuse of previous password (#28) | P2 | 1 | - | V1.0 | DONE | wwwer | Resolved 2026-04-02 |
 | FIX-08 | TECH | Org member role change shows layout glitch (#33) | P2 | 1 | - | V1.0 | DONE | wwwer | S09 |
 | FIX-09 | TECH | Commit Vite WS proxy fix — add ws:true to /api proxy (#39) | P0 | 1 | - | V1.0 | DONE | wwwer | S08 |
 | FIX-10 | TECH | Project invite accept page stuck on "Accepting invitation..." (#35) | P0 | 1 | - | V1.0 | DONE | wwwer | S08 |
@@ -83,12 +82,16 @@ Points scale:
 | AGT-02 | FR | Agent kill switch: per-project and per-org flag to disable agent execution | P0 | 2 | - | V1.0 | DONE | wwwer | S12 |
 | AGT-03 | FR | Agent post-condition verification: validate tool results match plan intent before continuing | P1 | 3 | AGT-01 | V1.0 | READY | wwwer | S12 stretch |
 | AGT-04 | FR | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | P2 | 2 | - | V1.0 | READY | wwwer | S12 stretch |
-| AGT-05 | TECH | Agent overhaul: task search (DB-level), system prompt redesign, prompt caching | P1 | - | - | V1.1 | NOT_READY | - | S14 |
+| AGT-05 | TECH | Task search + agent search foundation | P1 | 1 | - | V1.0 | DONE | wwwer | S14 |
+| AGT-06 | TECH | Agent prompt/tooling foundation hardening | P1 | 1 | - | V1.0 | DONE | wwwer | S14 |
 | UX-08 | TECH | Settings consolidation — 3-column /settings (profile, security, notifications, AI prefs, org general, members, billing), NavUser + sidebar redesign, /profile + /members redirect | P2 | 5 | UX-04 | V1.0 | DONE | wwwer | S15 |
-| FIX-18 | TECH | GIN index mismatch on task search — repo uses concat_ws(), index built on coalesce() || coalesce(); PostgreSQL skips index, full scan on large projects | P1 | 1 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
-| FIX-19 | TECH | Search cache not invalidated after task mutations — create/update/delete/reorder/indent/outdent/bulk only invalidate list key, search key stays stale in UI | P2 | 1 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
-| AGT-08 | TECH | Agent subtask drill-down — add parent_task_id filter to get_tasks tool, add is_summary to search_tasks response, update tool descriptions for drill-down pattern | P1 | 2 | AGT-05 | V1.0 | IN_PROGRESS | wwwer | S16 |
-| AGT-07 | TECH | Prompt caching last-mile — wire prompt_cache through brain_service to all 3 providers (Anthropic cache_control, OpenAI structure, Gemini config) | P2 | 3 | - | V1.0 | IN_PROGRESS | wwwer | S16 |
+| FIX-18 | TECH | GIN index mismatch on task search — repo uses concat_ws(), index built on coalesce() || coalesce(); PostgreSQL skips index, full scan on large projects | P1 | 1 | AGT-05 | V1.0 | DONE | wwwer | S16 |
+| FIX-19 | TECH | Search cache not invalidated after task mutations — create/update/delete/reorder/indent/outdent/bulk only invalidate list key, search key stays stale in UI | P2 | 1 | AGT-05 | V1.0 | DONE | wwwer | S16 |
+| AGT-08 | TECH | Agent subtask drill-down — add parent_task_id filter to get_tasks tool, add is_summary to search_tasks response, update tool descriptions for drill-down pattern | P1 | 1 | AGT-05 | V1.0 | DONE | wwwer | S16 |
+| AGT-07 | TECH | Prompt caching last-mile — wire prompt_cache through brain_service to all 3 providers (Anthropic cache_control, OpenAI structure, Gemini config) | P2 | 1 | AGT-06 | V1.0 | DONE | wwwer | S16 |
+| FIX-20 | TECH | Auth remember-me and verification recovery hardening | P1 | 2 | - | V1.0 | DONE | wwwer | S16 stretch |
+| QA-01 | TECH | Carry-forward manual verification sweep for shipped S14/S16 work | P1 | 2 | FIX-18, FIX-19, AGT-07, AGT-08, FIX-20 | V1.0 | IN_PROGRESS | wwwer | S17 |
+| AUTH-01 | TECH | Enforce post-expiry policy for unverified users after verification-link expiry (#48) | P0 | 5 | - | V1.0 | IN_PROGRESS | wwwer | S17 |
 
 ---
 
@@ -143,14 +146,26 @@ Points scale:
 | FEAT-02   | Percent-driven status: summary task status auto-derived from rolled-up percent                          | 2      | S11    |
 | AGT-01    | Agent policy engine: centralized permission and role check before every tool execution                   | 5      | S12    |
 | AGT-02    | Agent kill switch: per-project and per-org flag to disable agent execution                               | 2      | S12    |
+| UX-06     | AI panel styling and layout redesign                                                                      | 2      | S13    |
+| UX-07     | Unified floating TaskDetailPanel across all views                                                         | 2      | S13    |
+| FIX-07    | Password reset allows reuse of previous password (#28)                                                    | 1      | S14    |
+| AGT-05    | Task search + agent search foundation                                                                     | 1      | S14    |
+| AGT-06    | Agent prompt/tooling foundation hardening                                                                 | 1      | S14    |
+| UX-08     | Settings consolidation                                                                                    | 5      | S15    |
+| FIX-18    | GIN index mismatch on task search                                                                         | 1      | S16    |
+| FIX-19    | Search cache not invalidated after task mutations                                                         | 1      | S16    |
+| AGT-08    | Agent subtask drill-down                                                                                  | 1      | S16    |
+| AGT-07    | Prompt caching last-mile                                                                                  | 1      | S16    |
+| FIX-20    | Auth remember-me and verification recovery hardening                                                      | 2      | S16    |
 
 ### V1.0 (Remaining Backlog)
 
 | Item ID | Title                                            | Points | Status | Notes                        |
 | ------- | ------------------------------------------------ | ------ | ------ | ---------------------------- |
-| FIX-07   | Password reset allows reuse of previous password (#28) | 1      | READY | - |
 | AGT-03 | Agent post-condition verification: validate tool results match plan intent before continuing | 3 | READY | S12 stretch, depends on AGT-01 |
 | AGT-04 | Agent UI actions: implement highlight_tasks, open_task, filter_view handlers on frontend | 2 | READY | S12 stretch |
+| QA-01 | Carry-forward manual verification sweep for shipped S14/S16 work | 2 | IN_PROGRESS | S17 |
+| AUTH-01 | Enforce post-expiry policy for unverified users after verification-link expiry (#48) | 5 | IN_PROGRESS | S17, P0 |
 
 ### V1.1 (Planned)
 
