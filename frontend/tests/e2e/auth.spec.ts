@@ -75,7 +75,11 @@ test.describe("Authentication Flow", () => {
         // The error is rendered in an Alert component
         const alert = page.getByRole("alert");
         await expect(alert).toBeVisible();
-        await expect(alert).toContainText("Email already registered"); // Verified text from typical backend response
+        await expect(alert).toContainText(
+            "We couldn't complete sign up with that email.",
+        );
+        await expect(alert).toContainText("Sign in");
+        await expect(alert).toContainText("reset your password");
         await expect(page).toHaveURL("/register");
     });
 

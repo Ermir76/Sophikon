@@ -13,6 +13,23 @@ Guardrail: never delete previous sprint mini-task sections; keep historical spri
 
 ## Active Items - S16
 
+### FIX-20 — Auth remember-me and verification recovery hardening
+
+Status: `DONE`
+
+- [x] Wire `Keep me logged in` to real login form state and request payload
+- [x] Preserve session-only vs persistent cookie policy across `/auth/login` and `/auth/refresh`
+- [x] Persist remember-me choice on refresh-token records with migration support
+- [x] Add focused backend coverage for login and refresh cookie persistence behavior
+- [x] Add focused frontend coverage for login remember-me submission and verify-email resend recovery feedback
+- [ ] Manual verification in browser across close/reopen flow
+
+#### Notes
+
+- Files: `backend/app/api/v1/endpoints/auth.py`, `backend/app/service/auth_service.py`, `backend/app/models/refresh_token.py`, `backend/alembic/versions/b4d5e6f7a8c9_add_refresh_token_persistence_flag.py`, `backend/tests/unit/api/v1/test_auth.py`, `frontend/src/features/auth/pages/LoginPage.tsx`, `frontend/src/features/auth/pages/VerifyEmailPage.tsx`
+- Review gate: `PASS` via `/rr` after backend-review, frontend-review, pydantic-audit, and consistency-review
+- Decision: session persistence is now an explicit server-side policy carried by the refresh-token row instead of an implicit cookie-only behavior
+
 ### FIX-18 — GIN index mismatch
 
 Status: `DONE`

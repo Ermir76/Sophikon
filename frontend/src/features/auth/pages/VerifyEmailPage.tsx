@@ -1,20 +1,50 @@
-import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Mail, XCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 
+import { useSendVerificationEmail } from "@/features/auth/hooks/useAuth";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { getErrorMessage } from "@/shared/lib/errors";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const queryStatus = searchParams.get("status");
   const checkSession = useAuthStore((state) => state.checkSession);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const resendMutation = useSendVerificationEmail();
 
   useEffect(() => {
     if (queryStatus === "success") {
       checkSession();
     }
   }, [queryStatus, checkSession]);
+
+  const resendErrorAlert = resendMutation.isError ? (
+    <Alert variant="destructive">
+      <AlertDescription>{getErrorMessage(resendMutation.error)}</AlertDescription>
+    </Alert>
+  ) : null;
+
+  const resendActions = (
+    <div className="flex flex-col gap-3">
+      <Button
+        onClick={() => resendMutation.mutate()}
+        disabled={resendMutation.isPending || resendMutation.isSuccess}
+      >
+        <Mail className="mr-2 h-4 w-4" />
+        {resendMutation.isSuccess ? "Email Sent!" : "Resend Verification Email"}
+      </Button>
+      {resendErrorAlert}
+      <Button asChild variant="outline">
+        <Link to="/">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go to Dashboard
+        </Link>
+      </Button>
+    </div>
+  );
 
   if (queryStatus === "success") {
     return (
@@ -44,12 +74,11 @@ export default function VerifyEmailPage() {
           This link may have expired or already been used. Please request a new
           verification email.
         </p>
-        <Button asChild variant="outline">
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go to Dashboard
-          </Link>
-        </Button>
+        {isAuthenticated ? resendActions : (
+          <Button asChild>
+            <Link to="/login">Go to Login</Link>
+          </Button>
+        )}
       </div>
     );
   }
@@ -64,12 +93,11 @@ export default function VerifyEmailPage() {
         This verification link appears to be invalid. Please check your email and try
         again.
       </p>
-      <Button asChild variant="outline">
-        <Link to="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Go to Dashboard
-        </Link>
-      </Button>
+      {isAuthenticated ? resendActions : (
+        <Button asChild>
+          <Link to="/login">Go to Login</Link>
+        </Button>
+      )}
     </div>
   );
 }

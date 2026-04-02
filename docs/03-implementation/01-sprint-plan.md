@@ -119,10 +119,11 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 
 ### Execution Update
 
+- FIX-20: `DONE` (remember-me is now a real login/session policy, carried through refresh-token rotation with a persistence flag plus migration support; verify-email recovery now surfaces resend failures inline; focused backend/frontend auth tests passed and review gate closed `PASS`).
 - AGT-05: `DONE` (DB-level `/tasks/search` endpoint + repository full-text search + GIN index migration + agent `search_tasks` rewrite + frontend debounced search integration shipped).
 - AGT-06: `DONE` (versioned prompts, shared planner/executor tool catalog, prompt-cache metadata contracts in backend and ai-service, and prompt metadata traceability persistence completed).
 - QA Gate: `GO` (targeted backend suites `tests/unit/api/v1/test_tasks.py`, `tests/unit/service/test_agent_tool_registry.py`, `tests/unit/service/test_agent_executor.py`, `tests/unit/service/test_agent_history.py`, `tests/unit/service/test_agent_loop.py` and targeted ai-service suites `tests/test_brain_service.py`, `tests/test_contracts.py` passed).
-- Progress: `2/2` committed S14 items complete.
+- Progress: `2/2` committed S14 items complete, plus unplanned auth hardening fix `FIX-20` delivered and closed.
 
 ---
 
@@ -759,6 +760,7 @@ On mismatch: log warning, return error result to LLM, let LLM decide to retry or
 | Sprint | Dates                    | Planned | Completed | Carry-over | Notes                                                                               |
 | ------ | ------------------------ | ------- | --------- | ---------- | ----------------------------------------------------------------------------------- |
 | S13    | 2026-03-28 -> 2026-03-29 | 4       | 4         | 0          | AI panel UX overhaul completed: semantic styling refresh + unified floating TaskDetailPanel workflow (single-click select, double-click open) |
+| S16    | TBD                      | TBD     | TBD       | TBD        | Added unplanned auth hardening follow-up: real remember-me/session persistence across refresh rotation plus verify-email resend recovery feedback and focused auth coverage. |
 | S12    | TBD                      | 7       | 7         | 0          | Agent platform hardening: policy engine + kill switch shipped with full SDLC cycle |
 | S11    | 2026-03-27 -> 2026-03-29 | 7       | 7         | 0          | Percent-driven status: derive task status from percent_complete with configurable review threshold |
 | S10    | 2026-03-26 -> 2026-03-28 | 8       | 11        | 0          | Shipped UX remediation groups `UX-01..UX-04` plus stretch `UX-05` and `FIX-17`; invitation/notification/member/profile flows were hardened and visual consistency pass completed. |

@@ -197,6 +197,7 @@ JWT refresh token storage for session management.
 | **device_info**    | VARCHAR(500) | NULL                       | -                  | User-Agent string             |
 | **ip_address**     | INET         | NULL                       | -                  | Client IP address             |
 | **expires_at**     | TIMESTAMPTZ  | NOT NULL                   | -                  | Token expiration              |
+| **is_persistent**  | BOOLEAN      | NOT NULL                   | TRUE               | Survives browser restarts     |
 | **is_revoked**     | BOOLEAN      | NOT NULL                   | FALSE              | Revoked flag                  |
 | **revoked_at**     | TIMESTAMPTZ  | NULL                       | -                  | When revoked                  |
 | **revoked_reason** | VARCHAR(100) | NULL                       | -                  | logout, password_change, etc. |

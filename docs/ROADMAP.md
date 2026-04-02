@@ -49,6 +49,9 @@
 | OAuth (Google)            | Must     | Planned | - Check if we can use another OAuth provider |
 | JWT with refresh tokens   | Must     | Done    |
 
+Future consideration:
+- Review public auth flows for account-enumeration hardening. Current registration UX uses neutral recovery copy on duplicate-email errors, but the backend flow still distinguishes outcomes internally. In a future hardening pass, evaluate neutral registration responses, resend-verification behavior, timing consistency, abuse controls, and the UX tradeoff of removing post-registration auto-login.
+
 #### Project Management
 
 | Feature                                  | Priority | Status  |

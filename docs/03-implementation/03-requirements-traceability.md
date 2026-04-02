@@ -26,7 +26,7 @@ This document records what is evidenced by the current codebase review.
 
 ## Evidence Anchors
 
-- `A1` Auth surface: `backend/app/api/v1/endpoints/auth.py`, `frontend/src/features/auth/api/auth.service.ts`, `frontend/src/features/auth/pages/LoginPage.tsx`, `frontend/src/features/auth/pages/RegisterPage.tsx`, `frontend/src/features/auth/pages/VerifyEmailPage.tsx`, `frontend/src/app/App.tsx`
+- `A1` Auth surface: `backend/app/api/v1/endpoints/auth.py`, `backend/app/service/auth_service.py`, `backend/app/models/refresh_token.py`, `frontend/src/features/auth/api/auth.service.ts`, `frontend/src/features/auth/pages/LoginPage.tsx`, `frontend/src/features/auth/pages/RegisterPage.tsx`, `frontend/src/features/auth/pages/VerifyEmailPage.tsx`, `frontend/src/app/App.tsx`
 - `A2` Organization surface: `backend/app/api/v1/endpoints/organizations.py`, `backend/app/api/v1/endpoints/organization_members.py`, `frontend/src/features/organizations/*`, `frontend/src/app/App.tsx`
 - `A3` Project and insights surface: `backend/app/api/v1/endpoints/projects.py`, `backend/app/api/v1/endpoints/insights.py`, `backend/app/api/v1/endpoints/activity.py`, `frontend/src/features/projects/*`, `frontend/src/features/dashboard/*`, `frontend/src/app/App.tsx`
 - `A4` Task, dependency, and assignment surface: `backend/app/api/v1/endpoints/tasks.py` (includes `GET /projects/{project_id}/tasks/search`), `backend/app/api/v1/endpoints/dependencies.py`, `backend/app/api/v1/endpoints/assignments.py`, `backend/app/service/task_service.py` (`search_tasks`), `backend/app/repository/task_repo.py` (DB full-text search), `backend/app/service/dependency_service.py`, `frontend/src/features/tasks/*`
@@ -51,10 +51,10 @@ This document records what is evidenced by the current codebase review.
 | FR-AU-004 | Implemented   | A1       | Logout flow exists in backend and auth store.                                 |
 | FR-AU-005 | Implemented   | A1, A8   | Password-reset request/confirm routes are mounted and covered by API/service/concurrency tests. |
 | FR-AU-006 | Implemented   | A1, A8   | Profile update route/page are mounted, with API/service tests; account settings now use anchored sections (desktop left-nav + mobile sticky pill bar), profile save uses a clear pristine-state guard, password requirements are shown before submit as a live checklist, and account recovery is exposed inline in the security flow. |
-| FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI, and the mounted app now refreshes authenticated sessions proactively while idle. |
-| FR-AU-008 | Not evidenced | A1, A8   | No session-management route/page found in current mounted surface.            |
+| FR-AU-007 | Implemented   | A1       | Refresh-token flow exists, using cookies rather than exposed bearer-token UI; the mounted app refreshes authenticated sessions proactively while idle, and the backend now preserves session-only vs persistent login policy across refresh rotation via refresh-token persistence metadata. |
+| FR-AU-008 | Not evidenced | A1, A8   | Browser auth session behavior exists, but the broader session-management capability is not evidenced as complete because the documented active-session view/revoke surface is not mounted in the current product. |
 | FR-AU-009 | Implemented   | A1, A8   | Email verification route/page are mounted in backend and frontend.            |
-| FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI.          |
+| FR-AU-010 | Implemented   | A1, A8   | Resend verification flow exists in auth backend and verify-email UI, with explicit authenticated recovery actions and visible resend failure feedback on the verify-email page. |
 | FR-AU-011 | Implemented   | A1, A8   | Authenticated change-password flow is mounted in backend and profile UI, with standard success toast feedback on save. |
 | FR-AU-012 | Implemented   | A1, A8   | Avatar upload/remove routes are mounted, the frontend now sends real multipart uploads, profile UI handles client-side validation, upload failures surface safe user-facing errors, and returned avatar URLs render in both profile and sidebar UI. |
 | FR-AU-013 | Implemented   | A1, A7   | Account-level AI preferences are mounted in auth backend/service and profile UI, with visible save confirmation, stable optimistic toggle behavior, grouped permission controls by user intent, and explicit `Tool`/`Auto-approve` headered toggle rows. |

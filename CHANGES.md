@@ -4,6 +4,22 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-04-02 - Auth Remember-Me and Verification Recovery Hardening
+
+### Preserve session-vs-persistent login policy across refresh rotation
+
+**What:** Added `is_persistent` to the `refresh_token` model plus Alembic migration `b4d5e6f7a8c9_add_refresh_token_persistence_flag.py`. Updated auth token creation and refresh rotation so login stores the original `remember_me` choice on the server-side refresh-token record and `/auth/refresh` reissues cookies with the same persistence policy instead of always writing persistent cookies. Refactored auth cookie setting in `auth.py` to use a shared helper for register, login, OAuth callback, and refresh, and expanded focused backend auth tests to cover session-only vs persistent cookie behavior before and after refresh.
+
+**Why:** The original `remember_me` fix only changed `/auth/login`. As soon as `/auth/refresh` ran, it rewrote both cookies with persistent `Max-Age` values, effectively turning session-only logins into remembered logins. Storing the session type on the refresh-token record matches standard SaaS behavior and preserves the user’s original choice across token rotation.
+
+### Improve verify-email recovery feedback and auth-flow coverage
+
+**What:** Updated `VerifyEmailPage` so authenticated resend-verification actions surface inline failure feedback via `getErrorMessage(...)` instead of failing silently. Added focused frontend tests for guest invalid-link recovery, authenticated resend action submission, resend error rendering, and login-form submission of `remember_me`. Kept the neutral duplicate-registration recovery copy and the roadmap note for future public-auth enumeration hardening.
+
+**Why:** The verify-email recovery screen told users to request a new verification email but did not display any resend failure state, leaving recovery attempts opaque on network/auth/rate-limit errors. The added page coverage closes the direct automated-test gap around the new auth behavior.
+
+---
+
 ## 2026-03-30 - Sprint S14: AGT-05 Task Search Rewrite (DB-level for UI + Agent)
 
 ### AGT-05 - Replace in-memory task search with PostgreSQL full-text search path

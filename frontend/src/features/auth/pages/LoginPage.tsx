@@ -25,6 +25,7 @@ import { Label } from "@/shared/ui/label";
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
+  remember_me: z.boolean(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -40,7 +41,7 @@ export default function LoginPage() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", remember_me: false },
   });
 
   return (
@@ -122,12 +123,24 @@ export default function LoginPage() {
             )}
           />
 
-          <div className="flex items-center gap-2">
-            <Checkbox id="remember" />
-            <Label htmlFor="remember" className="text-sm font-normal">
-              Keep me logged in
-            </Label>
-          </div>
+          <FormField
+            control={form.control}
+            name="remember_me"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    id="remember"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <Label htmlFor="remember" className="text-sm font-normal">
+                  Keep me logged in
+                </Label>
+              </FormItem>
+            )}
+          />
 
           <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
             {loginMutation.isPending ? (

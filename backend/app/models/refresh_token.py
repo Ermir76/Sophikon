@@ -65,6 +65,12 @@ class RefreshToken(Base):
         nullable=False,
         comment="Token expiration",
     )
+    is_persistent: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=text("TRUE"),
+        comment="Whether the session should survive browser restarts",
+    )
 
     # Revocation
     is_revoked: Mapped[bool] = mapped_column(

@@ -296,9 +296,12 @@ Login with email and password.
 ```json
 {
   "email": "user@example.com",
-  "password": "securePassword123!"
+  "password": "securePassword123!",
+  "remember_me": false
 }
 ```
+
+`remember_me` controls whether the issued browser auth cookies are session-only or persistent across browser restarts. The backend stores this preference on the refresh-token record so `/auth/refresh` preserves the original login persistence policy during token rotation.
 
 **Response:** `200 OK`
 
@@ -610,6 +613,8 @@ Deactivate account.
 
 List active sessions.
 
+Status: Planned design surface. Not currently implemented in the mounted product.
+
 **Response:** `200 OK`
 
 ```json
@@ -631,6 +636,8 @@ List active sessions.
 ### DELETE /users/me/sessions/:id
 
 Revoke session.
+
+Status: Planned design surface. Not currently implemented in the mounted product.
 
 **Response:** `204 No Content`
 

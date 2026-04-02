@@ -22,6 +22,7 @@ class UserRegisterRequest(BaseModel):
 class UserLoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(max_length=128)
+    remember_me: bool = False
 
 
 class PasswordResetRequest(BaseModel):

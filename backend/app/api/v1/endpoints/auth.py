@@ -51,6 +51,40 @@ def _client_info(request: Request) -> tuple[str | None, str | None]:
     return device_info, ip
 
 
+def _set_auth_cookies(
+    response: Response,
+    *,
+    access_token: str,
+    refresh_token: str,
+    is_persistent: bool,
+) -> None:
+    access_max_age = (
+        settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 if is_persistent else None
+    )
+    refresh_max_age = (
+        settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60 if is_persistent else None
+    )
+
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=settings.ENV == "production",
+        samesite="lax",
+        path="/api",
+        max_age=access_max_age,
+    )
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.ENV == "production",
+        samesite="lax",
+        path="/api/v1/auth",
+        max_age=refresh_max_age,
+    )
+
+
 def _oauth_error_redirect() -> RedirectResponse:
     response = RedirectResponse(
         url=build_frontend_url("/login", params={"oauth": "error"}),
@@ -79,24 +113,11 @@ async def register(
     user, access, refresh = await auth_service.register_user(
         db, body.email, body.password, body.full_name, device_info, ip
     )
-
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api/v1/auth",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    _set_auth_cookies(
+        response,
+        access_token=access,
+        refresh_token=refresh,
+        is_persistent=True,
     )
 
     # Send verification email (don't fail registration if email fails)
@@ -121,26 +142,18 @@ async def login(
 ):
     device_info, ip = _client_info(request)
     user, access, refresh = await auth_service.login_user(
-        db, body.email, body.password, device_info, ip
+        db,
+        body.email,
+        body.password,
+        device_info,
+        ip,
+        remember_me=body.remember_me,
     )
-
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api/v1/auth",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    _set_auth_cookies(
+        response,
+        access_token=access,
+        refresh_token=refresh,
+        is_persistent=body.remember_me,
     )
 
     return AuthResponse(
@@ -213,23 +226,11 @@ async def oauth_google_callback(
         url=build_frontend_url(redirect_path),
         status_code=status.HTTP_302_FOUND,
     )
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api/v1/auth",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    _set_auth_cookies(
+        response,
+        access_token=access,
+        refresh_token=refresh,
+        is_persistent=True,
     )
     response.delete_cookie(
         GOOGLE_OAUTH_STATE_COOKIE_NAME,
@@ -293,27 +294,14 @@ async def refresh(
         raise AuthenticationError("No refresh token found")
 
     device_info, ip = _client_info(request)
-    user, access, new_refresh = await auth_service.refresh_tokens(
+    user, access, new_refresh, is_persistent = await auth_service.refresh_tokens(
         db, refresh_token, device_info, ip
     )
-
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=new_refresh,
-        httponly=True,
-        secure=settings.ENV == "production",
-        samesite="lax",
-        path="/api/v1/auth",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    _set_auth_cookies(
+        response,
+        access_token=access,
+        refresh_token=new_refresh,
+        is_persistent=is_persistent,
     )
 
     return AuthResponse(

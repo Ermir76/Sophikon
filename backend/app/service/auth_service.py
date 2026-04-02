@@ -202,6 +202,7 @@ async def _create_token_pair(
     user: User,
     device_info: str | None = None,
     ip: str | None = None,
+    is_persistent: bool = True,
 ) -> tuple[str, str]:
     """Create an access + refresh token pair and persist the refresh token."""
     access_token = create_access_token(subject=str(user.id))
@@ -214,6 +215,7 @@ async def _create_token_pair(
         ip_address=ip,
         expires_at=datetime.now(UTC)
         + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        is_persistent=is_persistent,
     )
     db.add(db_token)
     return access_token, raw_refresh
@@ -287,6 +289,7 @@ async def login_user(
     password: str,
     device_info: str | None = None,
     ip: str | None = None,
+    remember_me: bool = False,
 ) -> tuple[User, str, str]:
     """Authenticate and return (user, access_token, refresh_token)."""
     user = await get_user_by_email(db, email)
@@ -299,7 +302,13 @@ async def login_user(
     if not user.is_active:
         raise PermissionDeniedError("Account is deactivated")
 
-    access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
+    access_token, raw_refresh = await _create_token_pair(
+        db,
+        user,
+        device_info,
+        ip,
+        is_persistent=remember_me,
+    )
     user.last_login_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(user)
@@ -312,7 +321,7 @@ async def refresh_tokens(
     raw_refresh_token: str,
     device_info: str | None = None,
     ip: str | None = None,
-) -> tuple[User, str, str]:
+) -> tuple[User, str, str, bool]:
     """Rotate a refresh token. Returns (user, new_access, new_refresh)."""
     token_hash = hash_token(raw_refresh_token)
     result = await db.execute(
@@ -345,10 +354,16 @@ async def refresh_tokens(
     if not user or not user.is_active:
         raise AuthenticationError("User not found or deactivated")
 
-    access_token, raw_refresh = await _create_token_pair(db, user, device_info, ip)
+    access_token, raw_refresh = await _create_token_pair(
+        db,
+        user,
+        device_info,
+        ip,
+        is_persistent=db_token.is_persistent,
+    )
     await db.commit()
     await db.refresh(user)
-    return user, access_token, raw_refresh
+    return user, access_token, raw_refresh, db_token.is_persistent
 
 
 async def logout_user(db: AsyncSession, raw_refresh_token: str) -> None:

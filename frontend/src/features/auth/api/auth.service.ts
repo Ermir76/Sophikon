@@ -21,6 +21,7 @@ import type { AuthUser } from "@/features/auth/lib/auth";
 export interface LoginRequest {
   email: string;
   password: string;
+  remember_me: boolean;
 }
 
 /**

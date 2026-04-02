@@ -186,6 +186,78 @@ async def test_login_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_login_without_remember_me_sets_session_cookies(client: AsyncClient):
+    email = "login_session_cookie@example.com"
+    password = "StrongPassword123!"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Session Cookie User",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": password,
+            "remember_me": False,
+        },
+    )
+
+    assert response.status_code == 200
+    set_cookies = response.headers.get_list("set-cookie")
+    access_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("access_token=")
+    )
+    refresh_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("refresh_token=")
+    )
+    assert "Max-Age=" not in access_cookie
+    assert "Max-Age=" not in refresh_cookie
+
+
+@pytest.mark.asyncio
+async def test_login_with_remember_me_sets_persistent_cookies(client: AsyncClient):
+    email = "login_persistent_cookie@example.com"
+    password = "StrongPassword123!"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Persistent Cookie User",
+        },
+    )
+
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": password,
+            "remember_me": True,
+        },
+    )
+
+    assert response.status_code == 200
+    set_cookies = response.headers.get_list("set-cookie")
+    access_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("access_token=")
+    )
+    refresh_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("refresh_token=")
+    )
+    assert f"Max-Age={settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60}" in access_cookie
+    assert (
+        f"Max-Age={settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60}" in refresh_cookie
+    )
+
+
+@pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
     """Login — wrong password returns 401"""
     email = "wrong_password@example.com"
@@ -285,6 +357,90 @@ async def test_refresh_token_success(client: AsyncClient):
     # Verify we can user new access token
     # (By calling /me or similar, but test plan doesn't strictly require it here,
     # just checking 200 and cookies is enough for "rotates tokens")
+
+
+@pytest.mark.asyncio
+async def test_refresh_preserves_session_cookie_policy_for_non_persistent_login(
+    client: AsyncClient,
+):
+    email = "refresh-session-policy@example.com"
+    password = "StrongPassword123!"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Refresh Session Policy",
+        },
+    )
+    await client.post("/api/v1/auth/logout")
+
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": password,
+            "remember_me": False,
+        },
+    )
+    assert login_response.status_code == 200
+
+    refresh_response = await client.post("/api/v1/auth/refresh")
+    assert refresh_response.status_code == 200
+
+    set_cookies = refresh_response.headers.get_list("set-cookie")
+    access_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("access_token=")
+    )
+    refresh_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("refresh_token=")
+    )
+    assert "Max-Age=" not in access_cookie
+    assert "Max-Age=" not in refresh_cookie
+
+
+@pytest.mark.asyncio
+async def test_refresh_preserves_persistent_cookie_policy_for_remembered_login(
+    client: AsyncClient,
+):
+    email = "refresh-persistent-policy@example.com"
+    password = "StrongPassword123!"
+
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "full_name": "Refresh Persistent Policy",
+        },
+    )
+    await client.post("/api/v1/auth/logout")
+
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": password,
+            "remember_me": True,
+        },
+    )
+    assert login_response.status_code == 200
+
+    refresh_response = await client.post("/api/v1/auth/refresh")
+    assert refresh_response.status_code == 200
+
+    set_cookies = refresh_response.headers.get_list("set-cookie")
+    access_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("access_token=")
+    )
+    refresh_cookie = next(
+        cookie for cookie in set_cookies if cookie.startswith("refresh_token=")
+    )
+    assert f"Max-Age={settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60}" in access_cookie
+    assert (
+        f"Max-Age={settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60}" in refresh_cookie
+    )
 
 
 @pytest.mark.asyncio

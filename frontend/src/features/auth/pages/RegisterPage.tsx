@@ -19,6 +19,10 @@ import {
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
 
+const DUPLICATE_EMAIL_MESSAGE = "Email already registered";
+const NEUTRAL_REGISTER_ERROR_MESSAGE =
+  "We couldn't complete sign up with that email. Try signing in, resetting your password, or checking your inbox for a verification email.";
+
 const registerSchema = z
   .object({
     full_name: z.string().min(2, "Name must be at least 2 characters."),
@@ -38,6 +42,7 @@ export default function RegisterPage() {
   const next = searchParams.get("next");
   const registerMutation = useRegister(next);
   const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
+  const forgotPasswordHref = "/forgot-password";
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -54,6 +59,12 @@ export default function RegisterPage() {
     registerMutation.mutate(apiData);
   }
 
+  const registerErrorMessage = getErrorMessage(registerMutation.error);
+  const visibleRegisterErrorMessage =
+    registerErrorMessage === DUPLICATE_EMAIL_MESSAGE
+      ? NEUTRAL_REGISTER_ERROR_MESSAGE
+      : registerErrorMessage;
+
   return (
     <div>
       <div className="mb-8">
@@ -65,7 +76,21 @@ export default function RegisterPage() {
 
       {registerMutation.isError && (
         <Alert variant="destructive" className="mb-5">
-          <AlertDescription>{getErrorMessage(registerMutation.error)}</AlertDescription>
+          <AlertDescription className="space-y-2">
+            <p>{visibleRegisterErrorMessage}</p>
+            {registerErrorMessage === DUPLICATE_EMAIL_MESSAGE ? (
+              <p>
+                <Link to={loginHref} className="underline">
+                  Sign in
+                </Link>{" "}
+                or{" "}
+                <Link to={forgotPasswordHref} className="underline">
+                  reset your password
+                </Link>
+                .
+              </p>
+            ) : null}
+          </AlertDescription>
         </Alert>
       )}
 

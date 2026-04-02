@@ -65,4 +65,27 @@ describe("LoginPage", () => {
 
     expect(mocks.startGoogleOAuth).toHaveBeenCalledWith("/projects/abc?tab=tasks");
   });
+
+  it("submits remember_me when keep me logged in is checked", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email Address"), "user@example.com");
+    await user.type(screen.getByPlaceholderText("********"), "StrongPassword123!");
+    await user.click(screen.getByRole("checkbox", { name: "Keep me logged in" }));
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    expect(mocks.loginMutate).toHaveBeenCalledWith({
+      email: "user@example.com",
+      password: "StrongPassword123!",
+      remember_me: true,
+    });
+  });
 });
