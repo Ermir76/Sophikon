@@ -108,6 +108,18 @@ Both hooks invalidate relevant TanStack Query caches on incoming events.
 
 ---
 
+## Time Handling
+
+- Frontend must distinguish between date-only values and exact moments in time.
+- Date-only API fields such as `YYYY-MM-DD` task dates, trend bucket dates, and other calendar-day values must be parsed using `parseISO`.
+- Full ISO datetime fields such as `created_at`, `updated_at`, and timestamped activity data must be parsed as real moments and rendered in the viewer's local timezone.
+- The current `calendar` feature is a work-calendar / scheduling-rules surface, not a meeting-event calendar.
+- Follow:
+  - `docs/02-design/adr/ADR-011-date-parsing-rules.md`
+  - `docs/02-design/adr/ADR-012-time-semantics-contract.md`
+
+---
+
 ## Dependency Rules
 
 **Allowed:**
@@ -140,3 +152,5 @@ Both hooks invalidate relevant TanStack Query caches on incoming events.
 - Security -> `security-design.md`
 - Deployment -> `deployment-topology.md`
 - API contracts -> `api-specification.md`
+- Frontend date parsing -> `adr/ADR-011-date-parsing-rules.md`
+- Time semantics contract -> `adr/ADR-012-time-semantics-contract.md`

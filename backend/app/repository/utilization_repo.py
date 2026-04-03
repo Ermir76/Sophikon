@@ -54,3 +54,26 @@ async def get_active_resources_for_project(
         .order_by(Resource.name.asc())
     )
     return list(result.scalars().all())
+
+
+async def get_assignments_in_range_for_projects(
+    db: AsyncSession,
+    *,
+    project_ids: list[UUID],
+    start_date: date,
+    end_date: date,
+) -> list[Assignment]:
+    if not project_ids:
+        return []
+
+    result = await db.execute(
+        select(Assignment)
+        .join(Task, Assignment.task_id == Task.id)
+        .where(
+            Task.project_id.in_(project_ids),
+            Task.is_deleted == False,  # noqa: E712
+            Assignment.start_date <= end_date,
+            Assignment.finish_date >= start_date,
+        )
+    )
+    return list(result.scalars().all())

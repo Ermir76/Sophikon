@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
@@ -20,6 +21,21 @@ class _TaskStub:
     updated_at: datetime
     finish_date: date
     percent_complete: float
+
+
+@dataclass
+class _ResourceStub:
+    id: object
+    project_id: uuid.UUID
+    max_units: Decimal
+
+
+@dataclass
+class _AssignmentStub:
+    resource_id: object
+    start_date: date
+    finish_date: date
+    units: Decimal
 
 
 def _point_by_day(points, day: date):
@@ -61,6 +77,113 @@ def test_path_span_days_counts_same_day_path_as_one_day():
     day = date(2026, 1, 5)
 
     assert _path_span_days(day, day) == 1
+
+
+def test_resolve_window_uses_scoped_business_day_for_project(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    project = object()
+
+    def fake_resolve_business_day(*, project=None, organization=None, user=None):
+        assert project is not None
+        assert organization is None
+        assert user is None
+        assert project is not None
+        return date(2026, 1, 10)
+
+    monkeypatch.setattr(
+        insights_service, "resolve_business_day", fake_resolve_business_day
+    )
+
+    start_date, end_date = insights_service.resolve_window(
+        "7d", None, None, project=project
+    )
+
+    assert start_date == date(2026, 1, 4)
+    assert end_date == date(2026, 1, 10)
+
+
+def test_resolve_window_uses_scoped_business_day_for_organization(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    organization = object()
+
+    def fake_resolve_business_day(*, project=None, organization=None, user=None):
+        assert project is None
+        assert organization is not None
+        assert user is None
+        return date(2026, 2, 3)
+
+    monkeypatch.setattr(
+        insights_service, "resolve_business_day", fake_resolve_business_day
+    )
+
+    start_date, end_date = insights_service.resolve_window(
+        "30d", None, None, organization=organization
+    )
+
+    assert start_date == date(2026, 1, 5)
+    assert end_date == date(2026, 2, 3)
+
+
+def test_compute_overallocation_counts_normalizes_uuid_like_resource_ids():
+    project_id = uuid.uuid4()
+    resource_id = uuid.uuid4()
+
+    counts = insights_service.compute_overallocation_counts(
+        resources=[
+            _ResourceStub(
+                id=resource_id,
+                project_id=project_id,
+                max_units=Decimal("1.0"),
+            )
+        ],
+        assignments=[
+            _AssignmentStub(
+                resource_id=str(resource_id),
+                start_date=date(2026, 1, 6),
+                finish_date=date(2026, 1, 7),
+                units=Decimal("1.25"),
+            )
+        ],
+        start_date=date(2026, 1, 1),
+        end_date=date(2026, 1, 10),
+    )
+
+    assert counts == {project_id: 1}
+
+
+def test_compute_overallocation_counts_counts_each_resource_once_per_project():
+    project_id = uuid.uuid4()
+    resource_id = uuid.uuid4()
+
+    counts = insights_service.compute_overallocation_counts(
+        resources=[
+            _ResourceStub(
+                id=resource_id,
+                project_id=project_id,
+                max_units=Decimal("1.0"),
+            )
+        ],
+        assignments=[
+            _AssignmentStub(
+                resource_id=resource_id,
+                start_date=date(2026, 1, 6),
+                finish_date=date(2026, 1, 7),
+                units=Decimal("1.10"),
+            ),
+            _AssignmentStub(
+                resource_id=resource_id,
+                start_date=date(2026, 1, 6),
+                finish_date=date(2026, 1, 7),
+                units=Decimal("0.15"),
+            ),
+        ],
+        start_date=date(2026, 1, 1),
+        end_date=date(2026, 1, 10),
+    )
+
+    assert counts == {project_id: 1}
 
 
 async def _seed_dashboard_service_data(

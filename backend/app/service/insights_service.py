@@ -10,13 +10,15 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.assignment import Assignment
 from app.models.enums import ProjectStatus
 from app.models.organization import Organization
 from app.models.project import Project
 from app.models.resource import Resource
 from app.models.task import Task
-from app.repository import insights_repo
+from app.repository import insights_repo, utilization_repo
 from app.service import scheduling_service, utilization_service
+from app.service.time_policy import resolve_business_day
 
 TODAY_PRESET_DAYS = {
     "7d": 7,
@@ -35,11 +37,14 @@ def resolve_window(
     window_preset: str,
     start_date: date | None,
     end_date: date | None,
+    *,
+    project: Project | None = None,
+    organization: Organization | None = None,
 ) -> tuple[date, date]:
     """
     Resolve a dashboard window to concrete [start_date, end_date].
     """
-    today = date.today()
+    today = resolve_business_day(project=project, organization=organization)
 
     if window_preset == "custom":
         if not start_date or not end_date:
@@ -230,6 +235,46 @@ def _risk_score(
     return _round2(max(0.0, min(100.0, score)))
 
 
+def compute_overallocation_counts(
+    resources: list[Resource],
+    assignments: list[Assignment],
+    start_date: date,
+    end_date: date,
+) -> dict[UUID, int]:
+    resources_by_id = {
+        utilization_service.uuid_key(resource.id): resource for resource in resources
+    }
+    daily_allocations: dict[tuple[UUID, UUID, date], Decimal] = defaultdict(
+        lambda: Decimal("0")
+    )
+    overallocated_resource_keys: set[tuple[UUID, UUID]] = set()
+
+    for assignment in assignments:
+        resource = resources_by_id.get(
+            utilization_service.uuid_key(assignment.resource_id)
+        )
+        if resource is None:
+            continue
+
+        current = max(assignment.start_date, start_date)
+        assignment_end = min(assignment.finish_date, end_date)
+        while current <= assignment_end:
+            key = (resource.project_id, resource.id, current)
+            daily_allocations[key] += Decimal(str(assignment.units))
+            current += timedelta(days=1)
+
+    for (project_id, resource_id, _day), allocated_units in daily_allocations.items():
+        resource = resources_by_id[utilization_service.uuid_key(resource_id)]
+        if allocated_units > Decimal(str(resource.max_units)):
+            overallocated_resource_keys.add((project_id, resource_id))
+
+    counts: dict[UUID, int] = defaultdict(int)
+    for project_id, _resource_id in overallocated_resource_keys:
+        counts[project_id] += 1
+
+    return dict(counts)
+
+
 def _task_status_counts(tasks: list[Task], today: date) -> dict[str, Any]:
     work_tasks = _leaf_tasks(tasks)
     total_tasks = len(work_tasks)
@@ -380,7 +425,7 @@ async def get_org_dashboard_insights(
     start_date: date,
     end_date: date,
 ) -> dict[str, Any]:
-    today = date.today()
+    today = resolve_business_day(organization=organization)
 
     projects = await insights_repo.get_projects_for_organization(
         db,
@@ -413,6 +458,25 @@ async def get_org_dashboard_insights(
         db,
         project_ids=project_ids,
     )
+    active_resources = await insights_repo.get_active_resources_for_projects(
+        db,
+        project_ids=project_ids,
+    )
+    assignments = await utilization_repo.get_assignments_in_range_for_projects(
+        db,
+        project_ids=project_ids,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    overallocated_counts = compute_overallocation_counts(
+        active_resources,
+        assignments,
+        start_date,
+        end_date,
+    )
+    active_resource_counts_by_project: dict[UUID, int] = defaultdict(int)
+    for resource in active_resources:
+        active_resource_counts_by_project[resource.project_id] += 1
 
     tasks_by_project: dict[UUID, list[Task]] = defaultdict(list)
     for task in tasks:
@@ -426,15 +490,13 @@ async def get_org_dashboard_insights(
     project_health: list[dict[str, Any]] = []
     overallocated_resources_total = 0
 
-    # NOTE: Known perf tradeoff. This loop currently performs per-project
-    # over-allocation/resource queries (N+1 pattern). If this becomes a
-    # bottleneck, batch resource lookups with project_id IN (...) and
-    # compute over-allocation in a single pass.
     for project in projects:
         project_tasks = tasks_by_project.get(project.id, [])
         metrics = _task_completion_metrics(project_tasks, today)
-        overalloc_count, overalloc_ratio = await _project_overallocation_stats(
-            db, project, start_date, end_date
+        active_resource_count = active_resource_counts_by_project.get(project.id, 0)
+        overalloc_count = overallocated_counts.get(project.id, 0)
+        overalloc_ratio = (
+            overalloc_count / active_resource_count if active_resource_count else 0.0
         )
         overallocated_resources_total += overalloc_count
 
@@ -491,7 +553,7 @@ async def get_project_dashboard(
     start_date: date,
     end_date: date,
 ) -> dict[str, Any]:
-    today = date.today()
+    today = resolve_business_day(project=project)
 
     tasks = await insights_repo.get_tasks_for_project(
         db,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { useOrgStore, useOrganization } from "@/features/organizations";
+import { useOrgStore, useOrganization, useOrganizations } from "@/features/organizations";
 import { useDashboardInsights } from "@/features/dashboard/hooks/useDashboardInsights";
 import { QueryError } from "@/shared/components/QueryError";
 import { getErrorMessage } from "@/shared/lib/errors";
@@ -47,6 +47,12 @@ export default function DashboardPage() {
     error: orgError,
   } = useOrganization(activeOrgId);
   const {
+    isLoading: isOrgsLoading,
+    isError: isOrgsError,
+    error: orgsError,
+    refetch: refetchOrganizations,
+  } = useOrganizations();
+  const {
     data: insights,
     isLoading: isInsightsLoading,
     isFetching: isInsightsFetching,
@@ -55,7 +61,11 @@ export default function DashboardPage() {
     refetch: refetchInsights,
   } = useDashboardInsights(activeOrgId, window);
 
-  if (isOrgLoading || (isInsightsLoading && !!activeOrgId && !insights)) {
+  if (
+    isOrgLoading ||
+    (!activeOrgId && isOrgsLoading) ||
+    (isInsightsLoading && !!activeOrgId && !insights)
+  ) {
     return <PageLoading message="Loading dashboard..." />;
   }
 
@@ -63,6 +73,17 @@ export default function DashboardPage() {
     return (
       <PageShell className={shellClassName}>
         <QueryError message={getErrorMessage(orgError)} />
+      </PageShell>
+    );
+  }
+
+  if (!activeOrgId && isOrgsError) {
+    return (
+      <PageShell className={shellClassName}>
+        <QueryError
+          message={getErrorMessage(orgsError)}
+          onRetry={() => refetchOrganizations()}
+        />
       </PageShell>
     );
   }
@@ -94,7 +115,6 @@ export default function DashboardPage() {
   }
 
   const data = insights;
-  const firstProjectId = data?.project_health?.[0]?.project_id;
   const projectHealth = [...(data?.project_health ?? [])];
   if (healthSort === "completion") {
     projectHealth.sort((a, b) => b.completion_pct - a.completion_pct);
@@ -149,28 +169,28 @@ export default function DashboardPage() {
           label="Task Completion"
           value={`${kpis.task_completion_pct.toFixed(1)}%`}
           valueClassName="text-primary"
-          to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
+          to="/projects"
         />
         <InsightsMetricCard
           compact
           label="Overdue Tasks"
           value={kpis.overdue_tasks}
           valueClassName="text-destructive"
-          to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
+          to="/projects"
         />
         <InsightsMetricCard
           compact
           label="Critical Tasks"
           value={kpis.critical_tasks}
           valueClassName="text-destructive"
-          to={firstProjectId ? `/projects/${firstProjectId}/tasks` : "/projects"}
+          to="/projects"
         />
         <InsightsMetricCard
           compact
           label="Overallocated Resources"
           value={kpis.overallocated_resources}
           valueClassName="text-destructive"
-          to={firstProjectId ? `/projects/${firstProjectId}/utilization` : "/projects"}
+          to="/projects"
         />
       </div>
 

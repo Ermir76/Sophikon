@@ -38,7 +38,10 @@ async def get_dashboard_insights(
     Return dashboard control-center insights for an organization.
     """
     window_start, window_end = resolve_window_or_422(
-        window_preset, start_date, end_date
+        window_preset,
+        start_date,
+        end_date,
+        organization=access.organization,
     )
     payload = await insights_service.get_org_dashboard_insights(
         db, access.organization, window_start, window_end

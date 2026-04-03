@@ -4,6 +4,22 @@ All code changes are documented here with explanations before they are applied.
 
 ---
 
+## 2026-04-03 - Sprint S18: Dashboard Audit Fixes and QA Closure
+
+### Close all S18 dashboard audit findings across frontend and backend
+
+**What:** Fixed the organization dashboard bootstrap state so first-load org hydration, org-fetch failure, and true no-organization empty state are handled separately. Changed all six dashboard KPI cards to drill into the org-level `/projects` list instead of guessing a single project destination. Made recent-activity items clickable by routing `project`, `task`, and `resource` entries into their related project areas. Changed trend tick rendering to parse date-only buckets as local calendar dates instead of UTC-shifted `Date(...)` parsing. On the backend, introduced shared business-day helpers in `time_policy.py`, threaded scoped project/organization context into dashboard window resolution, and replaced the org dashboard's per-project over-allocation loop with batched resource/assignment queries plus a shared aggregation helper.
+
+**Why:** Three independent dashboard audits found the same P1 problems: misleading first-load empty state, wrong KPI drill-down targets, non-clickable recent activity, timezone-shifted trend labels, fragile date-only window semantics, and N+1 over-allocation queries. The fixes bring the org dashboard in line with the intended "cross-project control center" behavior and remove the known correctness/performance regressions.
+
+### Add direct regression coverage for the changed dashboard behavior
+
+**What:** Added focused frontend tests for `DashboardPage`, `InsightsActivityCard`, and `InsightsTrendCard`, and extended backend service coverage for scoped dashboard window resolution and `compute_overallocation_counts(...)`, including mixed UUID/string resource-id matching. Re-ran the targeted frontend dashboard slice and targeted backend dashboard slice to green.
+
+**Why:** Review correctly flagged that the initial implementation pass did not ship enough direct automated proof for the changed dashboard behavior. The added tests close that evidence gap and complete the S18 QA gate.
+
+---
+
 ## 2026-04-02 - AUTH-01 Unverified User Enforcement After Verification Expiry
 
 ### Enforce a 24-hour verification grace period with recovery paths

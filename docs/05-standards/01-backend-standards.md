@@ -31,6 +31,7 @@ Define mandatory backend engineering standards for API, service, persistence, se
 - Services own business rules, orchestration, and transaction boundaries.
 - External side effects (notifications, realtime events) must happen only after successful commit.
 - Cross-domain orchestration belongs in service layer, not repository layer.
+- Time/date business logic must follow `docs/02-design/adr/ADR-012-time-semantics-contract.md`; do not introduce ad hoc `today` or timezone semantics in feature code.
 
 ## Repository and Persistence Standards
 
@@ -66,3 +67,7 @@ Define mandatory backend engineering standards for API, service, persistence, se
 - Required migration included (if schema changed).
 - Error and auth behavior verified.
 - Traceability and relevant docs updated.
+
+## Related Decisions
+
+- Time semantics contract -> `docs/02-design/adr/ADR-012-time-semantics-contract.md`

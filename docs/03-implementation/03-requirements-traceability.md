@@ -72,7 +72,7 @@ This document records what is evidenced by the current codebase review.
 | FR-OR-007 | Implemented   | A2       | Organization member role update flow is mounted in the `/settings` members section, with a stable pending indicator that disables overlapping role actions during save. |
 | FR-OR-008 | Implemented   | A2       | Organization member removal flow is mounted in the `/settings` members section.                                     |
 | FR-OR-009 | Implemented   | A2       | Current-user organization membership resolution is mounted at `/organizations/{org_id}/members/me`.                 |
-| FR-OR-010 | Implemented   | A2, A3   | Organization dashboard insights endpoint and dashboard page flow are mounted via active-org context.                |
+| FR-OR-010 | Implemented   | A2, A3   | Organization dashboard insights endpoint and dashboard page flow are mounted via active-org context; the dashboard now distinguishes bootstrap loading vs no-org vs org-fetch error, KPI cards drill into the org-level `/projects` list, recent activity is project-scoped cross-project activity with clickable project/task/resource routes, trend buckets render date-only labels without UTC day shift, and org-level over-allocation aggregation uses batched backend queries with direct automated coverage. |
 | FR-OR-011 | Not evidenced | A2, A8   | Invite-unregistered-user onboarding flow was not evidenced in the current mounted backend/frontend surface.         |
 
 ### 3.2 Project Management

@@ -117,6 +117,7 @@ async def get_project_dashboard(
         window_preset,
         start_date,
         end_date,
+        project=access.project,
     )
     payload = await insights_service.get_project_dashboard(
         db,

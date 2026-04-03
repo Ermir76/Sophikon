@@ -81,3 +81,19 @@ async def get_active_resources_for_project(
         )
     )
     return list(result.scalars().all())
+
+
+async def get_active_resources_for_projects(
+    db: AsyncSession,
+    *,
+    project_ids: list[UUID],
+) -> list[Resource]:
+    if not project_ids:
+        return []
+    result = await db.execute(
+        select(Resource).where(
+            Resource.project_id.in_(project_ids),
+            Resource.is_active == True,  # noqa: E712
+        )
+    )
+    return list(result.scalars().all())

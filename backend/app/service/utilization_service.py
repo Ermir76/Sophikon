@@ -19,7 +19,7 @@ from app.models.resource import Resource
 from app.repository import utilization_repo
 
 
-def _uuid_key(value: object) -> str:
+def uuid_key(value: object) -> str:
     """
     Normalize UUID-like values to a stable string for safe equality checks.
 
@@ -48,7 +48,7 @@ def _build_daily_allocations(
     day_assignments: dict[date, list[Assignment]] = defaultdict(list)
 
     for assignment in assignments:
-        if _uuid_key(assignment.resource_id) != _uuid_key(resource.id):
+        if uuid_key(assignment.resource_id) != uuid_key(resource.id):
             continue
 
         # Clamp to the requested range

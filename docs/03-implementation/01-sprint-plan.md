@@ -42,6 +42,27 @@ Purpose: define one sprint commitment with capacity, scope, and completion crite
 | Bootstrap race fix may interact with org-store hydration timing | Regression in sidebar org switcher | Test org resolution flow end-to-end after fix | wwwer |
 | N+1 batch refactor changes query structure in insights_service | Regression in dashboard stats | Run existing backend insight tests plus new batched-query test | wwwer |
 
+### Execution Update
+
+- DASH-01: `DONE` (dashboard bootstrap now distinguishes org-list loading and org-list failure from the no-org empty state; focused page tests cover both branches)
+- DASH-03: `DONE` (trend tick rendering now parses date-only buckets as local calendar dates; focused shared-ui test covers the timezone-shift regression)
+- DASH-06: `DONE` (dashboard date-only logic now resolves through shared `time_policy` business-day helpers using scoped project/org context instead of ad hoc `date.today()` calls)
+- DASH-04: `DONE` (organization dashboard recent activity is now clickable and routes into the related project, task list, or resource page; contract clarified as project-scoped cross-project activity)
+- DASH-05: `DONE` (org dashboard over-allocation stats now use batched resource/assignment queries plus a shared aggregation helper; focused backend service coverage added for UUID-normalized matching)
+- DASH-02: `DONE` (all org-level KPI cards now drill into `/projects` rather than a guessed single-project context)
+- Stretch delivered: `DASH-09` partial (focused dashboard page/component/frontend tests plus backend service tests added during review closeout to prove the changed behavior directly)
+- QA Gate: `GO` (targeted frontend dashboard slice and targeted backend dashboard slice both passed after reviewer-requested coverage was added)
+- Progress: `9/9` committed points complete
+
+### Sprint Review
+
+- Planned points: `9`
+- Completed points: `9`
+- Carry-over points: `0`
+- Main wins: Closed all dashboard audit findings and finished the branch with direct automated proof for the risky time-window, routing, and batched aggregation changes.
+- Main misses: Review surfaced that the first pass did not include enough direct backend/frontend test coverage for the changed dashboard behavior, so closeout took an extra QA-focused pass.
+- Process changes for next sprint: When a dashboard or summary layer changes both behavior and aggregation strategy, add the direct service/component tests in the same pass instead of waiting for review to force them.
+
 ---
 
 ## Previous Sprint

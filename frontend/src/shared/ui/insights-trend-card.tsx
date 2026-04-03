@@ -1,3 +1,4 @@
+import { parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
   ChartContainer,
@@ -45,7 +46,8 @@ export function InsightsTrendCard({
               axisLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
               minTickGap={24}
-              tickFormatter={(v: string) => new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              tickFormatter={(v: string) =>
+                parseISO(v).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             />
             <YAxis allowDecimals={false} width={30} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
             <ChartTooltip content={<ChartTooltipContent />} />
