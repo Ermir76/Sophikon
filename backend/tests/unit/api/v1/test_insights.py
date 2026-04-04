@@ -2,7 +2,13 @@ import pytest
 from httpx import AsyncClient
 
 
-async def _seed_project_with_data(client: AsyncClient, email: str, slug: str):
+async def _seed_project_with_data(
+    client: AsyncClient,
+    email: str,
+    slug: str,
+    *,
+    activate_project: bool = False,
+):
     await client.post(
         "/api/v1/auth/register",
         json={
@@ -26,6 +32,13 @@ async def _seed_project_with_data(client: AsyncClient, email: str, slug: str):
         },
     )
     project_id = proj_resp.json()["id"]
+
+    if activate_project:
+        activate_resp = await client.patch(
+            f"/api/v1/projects/{project_id}",
+            json={"status": "ACTIVE"},
+        )
+        assert activate_resp.status_code == 200, activate_resp.text
 
     task_resp = await client.post(
         f"/api/v1/projects/{project_id}/tasks",
@@ -92,6 +105,27 @@ async def test_dashboard_insights_success(client: AsyncClient):
     assert "recent_activity" in data
     assert isinstance(data["recent_activity"], list)
     assert len(data["recent_activity"]) >= 1  # at least 1 activity from task creation
+
+
+@pytest.mark.asyncio
+async def test_dashboard_insights_counts_active_projects(client: AsyncClient):
+    """Dashboard - counts projects transitioned to ACTIVE in the KPI summary."""
+    org_id, _ = await _seed_project_with_data(
+        client,
+        email="ins_active@x.com",
+        slug="org-ins-active",
+        activate_project=True,
+    )
+
+    resp = await client.get(
+        f"/api/v1/organizations/{org_id}/insights/dashboard",
+        params={"window_preset": "30d"},
+    )
+    assert resp.status_code == 200
+
+    data = resp.json()
+
+    assert data["kpis"]["active_projects"] == 1
 
 
 @pytest.mark.asyncio
